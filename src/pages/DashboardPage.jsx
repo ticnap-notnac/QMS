@@ -9,6 +9,10 @@ function DashboardPage({
   onLogout,
   isNotificationsOpen,
   onToggleNotifications,
+  userRole,                 
+  setIsAdminPanelOpen,      
+  setIsAuditToolsOpen,
+  setProfileTargetTab       // 💡 Added parameter pass-through
 }) {
   return (
     <main className="dashboard">
@@ -20,10 +24,11 @@ function DashboardPage({
         onLogout={onLogout}
         isNotificationsOpen={isNotificationsOpen}
         onToggleNotifications={onToggleNotifications}
+        userRole={userRole}                 
+        setIsAdminPanelOpen={setIsAdminPanelOpen}
+        setIsAuditToolsOpen={setIsAuditToolsOpen}
+        setProfileTargetTab={setProfileTargetTab} // 💡 Forward down to navbar
       />
-      {/* We are now forwarding all menu states and page routing properties 
-        so the main canvas elements and dropdown triggers can change pages successfully.
-      */}
       <Dashboard 
         activePage={activePage}
         onPageChange={onPageChange}
@@ -37,4 +42,4 @@ function DashboardPage({
   )
 }
 
-export default DashboardPage
+export default DashboardPage;

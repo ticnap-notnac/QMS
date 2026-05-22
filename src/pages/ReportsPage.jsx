@@ -1,23 +1,14 @@
 import { useState } from 'react'
 import Navbar from '../components/Navbar.jsx'
-
-// Standard Lucide icons mapping for the UI elements
 import { 
   Upload as UploadIcon, 
   X as CloseIcon, 
-  Layers as LayersIcon, 
-  MapPin as MapPinIcon, 
-  Sliders as SlidersIcon, 
-  Building2 as BuildingIcon, 
-  AlignLeft as DescriptionIcon,
-  IdCard as CardIcon,
   SlidersHorizontal,
   SquarePen,
   User,
   Calendar,
   Filter,
-  FileSearch,
-  CheckCircle
+  FileSearch
 } from 'lucide-react'
 
 function ReportsPage({
@@ -28,46 +19,32 @@ function ReportsPage({
   onLogout,
   isNotificationsOpen,
   onToggleNotifications,
+  userRole,                 
+  setIsAdminPanelOpen,      
+  setIsAuditToolsOpen,
+  setProfileTargetTab       // 💡 Added parameter pass-through
 }) {
-  // Toggle states for managing modal overlays
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isCarModalOpen, setIsCarModalOpen] = useState(false);
   const [isQddrModalOpen, setIsQddrModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); 
-  const [isPreventiveActionModalOpen, setIsPreventiveActionModalOpen] = useState(false); // New rating view state
+  const [isPreventiveActionModalOpen, setIsPreventiveActionModalOpen] = useState(false);
 
-  // Main submission form payload states
   const [productType, setProductType] = useState('');
   const [batchNumber, setBatchNumber] = useState('');
   const [location, setLocation] = useState('');
   const [severity, setSeverity] = useState('');
   const [department, setDepartment] = useState('');
   const [description, setDescription] = useState('');
-
-  // Extended update report additional tracking fields
   const [investigationText, setInvestigationText] = useState('');
   const [resolutionTime, setResolutionTime] = useState('');
   const [verificationDate, setVerificationDate] = useState('');
-
-  // Preventive action active radio button tracking state
   const [preventiveRating, setPreventiveRating] = useState('Excellent');
 
-  // Transitions workflow click handlers
-  const triggerCarModalTransition = () => {
-    setIsModalOpen(false);
-    setIsCarModalOpen(true);
-  };
-
-  const triggerQddrModalTransition = () => {
-    setIsModalOpen(false);
-    setIsQddrModalOpen(true);
-  };
-
-  const triggerPreventiveActionTransition = () => {
-    setIsUpdateModalOpen(false);
-    setIsPreventiveActionModalOpen(true);
-  };
+  const triggerCarModalTransition = () => { setIsModalOpen(false); setIsCarModalOpen(true); };
+  const triggerQddrModalTransition = () => { setIsModalOpen(false); setIsQddrModalOpen(true); };
+  const triggerPreventiveActionTransition = () => { setIsUpdateModalOpen(false); setIsPreventiveActionModalOpen(true); };
 
   return (
     <main className="dashboard" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -79,34 +56,20 @@ function ReportsPage({
         onLogout={onLogout}
         isNotificationsOpen={isNotificationsOpen}
         onToggleNotifications={onToggleNotifications}
+        userRole={userRole}                 
+        setIsAdminPanelOpen={setIsAdminPanelOpen}
+        setIsAuditToolsOpen={setIsAuditToolsOpen}
+        setProfileTargetTab={setProfileTargetTab} // 💡 Forward down to navbar
       />
 
-      {/* --- MAIN PAGE WORKSPACE CANVAS --- */}
       <div style={{ flex: '1', width: '95%', maxWidth: '1200px', margin: '32px auto', padding: '0 16px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', position: 'relative', zIndex: '10' }}>
-        
-        {/* --- FILTER UTILITY CONTROL ICON --- */}
         <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '16px' }}>
-          <button 
-            type="button" 
-            onClick={() => setIsFilterModalOpen(true)}
-            style={{ 
-              background: 'rgba(13, 26, 45, 0.65)', 
-              border: '1px solid rgba(255, 255, 255, 0.12)', 
-              borderRadius: '6px', 
-              padding: '8px', 
-              color: '#22d3ee', 
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-            }}
-          >
+          <button type="button" onClick={() => setIsFilterModalOpen(true)} style={{ background: 'rgba(13, 26, 45, 0.65)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '6px', padding: '8px', color: '#22d3ee', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
             <SlidersHorizontal size={18} />
           </button>
         </div>
 
-        {/* --- CORE USER METRICS CARD VIEW --- */}
-        <div style={{ width: '100%', background: 'rgba(13, 26, 45, 0.65)', border: '1px solid rgba(255, 255, 255, 0.12)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderRadius: '12px', padding: '24px', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.45)', boxSizing: 'border-box', marginBottom: '32px' }}>
+        <div style={{ width: '100%', background: 'rgba(13, 26, 45, 0.65)', border: '1px solid rgba(255, 255, 255, 0.12)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderRadius: '12px', padding: '24px', boxSizing: 'border-box', marginBottom: '32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(6, 182, 212, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -126,23 +89,16 @@ function ReportsPage({
           
           <div style={{ width: '100%', height: '320px', background: 'rgba(8, 18, 35, 0.4)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
             <span style={{ fontSize: '13px', color: '#475569' }}>Data Workspace Content Window</span>
-            
-            <div 
-              onClick={() => setIsUpdateModalOpen(true)}
-              style={editIconContainerStyle}
-            >
-              <SquarePen size={18} />
-            </div>
+            <div onClick={() => setIsUpdateModalOpen(true)} style={editIconContainerStyle}><SquarePen size={18} /></div>
           </div>
         </div>
 
-        {/* --- SUBMIT REPORT TRIGGER BUTTON --- */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 'auto', paddingBottom: '40px' }}>
           <button type="button" onClick={() => setIsModalOpen(true)} style={primaryButtonStyle}>Submit a Report</button>
         </div>
       </div>
 
-      {/* --- MODAL 1: FILTER REPORTS FRAME --- */}
+      {/* Filter Modal */}
       {isFilterModalOpen && (
         <div style={modalOverlayStyle}>
           <div style={{ ...modalCardStyle, maxWidth: '800px' }}>
@@ -183,7 +139,7 @@ function ReportsPage({
         </div>
       )}
 
-      {/* --- MODAL 2: SUBMIT REPORT DATA INPUT VIEW --- */}
+      {/* Main Creation Modal */}
       {isModalOpen && (
         <div style={modalOverlayStyle}>
           <div style={modalCardStyle}>
@@ -237,7 +193,7 @@ function ReportsPage({
         </div>
       )}
 
-      {/* --- MODAL 3: CORRECTIVE ACTION REPORT VIEW --- */}
+      {/* CAR Modal */}
       {isCarModalOpen && (
         <div style={modalOverlayStyle}>
           <div style={{ ...modalCardStyle, maxWidth: '800px' }}>
@@ -249,7 +205,7 @@ function ReportsPage({
         </div>
       )}
 
-      {/* --- MODAL 4: QUALITY DEFECTS REPORT VIEW (QDDR) --- */}
+      {/* QDDR Modal */}
       {isQddrModalOpen && (
         <div style={modalOverlayStyle}>
           <div style={{ ...modalCardStyle, maxWidth: '800px' }}>
@@ -261,45 +217,36 @@ function ReportsPage({
         </div>
       )}
 
-      {/* --- MODAL 5: EXPANDED UPDATE REPORT PANEL CONFIGURATION --- */}
+      {/* Update Report Modal */}
       {isUpdateModalOpen && (
         <div style={modalOverlayStyle}>
           <div style={{ ...modalCardStyle, maxWidth: '780px', maxHeight: '90vh', overflowY: 'auto' }}>
             <button onClick={() => setIsUpdateModalOpen(false)} style={closeButtonStyle}><CloseIcon size={18} /></button>
-            
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px', color: '#f8fafc' }}>
               <FileSearch size={18} style={{ color: '#06b6d4' }} />
               <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.02em' }}>Update Report</h3>
             </div>
-
             <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: '18px', textAlign: 'left', margin: 0 }}>
               <div>
                 <label style={labelStyle}>Evidence:</label>
-                <div style={{ ...uploadBoxStyle, padding: '16px 20px' }}>
-                  <UploadIcon size={18} style={{ color: '#06b6d4' }} />
-                  <span style={{ fontSize: '12px', color: '#cbd5e1', fontWeight: '500' }}>Upload an Image</span>
-                </div>
+                <div style={{ ...uploadBoxStyle, padding: '16px 20px' }}><UploadIcon size={18} style={{ color: '#06b6d4' }} /><span style={{ fontSize: '12px', color: '#cbd5e1', fontWeight: '500' }}>Upload an Image</span></div>
               </div>
-
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
-                <div><label style={labelStyle}>Product Type:</label><input type="text" value={productType} onChange={(e) => setProductType(e.target.value)} style={inputStyle} placeholder="Product context type" /></div>
-                <div><label style={labelStyle}>Batch Number:</label><input type="text" value={batchNumber} onChange={(e) => setBatchNumber(e.target.value)} style={inputStyle} placeholder="Batch sequence number" /></div>
+                <div><label style={labelStyle}>Product Type:</label><input type="text" value={productType} onChange={(e) => setProductType(e.target.value)} style={inputStyle} /></div>
+                <div><label style={labelStyle}>Batch Number:</label><input type="text" value={batchNumber} onChange={(e) => setBatchNumber(e.target.value)} style={inputStyle} /></div>
                 <div>
                   <label style={labelStyle}>Location:</label>
                   <select value={location} onChange={(e) => setLocation(e.target.value)} style={selectStyle}>
-                    <option value="" disabled hidden>Select workspace block</option>
                     <option value="station-a">Production Station A</option>
                     <option value="station-b">Production Station B</option>
                     <option value="warehouse">Warehouse Storage</option>
                   </select>
                 </div>
               </div>
-
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '14px' }}>
                 <div>
                   <label style={labelStyle}>Severity Level:</label>
                   <select value={severity} onChange={(e) => setSeverity(e.target.value)} style={selectStyle}>
-                    <option value="" disabled hidden>Select risk metric</option>
                     <option value="low">Low Risk</option>
                     <option value="medium">Medium Risk</option>
                     <option value="high">High Severity</option>
@@ -308,61 +255,43 @@ function ReportsPage({
                 <div>
                   <label style={labelStyle}>Department:</label>
                   <select value={department} onChange={(e) => setDepartment(e.target.value)} style={selectStyle}>
-                    <option value="" disabled hidden>Select module owner team</option>
                     <option value="qa">Quality Assurance</option>
                     <option value="operations">Operations & Assembly</option>
-                    <option value="logistics">Logistics & Distribution</option>
                   </select>
                 </div>
               </div>
-
-              <div><label style={labelStyle}>Description:</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} style={{ ...inputStyle, height: '80px', padding: '10px', resize: 'none' }} placeholder="Summary context logs concerning logged discrepancies..." /></div>
-
-              <div>
-                <label style={labelStyle}>Investigation:</label>
-                <textarea value={investigationText} onChange={(e) => setInvestigationText(e.target.value)} style={{ ...inputStyle, height: '80px', padding: '10px', resize: 'none' }} placeholder="Provide brief outline summary concerning root cause analysis data..." />
-              </div>
-
+              <div><label style={labelStyle}>Description:</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} style={{ ...inputStyle, height: '80px', padding: '10px', resize: 'none' }} /></div>
+              <div><label style={labelStyle}>Investigation:</label><textarea value={investigationText} onChange={(e) => setInvestigationText(e.target.value)} style={{ ...inputStyle, height: '80px', padding: '10px', resize: 'none' }} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <label style={labelStyle}>Resolution Time:</label>
                   <select value={resolutionTime} onChange={(e) => setResolutionTime(e.target.value)} style={selectStyle}>
-                    <option value="" disabled hidden>Select interval timeline</option>
                     <option value="24h">Within 24 Hours</option>
                     <option value="72h">Within 3 Days</option>
-                    <option value="1w">Within 1 Week</option>
-                    <option value="extended">Extended Investigation Required</option>
                   </select>
                 </div>
                 <div>
                   <label style={labelStyle}>Verification Date:</label>
                   <div style={{ position: 'relative' }}>
                     <input type="text" value={verificationDate} onChange={(e) => setVerificationDate(e.target.value)} placeholder="DD/MM/YYYY" style={inputStyle} />
-                    <Calendar size={14} style={{ position: 'absolute', right: '12px', top: '12px', color: '#64748b', pointerEvents: 'none' }} />
+                    <Calendar size={14} style={{ position: 'absolute', right: '12px', top: '12px', color: '#64748b' }} />
                   </div>
                 </div>
               </div>
-
-              {/* Rerouted execution hook trigger to pop open the actions evaluation view panel next */}
               <div style={{ display: 'flex', justifyContent: 'center', marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '18px' }}>
-                <button type="button" onClick={triggerPreventiveActionTransition} style={{ ...primaryButtonStyle, padding: '12px 52px' }}>
-                  Update Report
-                </button>
+                <button type="button" onClick={triggerPreventiveActionTransition} style={{ ...primaryButtonStyle, padding: '12px 52px' }}>Update Report</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* --- NEW MODAL 6: SUGGESTED PREVENTIVE ACTION RATING VIEW --- */}
+      {/* Preventive Action Modal */}
       {isPreventiveActionModalOpen && (
         <div style={modalOverlayStyle}>
           <div style={{ ...modalCardStyle, maxWidth: '720px' }}>
             <button onClick={() => setIsPreventiveActionModalOpen(false)} style={closeButtonStyle}><CloseIcon size={18} /></button>
-            
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'left' }}>
-              
-              {/* Box Segment 1: Suggested Preventive Action Grid Title */}
               <div>
                 <label style={labelStyle}>Suggested Preventive Action:</label>
                 <div style={{ ...workspacePlaceholderStyle, height: '120px', marginBottom: 0 }}>
@@ -370,54 +299,20 @@ function ReportsPage({
                   <div style={crossLineBackgroundStyle}></div>
                 </div>
               </div>
-
-              {/* Box Segment 2: Rating Radio Options Matrix Group */}
-              <div style={{ background: 'rgba(8, 18, 35, 0.4)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '24px', boxSizing: 'border-box' }}>
+              <div style={{ background: 'rgba(8, 18, 35, 0.4)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '10px', padding: '24px' }}>
                 <span style={{ ...labelStyle, marginBottom: '16px', fontSize: '13px' }}>Suggested Preventive Action Rating:</span>
-                
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {['Excellent', 'Good', 'Ok', 'Poor', 'Very Poor'].map((rating) => (
-                    <label 
-                      key={rating} 
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#e2e8f0', cursor: 'pointer' }}
-                    >
-                      <input 
-                        type="radio" 
-                        name="preventiveRating" 
-                        value={rating} 
-                        checked={preventiveRating === rating} 
-                        onChange={(e) => setPreventiveRating(e.target.value)}
-                        style={{ accentColor: '#06b6d4', cursor: 'pointer', width: '15px', height: '15px' }}
-                      />
+                    <label key={rating} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#e2e8f0', cursor: 'pointer' }}>
+                      <input type="radio" name="preventiveRating" value={rating} checked={preventiveRating === rating} onChange={(e) => setPreventiveRating(e.target.value)} style={{ accentColor: '#06b6d4', width: '15px', height: '15px' }} />
                       {rating}
                     </label>
                   ))}
                 </div>
               </div>
-
-              {/* Close Dismiss Link */}
-              <div style={{ display: 'flex', justifyContent: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px', marginTop: '4px' }}>
-                <button 
-                  type="button" 
-                  onClick={() => setIsPreventiveActionModalOpen(false)}
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    color: '#94a3b8',
-                    padding: '10px 48px',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = '#64748b'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
-                >
-                  Submit
-                </button>
+              <div style={{ display: 'flex', justifyContent: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
+                <button type="button" onClick={() => setIsPreventiveActionModalOpen(false)} style={{ background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#94a3b8', padding: '10px 48px', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>Submit</button>
               </div>
-
             </div>
           </div>
         </div>
@@ -426,8 +321,7 @@ function ReportsPage({
   )
 }
 
-// --- DESIGN INLINE LAYOUT SCHEMES ---
-const modalOverlayStyle = { position: 'fixed', inset: 0, zIndex: '999', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(4, 9, 20, 0.8)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' };
+const modalOverlayStyle = { position: 'fixed', inset: 0, zIndex: '999', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(4, 9, 20, 0.8)', backdropFilter: 'blur(10px)' };
 const modalCardStyle = { width: '90%', maxWidth: '720px', background: 'rgba(13, 26, 45, 0.95)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '16px', padding: '32px', boxShadow: '0 30px 60px rgba(0, 0, 0, 0.6)', position: 'relative', boxSizing: 'border-box' };
 const closeButtonStyle = { position: 'absolute', right: '24px', top: '24px', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' };
 const inputStyle = { width: '100%', height: '38px', background: 'rgba(8, 18, 35, 0.5)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '0 12px', fontSize: '13px', color: '#e2e8f0', outline: 'none', boxSizing: 'border-box' };
@@ -439,10 +333,9 @@ const statusBadgeStyle = { background: 'rgba(6, 182, 212, 0.12)', border: '1px s
 const dayBadgeStyle = { background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#94a3b8', fontSize: '12px', fontWeight: '500', padding: '6px 14px', borderRadius: '6px' };
 const editIconContainerStyle = { position: 'absolute', right: '16px', bottom: '16px', color: '#06b6d4', cursor: 'pointer', background: 'rgba(13, 26, 45, 0.8)', padding: '8px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const uploadBoxStyle = { border: '2px dashed rgba(6, 182, 212, 0.3)', background: 'rgba(8, 18, 35, 0.4)', borderRadius: '8px', padding: '20px', textAlign: 'center', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', marginBottom: '4px' };
-const badgeButtonStyle = { background: 'rgba(6, 182, 212, 0.06)', border: '1px solid rgba(6, 182, 212, 0.2)', color: '#22d3ee', padding: '8px 24px', borderRadius: '6px', fontSize: '12px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.2s' };
-
+const badgeButtonStyle = { background: 'rgba(6, 182, 212, 0.06)', border: '1px solid rgba(6, 182, 212, 0.2)', color: '#22d3ee', padding: '8px 24px', borderRadius: '6px', fontSize: '12px', fontWeight: '500', cursor: 'pointer' };
 const workspacePlaceholderStyle = { width: '100%', height: '380px', background: 'rgba(8, 18, 35, 0.4)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', marginBottom: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' };
-const crossLineBackgroundStyle = { position: 'absolute', inset: 0, opacity: '0.02', pointerEvents: 'none', background: 'linear-gradient(135deg, transparent 49.5%, #fff 49.5%, #fff 50.5%, transparent 50.5%), linear-gradient(45deg, transparent 49.5%, #fff 49.5%, #fff 50.5%, transparent 50.5%)' };
-const secondaryActionButtonStyle = { background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.2)', color: '#e2e8f0', padding: '10px 48px', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer', transition: 'all 0.2s' };
+const crossLineBackgroundStyle = { position: 'absolute', inset: 0, opacity: '0.02', pointerEvents: 'none', background: 'linear-gradient(135deg, transparent 49.5%, #fff 49.5%, #fff 50.5%, transparent 50.5%)' };
+const secondaryActionButtonStyle = { background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.2)', color: '#e2e8f0', padding: '10px 48px', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' };
 
 export default ReportsPage;
