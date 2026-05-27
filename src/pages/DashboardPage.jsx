@@ -9,11 +9,15 @@ function DashboardPage({
   onLogout,
   isNotificationsOpen,
   onToggleNotifications,
-  userRole,                 
+  userRole,
+  userName,
+  userPosition,
   setIsAdminPanelOpen,      
   setIsAuditToolsOpen,
-  setProfileTargetTab       // 💡 Added parameter pass-through
+  setProfileTargetTab
 }) {
+  console.log('DashboardPage - userRole:', userRole)
+  
   return (
     <main className="dashboard">
       <Navbar
@@ -24,10 +28,12 @@ function DashboardPage({
         onLogout={onLogout}
         isNotificationsOpen={isNotificationsOpen}
         onToggleNotifications={onToggleNotifications}
-        userRole={userRole}                 
+        userRole={userRole}
+        userName={userName}
+        userPosition={userPosition}
         setIsAdminPanelOpen={setIsAdminPanelOpen}
         setIsAuditToolsOpen={setIsAuditToolsOpen}
-        setProfileTargetTab={setProfileTargetTab} // 💡 Forward down to navbar
+        setProfileTargetTab={setProfileTargetTab}
       />
       <Dashboard 
         activePage={activePage}

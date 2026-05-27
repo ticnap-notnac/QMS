@@ -1,5 +1,6 @@
-import React from 'react'
-import { Bell } from 'lucide-react' // <-- Added native icon import
+import React, { useState, useEffect } from 'react'
+import { Bell } from 'lucide-react'
+import { supabase } from '@/utils/supabase'
 
 function UserMenu({ 
   isOpen, 
@@ -9,6 +10,37 @@ function UserMenu({
   isNotificationsOpen, 
   onToggleNotifications 
 }) {
+  const [userProfile, setUserProfile] = useState({ name: 'Name of the User', role: 'Position' })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user) {
+          const { data, error } = await supabase
+            .from('users')
+            .select('first_name, last_name, user_name')
+            .eq('email', user.email)
+            .single()
+
+          if (error) throw error
+          if (data) {
+            const fullName = `${data.first_name} ${data.last_name}`.trim()
+            setUserProfile({ name: fullName || user.email, role: data.user_name || 'User' })
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching user profile:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserProfile()
+  }, [])
+
   return (
     <div className="user" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
       
@@ -70,8 +102,8 @@ function UserMenu({
       >
         <div className="avatar" aria-hidden="true"></div>
         <div className="user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-          <span className="user-name">Name of the User</span>
-          <span className="user-role">Position</span>
+          <span className="user-name">{loading ? 'Loading...' : userProfile.name}</span>
+          <span className="user-role">{userProfile.role}</span>
         </div>
       </button>
 

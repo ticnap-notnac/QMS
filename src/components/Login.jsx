@@ -1,12 +1,41 @@
+import { useState } from 'react'
+import { supabase } from '@/utils/supabase'
+
 function Login({
-  username,
-  password,
-  error,
-  onUsernameChange,
-  onPasswordChange,
   onSubmit,
   onLearnMore,
 }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+
+      if (error) throw error
+
+      // Call the parent's onSubmit callback if provided
+      if (onSubmit) {
+        onSubmit({ user: data.user, session: data.session })
+      }
+    } catch (err) {
+      setError(err.message || 'Login failed')
+      console.error('Login error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <main className="layout layout--center">
       <section className="auth auth--center">
@@ -14,14 +43,16 @@ function Login({
           <h1>Welcome to QFlow</h1>
           <p className="subtitle">Sign in to track inspections and stay audit-ready.</p>
 
-          <form className="form" onSubmit={onSubmit}>
+          <form className="form" onSubmit={handleSubmit}>
             <label className="field">
-              <span>Username</span>
+              <span>Email</span>
               <input
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={onUsernameChange}
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
               />
             </label>
 
@@ -29,12 +60,19 @@ function Login({
               <span>Password</span>
               <div className="input-wrap">
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   value={password}
-                  onChange={onPasswordChange}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
                 />
-                <button className="icon-button" type="button" aria-label="Show password">
+                <button 
+                  className="icon-button" 
+                  type="button" 
+                  aria-label="Show password"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path
                       d="M12 5c5.2 0 9.4 3.4 11 7-1.6 3.6-5.8 7-11 7S2.6 15.6 1 12c1.6-3.6 5.8-7 11-7zm0 2.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm0 2.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"
@@ -47,8 +85,8 @@ function Login({
 
             {error ? <p className="error">{error}</p> : null}
 
-            <button className="primary-button" type="submit">
-              Sign In <span className="arrow">-&gt;</span>
+            <button className="primary-button" type="submit" disabled={loading}>
+              {loading ? 'Signing In...' : 'Sign In'} <span className="arrow">-&gt;</span>
             </button>
           </form>
         </div>

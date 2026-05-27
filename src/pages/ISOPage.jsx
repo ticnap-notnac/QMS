@@ -19,10 +19,12 @@ function ISOPage({
   onLogout,
   isNotificationsOpen,
   onToggleNotifications,
-  userRole,                 
+  userRole,
+  userName,
+  userPosition,
   setIsAdminPanelOpen,      
   setIsAuditToolsOpen,
-  setProfileTargetTab       // 💡 Added parameter pass-through
+  setProfileTargetTab
 }) {
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
   const [isAuditTaskModalOpen, setIsAuditTaskModalOpen] = useState(false);
@@ -45,10 +47,12 @@ function ISOPage({
         onLogout={onLogout}
         isNotificationsOpen={isNotificationsOpen}
         onToggleNotifications={onToggleNotifications}
-        userRole={userRole}                 
+        userRole={userRole}
+        userName={userName}
+        userPosition={userPosition}
         setIsAdminPanelOpen={setIsAdminPanelOpen}
         setIsAuditToolsOpen={setIsAuditToolsOpen}
-        setProfileTargetTab={setProfileTargetTab} // 💡 Forward down to navbar
+        setProfileTargetTab={setProfileTargetTab}
       />
 
       <div style={{ flex: '1', width: '95%', maxWidth: '1200px', margin: '32px auto', padding: '0 16px', boxSizing: 'border-box', position: 'relative', zIndex: '10', display: 'flex', flexDirection: 'column', gap: '24px' }}>

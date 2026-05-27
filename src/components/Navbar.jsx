@@ -7,7 +7,9 @@ export default function Navbar({
   onToggleMenu,
   onLogout,
   onToggleNotifications,
-  userRole, 
+  userRole,
+  userName,
+  userPosition,
   setIsAdminPanelOpen,
   setIsAuditToolsOpen,
   setProfileTargetTab 
@@ -43,10 +45,10 @@ export default function Navbar({
         <div onClick={onToggleMenu} style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '16px', cursor: 'pointer' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
             <span style={{ fontSize: '12px', fontWeight: '500', color: '#e2e8f0' }}>
-              {userRole === 'admin' ? 'System Administrator' : 'Name of the User'}
+              {userName || 'Name of the User'}
             </span>
-            <span style={{ fontSize: '10px', color: userRole === 'admin' ? '#a78bfa' : '#64748b' }}>
-              {userRole === 'admin' ? 'QA Admin' : 'Position'}
+            <span style={{ fontSize: '10px', color: '#64748b' }}>
+              {userPosition || 'Position'}
             </span>
           </div>
           <div style={{ height: '32px', width: '32px', borderRadius: '50%', background: userRole === 'admin' ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.2)', border: userRole === 'admin' ? '1px solid #a78bfa' : '1px solid rgba(255,255,255,0.1)' }}></div>
@@ -78,7 +80,7 @@ export default function Navbar({
           {/* Admin panel options are preserved inside the dropdown view context list */}
           {userRole === 'admin' && (
             <button 
-              onClick={() => { onPageChange('Profile'); setProfileTargetTab('Admin Panel'); }} 
+              onClick={() => onPageChange('Admin Panel')} 
               style={{ ...dropdownItemStyle, color: '#c084fc' }}
               onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(192,132,252,0.08)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}

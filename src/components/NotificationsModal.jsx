@@ -1,4 +1,35 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '@/utils/supabase'
+
 function NotificationsModal({ isOpen, onClose }) {
+  const [notifications, setNotifications] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const fetchNotifications = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10)
+
+        if (error) throw error
+        setNotifications(data || [])
+      } catch (err) {
+        setError(err.message)
+        console.error('Error fetching notifications:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchNotifications()
+  }, [isOpen])
+
   if (!isOpen) {
     return null
   }
@@ -27,29 +58,36 @@ function NotificationsModal({ isOpen, onClose }) {
         </div>
         
         <div className="notifications-list">
-          <div className="notification-item">
-            <h3>Verification Deadline Reached.</h3>
-            <p>Please verify the effectiveness of the corrective action for this complaint as soon as possible.</p>
-            
-            <div className="notification-reviewers">
-              <div className="reviewer">
-                <div className="reviewer-avatar"></div>
-                <span className="reviewer-name">Name of the User</span>
-              </div>
-              <div className="reviewer">
-                <div className="reviewer-avatar"></div>
-                <span className="reviewer-name">Name of the User</span>
-              </div>
-              <button className="verify-btn" type="button">
-                Verify Effectiveness
-              </button>
-            </div>
+          {loading && <p style={{ padding: '16px', textAlign: 'center' }}>Loading notifications...</p>}
+          {error && <p style={{ padding: '16px', textAlign: 'center', color: '#ef4444' }}>Error: {error}</p>}
+          
+          {notifications.length === 0 && !loading ? (
+            <p style={{ padding: '16px', textAlign: 'center', color: '#94a3b8' }}>No notifications</p>
+          ) : (
+            notifications.map((notification) => (
+              <div key={notification.id} className="notification-item">
+                <h3>{notification.title}</h3>
+                <p>{notification.message}</p>
+                
+                <div className="notification-reviewers">
+                  {notification.reviewers?.map((reviewer, idx) => (
+                    <div key={idx} className="reviewer">
+                      <div className="reviewer-avatar"></div>
+                      <span className="reviewer-name">{reviewer.name}</span>
+                    </div>
+                  ))}
+                  <button className="verify-btn" type="button">
+                    {notification.action_text || 'Mark as Read'}
+                  </button>
+                </div>
 
-            <div className="notification-charts">
-              <div className="notification-chart"></div>
-              <div className="notification-chart"></div>
-            </div>
-          </div>
+                <div className="notification-charts">
+                  <div className="notification-chart"></div>
+                  <div className="notification-chart"></div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

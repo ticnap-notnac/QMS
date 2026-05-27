@@ -15,10 +15,12 @@ export default function DCCPage({
   onLogout,
   isNotificationsOpen,
   onToggleNotifications,
-  userRole,                 
-  setIsAdminPanelOpen,      
+  userRole,
+  userName,
+  userPosition,
+  setIsAdminPanelOpen,
   setIsAuditToolsOpen,
-  setProfileTargetTab       
+  setProfileTargetTab
 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFolder, setSelectedFolder] = useState(null)
@@ -37,6 +39,8 @@ export default function DCCPage({
         isNotificationsOpen={isNotificationsOpen}
         onToggleNotifications={onToggleNotifications}
         userRole={userRole}
+        userName={userName}
+        userPosition={userPosition}
         setIsAdminPanelOpen={setIsAdminPanelOpen}
         setIsAuditToolsOpen={setIsAuditToolsOpen}
         setProfileTargetTab={setProfileTargetTab}
