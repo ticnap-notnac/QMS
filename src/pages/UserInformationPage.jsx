@@ -46,7 +46,7 @@ export default function UserInformationPage({
           const { data, error } = await supabase
             .from('users')
             .select('first_name, last_name, user_name, email, employee_no, contact_number')
-            .eq('auth_id', user.id)
+            .eq('email', user.email)
             .maybeSingle()
 
           if (error) {
@@ -101,13 +101,13 @@ export default function UserInformationPage({
         setProfileTargetTab={setProfileTargetTab}
       />
 
-      {/* --- UNIFIED SYMMETRICAL BOUNDING BOX CANVAS --- */}
+      {/* --- MASTER BOUNDING BOX CANVAS --- */}
       <main style={{ flex: 1, width: '95%', maxWidth: '1050px', margin: '40px auto', padding: '0 16px', boxSizing: 'border-box', position: 'relative', zIndex: '10' }}>
         <h1 style={{ marginBottom: '24px', textAlign: 'left', color: '#e2e8f0', fontSize: '28px', fontWeight: '600' }}>Profile Settings</h1>
 
         {error && <div className="user-info-error" style={{ marginBottom: '20px' }}>{error}</div>}
 
-        {/* Dynamic Nav Tabs Row */}
+        {/* --- DYNAMIC NAV MASTER TAB ROW ELEMENT --- */}
         <div className="user-info-tabs" style={{ display: 'flex', gap: '4px', borderBottom: 'none', marginBottom: 0 }}>
           <button
             onClick={() => setActiveTab('User Information')}
@@ -121,22 +121,30 @@ export default function UserInformationPage({
           >
             <Settings size={18} /> Settings
           </button>
+          
+          {/* 💡 RE-ANCHORED SAFEGUARD: Restores access to Admin views seamlessly from any profile sub-window orientation */}
+          {userRole === 'admin' && (
+            <button
+              onClick={() => onPageChange('Admin Panel')}
+              className="user-info-tab-button"
+            >
+              Admin Panel
+            </button>
+          )}
         </div>
 
-        {/* --- UNIFIED SIZE GLASSMORPHIC FRAME CONTAINER --- */}
+        {/* --- UNIFIED SIZE SIZING CANVAS CONTAINER --- */}
         <div style={{ width: '100%', background: 'rgba(13, 26, 45, 0.65)', border: '1px solid rgba(255, 255, 255, 0.12)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderRadius: '0 12px 12px 12px', padding: '32px', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.45)', boxSizing: 'border-box', minHeight: '520px' }}>
           
-          {/* TAB 1: USER INFORMATION */}
+          {/* CONTENT VIEW A: USER SUMMARY CARD OVERVIEW */}
           {activeTab === 'User Information' && (
             <div style={{ display: 'flex', gap: '32px', width: '100%' }}>
-              {/* Fake Sidebar structure spacing anchor to align perfectly with the settings subtab row view */}
               <div style={{ width: '200px', borderRight: '1px solid rgba(255,255,255,0.06)', paddingRight: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <button className="sidebar-button active" style={{ cursor: 'default', background: 'rgba(6, 182, 212, 0.08)', color: '#22d3ee', border: 'none', textAlign: 'left', padding: '10px 14px', borderRadius: '6px', fontSize: '13px', fontWeight: '500' }}>
                   Overview Summary
                 </button>
               </div>
 
-              {/* Main Information Panel Box View */}
               <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '32px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '24px' }}>
                   <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'linear-gradient(135deg, #22d3ee, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
@@ -159,20 +167,19 @@ export default function UserInformationPage({
             </div>
           )}
 
-          {/* TAB 2: SETTINGS CONTROL VIEWS */}
+          {/* CONTENT VIEW B: SETTINGS PANEL FORMS SHEET */}
           {activeTab === 'Settings' && (
             <div style={{ display: 'flex', gap: '32px', width: '100%' }}>
-              
-              {/* Left Side Tab Navigation */}
               <div className="settings-sidebar" style={{ width: '200px', display: 'flex', flexDirection: 'column', gap: '8px', borderRight: '1px solid rgba(255,255,255,0.06)', paddingRight: '20px', boxSizing: 'border-box' }}>
                 <button onClick={() => setCurrentSubTab('Profile & Account')} className={`sidebar-button ${currentSubTab === 'Profile & Account' ? 'active' : ''}`} style={sidebarCustomButtonStyle}>Profile & Account</button>
                 <button onClick={() => setCurrentSubTab('Reporting Defaults')} className={`sidebar-button ${currentSubTab === 'Reporting Defaults' ? 'active' : ''}`} style={sidebarCustomButtonStyle}>Reporting Defaults</button>
+                
+                {/* Admin Audit sub-tab access filter lock */}
                 {userRole === 'admin' && (
                   <button onClick={() => setCurrentSubTab('Audit Tools')} className={`sidebar-button ${currentSubTab === 'Audit Tools' ? 'active' : ''}`} style={sidebarCustomButtonStyle}>Audit Tools</button>
                 )}
               </div>
 
-              {/* Right Side Workflow Canvas */}
               <div style={{ flex: '1', display: 'flex', flexDirection: 'column', textAlign: 'left', boxSizing: 'border-box' }}>
                 <div className="settings-content-inner" style={{ width: '100%' }}>
                   
@@ -243,7 +250,6 @@ export default function UserInformationPage({
   )
 }
 
-// Seamless Alignment Inline Elements Styling Blocks
 const fieldRowStyle = { display: 'flex', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.03)' };
 const fieldLabelStyle = { width: '180px', fontSize: '14px', color: '#94a3b8', fontWeight: '500', textAlign: 'left' };
 const fieldValueStyle = { flex: '1', fontSize: '14px', color: '#f1f5f9', fontWeight: '500', textAlign: 'left' };
