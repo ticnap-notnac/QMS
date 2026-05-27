@@ -69,7 +69,7 @@ export default function Navbar({
           </button>
           
           <button 
-            onClick={() => { onPageChange('Profile'); setProfileTargetTab('Settings'); }} 
+            onClick={() => { onPageChange('Settings'); setProfileTargetTab('Settings'); }} 
             style={dropdownItemStyle}
             onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}

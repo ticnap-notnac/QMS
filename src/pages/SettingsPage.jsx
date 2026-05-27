@@ -15,6 +15,7 @@ export default function SettingsPage({
   userName,
   userPosition,
   setProfileTargetTab,
+  onProfileUpdate,
 }) {
   const [userProfile, setUserProfile] = useState({
     first_name: '',
@@ -27,6 +28,10 @@ export default function SettingsPage({
   const [activeSection, setActiveSection] = useState('Profile & Account')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [authId, setAuthId] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [success, setSuccess] = useState('')
+  const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' })
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -34,6 +39,7 @@ export default function SettingsPage({
         const { data: { user } } = await supabase.auth.getUser()
 
         if (user) {
+            setAuthId(user.id)
           const { data, error } = await supabase
             .from('users')
             .select('first_name, last_name, user_name, email, employee_no, contact_number')
@@ -69,6 +75,53 @@ export default function SettingsPage({
 
     fetchUserProfile()
   }, [])
+
+  const handleUpdateChanges = async () => {
+  setSaving(true)
+  setError('')
+  setSuccess('')
+
+  try {
+    // Update profile in public.users
+    const { error: profileError } = await supabase
+      .from('users')
+      .update({
+        first_name: userProfile.first_name,
+        last_name: userProfile.last_name,
+        user_name: userProfile.user_name,
+        contact_number: userProfile.contact_number,
+      })
+      .eq('auth_id', authId)
+
+    if (profileError) throw new Error(profileError.message)
+
+    // Update password only if fields are filled
+    if (passwords.current || passwords.new || passwords.confirm) {
+      if (!passwords.current) throw new Error('Please enter your current password.')
+      if (!passwords.new) throw new Error('Please enter a new password.')
+      if (passwords.new !== passwords.confirm) throw new Error('New passwords do not match.')
+      if (passwords.new.length < 6) throw new Error('Password must be at least 6 characters.')
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: userProfile.email,
+        password: passwords.current,
+      })
+      if (signInError) throw new Error('Current password is incorrect.')
+
+      const { error: passwordError } = await supabase.auth.updateUser({ password: passwords.new })
+      if (passwordError) throw new Error(passwordError.message)
+  
+      setPasswords({ current: '', new: '', confirm: '' })
+    }
+
+    if (onProfileUpdate) await onProfileUpdate()
+    setSuccess('Profile updated successfully!')
+  } catch (err) {
+    setError(err.message)
+  } finally {
+    setSaving(false)
+  }
+}
 
   if (loading) {
     return (
@@ -113,6 +166,12 @@ export default function SettingsPage({
         {error && (
           <div className="user-info-error">
             {error}
+          </div>
+        )}
+
+        {success && (
+          <div style={{ color: 'green', marginBottom: '12px', padding: '10px', border: '1px solid green', borderRadius: '6px' }}>
+            {success}
           </div>
         )}
 
@@ -253,8 +312,13 @@ export default function SettingsPage({
                 </div>
 
                 {/* Update Changes Button */}
-                <button className="btn-primary" style={{ marginTop: '24px' }}>
-                  Update Changes
+                <button
+                    className="btn-primary"
+                    style={{ marginTop: '24px' }}
+                    onClick={handleUpdateChanges}
+                    disabled={saving}
+                >
+                    {saving ? 'Saving...' : 'Update Changes'}
                 </button>
               </div>
             )}

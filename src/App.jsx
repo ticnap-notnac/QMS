@@ -10,6 +10,8 @@ import ISOPage from './pages/ISOPage.jsx'
 import DCCPage from './pages/DCCPage.jsx'
 import UserInformationPage from './pages/UserInformationPage.jsx'
 import AdminPanelPage from './pages/AdminPanelPage.jsx'
+import SettingsPage from './pages/SettingsPage.jsx'
+import AuditToolsPage from './pages/AuditToolsPage.jsx'
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(false)
@@ -41,7 +43,7 @@ export default function App() {
           const { data } = await supabase
             .from('users')
             .select('first_name, last_name, user_name, role_id')
-            .eq('email', user.email)
+            .eq('auth_id', user.id)
             .maybeSingle()
           
           if (data) {
@@ -174,6 +176,22 @@ export default function App() {
     }
   }
 
+  const refreshUserData = async () => {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data } = await supabase
+      .from('users')
+      .select('first_name, last_name, user_name, role_id')
+      .eq('auth_id', user.id)
+      .maybeSingle()
+
+    if (data) {
+      const fullName = `${data.first_name || ''} ${data.last_name || ''}`.trim()
+      setUserName(fullName || 'Name of the User')
+      setUserPosition(data.user_name || 'Position')
+    }
+  }
+}
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut()
@@ -224,7 +242,12 @@ export default function App() {
     if (activePage === 'Admin Panel') {
       return <AdminPanelPage {...sharedProps} />
     }
-
+    if (activePage === 'Settings') {
+      return <SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />
+    }
+    if (activePage === 'Audit Tools') {
+      return <AuditToolsPage {...sharedProps} />
+    }
     return <DashboardPage {...sharedProps} />
   }
 
