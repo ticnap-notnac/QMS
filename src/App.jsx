@@ -116,7 +116,7 @@ export default function App() {
         const { data, error } = await supabase
           .from('users')
           .select('first_name, last_name, user_name, role_id')
-          .eq('email', authData.user.email)
+          .eq('auth_id', authData.user.id)
           .maybeSingle()
         
         console.log('User fetch result:', { data, error })

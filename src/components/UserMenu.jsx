@@ -22,7 +22,7 @@ function UserMenu({
           const { data, error } = await supabase
             .from('users')
             .select('first_name, last_name, user_name')
-            .eq('email', user.email)
+            .eq('auth_id', user.id)
             .single()
 
           if (error) throw error
