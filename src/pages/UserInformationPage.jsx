@@ -102,7 +102,7 @@ export default function UserInformationPage({
 
       {/* --- UNIFIED SYMMETRICAL BOUNDING BOX CANVAS --- */}
       <main className="page-main-wide">
-        <h1 className="page-title">Profile Settings</h1>
+        <h1 className="page-title">User Information</h1>
 
         {error && <div className="user-info-error">{error}</div>}
 
