@@ -46,7 +46,7 @@ export default function UserInformationPage({
           const { data, error } = await supabase
             .from('users')
             .select('first_name, last_name, user_name, email, employee_no, contact_number')
-            .eq('email', user.email)
+            .eq('auth_id', user.id)
             .maybeSingle()
 
           if (error) {
