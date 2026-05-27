@@ -139,7 +139,7 @@ export default function SettingsPage({
           userPosition={userPosition}
           setProfileTargetTab={setProfileTargetTab}
         />
-        <main style={{ padding: '24px' }}>Loading...</main>
+        <main className="page-padding">Loading...</main>
       </>
     )
   }
@@ -160,8 +160,8 @@ export default function SettingsPage({
         setProfileTargetTab={setProfileTargetTab}
       />
 
-      <main style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '24px', color: '#e2e8f0' }}>Settings</h1>
+      <main className="page-container">
+        <h1 className="page-heading">Settings</h1>
 
         {error && (
           <div className="user-info-error">
@@ -170,7 +170,7 @@ export default function SettingsPage({
         )}
 
         {success && (
-          <div style={{ color: 'green', marginBottom: '12px', padding: '10px', border: '1px solid green', borderRadius: '6px' }}>
+          <div className="success-message">
             {success}
           </div>
         )}
@@ -205,7 +205,7 @@ export default function SettingsPage({
               <div className="settings-content">
                 <h2>Edit Profile</h2>
                 
-                <div style={{ marginBottom: '24px' }}>
+                <div className="mb-24">
                   <div className="form-row-3">
                     <div className="form-group">
                       <label>First Name</label>
@@ -313,12 +313,11 @@ export default function SettingsPage({
 
                 {/* Update Changes Button */}
                 <button
-                    className="btn-primary"
-                    style={{ marginTop: '24px' }}
-                    onClick={handleUpdateChanges}
-                    disabled={saving}
+                  className="btn-primary mt-24"
+                  onClick={handleUpdateChanges}
+                  disabled={saving}
                 >
-                    {saving ? 'Saving...' : 'Update Changes'}
+                  {saving ? 'Saving...' : 'Update Changes'}
                 </button>
               </div>
             )}

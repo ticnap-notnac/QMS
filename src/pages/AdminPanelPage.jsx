@@ -35,7 +35,7 @@ export default function AdminPanelPage({
   }
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="page-root">
       <Navbar
         activePage={activePage}
         onPageChange={onPageChange}
@@ -51,11 +51,11 @@ export default function AdminPanelPage({
       />
 
       {userRole === 'admin' ? (
-        <main style={{ flex: 1, width: '95%', maxWidth: '1050px', margin: '40px auto', padding: '0 16px', boxSizing: 'border-box', position: 'relative', zIndex: '10' }}>
-          <h1 style={{ marginBottom: '24px', textAlign: 'left', color: '#e2e8f0', fontSize: '28px', fontWeight: '600' }}>Admin Panel</h1>
+        <main className="page-main-wide">
+          <h1 className="page-title">Admin Panel</h1>
 
           {/* Symmetrical Master Dashboard Menu Navigation Bar Row */}
-          <div className="user-info-tabs" style={{ display: 'flex', gap: '4px', borderBottom: 'none', marginBottom: 0 }}>
+          <div className="user-info-tabs">
             <button
               onClick={() => onPageChange('Profile')}
               className="user-info-tab-button"
@@ -70,32 +70,21 @@ export default function AdminPanelPage({
             </button>
             <button
               className="user-info-tab-button active"
-              style={{ cursor: 'default' }}
             >
               Admin Panel
             </button>
           </div>
 
           {/* Outer Glassmorphic Border Canvas Frame */}
-          <div style={{ width: '100%', background: 'rgba(13, 26, 45, 0.65)', border: '1px solid rgba(255, 255, 255, 0.12)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderRadius: '0 12px 12px 12px', padding: '32px', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.45)', boxSizing: 'border-box', minHeight: '520px' }}>
+          <div className="glass-card-rounded-bottom">
             
             {/* Row 1: Subpill filters selection header row */}
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '16px', marginBottom: '24px' }}>
+            <div className="tab-filter">
               {['Users', 'Dept', 'Roles', 'ISO Module'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setAdminTab(tab)}
-                  style={{
-                    background: adminTab === tab ? '#000000' : 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    padding: '6px 14px',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    color: adminTab === tab ? '#ffffff' : '#cbd5e1',
-                    transition: 'all 0.15s ease'
-                  }}
+                  className={`filter-button ${adminTab === tab ? 'active' : ''}`}
                 >
                   {tab}
                 </button>
@@ -103,62 +92,62 @@ export default function AdminPanelPage({
             </div>
 
             {/* Row 2: Search Input and Actions Filter Workspace Bar */}
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', width: '100%', marginBottom: '24px' }}>
-              <div style={{ flex: '1', position: 'relative', maxWidth: '380px' }}>
+            <div className="search-row">
+              <div className="search-container">
                 <input
                   type="text"
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ width: '100%', height: '36px', background: '#ffffff', border: '1px solid #737373', borderRadius: '4px', padding: '0 36px 0 12px', fontSize: '12px', color: '#000000', outline: 'none', boxSizing: 'border-box' }}
+                  className="search-input-light"
                 />
-                <span style={{ position: 'absolute', right: '12px', top: '10px', color: '#64748b', fontSize: '12px' }}>🔍</span>
+                <span className="search-icon">🔍</span>
               </div>
               
               <button
                 onClick={adminTab === 'Roles' ? handleAddRole : adminTab === 'Dept' ? handleAddDepartment : () => {}}
-                style={{ background: '#737373', border: 'none', color: '#ffffff', height: '36px', padding: '0 16px', borderRadius: '4px', fontSize: '11px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', marginLeft: 'auto' }}
+                className="btn-add-action"
               >
                 + Add {adminTab === 'ISO Module' ? 'Modules' : adminTab}
               </button>
             </div>
 
             {/* Row 3: Inner Component Sheets Workspace Canvas */}
-            <div style={{ width: '100%', height: '320px', background: 'rgba(8, 18, 35, 0.4)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'left', padding: '24px', boxSizing: 'border-box' }}>
+            <div className="glass-card-content">
               {adminTab === 'Users' && (
                 <div>
-                  <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#f8fafc' }}>Manage Users</h3>
-                  <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>User management functionality subsystem streams window</p>
+                  <h3 className="glass-card-heading">Manage Users</h3>
+                  <p className="glass-card-subtext">User management functionality subsystem streams window</p>
                 </div>
               )}
 
               {adminTab === 'Dept' && (
-                <div style={{ width: '100%', maxWidth: '320px' }}>
-                  <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', color: '#f8fafc' }}>Manage Departments</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '12px', color: '#94a3b8' }}>Department Name</label>
+                <div className="panel-narrow">
+                      <h3 className="glass-card-heading">Manage Departments</h3>
+                  <div className="panel-column">
+                    <label className="small-label">Department Name</label>
                     <input
                       type="text"
                       placeholder="Enter department name"
                       value={departmentName}
                       onChange={(e) => setDepartmentName(e.target.value)}
-                      style={{ width: '100%', height: '36px', background: 'rgba(8, 18, 35, 0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '0 12px', fontSize: '13px', color: '#e2e8f0', outline: 'none', boxSizing: 'border-box' }}
+                      className="form-input-reports"
                     />
                   </div>
                 </div>
               )}
 
               {adminTab === 'Roles' && (
-                <div style={{ width: '100%', maxWidth: '320px' }}>
-                  <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', color: '#f8fafc' }}>Manage Roles</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '12px', color: '#94a3b8' }}>Role Name</label>
+                <div className="panel-narrow">
+                  <h3 className="glass-card-heading">Manage Roles</h3>
+                  <div className="panel-column">
+                    <label className="small-label">Role Name</label>
                     <input
                       type="text"
                       placeholder="Enter role name"
                       value={roleData}
                       onChange={(e) => setRoleData(e.target.value)}
-                      style={{ width: '100%', height: '36px', background: 'rgba(8, 18, 35, 0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', padding: '0 12px', fontSize: '13px', color: '#e2e8f0', outline: 'none', boxSizing: 'border-box' }}
+                      className="form-input-reports"
                     />
                   </div>
                 </div>
@@ -166,8 +155,8 @@ export default function AdminPanelPage({
 
               {adminTab === 'ISO Module' && (
                 <div>
-                  <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: '#f8fafc' }}>Manage ISO Modules</h3>
-                  <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>ISO module management functionality subsystem streams window</p>
+                  <h3 className="glass-card-heading">Manage ISO Modules</h3>
+                  <p className="glass-card-subtext">ISO module management functionality subsystem streams window</p>
                 </div>
               )}
             </div>
@@ -175,9 +164,9 @@ export default function AdminPanelPage({
           </div>
         </main>
       ) : (
-        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#f8fafc' }}>
-          <h1 style={{ fontSize: '32px', fontWeight: '600', marginBottom: '16px' }}>Access Denied</h1>
-          <div style={{ color: '#94a3b8', fontSize: '14px', maxWidth: '480px', lineHeight: '1.6' }}>
+        <main className="page-main-centered">
+          <h1 className="page-title">Access Denied</h1>
+          <div className="access-denied-text">
             You don't have permission to access the Admin Panel. Only administrators can access this page.
           </div>
         </main>
