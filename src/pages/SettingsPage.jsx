@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/utils/supabase'
 import Navbar from '@/components/Navbar'
+import SettingsNavbar from '@/components/SettingsNavbar'
 import './PagesStyles.css'
 
 export default function SettingsPage({
@@ -159,9 +160,10 @@ export default function SettingsPage({
         userPosition={userPosition}
         setProfileTargetTab={setProfileTargetTab}
       />
-
       <main className="page-container">
         <h1 className="page-heading">Settings</h1>
+
+        <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
 
         {error && (
           <div className="user-info-error">

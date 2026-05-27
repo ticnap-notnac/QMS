@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Navbar from '@/components/Navbar'
+// SettingsNavbar intentionally not used here to preserve Admin layout
 import './PagesStyles.css'
 
 export default function AdminPanelPage({
@@ -76,15 +77,15 @@ export default function AdminPanelPage({
           </div>
 
           {/* Outer Glassmorphic Border Canvas Frame */}
-          <div className="glass-card-rounded-bottom">
-            
-            {/* Row 1: Subpill filters selection header row */}
-            <div className="tab-filter">
+            <div className="glass-card-rounded-bottom">
+              <div className="admin-inner-panel">
+                {/* Row 1: Subpill filters selection header row */}
+                <div className="tab-filter">
               {['Users', 'Dept', 'Roles', 'ISO Module'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setAdminTab(tab)}
-                  className={`filter-button ${adminTab === tab ? 'active' : ''}`}
+                      className={`filter-button ${adminTab === tab ? 'active' : ''}`}
                 >
                   {tab}
                 </button>
@@ -112,56 +113,56 @@ export default function AdminPanelPage({
               </button>
             </div>
 
-            {/* Row 3: Inner Component Sheets Workspace Canvas */}
-            <div className="glass-card-content">
-              {adminTab === 'Users' && (
-                <div>
-                  <h3 className="glass-card-heading">Manage Users</h3>
-                  <p className="glass-card-subtext">User management functionality subsystem streams window</p>
-                </div>
-              )}
+                {/* Row 3: Inner Component Sheets Workspace Canvas */}
+                <div className="glass-card-content">
+                  {adminTab === 'Users' && (
+                    <div>
+                      <h3 className="glass-card-heading">Manage Users</h3>
+                      <p className="glass-card-subtext">User management functionality subsystem streams window</p>
+                    </div>
+                  )}
 
-              {adminTab === 'Dept' && (
-                <div className="panel-narrow">
+                  {adminTab === 'Dept' && (
+                    <div className="panel-narrow">
                       <h3 className="glass-card-heading">Manage Departments</h3>
-                  <div className="panel-column">
-                    <label className="small-label">Department Name</label>
-                    <input
-                      type="text"
-                      placeholder="Enter department name"
-                      value={departmentName}
-                      onChange={(e) => setDepartmentName(e.target.value)}
-                      className="form-input-reports"
-                    />
-                  </div>
-                </div>
-              )}
+                      <div className="panel-column">
+                        <label className="small-label">Department Name</label>
+                        <input
+                          type="text"
+                          placeholder="Enter department name"
+                          value={departmentName}
+                          onChange={(e) => setDepartmentName(e.target.value)}
+                          className="form-input-reports"
+                        />
+                      </div>
+                    </div>
+                  )}
 
-              {adminTab === 'Roles' && (
-                <div className="panel-narrow">
-                  <h3 className="glass-card-heading">Manage Roles</h3>
-                  <div className="panel-column">
-                    <label className="small-label">Role Name</label>
-                    <input
-                      type="text"
-                      placeholder="Enter role name"
-                      value={roleData}
-                      onChange={(e) => setRoleData(e.target.value)}
-                      className="form-input-reports"
-                    />
-                  </div>
-                </div>
-              )}
+                  {adminTab === 'Roles' && (
+                    <div className="panel-narrow">
+                      <h3 className="glass-card-heading">Manage Roles</h3>
+                      <div className="panel-column">
+                        <label className="small-label">Role Name</label>
+                        <input
+                          type="text"
+                          placeholder="Enter role name"
+                          value={roleData}
+                          onChange={(e) => setRoleData(e.target.value)}
+                          className="form-input-reports"
+                        />
+                      </div>
+                    </div>
+                  )}
 
-              {adminTab === 'ISO Module' && (
-                <div>
-                  <h3 className="glass-card-heading">Manage ISO Modules</h3>
-                  <p className="glass-card-subtext">ISO module management functionality subsystem streams window</p>
+                  {adminTab === 'ISO Module' && (
+                    <div>
+                      <h3 className="glass-card-heading">Manage ISO Modules</h3>
+                      <p className="glass-card-subtext">ISO module management functionality subsystem streams window</p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
-
-          </div>
         </main>
       ) : (
         <main className="page-main-centered">

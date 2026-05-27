@@ -99,6 +99,8 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   padding: 24px;
+  max-width: 880px;
+  margin: 0 auto;
 }
 
 .settings-sidebar {
@@ -315,6 +317,18 @@
 
 .user-info-tab-button.admin.active:hover {
   background: rgba(192, 132, 252, 0.1);
+}
+
+/* Top settings navbar used across profile/settings/admin pages */
+.settings-top-nav {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.settings-top-nav .user-info-tab-button {
+  padding: 8px 14px;
 }
 
 .two-column-row {
@@ -722,6 +736,106 @@
   font-size: 14px;
   max-width: 480px;
   line-height: 1.6;
+}
+
+/* Admin panel specific helpers (restored) */
+.glass-card-rounded-bottom {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Inner white panel to match design */
+.admin-inner-panel {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.75);
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+}
+
+/* Top page tabs style (User Information / Settings / Admin Panel) */
+.user-info-tabs {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 18px;
+  align-items: center;
+}
+
+.user-info-tab-button {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 18px;
+}
+
+.user-info-tab-button.active {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  color: #22d3ee;
+}
+
+.tab-filter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.filter-button {
+  background: rgba(255,255,255,0.02);
+  color: #cbd5e1;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.filter-button.active {
+  background: rgba(34, 211, 238, 0.12);
+  color: #22d3ee;
+  border-color: rgba(34, 211, 238, 0.25);
+}
+
+
+.search-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  justify-content: space-between;
+}
+
+.search-container { flex: 1; display: flex; align-items: center; justify-content: center; }
+
+.search-input-light {
+  width: 420px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  color: #e2e8f0;
+}
+
+.btn-add-action {
+  background: rgba(255,255,255,0.04);
+  color: #e2e8f0;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+}
+
+.glass-card-content {
+  margin-top: 12px;
 }
 
 /* ===================== AUDIT TOOLS PAGE ===================== */

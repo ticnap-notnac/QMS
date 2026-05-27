@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/utils/supabase'
 import Navbar from '@/components/Navbar'
 import SettingsNavbar from '@/components/SettingsNavbar'
-import { Settings, User } from 'lucide-react'
 import './PagesStyles.css'
 
 export default function UserInformationPage({
@@ -28,7 +27,6 @@ export default function UserInformationPage({
     contact_number: '',
   })
   const [activeTab, setActiveTab] = useState(profileTargetTab || 'User Information')
-  const [currentSubTab, setCurrentSubTab] = useState('Profile & Account')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -108,36 +106,18 @@ export default function UserInformationPage({
 
         {error && <div className="user-info-error">{error}</div>}
 
-        {/* Dynamic Nav Tabs Row */}
-        <div className="user-info-tabs">
-          <button
-            onClick={() => setActiveTab('User Information')}
-            className={`user-info-tab-button ${activeTab === 'User Information' ? 'active' : ''}`}
-          >
-            <User size={18} /> User Information
-          </button>
-          <button
-            onClick={() => setActiveTab('Settings')}
-            className={`user-info-tab-button ${activeTab === 'Settings' ? 'active' : ''}`}
-          >
-            <Settings size={18} /> Settings
-          </button>
-        </div>
+        <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
 
         {/* --- UNIFIED SIZE GLASSMORPHIC FRAME CONTAINER --- */}
         <div className="glass-card-rounded-bottom">
           
           {/* TAB 1: USER INFORMATION */}
-          {activeTab === 'User Information' && (
+          {(activeTab === 'User Information' || activePage === 'Profile' || activePage === 'User Information') && (
             <div className="two-column-row">
-              {/* Fake Sidebar structure spacing anchor to align perfectly with the settings subtab row view */}
               <div className="settings-sidebar">
-                <button className="sidebar-button active">
-                  Overview Summary
-                </button>
+                <button className="sidebar-button active">Overview Summary</button>
               </div>
 
-              {/* Main Information Panel Box View */}
               <div className="main-info-panel">
                 <div className="profile-header profile-header-strong">
                   <div className="profile-avatar-large">{userProfile.first_name?.charAt(0) || 'U'}</div>
@@ -158,83 +138,7 @@ export default function UserInformationPage({
             </div>
           )}
 
-          {/* TAB 2: SETTINGS CONTROL VIEWS */}
-          {activeTab === 'Settings' && (
-            <div className="two-column-row">
-              
-              {/* Left Side Tab Navigation */}
-              <div className="settings-sidebar">
-                <button onClick={() => setCurrentSubTab('Profile & Account')} className={`sidebar-button ${currentSubTab === 'Profile & Account' ? 'active' : ''}`}>Profile & Account</button>
-                <button onClick={() => setCurrentSubTab('Reporting Defaults')} className={`sidebar-button ${currentSubTab === 'Reporting Defaults' ? 'active' : ''}`}>Reporting Defaults</button>
-                {userRole === 'admin' && (
-                  <button onClick={() => setCurrentSubTab('Audit Tools')} className={`sidebar-button ${currentSubTab === 'Audit Tools' ? 'active' : ''}`}>Audit Tools</button>
-                )}
-              </div>
-
-              {/* Right Side Workflow Canvas */}
-              <div className="settings-main-flow">
-                <div className="settings-content-inner full-width">
-                  
-                  {currentSubTab === 'Profile & Account' && (
-                    <>
-                      <h2>Edit Profile</h2>
-                      <div className="mb-24">
-                        <div className="edit-profile-grid-3col">
-                          <div className="form-group"><label>First Name</label><input type="text" value={userProfile.first_name} onChange={(e) => setUserProfile({...userProfile, first_name: e.target.value})} className="form-input" /></div>
-                          <div className="form-group"><label>Middle Name</label><input type="text" placeholder="N/A" className="form-input readOnlyOpacity" readOnly /></div>
-                          <div className="form-group"><label>Last Name</label><input type="text" value={userProfile.last_name} onChange={(e) => setUserProfile({...userProfile, last_name: e.target.value})} className="form-input" /></div>
-                        </div>
-                        <div className="edit-profile-grid-2col">
-                          <div className="form-group"><label>Email Address</label><input type="email" value={userProfile.email} onChange={(e) => setUserProfile({...userProfile, email: e.target.value})} className="form-input" /></div>
-                          <div className="form-group"><label>Username</label><input type="text" value={userProfile.user_name} onChange={(e) => setUserProfile({...userProfile, user_name: e.target.value})} className="form-input" /></div>
-                        </div>
-                        <div className="edit-profile-grid-2col">
-                          <div className="form-group"><label>Contact No.</label><input type="text" value={userProfile.contact_number} onChange={(e) => setUserProfile({...userProfile, contact_number: e.target.value})} className="form-input" /></div>
-                          <div className="form-group"><label>Employee ID</label><input type="text" value={userProfile.employee_no} disabled className="form-input" /></div>
-                        </div>
-                      </div>
-
-                      <div className="password-change-divider">
-                        <h3>Change Password</h3>
-                        <div className="edit-profile-grid-2col">
-                          <div className="form-group"><label>Current Password</label><input type="password" placeholder="Enter current password" className="form-input" /></div>
-                          <div className="form-group"><label>New Password</label><input type="password" placeholder="Enter new password" className="form-input" /></div>
-                        </div>
-                        <div className="form-group"><label>Confirm New Password</label><input type="password" placeholder="Confirm new password" className="form-input" /></div>
-                      </div>
-                      <button className="btn-primary mt-24">Update Changes</button>
-                    </>
-                  )}
-
-                  {currentSubTab === 'Reporting Defaults' && (
-                    <>
-                      <h2>Reporting Defaults</h2>
-                      <div className="form-group max-w-320 mb-24">
-                        <label>PREFERRED DATE RANGE:</label>
-                        <select className="form-input">
-                          <option value="7">Last 7 Days</option>
-                          <option value="30">Last 30 Days</option>
-                        </select>
-                      </div>
-                      <button className="btn-primary">Update Changes</button>
-                    </>
-                  )}
-
-                  {currentSubTab === 'Audit Tools' && userRole === 'admin' && (
-                    <div className="audit-stack">
-                      <h2 className="audit-title">Audit Checklist:</h2>
-                      <div className="audit-canvas">
-                        <span className="audit-canvas-text">Audit Verification Checklist Streams Workspace</span>
-                      </div>
-                      <button className="btn-primary self-start">Update Changes</button>
-                    </div>
-                  )}
-
-                </div>
-              </div>
-
-            </div>
-          )}
+        {/* Settings tab removed - Settings handled in separate SettingsPage component */}
 
         </div>
       </main>
