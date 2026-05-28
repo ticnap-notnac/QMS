@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar.jsx' // 💡 Import the unified clean navbar component
 import { 
   Folder, 
@@ -7,6 +7,7 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import './PagesStyles.css'
+import SystemLogsPanel from '../components/SystemLogsPanel.jsx'
 
 export default function DCCPage({
   activePage,
@@ -25,7 +26,40 @@ export default function DCCPage({
 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFolder, setSelectedFolder] = useState(null)
-  const folderItems = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
+  const folderItems = [
+    { id: 'system_logs', label: 'System Logs' },
+  ]
+
+  const [recentlyViewed, setRecentlyViewed] = useState([])
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('dcc_recently_viewed')
+      if (raw) setRecentlyViewed(JSON.parse(raw))
+    } catch (e) {
+      // ignore
+    }
+  }, [])
+
+  function saveRecentlyViewed(list) {
+    try {
+      localStorage.setItem('dcc_recently_viewed', JSON.stringify(list))
+    } catch (e) {}
+  }
+
+  function addRecentlyViewed(item) {
+    const entry = { id: item.id, label: item.label, path: item.path || null, when: new Date().toISOString() }
+    setRecentlyViewed((prev) => {
+      const deduped = [entry].concat(prev.filter((p) => p.id !== entry.id)).slice(0, 10)
+      saveRecentlyViewed(deduped)
+      return deduped
+    })
+  }
+
+  function openFolder(item) {
+    setSelectedFolder(item)
+    addRecentlyViewed(item)
+  }
 
   return (
     <div className="dcc-root">
@@ -51,7 +85,7 @@ export default function DCCPage({
       <div className="dcc-main-wrapper">
         <div className="glass-card-dcc">
           
-          {!selectedFolder ? (
+            {!selectedFolder ? (
             /* VIEW 1: ACTIVE ROOT DIRECTORY REPOSITORIES GRID */
             <div className="flex-column">
               <div className="search-container-centered">
@@ -60,45 +94,59 @@ export default function DCCPage({
               </div>
               <div className="folder-grid">
                 {folderItems.map((item) => (
-                  <div key={item} onClick={() => setSelectedFolder(item)} className="folder-item">
+                  <div key={item.id} onClick={() => openFolder(item)} className="folder-item">
                     <div className="folder-square-block"><Folder size={22} className="icon-fill-soft" /></div>
-                    <span className="folder-item-label">{item}</span>
+                    <span className="folder-item-label">{item.label}</span>
                   </div>
                 ))}
               </div>
               <div className="text-left">
                 <h3 className="recently-viewed-heading">Recently Viewed</h3>
-                <div className="recent-document-card">
-                  <FileText size={18} className="icon-green" />
-                  <div className="col-gap-2">
-                    <span className="recent-doc-title">Trainees Attendance</span>
-                    <span className="recent-doc-sub">A/test/Trainees Attendance.xlsx</span>
+                {recentlyViewed.length === 0 ? (
+                  <div className="recent-empty">No recently viewed items.</div>
+                ) : (
+                  recentlyViewed.map(rv => (
+                    <div key={rv.id} className="recent-document-card dcc-recent-document-card" onClick={() => openFolder({ id: rv.id, label: rv.label })}>
+                      <FileText size={18} className="icon-green" />
+                      <div className="col-gap-2">
+                        <span className="recent-doc-title">{rv.label}</span>
+                        <span className="recent-doc-sub">{new Date(rv.when).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            ) : (
+              /* VIEW 2: SUB-DIRECTORY / FOLDER VIEW */
+              <div className="flex-column full-height">
+                <div className="top-row">
+                  <button onClick={() => setSelectedFolder(null)} className="back-button"><ArrowLeft size={18} /></button>
+                  <div className="search-container-centered">
+                    <input type="text" placeholder={`Search ${selectedFolder.label}...`} className="search-bar-field" />
+                    <Search size={16} className="search-icon-absolute" />
                   </div>
                 </div>
+
+                {/* If the selected folder is System Logs and user is admin, show logs panel */}
+                {selectedFolder.id === 'system_logs' ? (
+                  userRole === 'admin' ? (
+                    <div className="row-gap-40">
+                      <div className="glass-card-dcc system-logs-wrapper">
+                        <SystemLogsPanel onClose={() => setSelectedFolder(null)} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="empty-state">You do not have permission to view System Logs.</div>
+                  )
+                ) : (
+                  /* generic folder: no hardcoded documents */
+                  <div className="row-gap-40">
+                    <div className="empty-state">This folder is empty or has no preview. Use the search or upload documents.</div>
+                  </div>
+                )}
               </div>
-            </div>
-          ) : (
-            /* VIEW 2: SUB-DIRECTORY EXPEDITED WORKFLOW VIEWS */
-            <div className="flex-column full-height">
-              <div className="top-row">
-                <button onClick={() => setSelectedFolder(null)} className="back-button"><ArrowLeft size={18} /></button>
-                <div className="search-container-centered">
-                  <input type="text" placeholder="Search documents..." className="search-bar-field" />
-                  <Search size={16} className="search-icon-absolute" />
-                </div>
-              </div>
-              <div className="row-gap-40">
-                <div className="doc-item">
-                  <div className="doc-thumbnail"><FileText size={36} /></div>
-                  <span className="doc-title">Trainees Attendance.PDF</span>
-                </div>
-                <div className="action-panel">
-                  <button className="action-panel-button">Approved</button>
-                  <button className="action-panel-button action-panel-button--accent">Download PDF</button>
-                </div>
-              </div>
-            </div>
-          )}
+            )}
           
         </div>
       </div>

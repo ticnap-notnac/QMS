@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/utils/supabase'
+import { insertLog } from '@/controllers/logController'
 import Navbar from '@/components/Navbar'
 import SettingsNavbar from '@/components/SettingsNavbar'
 import './PagesStyles.css'
@@ -103,6 +104,21 @@ export default function SettingsPage({
 
       if (profileError) throw new Error(profileError.message)
 
+      const updatedFullName = `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim()
+      await insertLog({
+        level: 'audit',
+        source: 'settings',
+        userAuthId: authId,
+        action: 'profile_update',
+        details: {
+          first_name: userProfile.first_name,
+          last_name: userProfile.last_name,
+          user_name: userProfile.user_name,
+          contact_number: userProfile.contact_number,
+          display_name: updatedFullName || null,
+        },
+      })
+
       if (passwords.current || passwords.new || passwords.confirm) {
         if (!passwords.current) throw new Error('Please enter your current password.')
         if (!passwords.new) throw new Error('Please enter a new password.')
@@ -168,8 +184,8 @@ export default function SettingsPage({
       />
       
       {/* 📐 STANDARD UNIFORM SYSTEM CONTAINER */}
-      <main className="page-container" style={{ width: '95%', maxWidth: '1050px', margin: '40px auto', padding: '0 16px', boxSizing: 'border-box' }}>
-        <h1 className="page-heading" style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: '600', color: '#ffffff' }}>Settings</h1>
+      <main className="page-container settings-page-container">
+        <h1 className="page-heading settings-page-title">Settings</h1>
 
         <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
 
@@ -177,10 +193,10 @@ export default function SettingsPage({
         {success && <div className="success-message">{success}</div>}
 
         {/* 🔮 UNIFORM METRIC CANVAS CARD GLASS DESIGN */}
-        <div className="settings-container" style={{ display: 'flex', gap: '32px', width: '100%', minHeight: '560px', background: 'rgba(13, 26, 45, 0.45)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', padding: '32px', boxSizing: 'border-box', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)', backdropFilter: 'blur(10px)' }}>
+        <div className="settings-container settings-container--profile">
           
           {/* Sidebar Navigation */}
-          <div className="settings-sidebar" style={{ width: '200px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="settings-sidebar settings-sidebar--profile">
             <button 
               onClick={() => setActiveSection('Profile & Account')}
               className={`sidebar-button ${activeSection === 'Profile & Account' ? 'active' : ''}`}
@@ -205,12 +221,12 @@ export default function SettingsPage({
           </div>
 
           {/* Main Content Pane Area Canvas */}
-          <div className="settings-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%', boxSizing: 'border-box' }}>
+          <div className="settings-main settings-main--profile">
             
             {/* Profile & Account Section */}
             {activeSection === 'Profile & Account' && (
-              <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-                <h2 style={{ margin: '0 0 24px 0', fontSize: '20px', fontWeight: '600', color: '#ffffff' }}>Edit Profile</h2>
+              <div className="settings-content settings-content--profile">
+                <h2 className="settings-section-title">Edit Profile</h2>
                 
                 <div className="mb-24">
                   <div className="form-row-3">
@@ -287,7 +303,7 @@ export default function SettingsPage({
                 </div>
 
                 <div className="password-section">
-                  <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#ffffff' }}>Change Password</h3>
+                  <h3 className="settings-password-title">Change Password</h3>
                   
                   <div className="form-row-2">
                     <div className="form-group">
@@ -325,10 +341,9 @@ export default function SettingsPage({
                 </div>
 
                 <button
-                  className="btn-primary mt-24"
+                  className="btn-primary mt-24 settings-save-button"
                   onClick={handleUpdateChanges}
                   disabled={saving}
-                  style={{ alignSelf: 'flex-start' }}
                 >
                   {saving ? 'Saving...' : 'Update Changes'}
                 </button>
@@ -337,20 +352,20 @@ export default function SettingsPage({
 
             {/* Reporting Defaults Section */}
             {activeSection === 'Reporting Defaults' && (
-              <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-                <h2 style={{ margin: '0 0 24px 0', fontSize: '20px', fontWeight: '600', color: '#ffffff' }}>Reporting Defaults</h2>
-                <div className="placeholder-box" style={{ flex: 1, minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '8px', background: 'rgba(15,23,42,0.15)' }}>
-                  <p style={{ color: '#64748b', margin: 0 }}>Reporting preferences will be configured here.</p>
+              <div className="settings-content settings-content--profile">
+                <h2 className="settings-section-title">Reporting Defaults</h2>
+                <div className="settings-placeholder">
+                  <p className="settings-placeholder-text">Reporting preferences will be configured here.</p>
                 </div>
               </div>
             )}
 
             {/* Audit Tools Section */}
             {activeSection === 'Audit Tools' && userRole === 'admin' && (
-              <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-                <h2 style={{ margin: '0 0 24px 0', fontSize: '20px', fontWeight: '600', color: '#ffffff' }}>Audit Tools</h2>
-                <div className="placeholder-box" style={{ flex: 1, minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '8px', background: 'rgba(15,23,42,0.15)' }}>
-                  <p style={{ color: '#64748b', margin: 0 }}>Audit tools and utilities will be available here.</p>
+              <div className="settings-content settings-content--profile">
+                <h2 className="settings-section-title">Audit Tools</h2>
+                <div className="settings-placeholder">
+                  <p className="settings-placeholder-text">Audit tools and utilities will be available here.</p>
                 </div>
               </div>
             )}

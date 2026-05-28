@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Navbar from '@/components/Navbar'
+import SettingsNavbar from '@/components/SettingsNavbar'
 import AdminNavbar from '@/components/AdminNavbar'
 import AddCategoryModal from '@/components/AddCategoryModal'
 import AdminListPanel from '@/components/AdminListPanel'
@@ -104,6 +105,9 @@ export default function RolesPage({
       {userRole === 'admin' ? (
         <main className="page-main-wide">
           <h1 className="page-title">Manage Roles</h1>
+
+          <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
+
           <div className="glass-card-rounded-bottom">
             <div className="admin-inner-panel">
               <div className="search-row">

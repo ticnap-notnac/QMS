@@ -77,3 +77,22 @@
 .admin-actions { display: flex; gap: 12px; align-items: center; }
 .btn-add-action { background: linear-gradient(180deg,#0ea5b1,#0369a1); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; font-weight: 600; }
 .admin-count-bubble { background: rgba(34,211,238,0.14); color: #22d3ee; padding: 6px 10px; border-radius: 20px; font-weight: 700; font-size: 13px; }
+
+/* System Logs panel */
+.system-logs-panel { padding: 12px; color: #e2e8f0; }
+.system-logs-panel .panel-header { display:flex; align-items:center; gap:12px; justify-content:space-between; margin-bottom:12px; }
+.system-logs-panel .panel-actions { display:flex; gap:8px; align-items:center; }
+.system-logs-panel .btn { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); color: #cbd5e1; padding:6px 8px; border-radius:6px; cursor:pointer; }
+.system-logs-panel .btn--ghost { background: transparent; border: none; color: #94a3b8; }
+.system-logs-panel .btn--muted { background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); }
+.system-logs-panel .logs-table { margin-top:12px; overflow:auto; }
+.system-logs-panel table { width:100%; border-collapse: collapse; color: #e2e8f0; }
+.system-logs-panel th, .system-logs-panel td { padding: 8px 10px; text-align: left; font-size: 13px; }
+.system-logs-panel thead th { color: #94a3b8; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.system-logs-panel tbody tr:nth-child(odd) { background: rgba(255,255,255,0.01); }
+.system-logs-panel .pagination { display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-top:8px; }
+
+@media (max-width: 768px) {
+  .system-logs-panel table { font-size: 12px; }
+  .system-logs-panel .admin-search-input { min-width: 140px; }
+}

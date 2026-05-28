@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar'
+import SettingsNavbar from '@/components/SettingsNavbar'
 import AddUserModal from '@/components/AddUserModal'
 import { createUser } from '@/controllers/userController'
 import { useLookup } from '@/context/LookupContext'
@@ -168,6 +169,8 @@ export default function AddUserPage({
       {userRole === 'admin' ? (
         <main className="page-main-wide">
           <h1 className="page-title">Admin — Add User</h1>
+
+          <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
 
           <div className="glass-card-rounded-bottom">
             <div className="admin-inner-panel">
