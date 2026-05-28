@@ -9,7 +9,9 @@ import ReportsPage from './pages/ReportsPage.jsx'
 import ISOPage from './pages/ISOPage.jsx'
 import DCCPage from './pages/DCCPage.jsx'
 import UserInformationPage from './pages/UserInformationPage.jsx'
-import AdminPanelPage from './pages/AdminPanelPage.jsx'
+import AddUserPage from './pages/AddUserPage.jsx'
+import RolesPage from './pages/RolesPage.jsx'
+import DepartmentsPage from './pages/DepartmentsPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AuditToolsPage from './pages/AuditToolsPage.jsx'
 
@@ -197,7 +199,13 @@ export default function App() {
       return <UserInformationPage {...sharedProps} />
     }
     if (activePage === 'Admin Panel') {
-      return <AdminPanelPage {...sharedProps} />
+      return <AddUserPage {...sharedProps} />
+    }
+    if (activePage === 'Roles') {
+      return <RolesPage {...sharedProps} />
+    }
+    if (activePage === 'Departments') {
+      return <DepartmentsPage {...sharedProps} />
     }
     if (activePage === 'Settings') {
       return <SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />
