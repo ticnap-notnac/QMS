@@ -1,8 +1,19 @@
 import { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import AddUserModal from '@/components/AddUserModal'
+import AddCategoryModal from '@/components/AddCategoryModal'
 import { supabase } from '@/utils/supabase'
 import { createAdminUser } from '@/controllers/adminController'
+import {
+  loadRoles as loadRolesController,
+  createRole as createRoleController,
+  deleteRole as deleteRoleController,
+} from '@/controllers/roleController'
+import {
+  loadDepartments as loadDepartmentsController,
+  createDepartment as createDepartmentController,
+  deleteDepartment as deleteDepartmentController,
+} from '@/controllers/departmentController'
 // SettingsNavbar intentionally not used here to preserve Admin layout
 import './PagesStyles.css'
 
@@ -21,8 +32,6 @@ export default function AdminPanelPage({
 }) {
   const [adminTab, setAdminTab] = useState('Users')
   const [searchQuery, setSearchQuery] = useState('')
-  const [departmentName, setDepartmentName] = useState('')
-  const [roleData, setRoleData] = useState('')
   const [adminUsers, setAdminUsers] = useState([])
   const [usersLoading, setUsersLoading] = useState(false)
   const [usersError, setUsersError] = useState('')
@@ -34,6 +43,11 @@ export default function AdminPanelPage({
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [roleSubmitting, setRoleSubmitting] = useState(false)
+  const [categoryInput, setCategoryInput] = useState('')
+  const [categoryModalType, setCategoryModalType] = useState('')
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  const [deletingRoleId, setDeletingRoleId] = useState(null)
+  const [deletingDepartmentId, setDeletingDepartmentId] = useState(null)
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
   const [deletingUserId, setDeletingUserId] = useState(null)
   const [newUser, setNewUser] = useState({
@@ -47,73 +61,39 @@ export default function AdminPanelPage({
     departmentId: '',
   })
 
-  const loadRoles = async () => {
+  const loadRoleAndDepartmentOptions = async () => {
     setRolesLoading(true)
-
-    try {
-      const { data, error } = await supabase
-        .from('roles')
-        .select('id, role_name')
-        .order('role_name', { ascending: true })
-
-      if (error) {
-        throw error
-      }
-
-      const roles = data || []
-
-      setAvailableRoles(roles)
-      setNewUser((current) => ({
-        ...current,
-        roleId: current.roleId || roles[0]?.id?.toString() || '',
-      }))
-
-      return roles
-    } catch (error) {
-      console.error('Error loading roles:', error)
-      setAvailableRoles([])
-      setFormError(error.message)
-      return []
-    } finally {
-      setRolesLoading(false)
-    }
-  }
-
-  const loadDepartments = async () => {
     setDepartmentsLoading(true)
 
     try {
-      const { data, error } = await supabase
-        .from('departments')
-        .select('id, department_name')
-        .order('department_name', { ascending: true })
+      const [roles, departments] = await Promise.all([
+        loadRolesController(),
+        loadDepartmentsController(),
+      ])
 
-      if (error) {
-        throw error
-      }
-
-      const departments = data || []
-
+      setAvailableRoles(roles)
       setAvailableDepartments(departments)
       setNewUser((current) => ({
         ...current,
+        roleId: current.roleId || roles[0]?.id?.toString() || '',
         departmentId: current.departmentId || departments[0]?.id?.toString() || '',
       }))
 
-      return departments
+      return { roles, departments }
     } catch (error) {
-      console.error('Error loading departments:', error)
+      console.error('Error loading roles and departments:', error)
+      setAvailableRoles([])
       setAvailableDepartments([])
       setFormError(error.message)
-      return []
+      return { roles: [], departments: [] }
     } finally {
+      setRolesLoading(false)
       setDepartmentsLoading(false)
     }
   }
 
   useEffect(() => {
-    loadRoles()
-    loadDepartments()
+    loadRoleAndDepartmentOptions()
   }, [])
 
   const loadUsers = async () => {
@@ -152,13 +132,7 @@ export default function AdminPanelPage({
 
   useEffect(() => {
     if (isAddUserModalOpen && availableRoles.length === 0) {
-      loadRoles()
-    }
-  }, [isAddUserModalOpen])
-
-  useEffect(() => {
-    if (isAddUserModalOpen && availableDepartments.length === 0) {
-      loadDepartments()
+      loadRoleAndDepartmentOptions()
     }
   }, [isAddUserModalOpen])
 
@@ -225,41 +199,29 @@ export default function AdminPanelPage({
     }
   }
 
-  const handleAddDepartment = () => {
-    const nextDepartment = departmentName.trim()
-
-    if (!nextDepartment) {
-      return
-    }
-
-    const insertDepartment = async () => {
-      try {
-        setFormError('')
-        setFormMessage('')
-
-        const { error } = await supabase
-          .from('departments')
-          .insert([{ department_name: nextDepartment }])
-
-        if (error) {
-          throw error
-        }
-
-        setDepartmentName('')
-        setFormMessage(`Added department ${nextDepartment} successfully.`)
-        await loadDepartments()
-      } catch (err) {
-        setFormError(err.message)
-      }
-    }
-
-    insertDepartment()
+  const openCategoryModal = (type) => {
+    setFormError('')
+    setFormMessage('')
+    setCategoryModalType(type)
+    setCategoryInput('')
+    setIsCategoryModalOpen(true)
   }
 
-  const handleAddRole = async () => {
-    const nextRole = roleData.trim()
+  const closeCategoryModal = () => {
+    if (!roleSubmitting) {
+      setIsCategoryModalOpen(false)
+      setCategoryModalType('')
+      setCategoryInput('')
+    }
+  }
 
-    if (!nextRole) {
+  const handleSubmitCategory = async (event) => {
+    event.preventDefault()
+
+    const nextValue = categoryInput.trim()
+
+    if (!nextValue) {
+      setFormError('Please enter a name.')
       return
     }
 
@@ -268,21 +230,63 @@ export default function AdminPanelPage({
       setFormError('')
       setFormMessage('')
 
-      const { error } = await supabase
-        .from('roles')
-        .insert([{ role_name: nextRole }])
-
-      if (error) {
-        throw error
+      if (categoryModalType === 'Dept') {
+        await createDepartmentController(nextValue)
+      } else {
+        await createRoleController(nextValue)
       }
 
-      setRoleData('')
-      setFormMessage(`Added role ${nextRole} successfully.`)
-      await loadRoles()
+      setFormMessage(`Added ${categoryModalType === 'Dept' ? 'department' : 'role'} ${nextValue} successfully.`)
+      await loadRoleAndDepartmentOptions()
+      closeCategoryModal()
     } catch (err) {
       setFormError(err.message)
     } finally {
       setRoleSubmitting(false)
+    }
+  }
+
+  const handleDeleteRole = async (role) => {
+    const confirmed = window.confirm(`Delete role "${role.role_name}"?`)
+
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      setDeletingRoleId(role.id)
+      setFormError('')
+      setFormMessage('')
+
+      await deleteRoleController(role.id)
+      setFormMessage(`Deleted role ${role.role_name} successfully.`)
+      await loadRoleAndDepartmentOptions()
+    } catch (err) {
+      setFormError(err.message)
+    } finally {
+      setDeletingRoleId(null)
+    }
+  }
+
+  const handleDeleteDepartment = async (department) => {
+    const confirmed = window.confirm(`Delete department "${department.department_name}"?`)
+
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      setDeletingDepartmentId(department.id)
+      setFormError('')
+      setFormMessage('')
+
+      await deleteDepartmentController(department.id)
+      setFormMessage(`Deleted department ${department.department_name} successfully.`)
+      await loadRoleAndDepartmentOptions()
+    } catch (err) {
+      setFormError(err.message)
+    } finally {
+      setDeletingDepartmentId(null)
     }
   }
 
@@ -417,11 +421,13 @@ export default function AdminPanelPage({
               </div>
               
               <button
-                onClick={adminTab === 'Users' ? openAddUserModal : adminTab === 'Roles' ? handleAddRole : adminTab === 'Dept' ? handleAddDepartment : () => {}}
+                onClick={adminTab === 'Users' ? openAddUserModal : adminTab === 'Roles' ? () => openCategoryModal('Roles') : adminTab === 'Dept' ? () => openCategoryModal('Dept') : () => {}}
                 className="btn-add-action"
-                  disabled={adminTab === 'Roles' && roleSubmitting}
+                  disabled={(adminTab === 'Roles' || adminTab === 'Dept') && roleSubmitting}
               >
-                {adminTab === 'Roles' && roleSubmitting ? 'Adding...' : `+ Add ${adminTab === 'ISO Module' ? 'Modules' : adminTab === 'Users' ? 'User' : adminTab}`}
+                {(adminTab === 'Roles' || adminTab === 'Dept') && roleSubmitting
+                  ? 'Adding...'
+                  : `+ Add ${adminTab === 'ISO Module' ? 'Modules' : adminTab === 'Users' ? 'User' : adminTab === 'Dept' ? 'Department' : 'Role'}`}
               </button>
             </div>
 
@@ -500,15 +506,37 @@ export default function AdminPanelPage({
                   {adminTab === 'Dept' && (
                     <div className="panel-narrow">
                       <h3 className="glass-card-heading">Manage Departments</h3>
-                      <div className="panel-column">
-                        <label className="small-label">Department Name</label>
-                        <input
-                          type="text"
-                          placeholder="Enter department name"
-                          value={departmentName}
-                          onChange={(e) => setDepartmentName(e.target.value)}
-                          className="form-input-reports"
-                        />
+                      <p className="glass-card-subtext">Use the add button above to create a new department.</p>
+                      <div className="admin-list-panel">
+                        <div className="admin-list-panel-header">
+                          <h4 className="glass-card-subtext">Available Departments</h4>
+                          <span>{availableDepartments.length}</span>
+                        </div>
+                        {departmentsLoading ? (
+                          <p className="glass-card-subtext">Loading departments...</p>
+                        ) : availableDepartments.length === 0 ? (
+                          <p className="glass-card-subtext">No departments found.</p>
+                        ) : (
+                          <div className="admin-list-items">
+                            {availableDepartments.map((department) => {
+                              const isDeleting = deletingDepartmentId === department.id
+
+                              return (
+                                <div className="admin-list-item" key={department.id}>
+                                  <span>{department.department_name}</span>
+                                  <button
+                                    type="button"
+                                    className="btn-delete-user"
+                                    onClick={() => handleDeleteDepartment(department)}
+                                    disabled={isDeleting}
+                                  >
+                                    {isDeleting ? 'Deleting...' : 'Delete'}
+                                  </button>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -516,15 +544,37 @@ export default function AdminPanelPage({
                   {adminTab === 'Roles' && (
                     <div className="panel-narrow">
                       <h3 className="glass-card-heading">Manage Roles</h3>
-                      <div className="panel-column">
-                        <label className="small-label">Role Name</label>
-                        <input
-                          type="text"
-                          placeholder="Enter role name"
-                          value={roleData}
-                          onChange={(e) => setRoleData(e.target.value)}
-                          className="form-input-reports"
-                        />
+                      <p className="glass-card-subtext">Use the add button above to create a new role.</p>
+                      <div className="admin-list-panel">
+                        <div className="admin-list-panel-header">
+                          <h4 className="glass-card-subtext">Available Roles</h4>
+                          <span>{availableRoles.length}</span>
+                        </div>
+                        {rolesLoading ? (
+                          <p className="glass-card-subtext">Loading roles...</p>
+                        ) : availableRoles.length === 0 ? (
+                          <p className="glass-card-subtext">No roles found.</p>
+                        ) : (
+                          <div className="admin-list-items">
+                            {availableRoles.map((role) => {
+                              const isDeleting = deletingRoleId === role.id
+
+                              return (
+                                <div className="admin-list-item" key={role.id}>
+                                  <span>{role.role_name}</span>
+                                  <button
+                                    type="button"
+                                    className="btn-delete-user"
+                                    onClick={() => handleDeleteRole(role)}
+                                    disabled={isDeleting}
+                                  >
+                                    {isDeleting ? 'Deleting...' : 'Delete'}
+                                  </button>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -552,6 +602,24 @@ export default function AdminPanelPage({
             loading={submitting}
             error={formError}
             message={formMessage}
+          />
+
+          <AddCategoryModal
+            isOpen={isCategoryModalOpen}
+            onClose={closeCategoryModal}
+            onSubmit={handleSubmitCategory}
+            title={categoryModalType === 'Dept' ? 'Create New Department' : 'Create New Role'}
+            label={categoryModalType === 'Dept' ? 'Department Name' : 'Role Name'}
+            value={categoryInput}
+            onChange={(event) => setCategoryInput(event.target.value)}
+            placeholder={categoryModalType === 'Dept' ? 'Enter department name' : 'Enter role name'}
+            loading={roleSubmitting}
+            error={formError}
+            message={formMessage}
+            submitLabel={categoryModalType === 'Dept' ? 'Create Department' : 'Create Role'}
+            helperText={categoryModalType === 'Dept'
+              ? 'Create a department entry that will be available in the user modal.'
+              : 'Create a role entry that will be available in the user modal.'}
           />
         </main>
       ) : (
