@@ -23,6 +23,8 @@ function SettingsNavbar({ userRole, activePage, onNavigate }) {
     <div className="settings-top-nav">
       {navItem('User Information', 'Profile', User)}
       {navItem('Settings', 'Settings', Settings)}
+      
+      {/* 🔒 Top-level Protection Lock */}
       {userRole === 'admin' && navItem('Admin Panel', 'Admin Panel', ShieldCheck)}
     </div>
   )
