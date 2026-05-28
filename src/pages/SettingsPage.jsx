@@ -167,17 +167,17 @@ export default function SettingsPage({
         setProfileTargetTab={setProfileTargetTab}
       />
       
-      {/* Centered sizing layout shell matching standard view scopes */}
+      {/* 📐 STANDARD UNIFORM SYSTEM CONTAINER */}
       <main className="page-container" style={{ width: '95%', maxWidth: '1050px', margin: '40px auto', padding: '0 16px', boxSizing: 'border-box' }}>
-        <h1 className="page-heading">Settings</h1>
+        <h1 className="page-heading" style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: '600', color: '#ffffff' }}>Settings</h1>
 
         <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
 
         {error && <div className="user-info-error">{error}</div>}
         {success && <div className="success-message">{success}</div>}
 
-        {/* 📐 THE UNIFORM FIX: Enforcing strict dimensions across all dynamic tabs */}
-        <div className="settings-container" style={{ display: 'flex', gap: '32px', width: '100%', minHeight: '560px', boxSizing: 'border-box' }}>
+        {/* 🔮 UNIFORM METRIC CANVAS CARD GLASS DESIGN */}
+        <div className="settings-container" style={{ display: 'flex', gap: '32px', width: '100%', minHeight: '560px', background: 'rgba(13, 26, 45, 0.45)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', padding: '32px', boxSizing: 'border-box', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)', backdropFilter: 'blur(10px)' }}>
           
           {/* Sidebar Navigation */}
           <div className="settings-sidebar" style={{ width: '200px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -210,7 +210,7 @@ export default function SettingsPage({
             {/* Profile & Account Section */}
             {activeSection === 'Profile & Account' && (
               <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-                <h2>Edit Profile</h2>
+                <h2 style={{ margin: '0 0 24px 0', fontSize: '20px', fontWeight: '600', color: '#ffffff' }}>Edit Profile</h2>
                 
                 <div className="mb-24">
                   <div className="form-row-3">
@@ -287,7 +287,7 @@ export default function SettingsPage({
                 </div>
 
                 <div className="password-section">
-                  <h3>Change Password</h3>
+                  <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#ffffff' }}>Change Password</h3>
                   
                   <div className="form-row-2">
                     <div className="form-group">
@@ -338,7 +338,7 @@ export default function SettingsPage({
             {/* Reporting Defaults Section */}
             {activeSection === 'Reporting Defaults' && (
               <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-                <h2>Reporting Defaults</h2>
+                <h2 style={{ margin: '0 0 24px 0', fontSize: '20px', fontWeight: '600', color: '#ffffff' }}>Reporting Defaults</h2>
                 <div className="placeholder-box" style={{ flex: 1, minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '8px', background: 'rgba(15,23,42,0.15)' }}>
                   <p style={{ color: '#64748b', margin: 0 }}>Reporting preferences will be configured here.</p>
                 </div>
@@ -348,7 +348,7 @@ export default function SettingsPage({
             {/* Audit Tools Section */}
             {activeSection === 'Audit Tools' && userRole === 'admin' && (
               <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-                <h2>Audit Tools</h2>
+                <h2 style={{ margin: '0 0 24px 0', fontSize: '20px', fontWeight: '600', color: '#ffffff' }}>Audit Tools</h2>
                 <div className="placeholder-box" style={{ flex: 1, minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '8px', background: 'rgba(15,23,42,0.15)' }}>
                   <p style={{ color: '#64748b', margin: 0 }}>Audit tools and utilities will be available here.</p>
                 </div>

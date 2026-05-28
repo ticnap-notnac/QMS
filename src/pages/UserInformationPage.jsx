@@ -102,50 +102,65 @@ export default function UserInformationPage({
         setProfileTargetTab={setProfileTargetTab}
       />
 
-      {/* --- UNIFIED SYMMETRICAL BOUNDING BOX CANVAS --- */}
-      <main className="page-main-wide">
-        <h1 className="page-title">User Information</h1>
-
-        {error && <div className="user-info-error">{error}</div>}
+      {/* 📐 STANDARD UNIFORM SYSTEM CONTAINER */}
+      <main className="page-container" style={{ width: '95%', maxWidth: '1050px', margin: '40px auto', padding: '0 16px', boxSizing: 'border-box' }}>
+        <h1 className="page-heading" style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: '600', color: '#ffffff' }}>User Information</h1>
 
         <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
 
-        {/* --- UNIFIED SIZE GLASSMORPHIC FRAME CONTAINER --- */}
-        <div className="glass-card-rounded-bottom">
+        {error && <div className="user-info-error">{error}</div>}
+
+        {/* 🔮 UNIFORM METRIC CANVAS CARD GLASS DESIGN */}
+        <div className="settings-container" style={{ display: 'flex', gap: '32px', width: '100%', minHeight: '560px', background: 'rgba(13, 26, 45, 0.45)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px', padding: '32px', boxSizing: 'border-box', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)', backdropFilter: 'blur(10px)' }}>
           
-          {/* TAB 1: USER INFORMATION */}
-          {(activeTab === 'User Information' || activePage === 'Profile' || activePage === 'User Information') && (
-            <div className="two-column-row">
-              <div className="settings-sidebar">
-                <button className="sidebar-button active">Overview Summary</button>
-              </div>
+          {/* Sidebar Navigation */}
+          <div className="settings-sidebar" style={{ width: '200px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button className="sidebar-button active">Overview Summary</button>
+          </div>
 
-              <div className="main-info-panel">
-                <div className="profile-header profile-header-strong">
-                  <div className="profile-avatar-large">{userProfile.first_name?.charAt(0) || 'U'}</div>
-                  <div className="profile-user-meta-stack">
-                    <h3 className="user-info-name">{userProfile.first_name} {userProfile.last_name}</h3>
-                    <p className="glass-card-subtext">{userProfile.user_name || 'employee'}</p>
-                  </div>
+          {/* Main Content Pane Area Canvas */}
+          <div className="settings-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%', boxSizing: 'border-box' }}>
+            
+            {/* User Details Section */}
+            <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+              
+              <div className="profile-header profile-header-strong" style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '24px' }}>
+                <div className="profile-avatar-large" style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#22d3ee', color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: '700' }}>
+                  {userProfile.first_name?.charAt(0) || 'U'}
                 </div>
-
-                <div className="profile-fields">
-                  <div className="profile-field"><span className="profile-field-label">Username</span><span className="profile-field-value">{userProfile.user_name || '-'}</span></div>
-                  <div className="profile-field"><span className="profile-field-label">Employee Department</span><span className="profile-field-value">IT Department</span></div>
-                  <div className="profile-field"><span className="profile-field-label">Position</span><span className="profile-field-value">{userPosition || '-'}</span></div>
-                  <div className="profile-field"><span className="profile-field-label">Email Address</span><span className="profile-field-value">{userProfile.email || '-'}</span></div>
-                  <div className="profile-field"><span className="profile-field-label">Contact No.</span><span className="profile-field-value">{userProfile.contact_number || '-'}</span></div>
+                <div className="profile-user-meta-stack">
+                  <h3 className="user-info-name" style={{ margin: '0 0 4px 0', fontSize: '20px', fontWeight: '600', color: '#ffffff' }}>{userProfile.first_name} {userProfile.last_name}</h3>
+                  <p className="glass-card-subtext" style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>{userRole || 'employee'}</p>
                 </div>
               </div>
+
+              <div className="profile-fields" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="profile-field" style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '12px' }}>
+                  <span className="profile-field-label" style={{ width: '200px', color: '#64748b', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Username</span>
+                  <span className="profile-field-value" style={{ color: '#e2e8f0', fontSize: '14px' }}>{userProfile.user_name || '-'}</span>
+                </div>
+                <div className="profile-field" style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '12px' }}>
+                  <span className="profile-field-label" style={{ width: '200px', color: '#64748b', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Employee Department</span>
+                  <span className="profile-field-value" style={{ color: '#e2e8f0', fontSize: '14px' }}>IT Department</span>
+                </div>
+                <div className="profile-field" style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '12px' }}>
+                  <span className="profile-field-label" style={{ width: '200px', color: '#64748b', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Position</span>
+                  <span className="profile-field-value" style={{ color: '#e2e8f0', fontSize: '14px' }}>{userPosition || '-'}</span>
+                </div>
+                <div className="profile-field" style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '12px' }}>
+                  <span className="profile-field-label" style={{ width: '200px', color: '#64748b', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email Address</span>
+                  <span className="profile-field-value" style={{ color: '#e2e8f0', fontSize: '14px' }}>{userProfile.email || '-'}</span>
+                </div>
+                <div className="profile-field" style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '12px' }}>
+                  <span className="profile-field-label" style={{ width: '200px', color: '#64748b', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Contact No.</span>
+                  <span className="profile-field-value" style={{ color: '#e2e8f0', fontSize: '14px' }}>{userProfile.contact_number || '-'}</span>
+                </div>
+              </div>
+
             </div>
-          )}
-
-        {/* Settings tab removed - Settings handled in separate SettingsPage component */}
-
+          </div>
         </div>
       </main>
     </div>
   )
 }
-
-// Inline style constants migrated to CSS (removed)
