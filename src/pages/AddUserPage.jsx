@@ -1,17 +1,11 @@
 import { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import AddUserModal from '@/components/AddUserModal'
-import { supabase } from '@/utils/supabase'
-import { createAdminUser } from '@/controllers/userController'
-import {
-  loadRoles as loadRolesController,
-  loadDepartments as loadDepartmentsController,
-} from '@/controllers/roleController'
+import { createUser } from '@/controllers/userController'
+import { useLookup } from '@/context/LookupContext'
 import './PagesStyles.css'
-
-// Note: roleController exports loadRoles; department controller exports loadDepartments.
-// We use the role controller import above for loadRoles and the departments loader below.
-import { loadDepartments } from '@/controllers/departmentController'
+import SearchForm from '@/components/SearchForm'
+import useUserManager from '@/hooks/useUserManager'
 
 export default function AddUserPage({
   activePage,
@@ -27,18 +21,13 @@ export default function AddUserPage({
   setProfileTargetTab,
 }) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [adminUsers, setAdminUsers] = useState([])
-  const [usersLoading, setUsersLoading] = useState(false)
-  const [usersError, setUsersError] = useState('')
-  const [availableRoles, setAvailableRoles] = useState([])
-  const [rolesLoading, setRolesLoading] = useState(false)
-  const [availableDepartments, setAvailableDepartments] = useState([])
-  const [departmentsLoading, setDepartmentsLoading] = useState(false)
+  
+  const { roles, departments, loading: lookupsLoading, reloadLookups } = useLookup()
   const [formMessage, setFormMessage] = useState('')
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
-  const [deletingUserId, setDeletingUserId] = useState(null)
+  
   const [newUser, setNewUser] = useState({
     firstName: '',
     lastName: '',
@@ -50,66 +39,13 @@ export default function AddUserPage({
     departmentId: '',
   })
 
-  const loadRoleAndDepartmentOptions = async () => {
-    setRolesLoading(true)
-    setDepartmentsLoading(true)
-
-    try {
-      const [roles, departments] = await Promise.all([
-        loadRolesController(),
-        loadDepartments(),
-      ])
-
-      setAvailableRoles(roles)
-      setAvailableDepartments(departments)
-      setNewUser((current) => ({
-        ...current,
-        roleId: current.roleId || roles[0]?.id?.toString() || '',
-        departmentId: current.departmentId || departments[0]?.id?.toString() || '',
-      }))
-
-      return { roles, departments }
-    } catch (error) {
-      console.error('Error loading roles and departments:', error)
-      setAvailableRoles([])
-      setAvailableDepartments([])
-      setFormError(error.message)
-      return { roles: [], departments: [] }
-    } finally {
-      setRolesLoading(false)
-      setDepartmentsLoading(false)
-    }
-  }
+  // roles/departments are supplied by LookupContext
+  const { items: adminUsers, loading: usersLoading, error: usersError, deletingId: deletingUserId, reload: reloadUsers, createItem: createUserItem, deleteItem } = useUserManager({ createFn: createUser })
 
   useEffect(() => {
-    loadRoleAndDepartmentOptions()
-  }, [])
-
-  const loadUsers = async () => {
-    setUsersLoading(true)
-
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, created_at')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-
-      setAdminUsers(data || [])
-      setUsersError('')
-    } catch (error) {
-      console.error('Error loading users:', error)
-      setAdminUsers([])
-      setUsersError(error.message)
-    } finally {
-      setUsersLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadUsers()
-  }, [])
+    // initial load of users after roles/departments
+    reloadUsers()
+  }, [reloadUsers])
 
   const handleUserFieldChange = (event) => {
     const { name, value } = event.target
@@ -119,6 +55,12 @@ export default function AddUserPage({
   const openAddUserModal = () => {
     setFormError('')
     setFormMessage('')
+    // ensure default selections come from lookups
+    setNewUser((current) => ({
+      ...current,
+      roleId: current.roleId || roles[0]?.id?.toString() || '',
+      departmentId: current.departmentId || departments[0]?.id?.toString() || '',
+    }))
     setIsAddUserModalOpen(true)
   }
 
@@ -133,8 +75,13 @@ export default function AddUserPage({
       setFormError('')
       setFormMessage('')
 
-      const result = await createAdminUser({
-        ...newUser,
+      const result = await createUserItem({
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        password: newUser.password,
+        userName: newUser.userName,
+        contactNumber: newUser.contactNumber,
         roleId: newUser.roleId || null,
         departmentId: newUser.departmentId || null,
       })
@@ -147,10 +94,10 @@ export default function AddUserPage({
         password: '',
         userName: '',
         contactNumber: '',
-        roleId: availableRoles[0]?.id?.toString() || '',
-        departmentId: availableDepartments[0]?.id?.toString() || '',
+        roleId: roles[0]?.id?.toString() || '',
+        departmentId: departments[0]?.id?.toString() || '',
       })
-      await loadUsers()
+      await reloadUsers()
       setIsAddUserModalOpen(false)
     } catch (err) {
       setFormError(err.message)
@@ -168,24 +115,15 @@ export default function AddUserPage({
     if (!confirmed) return
 
     try {
-      setDeletingUserId(user.id)
-      setUsersError('')
-
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', user.id)
-
-      if (error) throw error
-
-      await loadUsers()
+      setFormError('')
+      await deleteItem(user.id)
       setFormMessage(`Deleted ${displayName} successfully.`)
     } catch (err) {
       console.error('Delete user error:', err)
-      setUsersError(err.message)
+      setFormError(err.message)
       setFormError(`Failed to delete user: ${err.message}`)
     } finally {
-      setDeletingUserId(null)
+      // deletingId is tracked by hook
     }
   }
 
@@ -233,10 +171,7 @@ export default function AddUserPage({
           <div className="glass-card-rounded-bottom">
             <div className="admin-inner-panel">
               <div className="search-row">
-                <form className="search-container" onSubmit={(e) => { e.preventDefault(); loadUsers() }}>
-                  <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="search-input-light" />
-                  <button type="submit" className="search-icon">🔍</button>
-                </form>
+                <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reloadUsers} placeholder="Search..." />
                 <button onClick={openAddUserModal} className="btn-add-action">+ Add User</button>
               </div>
 

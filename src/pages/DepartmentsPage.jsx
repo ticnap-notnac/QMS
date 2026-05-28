@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Navbar from '@/components/Navbar'
 import AddCategoryModal from '@/components/AddCategoryModal'
+import AdminListPanel from '@/components/AdminListPanel'
+import SearchForm from '@/components/SearchForm'
 import './PagesStyles.css'
+import useCategoryManager from '@/hooks/useCategoryManager'
+import { useLookup } from '@/context/LookupContext'
 import {
   loadDepartments as loadDepartmentsController,
   createDepartment as createDepartmentController,
@@ -22,40 +26,20 @@ export default function DepartmentsPage({
   setProfileTargetTab,
 }) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [availableDepartments, setAvailableDepartments] = useState([])
-  const [departmentsLoading, setDepartmentsLoading] = useState(false)
-  const [roleSubmitting, setRoleSubmitting] = useState(false)
-  const [categoryInput, setCategoryInput] = useState('')
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
-  const [deletingDepartmentId, setDeletingDepartmentId] = useState(null)
+  const [categoryInput, setCategoryInput] = useState('')
   const [formError, setFormError] = useState('')
   const [formMessage, setFormMessage] = useState('')
 
-  const loadDepartments = async () => {
-    setDepartmentsLoading(true)
-    try {
-      const departments = await loadDepartmentsController()
-      setAvailableDepartments(departments)
-      setFormError('')
-    } catch (err) {
-      console.error('Error loading departments:', err)
-      setAvailableDepartments([])
-      setFormError(err.message)
-    } finally {
-      setDepartmentsLoading(false)
-    }
-  }
+  const { items, loading, deletingId, reload, createItem, deleteItem, error } = useCategoryManager({
+    loadFn: loadDepartmentsController,
+    createFn: createDepartmentController,
+    deleteFn: deleteDepartmentController,
+  })
 
-  useEffect(() => {
-    loadDepartments()
-  }, [])
+  const { reloadLookups } = useLookup()
 
-  const handleSearchSubmit = async (e) => {
-    if (e && e.preventDefault) e.preventDefault()
-    await loadDepartments()
-  }
-
-  const filteredDepartments = availableDepartments.filter((d) => (d.department_name || '').toLowerCase().includes(searchQuery.trim().toLowerCase()))
+  const filtered = items.filter((d) => (d.department_name || '').toLowerCase().includes(searchQuery.trim().toLowerCase()))
 
   const openCategoryModal = () => {
     setFormError('')
@@ -65,10 +49,8 @@ export default function DepartmentsPage({
   }
 
   const closeCategoryModal = () => {
-    if (!roleSubmitting) {
-      setIsCategoryModalOpen(false)
-      setCategoryInput('')
-    }
+    setIsCategoryModalOpen(false)
+    setCategoryInput('')
   }
 
   const handleSubmitCategory = async (event) => {
@@ -79,16 +61,13 @@ export default function DepartmentsPage({
       return
     }
     try {
-      setRoleSubmitting(true)
       setFormError('')
-      await createDepartmentController(nextValue)
+      await createItem(nextValue)
+      await reloadLookups()
       setFormMessage(`Added department ${nextValue} successfully.`)
-      await loadDepartments()
       closeCategoryModal()
     } catch (err) {
       setFormError(err.message)
-    } finally {
-      setRoleSubmitting(false)
     }
   }
 
@@ -96,15 +75,12 @@ export default function DepartmentsPage({
     const confirmed = window.confirm(`Delete department "${department.department_name}"?`)
     if (!confirmed) return
     try {
-      setDeletingDepartmentId(department.id)
       setFormError('')
-      await deleteDepartmentController(department.id)
+      await deleteItem(department.id)
+      await reloadLookups()
       setFormMessage(`Deleted department ${department.department_name} successfully.`)
-      await loadDepartments()
     } catch (err) {
       setFormError(err.message)
-    } finally {
-      setDeletingDepartmentId(null)
     }
   }
 
@@ -130,42 +106,23 @@ export default function DepartmentsPage({
           <div className="glass-card-rounded-bottom">
             <div className="admin-inner-panel">
               <div className="search-row">
-                <form className="search-container" onSubmit={handleSearchSubmit}>
-                  <input
-                    type="text"
-                    placeholder="Search departments..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="search-input-light"
-                  />
-                  <button type="submit" className="search-icon">🔍</button>
-                </form>
-                <button onClick={openCategoryModal} className="btn-add-action" disabled={roleSubmitting}>{roleSubmitting ? 'Adding...' : '+ Add Department'}</button>
+                <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reload} placeholder="Search departments..." />
+                <button onClick={openCategoryModal} className="btn-add-action">+ Add Department</button>
               </div>
 
               <div className="glass-card-content">
                 <div className="panel-narrow">
                   <p className="glass-card-subtext">Use the add button above to create a new department.</p>
-                  <div className="admin-list-panel">
-                    <div className="admin-list-panel-header">
-                      <h4 className="glass-card-subtext">Available Departments</h4>
-                      <span>{filteredDepartments.length}</span>
-                    </div>
-                    {departmentsLoading ? (
-                      <p className="glass-card-subtext">Loading departments...</p>
-                    ) : filteredDepartments.length === 0 ? (
-                      <p className="glass-card-subtext">No matches found.</p>
-                    ) : (
-                      <div className="admin-list-items">
-                        {filteredDepartments.map((department) => (
-                          <div className="admin-list-item" key={department.id}>
-                            <span>{department.department_name}</span>
-                            <button type="button" className="btn-delete-user" onClick={() => handleDeleteDepartment(department)} disabled={deletingDepartmentId === department.id}>{deletingDepartmentId === department.id ? 'Deleting...' : 'Delete'}</button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <AdminListPanel
+                    title="Available Departments"
+                    items={filtered}
+                    loading={loading}
+                    labelKey="department_name"
+                    onDelete={handleDeleteDepartment}
+                    deletingId={deletingId}
+                    noMatchesText="No matches found."
+                  />
+                  {error ? <p className="glass-card-subtext">{error}</p> : null}
                 </div>
               </div>
             </div>
@@ -180,7 +137,7 @@ export default function DepartmentsPage({
             value={categoryInput}
             onChange={(event) => setCategoryInput(event.target.value)}
             placeholder={'Enter department name'}
-            loading={roleSubmitting}
+            loading={false}
             error={formError}
             message={formMessage}
             submitLabel={'Create Department'}

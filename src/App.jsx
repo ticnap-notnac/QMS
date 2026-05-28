@@ -14,6 +14,7 @@ import RolesPage from './pages/RolesPage.jsx'
 import DepartmentsPage from './pages/DepartmentsPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AuditToolsPage from './pages/AuditToolsPage.jsx'
+import { LookupProvider } from './context/LookupContext'
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(false)
@@ -226,7 +227,8 @@ export default function App() {
   }
 
   return (
-    <div className="page">
+    <LookupProvider>
+      <div className="page">
       <div className="bg-orb bg-orb--one" aria-hidden="true"></div>
       <div className="bg-orb bg-orb--two" aria-hidden="true"></div>
 
@@ -247,8 +249,9 @@ export default function App() {
         />
       )}
 
-      <IntroModal isOpen={showIntro} onClose={() => setShowIntro(false)} />
-      <NotificationsModal isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
-    </div>
+        <IntroModal isOpen={showIntro} onClose={() => setShowIntro(false)} />
+        <NotificationsModal isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
+      </div>
+    </LookupProvider>
   )
 }

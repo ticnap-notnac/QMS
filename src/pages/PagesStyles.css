@@ -44,6 +44,7 @@
   box-shadow: 0 10px 30px rgba(3,10,25,0.5);
 }
 
+
 .app-navbar-brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
 
 /* center nav positioned in the middle of the navbar */
@@ -384,20 +385,9 @@
   color: #c084fc;
 }
 
+
 .user-info-tab-button.admin.active:hover {
   background: rgba(192, 132, 252, 0.1);
-}
-
-/* Top settings navbar used across profile/settings/admin pages */
-.settings-top-nav {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-  align-items: center;
-}
-
-.settings-top-nav .user-info-tab-button {
-  padding: 8px 14px;
 }
 
 .two-column-row {

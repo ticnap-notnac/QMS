@@ -15,7 +15,7 @@ function SettingsNavbar({ userRole, activePage, onNavigate }) {
       onClick={() => onNavigate?.(page)}
     >
       <Icon size={16} />
-      <span style={{ marginLeft: 8 }}>{label}</span>
+      <span className="settings-nav-label">{label}</span>
     </button>
   )
 

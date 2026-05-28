@@ -1,6 +1,6 @@
 import { supabase } from '@/utils/supabase'
 
-export async function createAdminUser({
+export async function createUser({
   firstName,
   lastName,
   email,
@@ -97,3 +97,6 @@ export async function createAdminUser({
     profile,
   }
 }
+
+// backwards-compatible alias
+export { createUser as createAdminUser }

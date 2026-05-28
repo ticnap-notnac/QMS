@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Navbar from '@/components/Navbar'
 import AddCategoryModal from '@/components/AddCategoryModal'
+import AdminListPanel from '@/components/AdminListPanel'
+import SearchForm from '@/components/SearchForm'
 import './PagesStyles.css'
+import useCategoryManager from '@/hooks/useCategoryManager'
+import { useLookup } from '@/context/LookupContext'
 import {
   loadRoles as loadRolesController,
   createRole as createRoleController,
@@ -22,40 +26,20 @@ export default function RolesPage({
   setProfileTargetTab,
 }) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [availableRoles, setAvailableRoles] = useState([])
-  const [rolesLoading, setRolesLoading] = useState(false)
-  const [roleSubmitting, setRoleSubmitting] = useState(false)
-  const [categoryInput, setCategoryInput] = useState('')
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
-  const [deletingRoleId, setDeletingRoleId] = useState(null)
+  const [categoryInput, setCategoryInput] = useState('')
   const [formError, setFormError] = useState('')
   const [formMessage, setFormMessage] = useState('')
 
-  const loadRoles = async () => {
-    setRolesLoading(true)
-    try {
-      const roles = await loadRolesController()
-      setAvailableRoles(roles)
-      setFormError('')
-    } catch (err) {
-      console.error('Error loading roles:', err)
-      setAvailableRoles([])
-      setFormError(err.message)
-    } finally {
-      setRolesLoading(false)
-    }
-  }
+  const { items, loading, deletingId, reload, createItem, deleteItem, error } = useCategoryManager({
+    loadFn: loadRolesController,
+    createFn: createRoleController,
+    deleteFn: deleteRoleController,
+  })
 
-  useEffect(() => {
-    loadRoles()
-  }, [])
+  const { reloadLookups } = useLookup()
 
-  const handleSearchSubmit = async (e) => {
-    if (e && e.preventDefault) e.preventDefault()
-    await loadRoles()
-  }
-
-  const filteredRoles = availableRoles.filter((r) => (r.role_name || '').toLowerCase().includes(searchQuery.trim().toLowerCase()))
+  const filtered = items.filter((r) => (r.role_name || '').toLowerCase().includes(searchQuery.trim().toLowerCase()))
 
   const openCategoryModal = () => {
     setFormError('')
@@ -65,10 +49,8 @@ export default function RolesPage({
   }
 
   const closeCategoryModal = () => {
-    if (!roleSubmitting) {
-      setIsCategoryModalOpen(false)
-      setCategoryInput('')
-    }
+    setIsCategoryModalOpen(false)
+    setCategoryInput('')
   }
 
   const handleSubmitCategory = async (event) => {
@@ -79,16 +61,13 @@ export default function RolesPage({
       return
     }
     try {
-      setRoleSubmitting(true)
       setFormError('')
-      await createRoleController(nextValue)
+      await createItem(nextValue)
+      await reloadLookups()
       setFormMessage(`Added role ${nextValue} successfully.`)
-      await loadRoles()
       closeCategoryModal()
     } catch (err) {
       setFormError(err.message)
-    } finally {
-      setRoleSubmitting(false)
     }
   }
 
@@ -96,15 +75,12 @@ export default function RolesPage({
     const confirmed = window.confirm(`Delete role "${role.role_name}"?`)
     if (!confirmed) return
     try {
-      setDeletingRoleId(role.id)
       setFormError('')
-      await deleteRoleController(role.id)
+      await deleteItem(role.id)
+      await reloadLookups()
       setFormMessage(`Deleted role ${role.role_name} successfully.`)
-      await loadRoles()
     } catch (err) {
       setFormError(err.message)
-    } finally {
-      setDeletingRoleId(null)
     }
   }
 
@@ -130,42 +106,23 @@ export default function RolesPage({
           <div className="glass-card-rounded-bottom">
             <div className="admin-inner-panel">
               <div className="search-row">
-                <form className="search-container" onSubmit={handleSearchSubmit}>
-                  <input
-                    type="text"
-                    placeholder="Search roles..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="search-input-light"
-                  />
-                  <button type="submit" className="search-icon">🔍</button>
-                </form>
-                <button onClick={openCategoryModal} className="btn-add-action" disabled={roleSubmitting}>{roleSubmitting ? 'Adding...' : '+ Add Role'}</button>
+                <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reload} placeholder="Search roles..." />
+                <button onClick={openCategoryModal} className="btn-add-action">+ Add Role</button>
               </div>
 
               <div className="glass-card-content">
                 <div className="panel-narrow">
                   <p className="glass-card-subtext">Use the add button above to create a new role.</p>
-                  <div className="admin-list-panel">
-                    <div className="admin-list-panel-header">
-                      <h4 className="glass-card-subtext">Available Roles</h4>
-                      <span>{filteredRoles.length}</span>
-                    </div>
-                    {rolesLoading ? (
-                      <p className="glass-card-subtext">Loading roles...</p>
-                    ) : filteredRoles.length === 0 ? (
-                      <p className="glass-card-subtext">No matches found.</p>
-                    ) : (
-                      <div className="admin-list-items">
-                        {filteredRoles.map((role) => (
-                          <div className="admin-list-item" key={role.id}>
-                            <span>{role.role_name}</span>
-                            <button type="button" className="btn-delete-user" onClick={() => handleDeleteRole(role)} disabled={deletingRoleId === role.id}>{deletingRoleId === role.id ? 'Deleting...' : 'Delete'}</button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <AdminListPanel
+                    title="Available Roles"
+                    items={filtered}
+                    loading={loading}
+                    labelKey="role_name"
+                    onDelete={handleDeleteRole}
+                    deletingId={deletingId}
+                    noMatchesText="No matches found."
+                  />
+                  {error ? <p className="glass-card-subtext">{error}</p> : null}
                 </div>
               </div>
             </div>
@@ -180,7 +137,7 @@ export default function RolesPage({
             value={categoryInput}
             onChange={(event) => setCategoryInput(event.target.value)}
             placeholder={'Enter role name'}
-            loading={roleSubmitting}
+            loading={false}
             error={formError}
             message={formMessage}
             submitLabel={'Create Role'}

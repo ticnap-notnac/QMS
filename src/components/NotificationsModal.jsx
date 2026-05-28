@@ -58,11 +58,11 @@ function NotificationsModal({ isOpen, onClose }) {
         </div>
         
         <div className="notifications-list">
-          {loading && <p style={{ padding: '16px', textAlign: 'center' }}>Loading notifications...</p>}
-          {error && <p style={{ padding: '16px', textAlign: 'center', color: '#ef4444' }}>Error: {error}</p>}
+          {loading && <p className="modal-message loading">Loading notifications...</p>}
+          {error && <p className="modal-message error">Error: {error}</p>}
           
           {notifications.length === 0 && !loading ? (
-            <p style={{ padding: '16px', textAlign: 'center', color: '#94a3b8' }}>No notifications</p>
+            <p className="modal-message">No notifications</p>
           ) : (
             notifications.map((notification) => (
               <div key={notification.id} className="notification-item">

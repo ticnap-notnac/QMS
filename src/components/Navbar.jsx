@@ -1,4 +1,5 @@
 import { Bell } from 'lucide-react'
+import './components.css'
 
 export default function Navbar({
   activePage,
@@ -19,87 +20,45 @@ export default function Navbar({
       <div className="app-navbar-inner">
       {/* Brand Logo Identity Section */}
       <div onClick={() => onPageChange('Dashboard')} className="app-navbar-brand">
-        <div style={{ display: 'flex', height: '32px', width: '32px', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', background: 'linear-gradient(135deg, #22d3ee, #3b82f6)', fontWeight: 'bold', color: 'white' }}>
-          <span>Q</span>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-          <span style={{ fontSize: '16px', fontWeight: '600', color: '#22d3ee', lineHeight: '1.2' }}>QFlow</span>
-          <span style={{ fontSize: '8px', textTransform: 'uppercase', color: '#94a3b8', lineHeight: '1' }}>Quality Management System</span>
+        <div className="brand-logo-box"><span>Q</span></div>
+        <div className="brand-text-stack">
+          <span className="brand-text">QFlow</span>
+          <span className="brand-sub">Quality Management System</span>
         </div>
       </div>
 
       {/* Main Center Navigation Tabs — Kept perfectly clean and unified */}
       <nav className="app-nav-center">
-        <button onClick={() => onPageChange('Dashboard')} style={{ background: 'none', border: 'none', color: activePage === 'Dashboard' ? '#22d3ee' : '#94a3b8', padding: '6px 12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>Dashboard</button>
-        <button onClick={() => onPageChange('Reports')} style={{ background: 'none', border: 'none', color: activePage === 'Reports' ? '#22d3ee' : '#94a3b8', padding: '6px 12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>Reports</button>
-        <button onClick={() => onPageChange('ISO')} style={{ background: 'none', border: 'none', color: activePage === 'ISO' ? '#22d3ee' : '#94a3b8', padding: '6px 12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>ISO</button>
-        <button onClick={() => onPageChange('DCC')} style={{ background: 'none', border: 'none', color: activePage === 'DCC' ? '#22d3ee' : '#94a3b8', padding: '6px 12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>DCC</button>
+        <button onClick={() => onPageChange('Dashboard')} className={`nav-tab-button ${activePage === 'Dashboard' ? 'active' : ''}`}>Dashboard</button>
+        <button onClick={() => onPageChange('Reports')} className={`nav-tab-button ${activePage === 'Reports' ? 'active' : ''}`}>Reports</button>
+        <button onClick={() => onPageChange('ISO')} className={`nav-tab-button ${activePage === 'ISO' ? 'active' : ''}`}>ISO</button>
+        <button onClick={() => onPageChange('DCC')} className={`nav-tab-button ${activePage === 'DCC' ? 'active' : ''}`}>DCC</button>
       </nav>
 
       {/* Per-page settings tabs are managed by page-specific components (SettingsNavbar) */}
 
       {/* Right Side Control Utility Items */}
       <div className="app-nav-right">
-        <button onClick={onToggleNotifications} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+        <button onClick={onToggleNotifications} className="nav-icon-button">
           <Bell size={18} />
         </button>
         
         <div onClick={onToggleMenu} className="app-user-trigger">
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-            <span style={{ fontSize: '12px', fontWeight: '500', color: '#e2e8f0' }}>
-              {userName || 'Name of the User'}
-            </span>
-            <span style={{ fontSize: '10px', color: '#64748b' }}>
-              {userPosition || 'Position'}
-            </span>
+          <div className="nav-user-info">
+            <span className="nav-user-name">{userName || 'Name of the User'}</span>
+            <span className="nav-user-position">{userPosition || 'Position'}</span>
           </div>
-          <div style={{ height: '32px', width: '32px', borderRadius: '50%', background: userRole === 'admin' ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.2)', border: userRole === 'admin' ? '1px solid #a78bfa' : '1px solid rgba(255,255,255,0.1)' }}></div>
+          <div className={`user-avatar ${userRole === 'admin' ? 'admin' : 'default'}`} />
         </div>
       </div>
 
       {/* --- REPAIRED DROPDOWN INTERACTIVE ROUTING PANEL --- */}
       {isUserMenuOpen && (
-        <div style={{ position: 'absolute', right: '24px', top: '64px', background: 'rgba(13, 27, 49, 0.96)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '6px', minWidth: '170px', display: 'flex', flexDirection: 'column', zIndex: '250', boxShadow: '0 12px 30px rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
-          
-          <button 
-            onClick={() => { onPageChange('Profile'); setProfileTargetTab('User Information'); }} 
-            style={dropdownItemStyle}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-          >
-            User Information
-          </button>
-          
-          <button 
-            onClick={() => { onPageChange('Settings'); setProfileTargetTab('Settings'); }} 
-            style={dropdownItemStyle}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-          >
-            Settings
-          </button>
-
-          {/* Admin panel options are preserved inside the dropdown view context list */}
-          {userRole === 'admin' && (
-            <button 
-              onClick={() => onPageChange('Admin Panel')} 
-              style={{ ...dropdownItemStyle, color: '#c084fc' }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(192,132,252,0.08)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-            >
-              Admin Panel
-            </button>
-          )}
-          
-          <button 
-            onClick={onLogout} 
-            style={{ ...dropdownItemStyle, color: '#ef4444', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '4px', paddingTop: '8px' }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-          >
-            Logout
-          </button>
-          
+        <div className="user-menu-dropdown">
+          <button onClick={() => { onPageChange('Profile'); setProfileTargetTab('User Information'); }} className="user-menu-item">User Information</button>
+          <button onClick={() => { onPageChange('Settings'); setProfileTargetTab('Settings'); }} className="user-menu-item">Settings</button>
+          {userRole === 'admin' && <button onClick={() => onPageChange('Admin Panel')} className="user-menu-item admin">Admin Panel</button>}
+          <button onClick={onLogout} className="user-menu-item logout">Logout</button>
         </div>
       )}
       </div>
