@@ -21,14 +21,27 @@ function UserMenu({
         if (user) {
           const { data, error } = await supabase
             .from('users')
-            .select('first_name, last_name, user_name')
+            .select('first_name, last_name, user_name, role_id')
             .eq('auth_id', user.id)
             .single()
 
           if (error) throw error
           if (data) {
             const fullName = `${data.first_name} ${data.last_name}`.trim()
-            setUserProfile({ name: fullName || user.email, role: data.user_name || 'User' })
+            if (data.role_id) {
+              const { data: roleData } = await supabase
+                .from('roles')
+                .select('role_name')
+                .eq('id', data.role_id)
+                .maybeSingle()
+
+              setUserProfile({
+                name: fullName || user.email,
+                role: roleData?.role_name?.toLowerCase() || data.user_name || 'User',
+              })
+            } else {
+              setUserProfile({ name: fullName || user.email, role: data.user_name || 'User' })
+            }
           }
         }
       } catch (err) {

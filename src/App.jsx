@@ -27,6 +27,47 @@ export default function App() {
   const [activePage, setActivePage] = useState('Dashboard')
   const [profileTargetTab, setProfileTargetTab] = useState('User Information')
 
+  const applyUserRoleData = async (profile) => {
+    const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+    // Prefer full name for display (first + last). Fall back to username, then email.
+    const displayName = fullName || profile.user_name || profile.email || 'Name of the User'
+    setUserName(displayName)
+
+    let resolvedRoleName = null
+
+    if (profile.role_id) {
+      try {
+        const { data: roleData, error: roleError } = await supabase
+          .from('roles')
+          .select('role_name')
+          .eq('id', profile.role_id)
+          .maybeSingle()
+
+        if (roleError) {
+          console.error('Role query error:', roleError)
+        } else if (roleData && roleData.role_name) {
+          resolvedRoleName = roleData.role_name
+          // Display the role name as-is (capitalization preserved) for the UI
+          setUserPosition(resolvedRoleName)
+          const normalized = resolvedRoleName.toLowerCase()
+          setUserRole(normalized === 'admin' ? 'admin' : normalized)
+        }
+      } catch (err) {
+        console.error('Role fetch error:', err)
+      }
+    }
+
+    // Fallbacks when role couldn't be resolved from roles table
+    if (!resolvedRoleName) {
+      // use profile.user_name or a generic Position label
+      setUserPosition(profile.user_name || 'Position')
+      // detect admin heuristically from username if needed
+      if (profile.user_name && profile.user_name.toLowerCase().includes('admin')) {
+        setUserRole('admin')
+      }
+    }
+  }
+
   // Debug useEffect to monitor userRole changes
   useEffect(() => {
     console.log('Current userRole:', userRole)
@@ -47,47 +88,7 @@ export default function App() {
             .maybeSingle()
           
           if (data) {
-            const fullName = `${data.first_name || ''} ${data.last_name || ''}`.trim()
-            setUserName(fullName || 'Name of the User')
-            const position = data.user_name || 'Position'
-            setUserPosition(position)
-            
-            if (position && position.toLowerCase().includes('admin')) {
-              console.log('Detected admin in user_name position, setting userRole to admin')
-              setUserRole('admin')
-            }
-            
-            // Fetch role from roles table based on role_id
-            if (data.role_id) {
-              console.log('Fetching role for role_id:', data.role_id, 'Type:', typeof data.role_id)
-              
-              try {
-                const { data: roleData, error: roleError } = await supabase
-                  .from('roles')
-                  .select('role_name')
-                  .eq('id', data.role_id)
-                  .maybeSingle()
-                
-                console.log('Role query - data:', roleData, 'error:', roleError)
-                
-                if (roleError) {
-                  console.error('Role query error:', roleError)
-                } else if (roleData && roleData.role_name) {
-                  const roleName = roleData.role_name.toLowerCase()
-                  console.log('Setting role to:', roleName, 'from:', roleData.role_name)
-                  setUserRole(roleName)
-                } else {
-                  console.log('Role data empty or no role_name:', roleData)
-                  // Try alternative: query all roles to see what's available
-                  const { data: allRoles } = await supabase.from('roles').select('id, role_name')
-                  console.log('Available roles:', allRoles)
-                }
-              } catch (err) {
-                console.error('Role fetch error:', err)
-              }
-            } else {
-              console.log('No role_id for user:', data.email || 'unknown')
-            }
+            await applyUserRoleData(data)
           }
         }
       } catch (err) {
@@ -124,50 +125,7 @@ export default function App() {
         console.log('User fetch result:', { data, error })
         
         if (data) {
-          const fullName = `${data.first_name || ''} ${data.last_name || ''}`.trim()
-          console.log('Setting userName to:', fullName)
-          setUserName(fullName || 'Name of the User')
-          const position = data.user_name || 'Position'
-          console.log('Setting userPosition to:', position)
-          setUserPosition(position)
-          
-          // If position contains 'admin', also set userRole to admin
-          if (position && position.toLowerCase().includes('admin')) {
-            console.log('Detected admin in user_name position, setting userRole to admin')
-            setUserRole('admin')
-          }
-          
-          // Fetch role from roles table based on role_id
-          if (data.role_id) {
-            console.log('Fetching role for role_id:', data.role_id, 'Type:', typeof data.role_id)
-            
-            try {
-              const { data: roleData, error: roleError } = await supabase
-                .from('roles')
-                .select('role_name')
-                .eq('id', data.role_id)
-                .maybeSingle()
-              
-              console.log('Role query - data:', roleData, 'error:', roleError)
-              
-              if (roleError) {
-                console.error('Role query error:', roleError)
-              } else if (roleData && roleData.role_name) {
-                const roleName = roleData.role_name.toLowerCase()
-                console.log('Setting role to:', roleName, 'from:', roleData.role_name)
-                setUserRole(roleName)
-              } else {
-                console.log('Role data empty or no role_name:', roleData)
-                // Try alternative: query all roles to see what's available
-                const { data: allRoles } = await supabase.from('roles').select('id, role_name')
-                console.log('Available roles:', allRoles)
-              }
-            } catch (err) {
-              console.error('Role fetch error:', err)
-            }
-          } else {
-            console.log('No role_id for user:', data.email || 'unknown')
-          }
+          await applyUserRoleData(data)
         }
       }
     } catch (err) {
@@ -186,9 +144,7 @@ export default function App() {
       .maybeSingle()
 
     if (data) {
-      const fullName = `${data.first_name || ''} ${data.last_name || ''}`.trim()
-      setUserName(fullName || 'Name of the User')
-      setUserPosition(data.user_name || 'Position')
+      await applyUserRoleData(data)
     }
   }
 }

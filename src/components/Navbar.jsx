@@ -15,7 +15,7 @@ export default function Navbar({
   setProfileTargetTab 
 }) {
   return (
-    <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '64px', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '0 24px', background: 'rgba(10, 20, 36, 0.8)', backdropFilter: 'blur(12px)', position: 'relative', zIndex: '150' }}>
+    <header className="app-navbar">
       
       {/* Brand Logo Identity Section */}
       <div onClick={() => onPageChange('Dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
@@ -35,6 +35,31 @@ export default function Navbar({
         <button onClick={() => onPageChange('ISO')} style={{ background: 'none', border: 'none', color: activePage === 'ISO' ? '#22d3ee' : '#94a3b8', padding: '6px 12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>ISO</button>
         <button onClick={() => onPageChange('DCC')} style={{ background: 'none', border: 'none', color: activePage === 'DCC' ? '#22d3ee' : '#94a3b8', padding: '6px 12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>DCC</button>
       </nav>
+
+      {/* Profile/Settings/Admin Navigation Tabs — Only show on Profile, Settings, and Admin pages */}
+      {(activePage === 'Profile' || activePage === 'Settings' || activePage === 'AdminPanel') && (
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '-8px' }}>
+          <button
+            onClick={() => onPageChange('Profile')}
+            className="user-info-tab-button"
+            style={{ background: 'none', border: 'none', color: activePage === 'Profile' ? '#22d3ee' : '#94a3b8', padding: '10px 16px', fontSize: '13px', fontWeight: '500', cursor: 'pointer', borderRadius: '6px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            User Information
+          </button>
+          <button
+            onClick={() => onPageChange('Settings')}
+            style={{ background: 'none', border: 'none', color: activePage === 'Settings' ? '#22d3ee' : '#94a3b8', padding: '10px 16px', fontSize: '13px', fontWeight: '500', cursor: 'pointer', borderRadius: '6px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            Settings
+          </button>
+          <button
+            onClick={() => onPageChange('AdminPanel')}
+            style={{ background: 'none', border: 'none', color: activePage === 'AdminPanel' ? '#22d3ee' : '#94a3b8', padding: '10px 16px', fontSize: '13px', fontWeight: '500', cursor: 'pointer', borderRadius: '6px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            Admin Panel
+          </button>
+        </nav>
+      )}
 
       {/* Right Side Control Utility Items */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -57,7 +82,7 @@ export default function Navbar({
 
       {/* --- REPAIRED DROPDOWN INTERACTIVE ROUTING PANEL --- */}
       {isUserMenuOpen && (
-        <div style={{ position: 'absolute', right: '24px', top: '60px', background: 'rgba(13, 27, 49, 0.96)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '6px', minWidth: '170px', display: 'flex', flexDirection: 'column', zIndex: '250', boxShadow: '0 12px 30px rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
+        <div style={{ position: 'absolute', right: '24px', top: '64px', background: 'rgba(13, 27, 49, 0.96)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px', padding: '6px', minWidth: '170px', display: 'flex', flexDirection: 'column', zIndex: '250', boxShadow: '0 12px 30px rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}>
           
           <button 
             onClick={() => { onPageChange('Profile'); setProfileTargetTab('User Information'); }} 
