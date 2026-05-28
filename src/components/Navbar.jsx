@@ -16,9 +16,9 @@ export default function Navbar({
 }) {
   return (
     <header className="app-navbar">
-      
+      <div className="app-navbar-inner">
       {/* Brand Logo Identity Section */}
-      <div onClick={() => onPageChange('Dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+      <div onClick={() => onPageChange('Dashboard')} className="app-navbar-brand">
         <div style={{ display: 'flex', height: '32px', width: '32px', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', background: 'linear-gradient(135deg, #22d3ee, #3b82f6)', fontWeight: 'bold', color: 'white' }}>
           <span>Q</span>
         </div>
@@ -29,45 +29,22 @@ export default function Navbar({
       </div>
 
       {/* Main Center Navigation Tabs — Kept perfectly clean and unified */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <nav className="app-nav-center">
         <button onClick={() => onPageChange('Dashboard')} style={{ background: 'none', border: 'none', color: activePage === 'Dashboard' ? '#22d3ee' : '#94a3b8', padding: '6px 12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>Dashboard</button>
         <button onClick={() => onPageChange('Reports')} style={{ background: 'none', border: 'none', color: activePage === 'Reports' ? '#22d3ee' : '#94a3b8', padding: '6px 12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>Reports</button>
         <button onClick={() => onPageChange('ISO')} style={{ background: 'none', border: 'none', color: activePage === 'ISO' ? '#22d3ee' : '#94a3b8', padding: '6px 12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>ISO</button>
         <button onClick={() => onPageChange('DCC')} style={{ background: 'none', border: 'none', color: activePage === 'DCC' ? '#22d3ee' : '#94a3b8', padding: '6px 12px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>DCC</button>
       </nav>
 
-      {/* Profile/Settings/Admin Navigation Tabs — Only show on Profile, Settings, and Admin pages */}
-      {(activePage === 'Profile' || activePage === 'Settings' || activePage === 'AdminPanel') && (
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '-8px' }}>
-          <button
-            onClick={() => onPageChange('Profile')}
-            className="user-info-tab-button"
-            style={{ background: 'none', border: 'none', color: activePage === 'Profile' ? '#22d3ee' : '#94a3b8', padding: '10px 16px', fontSize: '13px', fontWeight: '500', cursor: 'pointer', borderRadius: '6px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            User Information
-          </button>
-          <button
-            onClick={() => onPageChange('Settings')}
-            style={{ background: 'none', border: 'none', color: activePage === 'Settings' ? '#22d3ee' : '#94a3b8', padding: '10px 16px', fontSize: '13px', fontWeight: '500', cursor: 'pointer', borderRadius: '6px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            Settings
-          </button>
-          <button
-            onClick={() => onPageChange('AdminPanel')}
-            style={{ background: 'none', border: 'none', color: activePage === 'AdminPanel' ? '#22d3ee' : '#94a3b8', padding: '10px 16px', fontSize: '13px', fontWeight: '500', cursor: 'pointer', borderRadius: '6px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            Admin Panel
-          </button>
-        </nav>
-      )}
+      {/* Per-page settings tabs are managed by page-specific components (SettingsNavbar) */}
 
       {/* Right Side Control Utility Items */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div className="app-nav-right">
         <button onClick={onToggleNotifications} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
           <Bell size={18} />
         </button>
         
-        <div onClick={onToggleMenu} style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '16px', cursor: 'pointer' }}>
+        <div onClick={onToggleMenu} className="app-user-trigger">
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
             <span style={{ fontSize: '12px', fontWeight: '500', color: '#e2e8f0' }}>
               {userName || 'Name of the User'}
@@ -125,6 +102,7 @@ export default function Navbar({
           
         </div>
       )}
+      </div>
     </header>
   )
 }

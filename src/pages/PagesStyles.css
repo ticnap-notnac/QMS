@@ -7,12 +7,81 @@
   flex-direction: column;
 }
 
+/* App wide navbar used in the main layout */
+.app-navbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 12px 0; /* vertical spacing for the top bar */
+  box-sizing: border-box;
+  position: relative;
+  z-index: 30;
+  background: transparent;
+}
+
+.app-navbar nav { display: flex; gap: 8px; align-items: center; }
+
+.app-navbar button { background: none; border: none; cursor: pointer; }
+
+.app-navbar .user-info { display: flex; align-items: center; gap: 10px; }
+
+/* inner constrained container to center navbar content */
+.app-navbar-inner {
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: relative;
+  background: rgba(8, 18, 34, 0.9);
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 10px 30px rgba(3,10,25,0.5);
+}
+
+.app-navbar-brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+
+/* center nav positioned in the middle of the navbar */
+.app-nav-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 12px;
+}
+
+.app-nav-center button { color: #94a3b8; padding: 8px 12px; font-size: 14px; font-weight: 500; }
+.app-nav-center button:hover { color: #e7f1ff; }
+.app-nav-center button[style*="#22d3ee"] { color: #22d3ee; }
+
+.app-nav-right { display: flex; align-items: center; gap: 16px; }
+.app-user-trigger { display: flex; align-items: center; gap: 10px; border-left: 1px solid rgba(255,255,255,0.06); padding-left: 14px; cursor: pointer; }
+
+
 .page-main-wide {
   flex: 1;
   width: 95%;
   max-width: 1050px;
   margin: 40px auto;
   padding: 0 16px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 10;
+}
+
+/* Backwards-compatible alias for pages that use `page-main` */
+.page-main {
+  flex: 1;
+  width: 95%;
+  max-width: 1160px;
+  margin: 48px auto 24px; /* give space below navbar */
+  padding: 8px 20px;
   box-sizing: border-box;
   position: relative;
   z-index: 10;
@@ -804,6 +873,43 @@
   color: #22d3ee;
   border-color: rgba(34, 211, 238, 0.25);
 }
+
+/* ISO / metric buttons */
+.btn-metric-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: #cbd5e1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-metric-card:hover { background: rgba(255,255,255,0.05); }
+
+/* Primary gradient used across the app */
+.btn-gradient-primary {
+  background: linear-gradient(120deg, #2dd5dc 0%, #3b7bff 100%);
+  color: #04152d;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(59, 123, 255, 0.12);
+}
+.btn-gradient-primary:hover { transform: translateY(-1px); }
+
+/* Secondary light button for modal actions */
+.btn-secondary-light {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #e2e8f0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-secondary-light:hover { background: rgba(255,255,255,0.05); }
 
 
 .search-row {
