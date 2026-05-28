@@ -36,6 +36,12 @@ export default function SettingsPage({
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' })
 
   useEffect(() => {
+    if (activeSection === 'Audit Tools' && userRole !== 'admin') {
+      setActiveSection('Profile & Account')
+    }
+  }, [activeSection, userRole])
+
+  useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
@@ -80,51 +86,49 @@ export default function SettingsPage({
   }, [authUserId])
 
   const handleUpdateChanges = async () => {
-  setSaving(true)
-  setError('')
-  setSuccess('')
+    setSaving(true)
+    setError('')
+    setSuccess('')
 
-  try {
-    // Update profile in public.users
-    const { error: profileError } = await supabase
-      .from('users')
-      .update({
-        first_name: userProfile.first_name,
-        last_name: userProfile.last_name,
-        user_name: userProfile.user_name,
-        contact_number: userProfile.contact_number,
-      })
-      .eq('auth_id', authId)
+    try {
+      const { error: profileError } = await supabase
+        .from('users')
+        .update({
+          first_name: userProfile.first_name,
+          last_name: userProfile.last_name,
+          user_name: userProfile.user_name,
+          contact_number: userProfile.contact_number,
+        })
+        .eq('auth_id', authId)
 
-    if (profileError) throw new Error(profileError.message)
+      if (profileError) throw new Error(profileError.message)
 
-    // Update password only if fields are filled
-    if (passwords.current || passwords.new || passwords.confirm) {
-      if (!passwords.current) throw new Error('Please enter your current password.')
-      if (!passwords.new) throw new Error('Please enter a new password.')
-      if (passwords.new !== passwords.confirm) throw new Error('New passwords do not match.')
-      if (passwords.new.length < 6) throw new Error('Password must be at least 6 characters.')
+      if (passwords.current || passwords.new || passwords.confirm) {
+        if (!passwords.current) throw new Error('Please enter your current password.')
+        if (!passwords.new) throw new Error('Please enter a new password.')
+        if (passwords.new !== passwords.confirm) throw new Error('New passwords do not match.')
+        if (passwords.new.length < 6) throw new Error('Password must be at least 6 characters.')
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: userProfile.email,
-        password: passwords.current,
-      })
-      if (signInError) throw new Error('Current password is incorrect.')
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: userProfile.email,
+          password: passwords.current,
+        })
+        if (signInError) throw new Error('Current password is incorrect.')
 
-      const { error: passwordError } = await supabase.auth.updateUser({ password: passwords.new })
-      if (passwordError) throw new Error(passwordError.message)
-  
-      setPasswords({ current: '', new: '', confirm: '' })
+        const { error: passwordError } = await supabase.auth.updateUser({ password: passwords.new })
+        if (passwordError) throw new Error(passwordError.message)
+    
+        setPasswords({ current: '', new: '', confirm: '' })
+      }
+
+      if (onProfileUpdate) await onProfileUpdate()
+      setSuccess('Profile updated successfully!')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
     }
-
-    if (onProfileUpdate) await onProfileUpdate()
-    setSuccess('Profile updated successfully!')
-  } catch (err) {
-    setError(err.message)
-  } finally {
-    setSaving(false)
   }
-}
 
   if (loading) {
     return (
@@ -162,26 +166,21 @@ export default function SettingsPage({
         userPosition={userPosition}
         setProfileTargetTab={setProfileTargetTab}
       />
-      <main className="page-container">
+      
+      {/* Centered sizing layout shell matching standard view scopes */}
+      <main className="page-container" style={{ width: '95%', maxWidth: '1050px', margin: '40px auto', padding: '0 16px', boxSizing: 'border-box' }}>
         <h1 className="page-heading">Settings</h1>
 
         <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
 
-        {error && (
-          <div className="user-info-error">
-            {error}
-          </div>
-        )}
+        {error && <div className="user-info-error">{error}</div>}
+        {success && <div className="success-message">{success}</div>}
 
-        {success && (
-          <div className="success-message">
-            {success}
-          </div>
-        )}
-
-        <div className="settings-container">
-          {/* Sidebar */}
-          <div className="settings-sidebar">
+        {/* 📐 THE UNIFORM FIX: Enforcing strict dimensions across all dynamic tabs */}
+        <div className="settings-container" style={{ display: 'flex', gap: '32px', width: '100%', minHeight: '560px', boxSizing: 'border-box' }}>
+          
+          {/* Sidebar Navigation */}
+          <div className="settings-sidebar" style={{ width: '200px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button 
               onClick={() => setActiveSection('Profile & Account')}
               className={`sidebar-button ${activeSection === 'Profile & Account' ? 'active' : ''}`}
@@ -194,19 +193,23 @@ export default function SettingsPage({
             >
               Reporting Defaults
             </button>
-            <button 
-              onClick={() => setActiveSection('Audit Tools')}
-              className={`sidebar-button ${activeSection === 'Audit Tools' ? 'active' : ''}`}
-            >
-              Audit Tools
-            </button>
+            
+            {userRole === 'admin' && (
+              <button 
+                onClick={() => setActiveSection('Audit Tools')}
+                className={`sidebar-button ${activeSection === 'Audit Tools' ? 'active' : ''}`}
+              >
+                Audit Tools
+              </button>
+            )}
           </div>
 
-          {/* Content Area */}
-          <div className="settings-main">
+          {/* Main Content Pane Area Canvas */}
+          <div className="settings-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%', boxSizing: 'border-box' }}>
+            
             {/* Profile & Account Section */}
             {activeSection === 'Profile & Account' && (
-              <div className="settings-content">
+              <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
                 <h2>Edit Profile</h2>
                 
                 <div className="mb-24">
@@ -226,13 +229,14 @@ export default function SettingsPage({
                         type="text" 
                         placeholder="N/A"
                         className="form-input"
+                        readOnly
                       />
                     </div>
                     <div className="form-group">
                       <label>Last Name</label>
                       <input 
                         type="text" 
-                        value={userProfile.last_name}
+                        value={userProfile.last_name} 
                         onChange={(e) => setUserProfile({...userProfile, last_name: e.target.value})}
                         className="form-input"
                       />
@@ -244,7 +248,7 @@ export default function SettingsPage({
                       <label>Email Address</label>
                       <input 
                         type="email" 
-                        value={userProfile.email}
+                        value={userProfile.email} 
                         onChange={(e) => setUserProfile({...userProfile, email: e.target.value})}
                         className="form-input"
                       />
@@ -253,7 +257,7 @@ export default function SettingsPage({
                       <label>Username</label>
                       <input 
                         type="text" 
-                        value={userProfile.user_name}
+                        value={userProfile.user_name} 
                         onChange={(e) => setUserProfile({...userProfile, user_name: e.target.value})}
                         className="form-input"
                       />
@@ -265,7 +269,7 @@ export default function SettingsPage({
                       <label>Contact No.</label>
                       <input 
                         type="text" 
-                        value={userProfile.contact_number}
+                        value={userProfile.contact_number} 
                         onChange={(e) => setUserProfile({...userProfile, contact_number: e.target.value})}
                         className="form-input"
                       />
@@ -274,7 +278,7 @@ export default function SettingsPage({
                       <label>Employee ID</label>
                       <input 
                         type="text" 
-                        value={userProfile.employee_no}
+                        value={userProfile.employee_no} 
                         disabled
                         className="form-input"
                       />
@@ -282,7 +286,6 @@ export default function SettingsPage({
                   </div>
                 </div>
 
-                {/* Change Password Section */}
                 <div className="password-section">
                   <h3>Change Password</h3>
                   
@@ -292,6 +295,8 @@ export default function SettingsPage({
                       <input 
                         type="password"
                         placeholder="Enter current password"
+                        value={passwords.current}
+                        onChange={(e) => setPasswords({...passwords, current: e.target.value})}
                         className="form-input"
                       />
                     </div>
@@ -300,6 +305,8 @@ export default function SettingsPage({
                       <input 
                         type="password"
                         placeholder="Enter new password"
+                        value={passwords.new}
+                        onChange={(e) => setPasswords({...passwords, new: e.target.value})}
                         className="form-input"
                       />
                     </div>
@@ -310,16 +317,18 @@ export default function SettingsPage({
                     <input 
                       type="password"
                       placeholder="Confirm new password"
+                      value={passwords.confirm}
+                      onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
                       className="form-input"
                     />
                   </div>
                 </div>
 
-                {/* Update Changes Button */}
                 <button
                   className="btn-primary mt-24"
                   onClick={handleUpdateChanges}
                   disabled={saving}
+                  style={{ alignSelf: 'flex-start' }}
                 >
                   {saving ? 'Saving...' : 'Update Changes'}
                 </button>
@@ -328,20 +337,20 @@ export default function SettingsPage({
 
             {/* Reporting Defaults Section */}
             {activeSection === 'Reporting Defaults' && (
-              <div className="settings-content">
+              <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
                 <h2>Reporting Defaults</h2>
-                <div className="placeholder-box">
-                  <p>Reporting preferences will be configured here.</p>
+                <div className="placeholder-box" style={{ flex: 1, minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '8px', background: 'rgba(15,23,42,0.15)' }}>
+                  <p style={{ color: '#64748b', margin: 0 }}>Reporting preferences will be configured here.</p>
                 </div>
               </div>
             )}
 
             {/* Audit Tools Section */}
-            {activeSection === 'Audit Tools' && (
-              <div className="settings-content">
+            {activeSection === 'Audit Tools' && userRole === 'admin' && (
+              <div className="settings-content" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
                 <h2>Audit Tools</h2>
-                <div className="placeholder-box">
-                  <p>Audit tools and utilities will be available here.</p>
+                <div className="placeholder-box" style={{ flex: 1, minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '8px', background: 'rgba(15,23,42,0.15)' }}>
+                  <p style={{ color: '#64748b', margin: 0 }}>Audit tools and utilities will be available here.</p>
                 </div>
               </div>
             )}
