@@ -179,6 +179,7 @@ export default function App() {
       userRole,
       userName,
       userPosition,
+      authUserId: user?.id || '',
       profileTargetTab,
       setProfileTargetTab,
     }

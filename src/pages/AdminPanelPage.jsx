@@ -28,6 +28,8 @@ export default function AdminPanelPage({
   const [usersError, setUsersError] = useState('')
   const [availableRoles, setAvailableRoles] = useState([])
   const [rolesLoading, setRolesLoading] = useState(false)
+  const [availableDepartments, setAvailableDepartments] = useState([])
+  const [departmentsLoading, setDepartmentsLoading] = useState(false)
   const [formMessage, setFormMessage] = useState('')
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -42,6 +44,7 @@ export default function AdminPanelPage({
     userName: '',
     contactNumber: '',
     roleId: '',
+    departmentId: '',
   })
 
   const loadRoles = async () => {
@@ -76,8 +79,41 @@ export default function AdminPanelPage({
     }
   }
 
+  const loadDepartments = async () => {
+    setDepartmentsLoading(true)
+
+    try {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('id, department_name')
+        .order('department_name', { ascending: true })
+
+      if (error) {
+        throw error
+      }
+
+      const departments = data || []
+
+      setAvailableDepartments(departments)
+      setNewUser((current) => ({
+        ...current,
+        departmentId: current.departmentId || departments[0]?.id?.toString() || '',
+      }))
+
+      return departments
+    } catch (error) {
+      console.error('Error loading departments:', error)
+      setAvailableDepartments([])
+      setFormError(error.message)
+      return []
+    } finally {
+      setDepartmentsLoading(false)
+    }
+  }
+
   useEffect(() => {
     loadRoles()
+    loadDepartments()
   }, [])
 
   const loadUsers = async () => {
@@ -86,7 +122,7 @@ export default function AdminPanelPage({
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, first_name, last_name, user_name, email, contact_number, role_id, auth_id, employee_no, created_at')
+        .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, created_at')
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -117,6 +153,12 @@ export default function AdminPanelPage({
   useEffect(() => {
     if (isAddUserModalOpen && availableRoles.length === 0) {
       loadRoles()
+    }
+  }, [isAddUserModalOpen])
+
+  useEffect(() => {
+    if (isAddUserModalOpen && availableDepartments.length === 0) {
+      loadDepartments()
     }
   }, [isAddUserModalOpen])
 
@@ -160,6 +202,7 @@ export default function AdminPanelPage({
       const result = await createAdminUser({
         ...newUser,
         roleId: newUser.roleId || null,
+        departmentId: newUser.departmentId || null,
       })
 
       setFormMessage(`Created ${result.authUser.email} successfully.`)
@@ -171,6 +214,7 @@ export default function AdminPanelPage({
         userName: '',
         contactNumber: '',
         roleId: availableRoles[0]?.id?.toString() || '',
+        departmentId: availableDepartments[0]?.id?.toString() || '',
       })
       await loadUsers()
       setIsAddUserModalOpen(false)
@@ -182,10 +226,34 @@ export default function AdminPanelPage({
   }
 
   const handleAddDepartment = () => {
-    if (departmentName.trim()) {
-      console.log('Adding department:', departmentName)
-      setDepartmentName('')
+    const nextDepartment = departmentName.trim()
+
+    if (!nextDepartment) {
+      return
     }
+
+    const insertDepartment = async () => {
+      try {
+        setFormError('')
+        setFormMessage('')
+
+        const { error } = await supabase
+          .from('departments')
+          .insert([{ department_name: nextDepartment }])
+
+        if (error) {
+          throw error
+        }
+
+        setDepartmentName('')
+        setFormMessage(`Added department ${nextDepartment} successfully.`)
+        await loadDepartments()
+      } catch (err) {
+        setFormError(err.message)
+      }
+    }
+
+    insertDepartment()
   }
 
   const handleAddRole = async () => {
@@ -253,6 +321,7 @@ export default function AdminPanelPage({
   }
 
   const roleNameById = new Map(availableRoles.map((role) => [String(role.id), role.role_name]))
+  const departmentNameById = new Map(availableDepartments.map((department) => [String(department.id), department.department_name]))
 
   const filteredUsers = adminUsers.filter((user) => {
     const search = searchQuery.trim().toLowerCase()
@@ -262,6 +331,7 @@ export default function AdminPanelPage({
     }
 
     const roleName = roleNameById.get(String(user.role_id)) || ''
+    const departmentName = departmentNameById.get(String(user.department_id)) || ''
     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim()
     const haystack = [
       fullName,
@@ -270,6 +340,7 @@ export default function AdminPanelPage({
       user.contact_number,
       user.employee_no,
       roleName,
+      departmentName,
     ].join(' ').toLowerCase()
 
     return haystack.includes(search)
@@ -384,6 +455,7 @@ export default function AdminPanelPage({
                                 <th>Username</th>
                                 <th>Email</th>
                                 <th>Role</th>
+                                <th>Department</th>
                                 <th>Contact</th>
                                 <th>Employee No.</th>
                                 <th>Actions</th>
@@ -393,6 +465,7 @@ export default function AdminPanelPage({
                               {filteredUsers.map((user) => {
                                 const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'
                                 const roleName = roleNameById.get(String(user.role_id)) || '-'
+                                const departmentLabel = departmentNameById.get(String(user.department_id)) || '-'
                                 const isDeleting = deletingUserId === user.id
 
                                 return (
@@ -401,6 +474,7 @@ export default function AdminPanelPage({
                                     <td>{user.user_name || '-'}</td>
                                     <td>{user.email || '-'}</td>
                                     <td>{roleName}</td>
+                                    <td>{departmentLabel}</td>
                                     <td>{user.contact_number || '-'}</td>
                                     <td>{user.employee_no || '-'}</td>
                                     <td>
@@ -473,6 +547,8 @@ export default function AdminPanelPage({
             formData={newUser}
             availableRoles={availableRoles}
             rolesLoading={rolesLoading}
+            availableDepartments={availableDepartments}
+            departmentsLoading={departmentsLoading}
             loading={submitting}
             error={formError}
             message={formMessage}

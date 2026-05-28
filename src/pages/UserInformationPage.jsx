@@ -15,6 +15,7 @@ export default function UserInformationPage({
   userRole,
   userName,
   userPosition,
+  authUserId,
   setProfileTargetTab,
   profileTargetTab = 'User Information',
 }) {
@@ -40,12 +41,13 @@ export default function UserInformationPage({
     const fetchUserProfile = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
+        const currentAuthId = authUserId || user?.id
 
-        if (user) {
+        if (currentAuthId) {
           const { data, error } = await supabase
             .from('users')
             .select('first_name, last_name, user_name, email, employee_no, contact_number')
-            .eq('auth_id', user.id)
+            .eq('auth_id', currentAuthId)
             .maybeSingle()
 
           if (error) {
@@ -61,7 +63,7 @@ export default function UserInformationPage({
               contact_number: data.contact_number || '',
             })
           } else {
-            setUserProfile(prev => ({ ...prev, email: user.email }))
+            setUserProfile(prev => ({ ...prev, email: user?.email || prev.email }))
           }
         }
       } catch (err) {
@@ -73,7 +75,7 @@ export default function UserInformationPage({
     }
 
     fetchUserProfile()
-  }, [])
+  }, [authUserId])
 
   if (loading) {
     return (

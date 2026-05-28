@@ -6,6 +6,8 @@ function AddUserModal({
   formData,
   availableRoles,
   rolesLoading,
+  availableDepartments,
+  departmentsLoading,
   loading,
   error,
   message,
@@ -131,17 +133,44 @@ function AddUserModal({
             </label>
           </div>
 
-          <label className="panel-column">
-            <span className="small-label">Contact Number</span>
-            <input
-              type="text"
-              name="contactNumber"
-              value={formData.contactNumber}
-              onChange={onChange}
-              className="form-input-reports"
-              placeholder="Enter contact number"
-            />
-          </label>
+          <div className="modal-grid-2">
+            <label className="panel-column">
+              <span className="small-label">Department</span>
+              <select
+                name="departmentId"
+                value={formData.departmentId}
+                onChange={onChange}
+                className="form-input-reports"
+                disabled={departmentsLoading || availableDepartments.length === 0}
+              >
+                <option value="">
+                  {departmentsLoading ? 'Loading departments...' : 'Select a department'}
+                </option>
+                {!departmentsLoading && availableDepartments.length === 0 ? (
+                  <option value="" disabled>
+                    No departments available
+                  </option>
+                ) : null}
+                {availableDepartments.map((department) => (
+                  <option key={department.id} value={department.id}>
+                    {department.department_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="panel-column">
+              <span className="small-label">Contact Number</span>
+              <input
+                type="text"
+                name="contactNumber"
+                value={formData.contactNumber}
+                onChange={onChange}
+                className="form-input-reports"
+                placeholder="Enter contact number"
+              />
+            </label>
+          </div>
 
           <div className="modal-submit-row">
             <button className="btn-add-action" type="submit" disabled={loading}>
