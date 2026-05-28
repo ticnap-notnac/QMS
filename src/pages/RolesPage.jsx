@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Navbar from '@/components/Navbar'
+import AdminNavbar from '@/components/AdminNavbar'
 import AddCategoryModal from '@/components/AddCategoryModal'
 import AdminListPanel from '@/components/AdminListPanel'
 import SearchForm from '@/components/SearchForm'
@@ -106,8 +107,31 @@ export default function RolesPage({
           <div className="glass-card-rounded-bottom">
             <div className="admin-inner-panel">
               <div className="search-row">
-                <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reload} placeholder="Search roles..." />
-                <button onClick={openCategoryModal} className="btn-add-action">+ Add Role</button>
+                <div className="admin-top-row">
+                  <div className="admin-tabs-wrap">
+                    <AdminNavbar
+                      activeTab={activePage === 'Roles' ? 'Roles' : activePage === 'Departments' ? 'Dept' : activePage === 'ISO' ? 'ISO Module' : 'Users'}
+                      onTabChange={(tab) => {
+                        const map = {
+                          Users: 'Admin Panel',
+                          Dept: 'Departments',
+                          Roles: 'Roles',
+                          'ISO Module': 'ISO',
+                        }
+                        onPageChange?.(map[tab] || 'Admin Panel')
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="admin-search-actions-row">
+                  <div className="admin-search-container">
+                    <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reload} placeholder="Search roles..." />
+                  </div>
+                  <div className="admin-actions-right">
+                    <button onClick={openCategoryModal} className="btn-add-action">+ Add Role</button>
+                  </div>
+                </div>
               </div>
 
               <div className="glass-card-content">

@@ -5,6 +5,7 @@ import { createUser } from '@/controllers/userController'
 import { useLookup } from '@/context/LookupContext'
 import './PagesStyles.css'
 import SearchForm from '@/components/SearchForm'
+import AdminNavbar from '@/components/AdminNavbar'
 import useUserManager from '@/hooks/useUserManager'
 
 export default function AddUserPage({
@@ -127,8 +128,8 @@ export default function AddUserPage({
     }
   }
 
-  const roleNameById = new Map(availableRoles.map((role) => [String(role.id), role.role_name]))
-  const departmentNameById = new Map(availableDepartments.map((department) => [String(department.id), department.department_name]))
+  const roleNameById = new Map((roles || []).map((role) => [String(role.id), role.role_name]))
+  const departmentNameById = new Map((departments || []).map((department) => [String(department.id), department.department_name]))
 
   const filteredUsers = adminUsers.filter((user) => {
     const search = searchQuery.trim().toLowerCase()
@@ -171,8 +172,34 @@ export default function AddUserPage({
           <div className="glass-card-rounded-bottom">
             <div className="admin-inner-panel">
               <div className="search-row">
-                <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reloadUsers} placeholder="Search..." />
-                <button onClick={openAddUserModal} className="btn-add-action">+ Add User</button>
+                <div className="admin-top-row">
+                  <div className="admin-tabs-wrap">
+                    <AdminNavbar
+                      activeTab={activePage === 'Roles' ? 'Roles' : activePage === 'Departments' ? 'Dept' : activePage === 'ISO' ? 'ISO Module' : 'Users'}
+                      onTabChange={(tab) => {
+                        const map = {
+                          Users: 'Admin Panel',
+                          Dept: 'Departments',
+                          Roles: 'Roles',
+                          'ISO Module': 'ISO'
+                        }
+                        const target = map[tab] || 'Admin Panel'
+                        onPageChange?.(target)
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="admin-search-actions-row">
+                  <div className="admin-search-container">
+                    <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reloadUsers} placeholder="Search..." />
+                  </div>
+
+                  <div className="admin-actions-right">
+                    <button onClick={openAddUserModal} className="btn-add-action"><span>+ Add User</span></button>
+                  </div>
+                </div>
+
               </div>
 
               <div className="glass-card-content">
@@ -246,10 +273,10 @@ export default function AddUserPage({
             onSubmit={handleSubmitNewUser}
             onChange={handleUserFieldChange}
             formData={newUser}
-            availableRoles={availableRoles}
-            rolesLoading={rolesLoading}
-            availableDepartments={availableDepartments}
-            departmentsLoading={departmentsLoading}
+            availableRoles={roles}
+            rolesLoading={lookupsLoading}
+            availableDepartments={departments}
+            departmentsLoading={lookupsLoading}
             loading={submitting}
             error={formError}
             message={formMessage}

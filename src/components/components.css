@@ -59,3 +59,21 @@
 
 /* SettingsNavbar label */
 .settings-nav-label { margin-left: 8px; }
+
+/* AdminNavbar styles */
+.admin-top-nav { display: flex; gap: 20px; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.admin-tabs { display: flex; gap: 8px; align-items: center; }
+.admin-tab-button { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); color: #94a3b8; padding: 8px 12px; border-radius: 14px; cursor: pointer; font-weight: 600; font-size: 13px; }
+.admin-tab-button.active { background: rgba(34,211,238,0.08); color: #22d3ee; border-color: rgba(34,211,238,0.18); }
+.admin-tab-button.disabled,
+.admin-tab-button:disabled { opacity: 0.45; cursor: not-allowed; color: #64748b; }
+
+.admin-controls { display: flex; gap: 14px; align-items: center; }
+.admin-search { display: flex; align-items: center; background: rgba(255,255,255,0.02); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); }
+.admin-search-input { background: transparent; border: none; outline: none; color: #cbd5e1; padding: 6px 10px; min-width: 360px; }
+.admin-search-input::placeholder { color: #6b7280; }
+.admin-search-btn { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; padding: 6px; }
+
+.admin-actions { display: flex; gap: 12px; align-items: center; }
+.btn-add-action { background: linear-gradient(180deg,#0ea5b1,#0369a1); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; font-weight: 600; }
+.admin-count-bubble { background: rgba(34,211,238,0.14); color: #22d3ee; padding: 6px 10px; border-radius: 20px; font-weight: 700; font-size: 13px; }
