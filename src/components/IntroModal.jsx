@@ -1,66 +1,51 @@
 import React from 'react';
 import { X, ShieldCheck, Sparkles, Target } from 'lucide-react';
+import learnMoreRaw from '../../LEARN_MORE.md?raw'
 
 export default function IntroModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
+  // Parse the markdown: extract first heading as title, then split remaining content into paragraphs
+  const md = String(learnMoreRaw || '')
+  const lines = md.split(/\r?\n/)
+  let title = 'Introduction'
+  let body = md
+  const headingIndex = lines.findIndex((l) => l.trim().startsWith('#'))
+  if (headingIndex >= 0) {
+    title = lines[headingIndex].replace(/^#+\s*/, '')
+    body = lines.slice(headingIndex + 1).join('\n')
+  }
+
+  const sections = body
+    .split(/\n\s*\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  const icons = [ShieldCheck, Sparkles, Target]
+  const colors = ['#3b82f6', '#22d3ee', '#6366f1']
+
   return (
     <div style={overlayStyle}>
-      {/* Glassmorphic Modal Container */}
       <div style={modalStyle}>
-        
-        {/* Close Window Button */}
         <button onClick={onClose} style={closeButtonStyle} aria-label="Close modal">
           <X size={18} />
         </button>
 
-        {/* Dynamic Gradient Title */}
-        <h2 style={titleStyle}>QUALITY MANAGEMENT SYSTEM INTRODUCTION</h2>
-        
-        {/* Scrollable Document Content Canvas */}
+        <h2 style={titleStyle}>{title}</h2>
+
         <div style={contentContainerStyle}>
-          
-          {/* Paragraph 1 - Core Framework Block */}
-          <div style={accentBoxStyle('#3b82f6', 'rgba(59, 130, 246, 0.03)')}>
-            <div style={iconHeaderStyle}>
-              <ShieldCheck size={16} color="#3b82f6" />
-              <strong style={{ color: '#f8fafc' }}>Core System Framework</strong>
-            </div>
-            <p style={paragraphStyle}>
-              Our Quality Management System (QMS) is designed to ensure consistent excellence across 
-              all our processes, products, and services. It provides a structured framework that aligns 
-              our operations with defined standards, regulatory requirements, and customer expectations.
-            </p>
-          </div>
-
-          {/* Paragraph 2 - Continuous Improvement Block */}
-          <div style={accentBoxStyle('#22d3ee', 'rgba(34, 211, 238, 0.03)')}>
-            <div style={iconHeaderStyle}>
-              <Sparkles size={16} color="#22d3ee" />
-              <strong style={{ color: '#f8fafc' }}>Continuous Enhancement</strong>
-            </div>
-            <p style={paragraphStyle}>
-              At its core, the QMS promotes a culture of continuous improvement, accountability, and 
-              efficiency. By establishing clear procedures, measurable objectives, and systematic 
-              controls, we are able to monitor performance, identify opportunities for enhancement, 
-              and implement effective solutions.
-            </p>
-          </div>
-
-          {/* Paragraph 3 - Strategic Assets Block */}
-          <div style={accentBoxStyle('#6366f1', 'rgba(99, 102, 241, 0.03)')}>
-            <div style={iconHeaderStyle}>
-              <Target size={16} color="#6366f1" />
-              <strong style={{ color: '#f8fafc' }}>Strategic Compliance Operations</strong>
-            </div>
-            <p style={paragraphStyle}>
-              This system is not only a tool for compliance but also a strategic asset that supports 
-              our commitment to delivering reliable, high-quality outcomes. It empowers our team to 
-              work collaboratively, make informed decisions, and uphold the highest standards in 
-              everything we do.
-            </p>
-          </div>
-
+          {sections.map((text, i) => {
+            const Icon = icons[i % icons.length]
+            const color = colors[i % colors.length]
+            return (
+              <div key={i} style={accentBoxStyle(color, `${color}22`)}>
+                <div style={iconHeaderStyle}>
+                  <Icon size={16} color={color} />
+                </div>
+                <p style={paragraphStyle}>{text}</p>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
