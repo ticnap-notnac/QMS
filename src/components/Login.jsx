@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '@/utils/supabase'
+import { insertLog } from '@/controllers/logController'
 
 function Login({
   onSubmit,
@@ -31,6 +32,21 @@ function Login({
     } catch (err) {
       setError(err.message || 'Login failed')
       console.error('Login error:', err)
+
+      try {
+        await insertLog({
+          level: 'warn',
+          source: 'auth',
+          action: 'user_login_failed',
+          details: {
+            email,
+            event: 'login_failed',
+            message: err?.message || 'Login failed',
+          },
+        })
+      } catch (logErr) {
+        console.warn('Failed to write failed-login log:', logErr?.message || logErr)
+      }
     } finally {
       setLoading(false)
     }

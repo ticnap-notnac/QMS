@@ -1,28 +1,14 @@
-import { supabase } from '@/utils/supabase'
+import { request } from '@/lib/api'
 
 export async function loadDepartments() {
-  const { data, error } = await supabase
-    .from('departments')
-    .select('id, department_name')
-    .order('department_name', { ascending: true })
-
-  if (error) throw error
-
-  return data || []
+  return await request('/departments')
 }
 
 export async function createDepartment(departmentName) {
-  const { data, error } = await supabase
-    .from('departments')
-    .insert([{ department_name: departmentName }])
-
-  if (error) throw error
-
-  return data
+  return await request('/departments', { method: 'POST', body: JSON.stringify({ departmentName }) })
 }
 
 export async function deleteDepartment(id) {
-  const { error } = await supabase.from('departments').delete().eq('id', id)
-  if (error) throw error
+  await request(`/departments/${id}`, { method: 'DELETE' })
   return true
 }

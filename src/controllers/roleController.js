@@ -1,4 +1,4 @@
-import { supabase } from '@/utils/supabase'
+import { request } from '@/lib/api'
 
 function normalizeRoleError(error) {
   if (!error) {
@@ -24,28 +24,23 @@ function normalizeRoleError(error) {
 }
 
 export async function loadRoles() {
-  const { data, error } = await supabase
-    .from('roles')
-    .select('id, role_name')
-    .order('role_name', { ascending: true })
-
-  if (error) throw error
-
-  return data || []
+  return await request('/roles')
 }
 
 export async function createRole(roleName) {
-  const { data, error } = await supabase
-    .from('roles')
-    .insert([{ role_name: roleName }])
-
-  if (error) throw normalizeRoleError(error)
-
-  return data
+  try {
+    const data = await request('/roles', { method: 'POST', body: JSON.stringify({ roleName }) })
+    return data
+  } catch (err) {
+    throw normalizeRoleError(err)
+  }
 }
 
 export async function deleteRole(id) {
-  const { error } = await supabase.from('roles').delete().eq('id', id)
-  if (error) throw normalizeRoleError(error)
-  return true
+  try {
+    await request(`/roles/${id}`, { method: 'DELETE' })
+    return true
+  } catch (err) {
+    throw normalizeRoleError(err)
+  }
 }

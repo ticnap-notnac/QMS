@@ -5,6 +5,7 @@ import userRoutes from './routes/userRoutes.js'
 import roleRoutes from './routes/roleRoutes.js'
 import departmentRoutes from './routes/departmentRoutes.js'
 import logRoutes from './routes/logRoutes.js'
+import debugRoutes from './routes/debugRoutes.js'
 
 const app = express()
 
@@ -15,6 +16,7 @@ app.use('/api/users', userRoutes)
 app.use('/api/roles', roleRoutes)
 app.use('/api/departments', departmentRoutes)
 app.use('/api/logs', logRoutes)
+app.use('/api/debug', debugRoutes)
 
 const PORT = process.env.PORT || 3000
 

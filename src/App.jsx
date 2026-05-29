@@ -15,6 +15,7 @@ import DepartmentsPage from './pages/DepartmentsPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AuditToolsPage from './pages/AuditToolsPage.jsx'
 import { LookupProvider } from './context/LookupContext'
+import { insertLog } from '@/controllers/logController'
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(false)
@@ -103,8 +104,25 @@ export default function App() {
 
     checkUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user || null)
+
+      if (event === 'SIGNED_IN' && session?.user?.id) {
+        try {
+          await insertLog({
+            level: 'audit',
+            source: 'auth',
+            action: 'user_login',
+            userAuthId: session.user.id,
+            details: {
+              event: 'auth_state_signed_in',
+              email: session.user.email || null,
+            },
+          })
+        } catch (err) {
+          console.warn('Failed to log SIGNED_IN event:', err?.message || err)
+        }
+      }
     })
 
     return () => {
@@ -153,6 +171,23 @@ export default function App() {
 }
   const handleLogout = async () => {
     try {
+      if (user?.id) {
+        try {
+          await insertLog({
+            level: 'audit',
+            source: 'auth',
+            action: 'user_logout',
+            userAuthId: user.id,
+            details: {
+              event: 'explicit_logout',
+              email: user.email || null,
+            },
+          })
+        } catch (err) {
+          console.warn('Failed to write logout log:', err?.message || err)
+        }
+      }
+
       await supabase.auth.signOut()
       setUser(null)
       setUserRole('user')
