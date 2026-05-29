@@ -15,7 +15,7 @@ import DepartmentsPage from './pages/DepartmentsPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AuditToolsPage from './pages/AuditToolsPage.jsx'
 import { LookupProvider } from './context/LookupContext'
-import { insertLog } from '@/controllers/logController'
+import { insertLog } from '@/services/logService'
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(false)

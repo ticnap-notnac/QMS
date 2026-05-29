@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchLogs, recordLogRead } from '@/controllers/logController'
+import { fetchLogs, recordLogRead } from '@/services/logService'
 
 export default function SystemLogsPanel({ onClose }) {
   const [logs, setLogs] = useState([])

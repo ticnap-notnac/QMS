@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '@/utils/supabase'
-import { insertLog } from '@/controllers/logController'
+import { insertLog } from '@/services/logService'
 
 function Login({
   onSubmit,

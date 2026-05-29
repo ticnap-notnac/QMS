@@ -1,6 +1,6 @@
 import { createContext, useContext, useCallback, useEffect, useState } from 'react'
-import { loadRoles as loadRolesController } from '@/controllers/roleController'
-import { loadDepartments as loadDepartmentsController } from '@/controllers/departmentController'
+import { loadRoles as loadRolesController } from '@/services/roleService'
+import { loadDepartments as loadDepartmentsController } from '@/services/departmentService'
 
 const LookupContext = createContext({
   roles: [],

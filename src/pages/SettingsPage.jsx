@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/utils/supabase'
-import { insertLog } from '@/controllers/logController'
+import { insertLog } from '@/services/logService'
 import Navbar from '@/components/Navbar'
 import SettingsNavbar from '@/components/SettingsNavbar'
 import './PagesStyles.css'

@@ -12,7 +12,7 @@ import {
   loadRoles as loadRolesController,
   createRole as createRoleController,
   deleteRole as deleteRoleController,
-} from '@/controllers/roleController'
+} from '@/services/roleService'
 
 export default function RolesPage({
   activePage,

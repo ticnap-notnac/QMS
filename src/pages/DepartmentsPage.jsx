@@ -12,7 +12,7 @@ import {
   loadDepartments as loadDepartmentsController,
   createDepartment as createDepartmentController,
   deleteDepartment as deleteDepartmentController,
-} from '@/controllers/departmentController'
+} from '@/services/departmentService'
 
 export default function DepartmentsPage({
   activePage,

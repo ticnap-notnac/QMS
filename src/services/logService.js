@@ -25,3 +25,10 @@ export async function recordLogRead(payload = {}) {
     return null
   }
 }
+
+export default {
+  insertLog,
+  fetchLogs,
+  listLogs: fetchLogs,
+  recordLogRead,
+}
