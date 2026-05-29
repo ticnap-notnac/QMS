@@ -1,0 +1,23 @@
+import 'dotenv/config'
+import express from 'express'
+import cors from 'cors'
+import userRoutes from './routes/userRoutes.js'
+import roleRoutes from './routes/roleRoutes.js'
+import departmentRoutes from './routes/departmentRoutes.js'
+import logRoutes from './routes/logRoutes.js'
+
+const app = express()
+
+app.use(cors())
+app.use(express.json())
+
+app.use('/api/users', userRoutes)
+app.use('/api/roles', roleRoutes)
+app.use('/api/departments', departmentRoutes)
+app.use('/api/logs', logRoutes)
+
+const PORT = process.env.PORT || 3000
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})

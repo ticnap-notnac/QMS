@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { supabase } from '@/utils/supabase'
+import { request } from '@/lib/api'
 
 export default function useUserManager({ createFn } = {}) {
   const [items, setItems] = useState([])
@@ -11,12 +11,7 @@ export default function useUserManager({ createFn } = {}) {
     setLoading(true)
     setError('')
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, created_at')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
+      const data = await request('/users')
       setItems(data || [])
     } catch (err) {
       setItems([])
@@ -40,8 +35,7 @@ export default function useUserManager({ createFn } = {}) {
     setDeletingId(id)
     setError('')
     try {
-      const { error } = await supabase.from('users').delete().eq('id', id)
-      if (error) throw error
+      await request(`/users/${id}`, { method: 'DELETE' })
       await reload()
     } catch (err) {
       setError(err?.message || String(err))

@@ -1,0 +1,14 @@
+{
+  "name": "thesissystem-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^4.21.2",
+    "@supabase/supabase-js": "^2.106.2"
+  }
+}
