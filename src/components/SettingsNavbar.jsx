@@ -13,7 +13,7 @@ function SettingsNavbar({ userRole, activePage, onNavigate }) {
 
     // Treat the Admin Panel tab as active for several admin-related pages (case-sensitive exact match)
     if (page === 'Admin Panel') {
-      const adminPages = ['Admin Panel', 'Departments', 'Roles', 'Add User', 'Users']
+      const adminPages = ['Admin Panel', 'Departments', 'Roles', 'Locations', 'Product Types', 'Add User', 'Users']
       isActive = adminPages.includes(activePage)
     }
 

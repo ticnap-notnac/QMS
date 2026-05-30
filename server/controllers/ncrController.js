@@ -20,6 +20,60 @@ function buildReferenceNumber(referenceNo) {
   return Number(match[2]) || 0
 }
 
+function normalizeText(value) {
+  return String(value || '').trim()
+}
+
+async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, rawName }) {
+  const numericId = normalizeId(rawId)
+  if (numericId !== null && numericId !== undefined && numericId !== '') {
+    const { data, error } = await supabase
+      .from(table)
+      .select(`${idColumn}, ${nameColumn}`)
+      .eq(idColumn, numericId)
+      .maybeSingle()
+
+    if (error) {
+      throw error
+    }
+
+    if (data) {
+      return { id: data[idColumn], name: data[nameColumn] || null }
+    }
+  }
+
+  const textValue = normalizeText(rawName || rawId)
+  if (!textValue) {
+    return { id: null, name: null }
+  }
+
+  const { data: existing, error: lookupError } = await supabase
+    .from(table)
+    .select(`${idColumn}, ${nameColumn}`)
+    .ilike(nameColumn, textValue)
+    .maybeSingle()
+
+  if (lookupError) {
+    throw lookupError
+  }
+
+  if (existing) {
+    return { id: existing[idColumn], name: existing[nameColumn] || textValue }
+  }
+
+  const { data: inserted, error: insertError } = await supabase
+    .from(table)
+    .insert([{ [nameColumn]: textValue }])
+    .select(`${idColumn}, ${nameColumn}`)
+    .maybeSingle()
+
+  if (insertError) {
+    throw insertError
+  }
+
+  return { id: inserted?.[idColumn] ?? null, name: inserted?.[nameColumn] || textValue }
+}
+
 async function getReporterMaps(reports) {
   const reporterAuthIds = [...new Set(reports.map((report) => report.reported_by).filter(Boolean))]
 
@@ -82,6 +136,29 @@ export async function getReports(_req, res) {
   try {
     const { userByAuthId, roleById, departmentById } = await getReporterMaps(reports)
 
+    const locationIds = [...new Set(reports.map((report) => report.location_id).filter(Boolean))]
+    const productTypeIds = [...new Set(reports.map((report) => report.product_type_id).filter(Boolean))]
+
+    const [locationsResult, productTypesResult] = await Promise.all([
+      locationIds.length > 0
+        ? supabase.from('locations').select('id, location_name').in('id', locationIds)
+        : Promise.resolve({ data: [], error: null }),
+      productTypeIds.length > 0
+        ? supabase.from('product_types').select('id, product_name').in('id', productTypeIds)
+        : Promise.resolve({ data: [], error: null }),
+    ])
+
+    if (locationsResult.error) {
+      throw locationsResult.error
+    }
+
+    if (productTypesResult.error) {
+      throw productTypesResult.error
+    }
+
+    const locationById = new Map((locationsResult.data || []).map((location) => [String(location.id), location.location_name]))
+    const productTypeById = new Map((productTypesResult.data || []).map((productType) => [String(productType.id), productType.product_name]))
+
     const enriched = reports.map((report) => {
       const reporter = userByAuthId.get(report.reported_by)
       const reporterFullName = reporter
@@ -93,6 +170,8 @@ export async function getReports(_req, res) {
         reporter_full_name: reporterFullName,
         reporter_role_name: reporter ? roleById.get(String(reporter.role_id)) || null : null,
         reporter_department_name: reporter ? departmentById.get(String(reporter.department_id)) || null : null,
+        location_name: report.location_id ? locationById.get(String(report.location_id)) || null : report.complaint_location || null,
+        product_type_name: report.product_type_id ? productTypeById.get(String(report.product_type_id)) || null : report.product_type || null,
       }
     })
 
@@ -105,8 +184,10 @@ export async function getReports(_req, res) {
 export async function createReport(req, res) {
   const {
     product_type,
+    product_type_id,
     batch_number,
     complaint_location,
+    location_id,
     severity,
     department_id,
     description,
@@ -121,8 +202,8 @@ export async function createReport(req, res) {
     return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
   }
 
-  if (!product_type || !batch_number || !complaint_location || !severity || !department_id || !description) {
-    return res.status(400).json({ error: 'Product type, batch number, location, severity, department, and description are required.' })
+  if (!batch_number || !severity || !department_id || !description) {
+    return res.status(400).json({ error: 'Batch number, severity, department, and description are required.' })
   }
 
   const { data: reporter, error: reporterError } = await supabase
@@ -155,13 +236,35 @@ export async function createReport(req, res) {
   const nextSequence = buildReferenceNumber(latest?.reference_no) + 1
   const referenceNo = `NCR-${year}-${String(nextSequence).padStart(4, '0')}`
 
+  const { id: resolvedLocationId, name: resolvedLocationName } = await resolveCatalogEntry({
+    table: 'locations',
+    idColumn: 'id',
+    nameColumn: 'location_name',
+    rawId: location_id,
+    rawName: complaint_location,
+  })
+
+  const { id: resolvedProductTypeId, name: resolvedProductTypeName } = await resolveCatalogEntry({
+    table: 'product_types',
+    idColumn: 'id',
+    nameColumn: 'product_name',
+    rawId: product_type_id,
+    rawName: product_type,
+  })
+
+  if (!resolvedLocationId || !resolvedProductTypeId) {
+    return res.status(400).json({ error: 'Location and product type are required.' })
+  }
+
   const payload = {
     reference_no: referenceNo,
     reported_by: reporter.id,
     status: 'open',
-    product_type,
+    product_type: resolvedProductTypeName,
+    product_type_id: resolvedProductTypeId,
     batch_number,
-    complaint_location,
+    complaint_location: resolvedLocationName,
+    location_id: resolvedLocationId,
     severity,
     department_id: normalizeId(department_id),
     description,
@@ -199,8 +302,10 @@ export async function updateReport(req, res) {
   const { id } = req.params
   const {
     product_type,
+    product_type_id,
     batch_number,
     complaint_location,
+    location_id,
     severity,
     department_id,
     description,
@@ -224,10 +329,38 @@ export async function updateReport(req, res) {
     return res.status(404).json({ error: 'NCR report not found.' })
   }
 
+  let resolvedLocation = null
+  if (location_id !== undefined || complaint_location !== undefined) {
+    resolvedLocation = await resolveCatalogEntry({
+      table: 'locations',
+      idColumn: 'id',
+      nameColumn: 'location_name',
+      rawId: location_id,
+      rawName: complaint_location,
+    })
+  }
+
+  let resolvedProductType = null
+  if (product_type_id !== undefined || product_type !== undefined) {
+    resolvedProductType = await resolveCatalogEntry({
+      table: 'product_types',
+      idColumn: 'id',
+      nameColumn: 'product_name',
+      rawId: product_type_id,
+      rawName: product_type,
+    })
+  }
+
   const updates = {}
-  if (product_type !== undefined) updates.product_type = product_type
+  if (resolvedProductType) {
+    updates.product_type = resolvedProductType.name
+    updates.product_type_id = resolvedProductType.id
+  }
   if (batch_number !== undefined) updates.batch_number = batch_number
-  if (complaint_location !== undefined) updates.complaint_location = complaint_location
+  if (resolvedLocation) {
+    updates.complaint_location = resolvedLocation.name
+    updates.location_id = resolvedLocation.id
+  }
   if (severity !== undefined) updates.severity = severity
   if (department_id !== undefined) updates.department_id = normalizeId(department_id)
   if (description !== undefined) updates.description = description

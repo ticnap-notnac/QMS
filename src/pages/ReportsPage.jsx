@@ -14,12 +14,8 @@ import './PagesStyles.css'
 import { useAuth } from '@/hooks/useAuth'
 import { loadDepartments } from '@/services/departmentService'
 import { createReport, fetchReports, updateReport } from '@/services/ncrService'
-
-const LOCATION_OPTIONS = [
-  { value: 'station-a', label: 'Production Station A' },
-  { value: 'station-b', label: 'Production Station B' },
-  { value: 'warehouse', label: 'Warehouse Storage' },
-]
+import { fetchLocations, createLocation } from '@/services/locationService'
+import { fetchProductTypes, createProductType } from '@/services/productTypeService'
 
 const DEFAULT_CREATE_FORM = {
   productType: '',
@@ -65,6 +61,97 @@ function getSeverityStyle(severity) {
   return { background: 'rgba(59, 130, 246, 0.18)', color: '#bfdbfe', borderColor: 'rgba(59, 130, 246, 0.32)' }
 }
 
+function SearchableDropdown({ label, value, onValueChange, options, loading, placeholder, onSelectOption }) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const filteredOptions = useMemo(() => {
+    const query = value.trim().toLowerCase()
+    if (!query) return options
+    return options.filter((option) => String(option.label || '').toLowerCase().includes(query))
+  }, [options, value])
+
+  return (
+    <div>
+      <label className="label-field">{label}</label>
+      <div style={{ position: 'relative' }}>
+        <input
+          type="text"
+          value={value}
+          onChange={(event) => {
+            onValueChange(event.target.value)
+            setIsOpen(true)
+          }}
+          onFocus={() => setIsOpen(true)}
+          onBlur={() => {
+            window.setTimeout(() => setIsOpen(false), 120)
+          }}
+          className="input-field"
+          placeholder={placeholder}
+        />
+
+        {isOpen ? (
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: '100%',
+              zIndex: 20,
+              marginTop: '6px',
+              maxHeight: '180px',
+              overflowY: 'auto',
+              border: '1px solid rgba(148, 163, 184, 0.28)',
+              borderRadius: '12px',
+              background: 'rgba(11, 24, 53, 0.98)',
+              boxShadow: '0 18px 40px rgba(0, 0, 0, 0.28)',
+            }}
+          >
+            {loading ? (
+              <div style={{ padding: '12px 14px', color: '#cbd5e1' }}>Loading...</div>
+            ) : filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onMouseDown={(event) => {
+                    event.preventDefault()
+                    onValueChange(option.label)
+                    onSelectOption(option)
+                    setIsOpen(false)
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '10px 14px',
+                    background: 'transparent',
+                    color: '#e2e8f0',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))
+            ) : (
+              <div style={{ padding: '12px 14px', color: '#cbd5e1' }}>
+                No matches found. You can keep typing a custom value.
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function toOptionList(items, labelKey) {
+  return (items || []).map((item) => ({
+    id: item.id,
+    label: item[labelKey] || '',
+  }))
+}
+
 function ReportsPage({
   activePage,
   onPageChange,
@@ -91,7 +178,11 @@ function ReportsPage({
   const [carFiled, setCarFiled] = useState(false)
   const [qddrFiled, setQddrFiled] = useState(false)
   const [departments, setDepartments] = useState([])
+  const [locations, setLocations] = useState([])
+  const [productTypes, setProductTypes] = useState([])
   const [departmentsLoading, setDepartmentsLoading] = useState(false)
+  const [locationsLoading, setLocationsLoading] = useState(false)
+  const [productTypesLoading, setProductTypesLoading] = useState(false)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
@@ -101,8 +192,10 @@ function ReportsPage({
   const [isPreventiveActionModalOpen, setIsPreventiveActionModalOpen] = useState(false)
 
   const [productType, setProductType] = useState(DEFAULT_CREATE_FORM.productType)
+  const [productTypeId, setProductTypeId] = useState('')
   const [batchNumber, setBatchNumber] = useState(DEFAULT_CREATE_FORM.batchNumber)
   const [location, setLocation] = useState(DEFAULT_CREATE_FORM.location)
+  const [locationId, setLocationId] = useState('')
   const [severity, setSeverity] = useState(DEFAULT_CREATE_FORM.severity)
   const [department, setDepartment] = useState(DEFAULT_CREATE_FORM.department)
   const [description, setDescription] = useState(DEFAULT_CREATE_FORM.description)
@@ -112,11 +205,15 @@ function ReportsPage({
   const [preventiveRating, setPreventiveRating] = useState(DEFAULT_CREATE_FORM.preventiveRating)
 
   const departmentOptions = useMemo(() => departments || [], [departments])
+  const locationOptions = useMemo(() => toOptionList(locations, 'location_name'), [locations])
+  const productTypeOptions = useMemo(() => toOptionList(productTypes, 'product_type_name'), [productTypes])
 
   const resetCreateForm = () => {
     setProductType(DEFAULT_CREATE_FORM.productType)
+    setProductTypeId('')
     setBatchNumber(DEFAULT_CREATE_FORM.batchNumber)
     setLocation(DEFAULT_CREATE_FORM.location)
+    setLocationId('')
     setSeverity(DEFAULT_CREATE_FORM.severity)
     setDepartment(DEFAULT_CREATE_FORM.department)
     setDescription(DEFAULT_CREATE_FORM.description)
@@ -127,9 +224,11 @@ function ReportsPage({
   const setFormFromReport = (report) => {
     if (!report) return
 
-    setProductType(report.product_type || '')
+    setProductType(report.product_type_name || report.product_type || '')
+    setProductTypeId(report.product_type_id ? String(report.product_type_id) : '')
     setBatchNumber(report.batch_number || '')
-    setLocation(report.complaint_location || '')
+    setLocation(report.location_name || report.complaint_location || '')
+    setLocationId(report.location_id ? String(report.location_id) : '')
     setSeverity(report.severity || '')
     setDepartment(report.department_id ? String(report.department_id) : '')
     setDescription(report.description || '')
@@ -144,21 +243,29 @@ function ReportsPage({
   const loadPageData = async () => {
     setIsLoading(true)
     setDepartmentsLoading(true)
+    setLocationsLoading(true)
+    setProductTypesLoading(true)
     setError(null)
 
     try {
-      const [departmentData, reportData] = await Promise.all([
+      const [departmentData, locationData, productTypeData, reportData] = await Promise.all([
         loadDepartments(),
+        fetchLocations(),
+        fetchProductTypes(),
         fetchReports(),
       ])
 
       setDepartments(Array.isArray(departmentData) ? departmentData : [])
+      setLocations(Array.isArray(locationData) ? locationData : [])
+      setProductTypes(Array.isArray(productTypeData) ? productTypeData : [])
       setReports(Array.isArray(reportData) ? reportData : [])
     } catch (err) {
       setError(err?.message || 'Failed to load NCR reports.')
     } finally {
       setIsLoading(false)
       setDepartmentsLoading(false)
+      setLocationsLoading(false)
+      setProductTypesLoading(false)
     }
   }
 
@@ -215,26 +322,83 @@ function ReportsPage({
     setIsPreventiveActionModalOpen(true)
   }
 
+  const resolveCatalogSelection = async ({ inputValue, selectedId, options, createFn, optionLabelKey }) => {
+    const trimmed = String(inputValue || '').trim()
+    if (!trimmed) {
+      throw new Error('Location and product type are required.')
+    }
+
+    if (selectedId) {
+      const existingById = options.find((option) => String(option.id) === String(selectedId))
+      if (existingById) {
+        return { id: existingById.id, label: existingById[optionLabelKey] || existingById.label || trimmed }
+      }
+    }
+
+    const exactMatch = options.find((option) => String(option[optionLabelKey] || option.label || '').trim().toLowerCase() === trimmed.toLowerCase())
+    if (exactMatch) {
+      return { id: exactMatch.id, label: exactMatch[optionLabelKey] || exactMatch.label || trimmed }
+    }
+
+    const created = await createFn(trimmed)
+    const createdItem = Array.isArray(created) ? created[0] : created
+    return {
+      id: createdItem?.id,
+      label: createdItem?.[optionLabelKey] || createdItem?.label || trimmed,
+    }
+  }
+
   const handleSubmitReport = async (event) => {
     event.preventDefault()
+    await submitReport()
+  }
+
+  // Shared create flow used by the main create form and CAR/QDDR modals
+  const submitReport = async (overrides = {}) => {
     try {
       setError(null)
-      await createReport({
-        product_type: productType,
+
+      const resolvedProductType = await resolveCatalogSelection({
+        inputValue: productType,
+        selectedId: productTypeId,
+        options: productTypeOptions,
+        createFn: createProductType,
+        optionLabelKey: 'label',
+      })
+
+      const resolvedLocation = await resolveCatalogSelection({
+        inputValue: location,
+        selectedId: locationId,
+        options: locationOptions,
+        createFn: createLocation,
+        optionLabelKey: 'label',
+      })
+
+      const payload = {
+        product_type_id: resolvedProductType.id,
         batch_number: batchNumber,
-        complaint_location: location,
+        location_id: resolvedLocation.id,
         severity,
         department_id: department,
         description,
-        car_filed: carFiled,
-        qddr_filed: qddrFiled,
+        car_filed: Boolean(carFiled),
+        qddr_filed: Boolean(qddrFiled),
         evidence_url: null,
-      })
-      closeCreateModal()
+        ...overrides,
+      }
+
+      await createReport(payload)
+
+      // close any open creation-related modals
+      setIsCarModalOpen(false)
+      setIsQddrModalOpen(false)
+      setIsModalOpen(false)
+
       resetCreateForm()
       await loadPageData()
     } catch (err) {
       setError(err?.message || 'Failed to submit NCR report.')
+      throw err
     }
   }
 
@@ -244,10 +408,26 @@ function ReportsPage({
 
     try {
       setError(null)
+      const resolvedProductType = await resolveCatalogSelection({
+        inputValue: productType,
+        selectedId: productTypeId,
+        options: productTypeOptions,
+        createFn: createProductType,
+        optionLabelKey: 'label',
+      })
+
+      const resolvedLocation = await resolveCatalogSelection({
+        inputValue: location,
+        selectedId: locationId,
+        options: locationOptions,
+        createFn: createLocation,
+        optionLabelKey: 'label',
+      })
+
       await updateReport(selectedReport.id, {
-        product_type: productType,
+        product_type_id: resolvedProductType.id,
         batch_number: batchNumber,
-        complaint_location: location,
+        location_id: resolvedLocation.id,
         severity,
         department_id: department,
         description,
@@ -308,7 +488,7 @@ function ReportsPage({
             const reporterName = report.reporter_full_name || 'Name of the User'
             const reporterRole = report.reporter_role_name || 'Position'
             const reporterDepartment = report.reporter_department_name || departmentNameById.get(String(report.department_id)) || 'Department'
-            const reportLocation = report.complaint_location || 'Location'
+            const reportLocation = report.location_name || report.complaint_location || 'Location'
             const statusStyle = getStatusStyle(report.status)
             const severityStyle = getSeverityStyle(report.severity)
 
@@ -407,16 +587,34 @@ function ReportsPage({
                 <div className="upload-box"><UploadIcon size={20} className="icon-teal" /><span className="reports-upload-text">Upload an Image</span></div>
               </div>
               <div className="reports-grid-3-16">
-                <div><label className="label-field">Product Type:</label><input type="text" value={productType} onChange={(e) => setProductType(e.target.value)} className="input-field" placeholder="Enter product type" /></div>
+                <div>
+                  <SearchableDropdown
+                    label="Product Type:"
+                    value={productType}
+                    onValueChange={(nextValue) => {
+                      setProductType(nextValue)
+                      setProductTypeId('')
+                    }}
+                    options={productTypeOptions}
+                    loading={productTypesLoading}
+                    placeholder={productTypesLoading ? 'Loading product types...' : 'Enter or select product type'}
+                    onSelectOption={(option) => setProductTypeId(String(option.id))}
+                  />
+                </div>
                 <div><label className="label-field">Batch Number:</label><input type="text" value={batchNumber} onChange={(e) => setBatchNumber(e.target.value)} className="input-field" placeholder="Enter batch number" /></div>
                 <div>
-                  <label className="label-field">Location:</label>
-                  <select value={location} onChange={(e) => setLocation(e.target.value)} className="select-field">
-                    <option value="" disabled hidden>Select structural section</option>
-                    {LOCATION_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
+                  <SearchableDropdown
+                    label="Location:"
+                    value={location}
+                    onValueChange={(nextValue) => {
+                      setLocation(nextValue)
+                      setLocationId('')
+                    }}
+                    options={locationOptions}
+                    loading={locationsLoading}
+                    placeholder={locationsLoading ? 'Loading locations...' : 'Enter or select location'}
+                    onSelectOption={(option) => setLocationId(String(option.id))}
+                  />
                 </div>
               </div>
               <div className="reports-grid-2-16">
@@ -457,7 +655,7 @@ function ReportsPage({
             <button onClick={closeCarModal} className="modal-close-button"><CloseIcon size={18} /></button>
             <h3 className="reports-uppercase-title">Corrective Action Report</h3>
             <div className="workspace-placeholder"><span className="reports-placeholder-text">Corrective Actions Configuration Sheet</span><div className="cross-line-bg"></div></div>
-            <div className="center-row"><button type="button" onClick={closeCarModal} className="secondary-action-button">Submit Report</button></div>
+            <div className="center-row"><button type="button" onClick={async () => { try { await submitReport({ car_filed: true }) } catch (e) {} }} className="secondary-action-button">Submit Report</button></div>
           </div>
         </div>
       )}
@@ -469,7 +667,7 @@ function ReportsPage({
             <button onClick={closeQddrModal} className="modal-close-button"><CloseIcon size={18} /></button>
             <h3 className="reports-uppercase-title">Quality Defects / Damaged / Discrepancy Report</h3>
             <div className="workspace-placeholder"><span className="reports-placeholder-text">Quality Discrepancy Analysis Canvas</span><div className="cross-line-bg"></div></div>
-            <div className="center-row"><button type="button" onClick={closeQddrModal} className="secondary-action-button">Submit Report</button></div>
+            <div className="center-row"><button type="button" onClick={async () => { try { await submitReport({ qddr_filed: true }) } catch (e) {} }} className="secondary-action-button">Submit Report</button></div>
           </div>
         </div>
       )}
@@ -489,16 +687,34 @@ function ReportsPage({
                 <div className="upload-box upload-box--padded"><UploadIcon size={18} className="icon-teal" /><span className="reports-upload-text-small">Upload an Image</span></div>
               </div>
               <div className="grid-3">
-                <div><label className="label-field">Product Type:</label><input type="text" value={productType} onChange={(e) => setProductType(e.target.value)} className="input-field" /></div>
+                <div>
+                  <SearchableDropdown
+                    label="Product Type:"
+                    value={productType}
+                    onValueChange={(nextValue) => {
+                      setProductType(nextValue)
+                      setProductTypeId('')
+                    }}
+                    options={productTypeOptions}
+                    loading={productTypesLoading}
+                    placeholder={productTypesLoading ? 'Loading product types...' : 'Enter or select product type'}
+                    onSelectOption={(option) => setProductTypeId(String(option.id))}
+                  />
+                </div>
                 <div><label className="label-field">Batch Number:</label><input type="text" value={batchNumber} onChange={(e) => setBatchNumber(e.target.value)} className="input-field" /></div>
                 <div>
-                  <label className="label-field">Location:</label>
-                  <select value={location} onChange={(e) => setLocation(e.target.value)} className="select-field">
-                    <option value="" disabled hidden>Select structural section</option>
-                    {LOCATION_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
+                  <SearchableDropdown
+                    label="Location:"
+                    value={location}
+                    onValueChange={(nextValue) => {
+                      setLocation(nextValue)
+                      setLocationId('')
+                    }}
+                    options={locationOptions}
+                    loading={locationsLoading}
+                    placeholder={locationsLoading ? 'Loading locations...' : 'Enter or select location'}
+                    onSelectOption={(option) => setLocationId(String(option.id))}
+                  />
                 </div>
               </div>
               <div className="reports-grid-2-14">

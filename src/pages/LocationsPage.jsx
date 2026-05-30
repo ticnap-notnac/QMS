@@ -7,16 +7,13 @@ import AdminListPanel from '@/components/AdminListPanel'
 import SearchForm from '@/components/SearchForm'
 import './PagesStyles.css'
 import useCategoryManager from '@/hooks/useCategoryManager'
-import { useLookup } from '@/context/LookupContext'
 import {
-  loadRoles as loadRolesController,
-  createRole as createRoleController,
-  deleteRole as deleteRoleController,
-} from '@/services/roleService'
-import { insertLog, logAction } from '@/services/logService'
-import { supabase } from '@/utils/supabase'
+  loadLocations as loadLocationsController,
+  createLocation as createLocationController,
+  deleteLocation as deleteLocationController,
+} from '@/services/locationService'
 
-export default function RolesPage({
+export default function LocationsPage({
   activePage,
   onPageChange,
   isUserMenuOpen,
@@ -36,14 +33,12 @@ export default function RolesPage({
   const [formMessage, setFormMessage] = useState('')
 
   const { items, loading, deletingId, reload, createItem, deleteItem, error } = useCategoryManager({
-    loadFn: loadRolesController,
-    createFn: createRoleController,
-    deleteFn: deleteRoleController,
+    loadFn: loadLocationsController,
+    createFn: createLocationController,
+    deleteFn: deleteLocationController,
   })
 
-  const { reloadLookups } = useLookup()
-
-  const filtered = items.filter((r) => (r.role_name || '').toLowerCase().includes(searchQuery.trim().toLowerCase()))
+  const filtered = items.filter((location) => (location.location_name || '').toLowerCase().includes(searchQuery.trim().toLowerCase()))
 
   const openCategoryModal = () => {
     setFormError('')
@@ -67,24 +62,20 @@ export default function RolesPage({
     try {
       setFormError('')
       await createItem(nextValue)
-      await reloadLookups()
-      setFormMessage(`Added role ${nextValue} successfully.`)
+      setFormMessage(`Added location ${nextValue} successfully.`)
       closeCategoryModal()
     } catch (err) {
       setFormError(err.message)
     }
   }
 
-  const handleDeleteRole = async (role) => {
-    const confirmed = window.confirm(`Delete role "${role.role_name}"?`)
+  const handleDeleteLocation = async (location) => {
+    const confirmed = window.confirm(`Delete location "${location.location_name}"?`)
     if (!confirmed) return
     try {
       setFormError('')
-      await deleteItem(role.id)
-      await reloadLookups()
-      // Server records role_delete; avoid duplicate client-side log
-
-      setFormMessage(`Deleted role ${role.role_name} successfully.`)
+      await deleteItem(location.id)
+      setFormMessage(`Deleted location ${location.location_name} successfully.`)
     } catch (err) {
       setFormError(err.message)
     }
@@ -108,7 +99,7 @@ export default function RolesPage({
 
       {userRole === 'admin' ? (
         <main className="page-main-wide">
-          <h1 className="page-title">Manage Roles</h1>
+          <h1 className="page-title">Manage Locations</h1>
 
           <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
 
@@ -136,23 +127,23 @@ export default function RolesPage({
 
                 <div className="admin-search-actions-row">
                   <div className="admin-search-container">
-                    <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reload} placeholder="Search roles..." />
+                    <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reload} placeholder="Search locations..." />
                   </div>
                   <div className="admin-actions-right">
-                    <button onClick={openCategoryModal} className="btn-add-action">+ Add Role</button>
+                    <button onClick={openCategoryModal} className="btn-add-action">+ Add Location</button>
                   </div>
                 </div>
               </div>
 
               <div className="glass-card-content">
                 <div className="panel-narrow">
-                  <p className="glass-card-subtext">Use the add button above to create a new role.</p>
+                  <p className="glass-card-subtext">Use the add button above to create a new location.</p>
                   <AdminListPanel
-                    title="Available Roles"
+                    title="Available Locations"
                     items={filtered}
                     loading={loading}
-                    labelKey="role_name"
-                    onDelete={handleDeleteRole}
+                    labelKey="location_name"
+                    onDelete={handleDeleteLocation}
                     deletingId={deletingId}
                     noMatchesText="No matches found."
                   />
@@ -166,16 +157,16 @@ export default function RolesPage({
             isOpen={isCategoryModalOpen}
             onClose={closeCategoryModal}
             onSubmit={handleSubmitCategory}
-            title={'Create New Role'}
-            label={'Role Name'}
+            title={'Create New Location'}
+            label={'Location Name'}
             value={categoryInput}
             onChange={(event) => setCategoryInput(event.target.value)}
-            placeholder={'Enter role name'}
+            placeholder={'Enter location name'}
             loading={false}
             error={formError}
             message={formMessage}
-            submitLabel={'Create Role'}
-            helperText={'Create a role entry that will be available in the user modal.'}
+            submitLabel={'Create Location'}
+            helperText={'Create a location entry that will be available in the NCR report modal.'}
           />
         </main>
       ) : (

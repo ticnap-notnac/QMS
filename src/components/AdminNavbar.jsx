@@ -2,7 +2,7 @@ export default function AdminNavbar({
   activeTab = 'Users',
   onTabChange,
 }) {
-  const tabs = ['Users', 'Dept', 'Roles', 'ISO Module']
+  const tabs = ['Users', 'Dept', 'Roles', 'Locations', 'Product Types', 'ISO Module']
 
   return (
     <div className="admin-top-nav">
