@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Navbar from '../components/Navbar.jsx'
 import { 
   Upload as UploadIcon, 
@@ -11,6 +11,59 @@ import {
   FileSearch
 } from 'lucide-react'
 import './PagesStyles.css'
+import { useAuth } from '@/hooks/useAuth'
+import { loadDepartments } from '@/services/departmentService'
+import { createReport, fetchReports, updateReport } from '@/services/ncrService'
+
+const LOCATION_OPTIONS = [
+  { value: 'station-a', label: 'Production Station A' },
+  { value: 'station-b', label: 'Production Station B' },
+  { value: 'warehouse', label: 'Warehouse Storage' },
+]
+
+const DEFAULT_CREATE_FORM = {
+  productType: '',
+  batchNumber: '',
+  location: '',
+  severity: '',
+  department: '',
+  description: '',
+  investigationText: '',
+  resolutionTime: '24h',
+  verificationDate: '',
+  preventiveRating: 'Excellent',
+}
+
+function formatDate(value) {
+  if (!value) return 'No date'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'No date'
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function getStatusStyle(status) {
+  if (String(status).toLowerCase() === 'closed') {
+    return { background: 'rgba(148, 163, 184, 0.18)', color: '#e2e8f0', borderColor: 'rgba(148, 163, 184, 0.3)' }
+  }
+
+  return { background: 'rgba(34, 197, 94, 0.16)', color: '#bbf7d0', borderColor: 'rgba(34, 197, 94, 0.28)' }
+}
+
+function getSeverityStyle(severity) {
+  const value = String(severity).toLowerCase()
+  if (value === 'high') {
+    return { background: 'rgba(239, 68, 68, 0.18)', color: '#fecaca', borderColor: 'rgba(239, 68, 68, 0.32)' }
+  }
+  if (value === 'medium') {
+    return { background: 'rgba(245, 158, 11, 0.18)', color: '#fde68a', borderColor: 'rgba(245, 158, 11, 0.32)' }
+  }
+
+  return { background: 'rgba(59, 130, 246, 0.18)', color: '#bfdbfe', borderColor: 'rgba(59, 130, 246, 0.32)' }
+}
 
 function ReportsPage({
   activePage,
@@ -23,31 +76,195 @@ function ReportsPage({
   userRole,
   userName,
   userPosition,
-  setIsAdminPanelOpen,      
+  setIsAdminPanelOpen,
   setIsAuditToolsOpen,
-  setProfileTargetTab
+  setProfileTargetTab,
+  authUserId,
 }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [isCarModalOpen, setIsCarModalOpen] = useState(false);
-  const [isQddrModalOpen, setIsQddrModalOpen] = useState(false);
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false); 
-  const [isPreventiveActionModalOpen, setIsPreventiveActionModalOpen] = useState(false);
+  const { user: authUser } = useAuth()
+  const currentAuthId = authUser?.id || authUserId || ''
 
-  const [productType, setProductType] = useState('');
-  const [batchNumber, setBatchNumber] = useState('');
-  const [location, setLocation] = useState('');
-  const [severity, setSeverity] = useState('');
-  const [department, setDepartment] = useState('');
-  const [description, setDescription] = useState('');
-  const [investigationText, setInvestigationText] = useState('');
-  const [resolutionTime, setResolutionTime] = useState('');
-  const [verificationDate, setVerificationDate] = useState('');
-  const [preventiveRating, setPreventiveRating] = useState('Excellent');
+  const [reports, setReports] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [selectedReport, setSelectedReport] = useState(null)
+  const [carFiled, setCarFiled] = useState(false)
+  const [qddrFiled, setQddrFiled] = useState(false)
+  const [departments, setDepartments] = useState([])
+  const [departmentsLoading, setDepartmentsLoading] = useState(false)
 
-  const triggerCarModalTransition = () => { setIsModalOpen(false); setIsCarModalOpen(true); };
-  const triggerQddrModalTransition = () => { setIsModalOpen(false); setIsQddrModalOpen(true); };
-  const triggerPreventiveActionTransition = () => { setIsUpdateModalOpen(false); setIsPreventiveActionModalOpen(true); };
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+  const [isCarModalOpen, setIsCarModalOpen] = useState(false)
+  const [isQddrModalOpen, setIsQddrModalOpen] = useState(false)
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+  const [isPreventiveActionModalOpen, setIsPreventiveActionModalOpen] = useState(false)
+
+  const [productType, setProductType] = useState(DEFAULT_CREATE_FORM.productType)
+  const [batchNumber, setBatchNumber] = useState(DEFAULT_CREATE_FORM.batchNumber)
+  const [location, setLocation] = useState(DEFAULT_CREATE_FORM.location)
+  const [severity, setSeverity] = useState(DEFAULT_CREATE_FORM.severity)
+  const [department, setDepartment] = useState(DEFAULT_CREATE_FORM.department)
+  const [description, setDescription] = useState(DEFAULT_CREATE_FORM.description)
+  const [investigationText, setInvestigationText] = useState(DEFAULT_CREATE_FORM.investigationText)
+  const [resolutionTime, setResolutionTime] = useState(DEFAULT_CREATE_FORM.resolutionTime)
+  const [verificationDate, setVerificationDate] = useState(DEFAULT_CREATE_FORM.verificationDate)
+  const [preventiveRating, setPreventiveRating] = useState(DEFAULT_CREATE_FORM.preventiveRating)
+
+  const departmentOptions = useMemo(() => departments || [], [departments])
+
+  const resetCreateForm = () => {
+    setProductType(DEFAULT_CREATE_FORM.productType)
+    setBatchNumber(DEFAULT_CREATE_FORM.batchNumber)
+    setLocation(DEFAULT_CREATE_FORM.location)
+    setSeverity(DEFAULT_CREATE_FORM.severity)
+    setDepartment(DEFAULT_CREATE_FORM.department)
+    setDescription(DEFAULT_CREATE_FORM.description)
+    setCarFiled(false)
+    setQddrFiled(false)
+  }
+
+  const setFormFromReport = (report) => {
+    if (!report) return
+
+    setProductType(report.product_type || '')
+    setBatchNumber(report.batch_number || '')
+    setLocation(report.complaint_location || '')
+    setSeverity(report.severity || '')
+    setDepartment(report.department_id ? String(report.department_id) : '')
+    setDescription(report.description || '')
+    setInvestigationText(report.investigation_text || '')
+    setResolutionTime(report.resolution_time || DEFAULT_CREATE_FORM.resolutionTime)
+    setVerificationDate(report.verification_date || '')
+    setPreventiveRating(report.preventive_rating || DEFAULT_CREATE_FORM.preventiveRating)
+    setCarFiled(Boolean(report.car_filed))
+    setQddrFiled(Boolean(report.qddr_filed))
+  }
+
+  const loadPageData = async () => {
+    setIsLoading(true)
+    setDepartmentsLoading(true)
+    setError(null)
+
+    try {
+      const [departmentData, reportData] = await Promise.all([
+        loadDepartments(),
+        fetchReports(),
+      ])
+
+      setDepartments(Array.isArray(departmentData) ? departmentData : [])
+      setReports(Array.isArray(reportData) ? reportData : [])
+    } catch (err) {
+      setError(err?.message || 'Failed to load NCR reports.')
+    } finally {
+      setIsLoading(false)
+      setDepartmentsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadPageData()
+  }, [currentAuthId])
+
+  const openCreateModal = () => {
+    setError(null)
+    resetCreateForm()
+    setIsModalOpen(true)
+  }
+
+  const closeCreateModal = () => {
+    setIsModalOpen(false)
+  }
+
+  const openCarModal = () => {
+    setCarFiled(true)
+    setIsModalOpen(false)
+    setIsCarModalOpen(true)
+  }
+
+  const closeCarModal = () => {
+    setIsCarModalOpen(false)
+    setIsModalOpen(true)
+  }
+
+  const openQddrModal = () => {
+    setQddrFiled(true)
+    setIsModalOpen(false)
+    setIsQddrModalOpen(true)
+  }
+
+  const closeQddrModal = () => {
+    setIsQddrModalOpen(false)
+    setIsModalOpen(true)
+  }
+
+  const openUpdateModal = (report) => {
+    setSelectedReport(report)
+    setError(null)
+    setFormFromReport(report)
+    setIsUpdateModalOpen(true)
+  }
+
+  const closeUpdateModal = () => {
+    setIsUpdateModalOpen(false)
+    setSelectedReport(null)
+  }
+
+  const triggerPreventiveActionTransition = () => {
+    setIsUpdateModalOpen(false)
+    setIsPreventiveActionModalOpen(true)
+  }
+
+  const handleSubmitReport = async (event) => {
+    event.preventDefault()
+    try {
+      setError(null)
+      await createReport({
+        product_type: productType,
+        batch_number: batchNumber,
+        complaint_location: location,
+        severity,
+        department_id: department,
+        description,
+        car_filed: carFiled,
+        qddr_filed: qddrFiled,
+        evidence_url: null,
+      })
+      closeCreateModal()
+      resetCreateForm()
+      await loadPageData()
+    } catch (err) {
+      setError(err?.message || 'Failed to submit NCR report.')
+    }
+  }
+
+  const handleUpdateReport = async (event) => {
+    event.preventDefault()
+    if (!selectedReport?.id) return
+
+    try {
+      setError(null)
+      await updateReport(selectedReport.id, {
+        product_type: productType,
+        batch_number: batchNumber,
+        complaint_location: location,
+        severity,
+        department_id: department,
+        description,
+        car_filed: carFiled,
+        qddr_filed: qddrFiled,
+        evidence_url: selectedReport.evidence_url ?? null,
+      })
+      closeUpdateModal()
+      await loadPageData()
+    } catch (err) {
+      setError(err?.message || 'Failed to update NCR report.')
+    }
+  }
+
+  const departmentNameById = useMemo(() => {
+    return new Map((departments || []).map((item) => [String(item.id), item.department_name]))
+  }, [departments])
 
   return (
     <main className="dashboard page-root">
@@ -74,32 +291,59 @@ function ReportsPage({
           </button>
         </div>
 
-        <div className="reports-card">
-          <div className="reports-card-header">
-            <div className="reports-user-block">
-              <div className="reports-avatar">
-                <User size={20} className="icon-cyan" />
-              </div>
-              <div className="reports-user-text">
-                <span className="reports-user-name">Name of the User</span>
-                <span className="reports-user-meta">Position • Location • Date and Time</span>
-              </div>
-            </div>
-            <div className="badges-row">
-              <span className="status-badge">Status</span>
-              <span className="day-badge">Day</span>
+        {error ? <div className="user-info-error">{error}</div> : null}
+
+        {isLoading ? (
+          <div className="reports-card">
+            <div className="glass-card-subtext">Loading reports...</div>
+          </div>
+        ) : reports.length === 0 ? (
+          <div className="reports-card">
+            <div className="reports-workspace">
+              <span className="reports-workspace-text">No reports yet</span>
             </div>
           </div>
-          <div className="reports-details-title-wrap"><h4 className="reports-details-title">Details</h4></div>
-          
-          <div className="reports-workspace">
-            <span className="reports-workspace-text">Data Workspace Content Window</span>
-            <div onClick={() => setIsUpdateModalOpen(true)} className="edit-icon-container"><SquarePen size={18} /></div>
-          </div>
-        </div>
+        ) : (
+          reports.map((report) => {
+            const reporterName = report.reporter_full_name || 'Name of the User'
+            const reporterRole = report.reporter_role_name || 'Position'
+            const reporterDepartment = report.reporter_department_name || departmentNameById.get(String(report.department_id)) || 'Department'
+            const reportLocation = report.complaint_location || 'Location'
+            const statusStyle = getStatusStyle(report.status)
+            const severityStyle = getSeverityStyle(report.severity)
+
+            return (
+              <div className="reports-card" key={report.id}>
+                <div className="reports-card-header">
+                  <div className="reports-user-block">
+                    <div className="reports-avatar">
+                      <User size={20} className="icon-cyan" />
+                    </div>
+                    <div className="reports-user-text">
+                      <span className="reports-user-name">{reporterName}</span>
+                      <span className="reports-user-meta">
+                        {reporterRole} • {reporterDepartment} • {reportLocation} • {formatDate(report.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="badges-row">
+                    <span className="status-badge" style={statusStyle}>{String(report.status || 'open').toUpperCase()}</span>
+                    <span className="day-badge" style={severityStyle}>{String(report.severity || 'low').toUpperCase()}</span>
+                  </div>
+                </div>
+                <div className="reports-details-title-wrap"><h4 className="reports-details-title">Details</h4></div>
+
+                <div className="reports-workspace">
+                  <span className="reports-workspace-text">{report.description || 'No description provided.'}</span>
+                  <div onClick={() => openUpdateModal(report)} className="edit-icon-container"><SquarePen size={18} /></div>
+                </div>
+              </div>
+            )
+          })
+        )}
 
         <div className="reports-submit-row">
-          <button type="button" onClick={() => setIsModalOpen(true)} className="btn-gradient-primary reports-submit-primary">Submit a Report</button>
+          <button type="button" onClick={openCreateModal} className="btn-gradient-primary reports-submit-primary">Submit a Report</button>
         </div>
       </div>
 
@@ -115,7 +359,15 @@ function ReportsPage({
             <div className="modal-grid">
               <div className="modal-col">
                 <div className="modal-grid-2">
-                  <div><label className="label-field">Department</label><select className="input-field"><option>Select</option></select></div>
+                  <div>
+                    <label className="label-field">Department</label>
+                    <select className="input-field" defaultValue="">
+                      <option value="">Select</option>
+                      {departmentOptions.map((item) => (
+                        <option key={item.id} value={item.id}>{item.department_name}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div>
                     <label className="label-field">Date</label>
                     <div className="relative">
@@ -148,8 +400,8 @@ function ReportsPage({
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-card">
-            <button onClick={() => setIsModalOpen(false)} className="modal-close-button"><CloseIcon size={18} /></button>
-            <form onSubmit={(e) => e.preventDefault()} className="modal-form">
+            <button onClick={closeCreateModal} className="modal-close-button"><CloseIcon size={18} /></button>
+            <form onSubmit={handleSubmitReport} className="modal-form">
               <div>
                 <label className="label-field">Evidence:</label>
                 <div className="upload-box"><UploadIcon size={20} className="icon-teal" /><span className="reports-upload-text">Upload an Image</span></div>
@@ -161,9 +413,9 @@ function ReportsPage({
                   <label className="label-field">Location:</label>
                   <select value={location} onChange={(e) => setLocation(e.target.value)} className="select-field">
                     <option value="" disabled hidden>Select structural section</option>
-                    <option value="station-a">Production Station A</option>
-                    <option value="station-b">Production Station B</option>
-                    <option value="warehouse">Warehouse Storage</option>
+                    {LOCATION_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -179,20 +431,20 @@ function ReportsPage({
                 </div>
                 <div>
                   <label className="label-field">Department:</label>
-                  <select value={department} onChange={(e) => setDepartment(e.target.value)} className="select-field">
-                    <option value="" disabled hidden>Select targeted module block</option>
-                    <option value="qa">Quality Assurance</option>
-                    <option value="operations">Operations & Assembly</option>
-                    <option value="logistics">Logistics & Distribution</option>
+                  <select value={department} onChange={(e) => setDepartment(e.target.value)} className="select-field" disabled={departmentsLoading || departmentOptions.length === 0}>
+                    <option value="" disabled hidden>{departmentsLoading ? 'Loading departments...' : 'Select targeted module block'}</option>
+                    {departmentOptions.map((item) => (
+                      <option key={item.id} value={item.id}>{item.department_name}</option>
+                    ))}
                   </select>
                 </div>
               </div>
               <div><label className="label-field">Description:</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} className="input-field textarea-large" placeholder="Provide thorough configuration summary report details..." /></div>
               <div className="modal-badges-row">
-                <button type="button" onClick={triggerCarModalTransition} className="badge-button">File for CAR</button>
-                <button type="button" onClick={triggerQddrModalTransition} className="badge-button">File for QDDR</button>
+                <button type="button" onClick={openCarModal} className="badge-button">File for CAR</button>
+                <button type="button" onClick={openQddrModal} className="badge-button">File for QDDR</button>
               </div>
-              <div className="modal-submit-row"><button type="submit" onClick={() => setIsModalOpen(false)} className="btn-gradient-primary">Submit Report</button></div>
+              <div className="modal-submit-row"><button type="submit" className="btn-gradient-primary">Submit Report</button></div>
             </form>
           </div>
         </div>
@@ -202,10 +454,10 @@ function ReportsPage({
       {isCarModalOpen && (
         <div className="modal-overlay">
           <div className="modal-card modal-card--large">
-            <button onClick={() => setIsCarModalOpen(false)} className="modal-close-button"><CloseIcon size={18} /></button>
+            <button onClick={closeCarModal} className="modal-close-button"><CloseIcon size={18} /></button>
             <h3 className="reports-uppercase-title">Corrective Action Report</h3>
             <div className="workspace-placeholder"><span className="reports-placeholder-text">Corrective Actions Configuration Sheet</span><div className="cross-line-bg"></div></div>
-            <div className="center-row"><button type="button" onClick={() => setIsCarModalOpen(false)} className="secondary-action-button">Submit Report</button></div>
+            <div className="center-row"><button type="button" onClick={closeCarModal} className="secondary-action-button">Submit Report</button></div>
           </div>
         </div>
       )}
@@ -214,10 +466,10 @@ function ReportsPage({
       {isQddrModalOpen && (
         <div className="modal-overlay">
           <div className="modal-card modal-card--large">
-            <button onClick={() => setIsQddrModalOpen(false)} className="modal-close-button"><CloseIcon size={18} /></button>
+            <button onClick={closeQddrModal} className="modal-close-button"><CloseIcon size={18} /></button>
             <h3 className="reports-uppercase-title">Quality Defects / Damaged / Discrepancy Report</h3>
             <div className="workspace-placeholder"><span className="reports-placeholder-text">Quality Discrepancy Analysis Canvas</span><div className="cross-line-bg"></div></div>
-            <div className="center-row"><button type="button" onClick={() => setIsQddrModalOpen(false)} className="secondary-action-button">Submit Report</button></div>
+            <div className="center-row"><button type="button" onClick={closeQddrModal} className="secondary-action-button">Submit Report</button></div>
           </div>
         </div>
       )}
@@ -226,12 +478,12 @@ function ReportsPage({
       {isUpdateModalOpen && (
         <div className="modal-overlay">
           <div className="modal-card modal-card--tall reports-update-card">
-            <button onClick={() => setIsUpdateModalOpen(false)} className="modal-close-button"><CloseIcon size={18} /></button>
+            <button onClick={closeUpdateModal} className="modal-close-button"><CloseIcon size={18} /></button>
             <div className="modal-header-row">
               <FileSearch size={18} className="icon-teal" />
               <h3 className="reports-update-title">Update Report</h3>
             </div>
-            <form onSubmit={(e) => e.preventDefault()} className="modal-form reports-form-compact">
+            <form onSubmit={handleUpdateReport} className="modal-form reports-form-compact">
               <div>
                 <label className="label-field">Evidence:</label>
                 <div className="upload-box upload-box--padded"><UploadIcon size={18} className="icon-teal" /><span className="reports-upload-text-small">Upload an Image</span></div>
@@ -242,9 +494,10 @@ function ReportsPage({
                 <div>
                   <label className="label-field">Location:</label>
                   <select value={location} onChange={(e) => setLocation(e.target.value)} className="select-field">
-                    <option value="station-a">Production Station A</option>
-                    <option value="station-b">Production Station B</option>
-                    <option value="warehouse">Warehouse Storage</option>
+                    <option value="" disabled hidden>Select structural section</option>
+                    {LOCATION_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -259,9 +512,10 @@ function ReportsPage({
                 </div>
                 <div>
                   <label className="label-field">Department:</label>
-                  <select value={department} onChange={(e) => setDepartment(e.target.value)} className="select-field">
-                    <option value="qa">Quality Assurance</option>
-                    <option value="operations">Operations & Assembly</option>
+                  <select value={department} onChange={(e) => setDepartment(e.target.value)} className="select-field" disabled={departmentsLoading || departmentOptions.length === 0}>
+                    {departmentOptions.map((item) => (
+                      <option key={item.id} value={item.id}>{item.department_name}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -284,7 +538,7 @@ function ReportsPage({
                 </div>
               </div>
               <div className="reports-update-submit-row">
-                <button type="button" onClick={triggerPreventiveActionTransition} className="btn-gradient-primary reports-update-button">Update Report</button>
+                <button type="submit" className="btn-gradient-primary reports-update-button">Update Report</button>
               </div>
             </form>
           </div>
@@ -326,4 +580,4 @@ function ReportsPage({
   )
 }
 
-export default ReportsPage;
+export default ReportsPage

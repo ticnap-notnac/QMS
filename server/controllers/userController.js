@@ -3,16 +3,35 @@ import { writeAudit } from '../lib/audit.js'
 import { getRequestActor } from '../lib/requestUtils.js'
 
 export async function getUsers(_req, res) {
-  const { data, error } = await supabase
-    .from('users')
-    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, created_at')
-    .order('created_at', { ascending: false })
+  const [usersResult, rolesResult, departmentsResult] = await Promise.all([
+    supabase
+      .from('users')
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, created_at')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('roles')
+      .select('id, role_name'),
+    supabase
+      .from('departments')
+      .select('id, department_name'),
+  ])
+
+  const { data, error } = usersResult
 
   if (error) {
     return res.status(500).json({ error: error.message })
   }
 
-  return res.json(data || [])
+  const roleMap = new Map((rolesResult.data || []).map((role) => [String(role.id), role.role_name]))
+  const departmentMap = new Map((departmentsResult.data || []).map((department) => [String(department.id), department.department_name]))
+
+  const enrichedUsers = (data || []).map((user) => ({
+    ...user,
+    role_name: roleMap.get(String(user.role_id)) || null,
+    department_name: departmentMap.get(String(user.department_id)) || null,
+  }))
+
+  return res.json(enrichedUsers)
 }
 
 export async function createUser(req, res) {

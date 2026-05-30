@@ -325,8 +325,8 @@ export default function AddUserPage({
                         <tbody>
                           {filteredUsers.map((user) => {
                             const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'
-                            const roleName = roleNameById.get(String(user.role_id)) || '-'
-                            const departmentLabel = departmentNameById.get(String(user.department_id)) || '-'
+                            const roleName = user.role_name || roleNameById.get(String(user.role_id)) || '-'
+                            const departmentLabel = user.department_name || departmentNameById.get(String(user.department_id)) || '-'
                             const isDeleting = deletingUserId === user.id
 
                             return (
