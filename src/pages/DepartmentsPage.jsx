@@ -82,11 +82,7 @@ export default function DepartmentsPage({
       setFormError('')
       await deleteItem(department.id)
       await reloadLookups()
-      try {
-        await logAction({ source: 'departments', action: 'department_delete', details: { id: department.id, department_name: department.department_name } })
-      } catch (e) {
-        console.warn('Failed to record department_delete from UI:', e?.message || e)
-      }
+      // Server records department_delete; avoid duplicate client-side log
 
       setFormMessage(`Deleted department ${department.department_name} successfully.`)
     } catch (err) {

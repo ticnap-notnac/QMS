@@ -122,11 +122,7 @@ export default function AddUserPage({
     try {
       setFormError('')
       await deleteItem(user.id)
-      try {
-        await logAction({ source: 'users', action: 'user_delete', details: { id: user.id, deleted_auth_id: user.auth_id || null, deleted_display: displayName } })
-      } catch (e) {
-        console.warn('Failed to record user_delete from UI:', e?.message || e)
-      }
+      // Server records user_delete; avoid duplicate client-side log
       setFormMessage(`Deleted ${displayName} successfully.`)
     } catch (err) {
       console.error('Delete user error:', err)

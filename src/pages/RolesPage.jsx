@@ -82,11 +82,7 @@ export default function RolesPage({
       setFormError('')
       await deleteItem(role.id)
       await reloadLookups()
-      try {
-        await logAction({ source: 'roles', action: 'role_delete', details: { id: role.id, role_name: role.role_name } })
-      } catch (e) {
-        console.warn('Failed to record role_delete from UI:', e?.message || e)
-      }
+      // Server records role_delete; avoid duplicate client-side log
 
       setFormMessage(`Deleted role ${role.role_name} successfully.`)
     } catch (err) {
