@@ -23,5 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
+.CODE_REVIEW.md
+
 # Ignore server environment file containing secrets
 server/.env
