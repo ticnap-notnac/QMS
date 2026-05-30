@@ -2,7 +2,7 @@ export default function AdminNavbar({
   activeTab = 'Users',
   onTabChange,
 }) {
-  const tabs = ['Users', 'Dept', 'Roles', 'Locations', 'Product Types', 'ISO Module']
+  const tabs = ['Users', 'Dept', 'Roles', 'Locations', 'Product Types', 'ISO Standards']
 
   return (
     <div className="admin-top-nav">
@@ -11,13 +11,8 @@ export default function AdminNavbar({
           <button
             key={t}
             type="button"
-            className={`admin-tab-button ${activeTab === t ? 'active' : ''} ${t === 'ISO Module' ? 'disabled' : ''}`}
-            onClick={() => {
-              if (t === 'ISO Module') return
-              onTabChange?.(t)
-            }}
-            disabled={t === 'ISO Module'}
-            title={t === 'ISO Module' ? 'ISO Module is unavailable for now' : undefined}
+            className={`admin-tab-button ${activeTab === t ? 'active' : ''}`}
+            onClick={() => onTabChange?.(t)}
           >
             {t}
           </button>

@@ -118,7 +118,7 @@ export default function RolesPage({
                 <div className="admin-top-row">
                   <div className="admin-tabs-wrap">
                     <AdminNavbar
-                      activeTab={activePage === 'Roles' ? 'Roles' : activePage === 'Departments' ? 'Dept' : activePage === 'Locations' ? 'Locations' : activePage === 'Product Types' ? 'Product Types' : activePage === 'ISO' ? 'ISO Module' : 'Users'}
+                      activeTab={activePage === 'Roles' ? 'Roles' : activePage === 'Departments' ? 'Dept' : activePage === 'Locations' ? 'Locations' : activePage === 'Product Types' ? 'Product Types' : activePage === 'ISO Standards' ? 'ISO Standards' : 'Users'}
                       onTabChange={(tab) => {
                         const map = {
                           Users: 'Admin Panel',
@@ -126,7 +126,7 @@ export default function RolesPage({
                           Roles: 'Roles',
                           Locations: 'Locations',
                           'Product Types': 'Product Types',
-                          'ISO Module': 'ISO',
+                          'ISO Standards': 'ISO Standards',
                         }
                         onPageChange?.(map[tab] || 'Admin Panel')
                       }}
@@ -166,16 +166,16 @@ export default function RolesPage({
             isOpen={isCategoryModalOpen}
             onClose={closeCategoryModal}
             onSubmit={handleSubmitCategory}
-            title={'Create New Role'}
-            label={'Role Name'}
+            title="Create New Role"
+            label="Role Name"
             value={categoryInput}
             onChange={(event) => setCategoryInput(event.target.value)}
-            placeholder={'Enter role name'}
+            placeholder="Enter role name"
             loading={false}
             error={formError}
             message={formMessage}
-            submitLabel={'Create Role'}
-            helperText={'Create a role entry that will be available in the user modal.'}
+            submitLabel="Create Role"
+            helperText="Create a role entry that will be available in the user modal."
           />
         </main>
       ) : (

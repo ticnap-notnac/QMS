@@ -261,7 +261,7 @@ export default function AddUserPage({
                 <div className="admin-top-row">
                   <div className="admin-tabs-wrap">
                     <AdminNavbar
-                      activeTab={activePage === 'Roles' ? 'Roles' : activePage === 'Departments' ? 'Dept' : activePage === 'Locations' ? 'Locations' : activePage === 'Product Types' ? 'Product Types' : activePage === 'ISO' ? 'ISO Module' : 'Users'}
+                      activeTab={activePage === 'Roles' ? 'Roles' : activePage === 'Departments' ? 'Dept' : activePage === 'Locations' ? 'Locations' : activePage === 'Product Types' ? 'Product Types' : activePage === 'ISO Standards' ? 'ISO Standards' : 'Users'}
                       onTabChange={(tab) => {
                         const map = {
                           Users: 'Admin Panel',
@@ -269,7 +269,7 @@ export default function AddUserPage({
                           Roles: 'Roles',
                           Locations: 'Locations',
                           'Product Types': 'Product Types',
-                          'ISO Module': 'ISO'
+                          'ISO Standards': 'ISO Standards'
                         }
                         const target = map[tab] || 'Admin Panel'
                         onPageChange?.(target)

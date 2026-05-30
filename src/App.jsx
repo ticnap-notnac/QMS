@@ -16,6 +16,7 @@ import LocationsPage from './pages/LocationsPage.jsx'
 import ProductTypesPage from './pages/ProductTypesPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AuditToolsPage from './pages/AuditToolsPage.jsx'
+import ISOStandardsPage from './pages/ISOStandardsPage.jsx'
 import { LookupProvider } from './context/LookupContext'
 import { insertLog } from '@/services/logService'
 
@@ -351,6 +352,9 @@ export default function App() {
     }
     if (activePage === 'Product Types') {
       return <ProductTypesPage {...sharedProps} />
+    }
+    if (activePage === 'ISO Standards') {
+      return <ISOStandardsPage {...sharedProps} />
     }
     if (activePage === 'Settings') {
       return <SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />
