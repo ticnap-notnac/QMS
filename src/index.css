@@ -1,4 +1,7 @@
+/* src/index.css - Global Core Shared Framework */
+
 :root {
+  /* Core Brand Typography and Color Tokens */
   --ink: #e7efff;
   --body: 'Gill Sans', 'Trebuchet MS', Verdana, sans-serif;
   --display: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
@@ -33,4 +36,199 @@ button {
 
 input {
   font-family: inherit;
+}
+
+/* ==========================================================================
+   SHARED STRUCTURE & LAYOUT ENGINE (REDUNDANT CSS COMBINED FROM ALL PAGES)
+   ========================================================================== */
+
+/* App-wide Master Page Structural Wrappers */
+.page-root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Reusable Alignment Layout Contexts */
+.flex-column { display: flex; flex-direction: column; }
+.relative { position: relative; }
+.wrap { flex-wrap: wrap; }
+.full-width { width: 100%; }
+.max-w-320 { max-width: 320px; }
+.text-left { text-align: left; }
+
+.center-row {
+  display: flex;
+  justify-content: center;
+}
+
+.flex-start-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 16px;
+}
+
+.two-column-row {
+  display: flex;
+  gap: 32px;
+  width: 100%;
+}
+
+/* Spacing Helpers */
+.mb-24 { margin-bottom: 24px; }
+.mt-24 { margin-top: 24px; }
+
+/* Reusable Constrained Content Bounds */
+.page-padding { padding: 24px; }
+.page-container { padding: 24px; max-width: 1000px; margin: 0 auto; }
+.page-heading { margin-bottom: 24px; color: #e2e8f0; }
+
+.page-title {
+  margin-bottom: 24px;
+  text-align: left;
+  color: #e2e8f0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+/* Global Shared Control Buttons Framework */
+.btn-primary {
+  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  color: #22d3ee;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.btn-primary:hover { background: rgba(34, 211, 238, 0.2); }
+.btn-primary:active { background: rgba(34, 211, 238, 0.15); }
+
+.btn-gradient-primary {
+  background: linear-gradient(120deg, #2dd5dc 0%, #3b7bff 100%);
+  color: #04152d;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(59, 123, 255, 0.12);
+}
+.btn-gradient-primary:hover { transform: translateY(-1px); }
+
+.btn-secondary-light {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #e2e8f0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-secondary-light:hover { background: rgba(255,255,255,0.05); }
+
+/* Universal Shared Form Layout Contexts */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.form-input:focus {
+  outline: none;
+  border-color: rgba(34, 211, 238, 0.5);
+  background: rgba(34, 211, 238, 0.05);
+}
+.form-input:disabled {
+  background: rgba(255, 255, 255, 0.02);
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+/* Micro Action Messages & Badges */
+.success-message {
+  color: green;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid green;
+  border-radius: 6px;
+}
+
+.error-message {
+  color: #fca5a5;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Shared Structural Badges and System Colors */
+.badges-row {
+  display: flex;
+  gap: 8px;
+}
+.icon-cyan { color: #22d3ee; }
+.icon-teal { color: #06b6d4; }
+.icon-amber { color: #f59e0b; }
+.icon-blue { color: #3b82f6; }
+.icon-green { color: #10b981; }
+.icon-abs { position: absolute; right: 12px; top: 12px; color: #64748b; }
+
+/* ==========================================================================
+   DYNAMIC INTERACTIVE TOAST NOTIFICATION SYSTEM
+   ========================================================================== */
+.toast-alert-card {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: rgba(13, 26, 45, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px 22px;
+  border-radius: 10px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  z-index: 5000;
+  animation: slideNotificationIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Color codes mapped to theme accents */
+.toast-status--info { border-left: 4px solid #22d3ee; }
+.toast-status--success { border-left: 4px solid #10b981; }
+.toast-status--error { border-left: 4px solid #ef4444; }
+
+.toast-inner-cluster { display: flex; align-items: center; gap: 12px; }
+.toast-body-text { margin: 0; color: #f1f5f9; font-size: 13.5px; font-weight: 500; }
+.toast-dismiss-button { 
+  background: none; 
+  border: none; 
+  color: #64748b; 
+  cursor: pointer; 
+  font-size: 18px; 
+  transition: color 0.2s; 
+}
+.toast-dismiss-button:hover { color: #f8fafc; }
+
+@keyframes slideNotificationIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }

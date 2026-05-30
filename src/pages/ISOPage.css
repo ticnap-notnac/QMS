@@ -1,0 +1,86 @@
+/* src/pages/ISOPage.css */
+.iso-page-main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+.iso-top-grid {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  align-items: stretch;
+}
+.iso-left-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 320px;
+  flex-shrink: 0;
+}
+.iso-compliance-card {
+  margin: 0;
+  padding: 24px;
+}
+.iso-compliance-value {
+  margin: 8px 0 0 0;
+  font-size: 48px;
+  font-weight: 700;
+  color: #22d3ee;
+}
+.iso-button-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.iso-metric-button {
+  cursor: pointer;
+  padding: 12px 8px;
+}
+.iso-graph-card {
+  flex: 1;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 170px;
+}
+.iso-graph-placeholder-text { color: #64748b; }
+.iso-review-card { margin: 0; padding: 32px; }
+.iso-review-title { margin: 0 0 24px 0; font-size: 16px; letter-spacing: 0.5px; }
+.iso-progress-stack { display: flex; flex-direction: column; gap: 20px; }
+.iso-cta-row { display: flex; justify-content: flex-end; width: 100%; margin-top: 8px; }
+.iso-cta-button { padding: 12px 24px; font-weight: 600; }
+
+/* Full-Screen Diagnostic Modal Overlay Panels */
+.iso-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(2, 6, 12, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.iso-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  background: rgba(13, 26, 45, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  border-radius: 16px;
+  padding: 24px 32px 40px 32px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}

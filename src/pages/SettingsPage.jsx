@@ -3,7 +3,8 @@ import { supabase } from '@/utils/supabase'
 import { insertLog } from '@/services/logService'
 import Navbar from '@/components/Navbar'
 import SettingsNavbar from '@/components/SettingsNavbar'
-import './PagesStyles.css'
+import Toast from '@/components/Toast' // 🍞 Pulling in our universal dynamic feedback manager
+import './SettingsPage.css' // 🔌 Link our separate settings style definitions cleanly!
 
 export default function SettingsPage({
   activePage,
@@ -30,10 +31,9 @@ export default function SettingsPage({
   })
   const [activeSection, setActiveSection] = useState('Profile & Account')
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [toast, setToast] = useState(null) // State reference for interactive layout toasts
   const [authId, setAuthId] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [success, setSuccess] = useState('')
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' })
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function SettingsPage({
 
           if (error) {
             console.error('Error fetching user profile:', error)
-            setError(error.message)
+            setToast({ message: `Failed to load user credentials: ${error.message}`, type: 'error' })
           } else if (data) {
             setUserProfile({
               first_name: data.first_name || '',
@@ -76,7 +76,7 @@ export default function SettingsPage({
           }
         }
       } catch (err) {
-        setError(err.message)
+        setToast({ message: err.message, type: 'error' })
         console.error('Error fetching user profile:', err)
       } finally {
         setLoading(false)
@@ -88,9 +88,6 @@ export default function SettingsPage({
 
   const handleUpdateChanges = async () => {
     setSaving(true)
-    setError('')
-    setSuccess('')
-
     try {
       const { error: profileError } = await supabase
         .from('users')
@@ -138,9 +135,9 @@ export default function SettingsPage({
       }
 
       if (onProfileUpdate) await onProfileUpdate()
-      setSuccess('Profile updated successfully!')
+      setToast({ message: 'Profile account settings committed successfully!', type: 'success' })
     } catch (err) {
-      setError(err.message)
+      setToast({ message: err.message, type: 'error' })
     } finally {
       setSaving(false)
     }
@@ -169,6 +166,15 @@ export default function SettingsPage({
 
   return (
     <>
+      {/* 🍞 Interactive Overlay Toast Feed */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
+
       <Navbar
         activePage={activePage}
         onPageChange={onPageChange}
@@ -183,16 +189,11 @@ export default function SettingsPage({
         setProfileTargetTab={setProfileTargetTab}
       />
       
-      {/* 📐 STANDARD UNIFORM SYSTEM CONTAINER */}
       <main className="page-container settings-page-container">
         <h1 className="page-heading settings-page-title">Settings</h1>
 
         <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
 
-        {error && <div className="user-info-error">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
-
-        {/* 🔮 UNIFORM METRIC CANVAS CARD GLASS DESIGN */}
         <div className="settings-container settings-container--profile">
           
           {/* Sidebar Navigation */}
@@ -223,7 +224,6 @@ export default function SettingsPage({
           {/* Main Content Pane Area Canvas */}
           <div className="settings-main settings-main--profile">
             
-            {/* Profile & Account Section */}
             {activeSection === 'Profile & Account' && (
               <div className="settings-content settings-content--profile">
                 <h2 className="settings-section-title">Edit Profile</h2>
@@ -350,7 +350,6 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* Reporting Defaults Section */}
             {activeSection === 'Reporting Defaults' && (
               <div className="settings-content settings-content--profile">
                 <h2 className="settings-section-title">Reporting Defaults</h2>
@@ -360,7 +359,6 @@ export default function SettingsPage({
               </div>
             )}
 
-            {/* Audit Tools Section */}
             {activeSection === 'Audit Tools' && userRole === 'admin' && (
               <div className="settings-content settings-content--profile">
                 <h2 className="settings-section-title">Audit Tools</h2>

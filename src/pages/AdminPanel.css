@@ -1,0 +1,71 @@
+/* src/pages/AdminPanel.css */
+.admin-panel-main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.admin-panel-title { margin-bottom: 24px; color: #e2e8f0; font-size: 28px; font-weight: 600; }
+
+.admin-tab-navigation { display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; }
+.admin-tab-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.admin-tab-button:hover { border-color: rgba(255, 255, 255, 0.3); color: #cbd5e1; }
+.admin-tab-button.active { background: #1e293b; border-color: #22d3ee; color: #22d3ee; }
+
+/* Control Search Utility Rows */
+.admin-search-row { display: flex; gap: 16px; align-items: center; margin-bottom: 24px; }
+.admin-search-container { flex: 1; position: relative; }
+.admin-search-input {
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.admin-search-input:focus { outline: none; border-color: rgba(34, 211, 238, 0.5); background: rgba(34, 211, 238, 0.05); }
+.admin-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; }
+
+.admin-add-button {
+  padding: 10px 20px;
+  background: #c084fc;
+  color: #0f172a;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.admin-add-button:hover { background: #a855f7; }
+
+/* Management Information Table Layouts */
+.admin-users-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  background: rgba(8, 16, 36, 0.55);
+}
+.admin-users-table { width: 100%; border-collapse: collapse; min-width: 760px; }
+.admin-users-table th, .admin-users-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 13px; }
+.admin-users-table th { color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; background: rgba(255, 255, 255, 0.02); }
+.admin-users-table td { color: #e2e8f0; }
+.admin-users-table tbody tr:hover { background: rgba(34, 211, 238, 0.05); }
+
+/* Core Authorization Access Guard Notifications */
+.admin-access-denied-message {
+  padding: 16px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #fca5a5;
+  font-size: 14px;
+}

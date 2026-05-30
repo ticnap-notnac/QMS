@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Navbar from '../components/Navbar.jsx'
+import Toast from '../components/Toast.jsx' // 🍞 Import our toast notification component
 import { 
   X, 
   ClipboardCheck, 
@@ -10,6 +11,7 @@ import {
   AlertCircle, 
   HelpCircle
 } from 'lucide-react'
+import './ISOPage.css' // 🔌 Link our separated stylesheet module directly!
 
 function ISOPage({
   activePage,
@@ -31,14 +33,38 @@ function ISOPage({
   const [isCapaTaskModalOpen, setIsCapaTaskModalOpen] = useState(false);
   const [isDocumentTaskModalOpen, setIsDocumentTaskModalOpen] = useState(false);
   const [isTrainingTaskModalOpen, setIsTrainingTaskModalOpen] = useState(false);
+  const [toast, setToast] = useState(null); // Active state for information alerts
 
   const openAuditTask = () => { setIsSelectionModalOpen(false); setIsAuditTaskModalOpen(true); };
   const openCapaTask = () => { setIsSelectionModalOpen(false); setIsCapaTaskModalOpen(true); };
   const openDocumentTask = () => { setIsSelectionModalOpen(false); setIsDocumentTaskModalOpen(true); };
   const openTrainingTask = () => { setIsSelectionModalOpen(false); setIsTrainingTaskModalOpen(true); };
 
+  // Helper handler to mimic real user interaction and announce success
+  const handleTaskCreation = (taskName) => {
+    setIsAuditTaskModalOpen(false);
+    setIsCapaTaskModalOpen(false);
+    setIsDocumentTaskModalOpen(false);
+    setIsTrainingTaskModalOpen(false);
+    
+    // Fire a success toast notification pop-up
+    setToast({
+      message: `${taskName} was initialized and committed securely!`,
+      type: 'success'
+    });
+  };
+
   return (
     <main className="dashboard page-root">
+      {/* 🍞 Dynamic Toast Alert Handler */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
+
       <Navbar
         activePage={activePage}
         onPageChange={onPageChange}
@@ -68,8 +94,20 @@ function ISOPage({
             </div>
             
             <div className="iso-button-grid">
-              <button type="button" className="btn-metric-card iso-metric-button">ISO Modules</button>
-              <button type="button" className="btn-metric-card iso-metric-button">ISO Requirements</button>
+              <button 
+                type="button" 
+                className="btn-metric-card iso-metric-button"
+                onClick={() => setToast({ message: "Loading comprehensive ISO core compliance modules...", type: 'info' })}
+              >
+                ISO Modules
+              </button>
+              <button 
+                type="button" 
+                className="btn-metric-card iso-metric-button"
+                onClick={() => setToast({ message: "Fetching audit regulatory clause checklists...", type: 'info' })}
+              >
+                ISO Requirements
+              </button>
             </div>
           </div>
 
@@ -163,7 +201,7 @@ function ISOPage({
               <span className="placeholder-text iso-graph-placeholder-text">Task Configuration Workspace</span>
             </div>
             <div className="iso-submodal-submit-row">
-              <button onClick={() => setIsAuditTaskModalOpen(false)} className="btn-secondary-light iso-submodal-submit-button">
+              <button onClick={() => handleTaskCreation("Internal Audit Task")} className="btn-secondary-light iso-submodal-submit-button">
                 Create Task
               </button>
             </div>
@@ -171,6 +209,7 @@ function ISOPage({
         </div>
       )}
 
+      {/* CAPA Sub-Modal */}
       {isCapaTaskModalOpen && (
         <div className="iso-modal-overlay">
           <div className="iso-modal-card">
@@ -182,7 +221,7 @@ function ISOPage({
               <span className="placeholder-text iso-graph-placeholder-text">CAPA Task Configuration Canvas</span>
             </div>
             <div className="iso-submodal-submit-row">
-              <button onClick={() => setIsCapaTaskModalOpen(false)} className="btn-secondary-light iso-submodal-submit-button">
+              <button onClick={() => handleTaskCreation("CAPA Task")} className="btn-secondary-light iso-submodal-submit-button">
                 Create Task
               </button>
             </div>
@@ -190,6 +229,7 @@ function ISOPage({
         </div>
       )}
 
+      {/* Document Task Sub-Modal */}
       {isDocumentTaskModalOpen && (
         <div className="iso-modal-overlay">
           <div className="iso-modal-card">
@@ -201,7 +241,7 @@ function ISOPage({
               <span className="placeholder-text iso-graph-placeholder-text">Document Update Workspace Canvas</span>
             </div>
             <div className="iso-submodal-submit-row">
-              <button onClick={() => setIsDocumentTaskModalOpen(false)} className="btn-secondary-light iso-submodal-submit-button">
+              <button onClick={() => handleTaskCreation("Document Update Task")} className="btn-secondary-light iso-submodal-submit-button">
                 Create Task
               </button>
             </div>
@@ -209,6 +249,7 @@ function ISOPage({
         </div>
       )}
 
+      {/* Training Sub-Modal */}
       {isTrainingTaskModalOpen && (
         <div className="iso-modal-overlay">
           <div className="iso-modal-card">
@@ -220,7 +261,7 @@ function ISOPage({
               <span className="placeholder-text iso-graph-placeholder-text">Training Program Configuration Canvas</span>
             </div>
             <div className="iso-submodal-submit-row">
-              <button onClick={() => setIsTrainingTaskModalOpen(false)} className="btn-secondary-light iso-submodal-submit-button">
+              <button onClick={() => handleTaskCreation("Training Task")} className="btn-secondary-light iso-submodal-submit-button">
                 Create Task
               </button>
             </div>
@@ -231,7 +272,6 @@ function ISOPage({
   )
 }
 
-/* 📊 HORIZONTAL PROGRESS ROWS: Synchronizes labels and layout bars across the canvas box */
 const ProgressRow = ({ label, tone, widthClass, icon }) => (
   <div className="progress-row iso-progress-row">
     <div className="progress-label-container iso-progress-label-container">

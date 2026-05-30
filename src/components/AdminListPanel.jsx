@@ -1,4 +1,5 @@
 import React from 'react'
+import '../pages/AdminPanel.css' // 📁 Steps up out of components/ and into pages/ where the file lives!
 
 export default function AdminListPanel({
   title,

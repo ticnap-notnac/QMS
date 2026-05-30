@@ -18,12 +18,18 @@ function Login({
     setLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // 🛡️ Safety Check: Pre-validate that your Vite client keys are loaded
+      if (!supabase || !supabase.auth) {
+        throw new Error("Application authentication client is uninitialized. Please check your configuration.")
+      }
+
+      // 🔌 Talk straight to the standard cloud Supabase client setup
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password
       })
 
-      if (error) throw error
+      if (authError) throw authError
 
       // Call the parent's onSubmit callback if provided
       if (onSubmit) {
@@ -33,6 +39,7 @@ function Login({
       setError(err.message || 'Login failed')
       console.error('Login error:', err)
 
+      // Only attempt logging audit trails if the backend is actively listening
       try {
         await insertLog({
           level: 'warn',

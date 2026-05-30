@@ -1,0 +1,54 @@
+/* src/components/Navbar.css */
+.app-navbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 12px 0;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 30;
+  background: transparent;
+}
+.app-navbar nav { display: flex; gap: 8px; align-items: center; }
+.app-navbar button { background: none; border: none; cursor: pointer; }
+.app-navbar .user-info { display: flex; align-items: center; gap: 10px; }
+
+.app-navbar-inner {
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: relative;
+  background: rgba(8, 18, 34, 0.9);
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 10px 30px rgba(3,10,25,0.5);
+}
+.app-navbar-brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+
+.app-nav-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 12px;
+}
+.app-nav-center button { color: #94a3b8; padding: 8px 12px; font-size: 14px; font-weight: 500; }
+.app-nav-center button:hover { color: #e7f1ff; }
+.app-nav-center button[style*="#22d3ee"] { color: #22d3ee; }
+.app-nav-right { display: flex; align-items: center; gap: 16px; }
+.app-user-trigger { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px;
+  border-left: 1px solid rgba(255,255,255,0.06); 
+  padding-left: 14px; 
+  cursor: pointer; 
+}
