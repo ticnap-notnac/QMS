@@ -19,3 +19,18 @@ export async function createUser(payload) {
 
 // backwards-compatible alias
 export { createUser as createAdminUser }
+
+export async function updateUser(id, payload) {
+  const data = await request(`/users/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
+  try {
+    await insertLog({
+      level: 'audit',
+      source: 'users',
+      action: 'user_update',
+      details: { id, ...payload }
+    })
+  } catch (err) {
+    console.warn('Failed to insert user_update log', err?.message || err)
+  }
+  return data
+}

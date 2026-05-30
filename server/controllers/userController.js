@@ -118,3 +118,83 @@ export async function deleteUser(req, res) {
 
   return res.json({ success: true })
 }
+
+export async function updateUser(req, res) {
+  const { id } = req.params
+  const {
+    firstName,
+    lastName,
+    email,
+    userName,
+    contactNumber,
+    roleId,
+    departmentId,
+    password,
+  } = req.body || {}
+
+  // Fetch existing profile row
+  const { data: existing, error: fetchError } = await supabase
+    .from('users')
+    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (fetchError) {
+    return res.status(500).json({ error: fetchError.message })
+  }
+
+  if (!existing) {
+    return res.status(404).json({ error: 'User not found.' })
+  }
+
+  const authUserId = existing.auth_id
+
+  // Build update payload only for changed/defined fields
+  const updates = {}
+  if (firstName !== undefined && firstName !== (existing.first_name || '')) updates.first_name = firstName
+  if (lastName !== undefined && lastName !== (existing.last_name || '')) updates.last_name = lastName
+  if (userName !== undefined && userName !== (existing.user_name || '')) updates.user_name = userName
+  if (contactNumber !== undefined && contactNumber !== (existing.contact_number || '')) updates.contact_number = contactNumber
+  if (roleId !== undefined && String(roleId) !== String(existing.role_id)) updates.role_id = roleId || null
+  if (departmentId !== undefined && String(departmentId) !== String(existing.department_id)) updates.department_id = departmentId || null
+  if (email !== undefined && email !== (existing.email || '')) updates.email = email
+
+  // Update public.users profile row if there are changes
+  let updatedProfile = existing
+  if (Object.keys(updates).length > 0) {
+    const { data: profileData, error: profileError } = await supabase
+      .from('users')
+      .update(updates)
+      .eq('id', id)
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no')
+      .maybeSingle()
+
+    if (profileError) {
+      return res.status(500).json({ error: profileError.message })
+    }
+
+    updatedProfile = profileData || updatedProfile
+  }
+
+  // Update Supabase Auth for email/password if needed (requires service role)
+  if (hasServiceRole && authUserId && (password || (email && email !== existing.email))) {
+    const adminUpdate = {}
+    if (password) adminUpdate.password = password
+    if (email && email !== existing.email) adminUpdate.email = email
+
+    const { error: authErr } = await supabase.auth.admin.updateUserById(authUserId, adminUpdate)
+    if (authErr) {
+      return res.status(500).json({ error: authErr.message })
+    }
+  }
+
+  // record audit log (non-blocking)
+  try {
+    const userAuthId = getRequestActor(req)
+    await writeAudit({ source: 'users', action: 'user_update', userAuthId, details: { id, updates } })
+  } catch (logErr) {
+    console.warn('Failed to record user_update log:', logErr?.message || logErr)
+  }
+
+  return res.json({ profile: updatedProfile })
+}

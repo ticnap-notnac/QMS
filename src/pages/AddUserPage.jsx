@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import SettingsNavbar from '@/components/SettingsNavbar'
 import AddUserModal from '@/components/AddUserModal'
+import EditUserModal from '@/components/EditUserModal'
 import { createUser } from '@/services/userService'
 import { useLookup } from '@/context/LookupContext'
 import './PagesStyles.css'
@@ -9,6 +10,7 @@ import SearchForm from '@/components/SearchForm'
 import AdminNavbar from '@/components/AdminNavbar'
 import useUserManager from '@/hooks/useUserManager'
 import { insertLog, logAction } from '@/services/logService'
+import { updateUser } from '@/services/userService'
 import { formatDisplayName } from '@/utils/userUtils'
 import { supabase } from '@/utils/supabase'
 
@@ -32,6 +34,11 @@ export default function AddUserPage({
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
+  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState(null)
+  const [editFormError, setEditFormError] = useState('')
+  const [editFormMessage, setEditFormMessage] = useState('')
+  const [editSubmitting, setEditSubmitting] = useState(false)
   
   const [newUser, setNewUser] = useState({
     firstName: '',
@@ -130,6 +137,78 @@ export default function AddUserPage({
       setFormError(`Failed to delete user: ${err.message}`)
     } finally {
       // deletingId is tracked by hook
+    }
+  }
+
+  const openEditUserModal = (user) => {
+    setEditFormError('')
+    setEditFormMessage('')
+    setEditingUser({
+      id: user.id,
+      authId: user.auth_id,
+      firstName: user.first_name || '',
+      lastName: user.last_name || '',
+      email: user.email || '',
+      userName: user.user_name || '',
+      contactNumber: user.contact_number || '',
+      roleId: user.role_id ? String(user.role_id) : '',
+      departmentId: user.department_id ? String(user.department_id) : '',
+      password: '',
+    })
+    setIsEditUserModalOpen(true)
+  }
+
+  const closeEditUserModal = () => {
+    if (!editSubmitting) setIsEditUserModalOpen(false)
+    setEditingUser(null)
+  }
+
+  const handleEditFieldChange = (event) => {
+    const { name, value } = event.target
+    setEditingUser((cur) => ({ ...cur, [name]: value }))
+  }
+
+  const handleSubmitEditUser = async (e) => {
+    e.preventDefault()
+    if (!editingUser) return
+    try {
+      setEditSubmitting(true)
+      setEditFormError('')
+      setEditFormMessage('')
+
+      // Build payload with only changed/filled fields
+      const payload = {}
+      if (editingUser.firstName !== undefined) payload.firstName = editingUser.firstName
+      if (editingUser.lastName !== undefined) payload.lastName = editingUser.lastName
+      if (editingUser.email !== undefined) payload.email = editingUser.email
+      if (editingUser.userName !== undefined) payload.userName = editingUser.userName
+      if (editingUser.contactNumber !== undefined) payload.contactNumber = editingUser.contactNumber
+      if (editingUser.roleId !== undefined) payload.roleId = editingUser.roleId || null
+      if (editingUser.departmentId !== undefined) payload.departmentId = editingUser.departmentId || null
+      if (editingUser.password) payload.password = editingUser.password // optional
+
+      await updateUser(editingUser.id, payload)
+      setEditFormMessage('User updated successfully.')
+      await reloadUsers()
+
+      // If admin edited their own account, reload to refresh navbar/session
+      try {
+        const { data: { user: current } } = await supabase.auth.getUser()
+        if (current && current.id && editingUser.authId === current.id) {
+          window.location.reload()
+        }
+      } catch (err) {
+        // ignore
+      }
+
+      setTimeout(() => {
+        closeEditUserModal()
+      }, 700)
+    } catch (err) {
+      console.error('Update user error:', err)
+      setEditFormError(err.message || 'Failed to update user')
+    } finally {
+      setEditSubmitting(false)
     }
   }
 
@@ -260,6 +339,7 @@ export default function AddUserPage({
                                 <td>{user.contact_number || '-'}</td>
                                 <td>{user.employee_no || '-'}</td>
                                 <td>
+                                  <button type="button" className="btn-edit-user" onClick={() => openEditUserModal(user)} style={{ marginRight: '8px' }}>Edit</button>
                                   <button type="button" className="btn-delete-user" onClick={() => handleDeleteUser(user)} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Delete'}</button>
                                 </td>
                               </tr>
@@ -287,6 +367,20 @@ export default function AddUserPage({
             loading={submitting}
             error={formError}
             message={formMessage}
+          />
+          <EditUserModal
+            isOpen={isEditUserModalOpen}
+            onClose={closeEditUserModal}
+            onSubmit={handleSubmitEditUser}
+            onChange={handleEditFieldChange}
+            formData={editingUser || {}}
+            availableRoles={roles}
+            rolesLoading={lookupsLoading}
+            availableDepartments={departments}
+            departmentsLoading={lookupsLoading}
+            loading={editSubmitting}
+            error={editFormError}
+            message={editFormMessage}
           />
         </main>
       ) : (
