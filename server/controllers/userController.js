@@ -1,4 +1,6 @@
 import { hasServiceRole, supabase } from '../lib/supabase.js'
+import { writeAudit } from '../lib/audit.js'
+import { getRequestActor } from '../lib/requestUtils.js'
 
 export async function getUsers(_req, res) {
   const { data, error } = await supabase
@@ -107,9 +109,9 @@ export async function deleteUser(req, res) {
 
   // record audit log (non-blocking)
   try {
-    const userAuthId = req.body?.userAuthId || req.headers['x-user-auth-id'] || req.query?.userAuthId || null
+    const userAuthId = getRequestActor(req)
     const displayName = existing ? `${existing.first_name || ''} ${existing.last_name || ''}`.trim() || existing.user_name || existing.email : null
-    await supabase.from('system_logs').insert([{ level: 'audit', source: 'users', action: 'user_delete', user_auth_id: userAuthId, details: { id: existing?.id ?? id, deleted_auth_id: authUserId, deleted_display: displayName } }])
+    await writeAudit({ source: 'users', action: 'user_delete', userAuthId, details: { id: existing?.id ?? id, deleted_auth_id: authUserId, deleted_display: displayName } })
   } catch (logErr) {
     console.warn('Failed to record user_delete log:', logErr?.message || logErr)
   }

@@ -1,4 +1,6 @@
 import { supabase } from '../lib/supabase.js'
+import { writeAudit } from '../lib/audit.js'
+import { getRequestActor } from '../lib/requestUtils.js'
 
 export async function getDepartments(_req, res) {
   const { data, error } = await supabase
@@ -50,10 +52,10 @@ export async function deleteDepartment(req, res) {
     return res.status(500).json({ error: error.message })
   }
 
-  // try to record audit log (non-blocking)
+  // record audit log (non-blocking)
   try {
-    const userAuthId = req.body?.userAuthId || req.headers['x-user-auth-id'] || req.query?.userAuthId || null
-    await supabase.from('system_logs').insert([{ level: 'audit', source: 'departments', action: 'department_delete', user_auth_id: userAuthId, details: { id: existing?.id ?? id, department_name: existing?.department_name || null } }])
+    const userAuthId = getRequestActor(req)
+    await writeAudit({ source: 'departments', action: 'department_delete', userAuthId, details: { id: existing?.id ?? id, department_name: existing?.department_name || null } })
   } catch (logErr) {
     console.warn('Failed to record department_delete log:', logErr?.message || logErr)
   }

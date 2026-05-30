@@ -13,7 +13,7 @@ import {
   createRole as createRoleController,
   deleteRole as deleteRoleController,
 } from '@/services/roleService'
-import { insertLog } from '@/services/logService'
+import { insertLog, logAction } from '@/services/logService'
 import { supabase } from '@/utils/supabase'
 
 export default function RolesPage({
@@ -83,19 +83,7 @@ export default function RolesPage({
       await deleteItem(role.id)
       await reloadLookups()
       try {
-        let userAuthId = null
-        try {
-          const { data: { user } } = await supabase.auth.getUser()
-          userAuthId = user?.id || null
-        } catch (e) {}
-
-        await insertLog({
-          level: 'audit',
-          source: 'roles',
-          action: 'role_delete',
-          userAuthId,
-          details: { id: role.id, role_name: role.role_name }
-        })
+        await logAction({ source: 'roles', action: 'role_delete', details: { id: role.id, role_name: role.role_name } })
       } catch (e) {
         console.warn('Failed to record role_delete from UI:', e?.message || e)
       }

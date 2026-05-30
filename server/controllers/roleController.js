@@ -1,4 +1,6 @@
 import { supabase } from '../lib/supabase.js'
+import { writeAudit } from '../lib/audit.js'
+import { getRequestActor } from '../lib/requestUtils.js'
 
 export async function getRoles(_req, res) {
   const { data, error } = await supabase
@@ -50,12 +52,11 @@ export async function deleteRole(req, res) {
     return res.status(500).json({ error: error.message })
   }
 
-  // try to record audit log (non-blocking)
+  // record audit log (non-blocking)
   try {
-    const userAuthId = req.body?.userAuthId || req.headers['x-user-auth-id'] || req.query?.userAuthId || null
-    await supabase.from('system_logs').insert([{ level: 'audit', source: 'roles', action: 'role_delete', user_auth_id: userAuthId, details: { id: existing?.id ?? id, role_name: existing?.role_name || null } }])
+    const userAuthId = getRequestActor(req)
+    await writeAudit({ source: 'roles', action: 'role_delete', userAuthId, details: { id: existing?.id ?? id, role_name: existing?.role_name || null } })
   } catch (logErr) {
-    // don't fail the request on logging error
     console.warn('Failed to record role_delete log:', logErr?.message || logErr)
   }
 

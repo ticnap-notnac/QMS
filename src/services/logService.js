@@ -1,7 +1,20 @@
 import { request } from '@/lib/api'
+import { getCurrentAuthId } from '@/services/authService'
 
 export async function insertLog(payload = {}) {
   return await request('/logs', { method: 'POST', body: JSON.stringify(payload) })
+}
+
+export async function logAction({ level = 'audit', source, action, details = {} } = {}) {
+  try {
+    const userAuthId = await getCurrentAuthId()
+    const payload = { level, source, action, userAuthId, details }
+    return await insertLog(payload)
+  } catch (err) {
+    // don't fail UI on logging errors
+    console.warn('Failed to write audit log:', err?.message || err)
+    return null
+  }
 }
 
 export async function fetchLogs({ limit = 50, offset = 0, filters = {} } = {}) {
@@ -28,6 +41,7 @@ export async function recordLogRead(payload = {}) {
 
 export default {
   insertLog,
+  logAction,
   fetchLogs,
   listLogs: fetchLogs,
   recordLogRead,
