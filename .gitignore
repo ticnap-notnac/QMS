@@ -25,3 +25,9 @@ dist-ssr
 
 # Ignore server environment file containing secrets
 server/.env
+
+# Local planning draft
+thesis-roadmap.md
+
+# Local code review note
+CODE_REVIEW.md
