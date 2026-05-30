@@ -13,6 +13,8 @@ import {
   createDepartment as createDepartmentController,
   deleteDepartment as deleteDepartmentController,
 } from '@/services/departmentService'
+import { insertLog } from '@/services/logService'
+import { supabase } from '@/utils/supabase'
 
 export default function DepartmentsPage({
   activePage,
@@ -80,6 +82,24 @@ export default function DepartmentsPage({
       setFormError('')
       await deleteItem(department.id)
       await reloadLookups()
+      try {
+        let userAuthId = null
+        try {
+          const { data: { user } } = await supabase.auth.getUser()
+          userAuthId = user?.id || null
+        } catch (e) {}
+
+        await insertLog({
+          level: 'audit',
+          source: 'departments',
+          action: 'department_delete',
+          userAuthId,
+          details: { id: department.id, department_name: department.department_name }
+        })
+      } catch (e) {
+        console.warn('Failed to record department_delete from UI:', e?.message || e)
+      }
+
       setFormMessage(`Deleted department ${department.department_name} successfully.`)
     } catch (err) {
       setFormError(err.message)

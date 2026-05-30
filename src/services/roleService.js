@@ -1,4 +1,6 @@
 import { request } from '@/lib/api'
+import { insertLog } from '@/services/logService'
+import { supabase } from '@/utils/supabase'
 
 function normalizeRoleError(error) {
   if (!error) {
@@ -30,6 +32,26 @@ export async function loadRoles() {
 export async function createRole(roleName) {
   try {
     const data = await request('/roles', { method: 'POST', body: JSON.stringify({ roleName }) })
+    try {
+      // include current user's auth id when available so server can enrich user_display
+      let userAuthId = null
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        userAuthId = user?.id || null
+      } catch (e) {
+        // ignore
+      }
+
+      await insertLog({
+        level: 'audit',
+        source: 'roles',
+        action: 'role_create',
+        userAuthId,
+        details: { id: Array.isArray(data) ? data[0]?.id ?? null : data?.id ?? null, roleName }
+      })
+    } catch (err) {
+      console.warn('Failed to insert role_create log', err?.message || err)
+    }
     return data
   } catch (err) {
     throw normalizeRoleError(err)
@@ -38,7 +60,15 @@ export async function createRole(roleName) {
 
 export async function deleteRole(id) {
   try {
-    await request(`/roles/${id}`, { method: 'DELETE' })
+    let userAuthId = null
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      userAuthId = user?.id || null
+    } catch (e) {
+      // ignore
+    }
+
+    await request(`/roles/${id}`, { method: 'DELETE', body: JSON.stringify({ userAuthId }) })
     return true
   } catch (err) {
     throw normalizeRoleError(err)

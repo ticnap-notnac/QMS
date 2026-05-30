@@ -28,19 +28,31 @@ try {
   // ignore
 }
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.SUPABASE_SERVICE_KEY ||
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.VITE_SUPABASE_ANON_KEY
+function normalizeSupabaseUrl(rawUrl) {
+  if (!rawUrl) {
+    return rawUrl
+  }
+
+  try {
+    const url = new URL(rawUrl)
+    url.pathname = url.pathname.replace(/\/(rest\/v1|auth\/v1)\/?$/i, '')
+    return url.toString().replace(/\/$/, '')
+  } catch (err) {
+    return rawUrl
+      .replace(/\/(rest\/v1|auth\/v1)\/?$/i, '')
+      .replace(/\/$/, '')
+  }
+}
+
+const supabaseUrl = normalizeSupabaseUrl(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL)
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
 
 if (!supabaseUrl) {
   throw new Error('Missing SUPABASE_URL or VITE_SUPABASE_URL in server environment.')
 }
 
 if (!supabaseKey) {
-  throw new Error('Missing Supabase key in server environment.')
+  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY in server environment. Auth admin operations require the service role key.')
 }
 
 export const hasServiceRole = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY)

@@ -67,10 +67,51 @@ export async function createUser(req, res) {
 
 export async function deleteUser(req, res) {
   const { id } = req.params
-  const { error } = await supabase.from('users').delete().eq('id', id)
+  // Fetch the profile row first so we can delete the matching Supabase Auth user.
+  const { data: existing, error: fetchError } = await supabase
+    .from('users')
+    .select('id, first_name, last_name, user_name, email, auth_id')
+    .eq('id', id)
+    .maybeSingle()
 
-  if (error) {
-    return res.status(500).json({ error: error.message })
+  if (fetchError) {
+    return res.status(500).json({ error: fetchError.message })
+  }
+
+  if (!existing) {
+    return res.status(404).json({ error: 'User not found.' })
+  }
+
+  const authUserId = existing.auth_id
+
+  if (!authUserId) {
+    return res.status(500).json({ error: 'This user is missing auth_id. Delete the auth account manually or repair the profile row linkage.' })
+  }
+
+  // Step 1: Delete from the public users table.
+  const { error: dbError } = await supabase
+    .from('users')
+    .delete()
+    .eq('id', id)
+
+  if (dbError) {
+    return res.status(500).json({ error: dbError.message })
+  }
+
+  // Step 2: Delete from Supabase Auth.
+  const { error: authError } = await supabase.auth.admin.deleteUser(authUserId)
+
+  if (authError) {
+    return res.status(500).json({ error: authError.message })
+  }
+
+  // record audit log (non-blocking)
+  try {
+    const userAuthId = req.body?.userAuthId || req.headers['x-user-auth-id'] || req.query?.userAuthId || null
+    const displayName = existing ? `${existing.first_name || ''} ${existing.last_name || ''}`.trim() || existing.user_name || existing.email : null
+    await supabase.from('system_logs').insert([{ level: 'audit', source: 'users', action: 'user_delete', user_auth_id: userAuthId, details: { id: existing?.id ?? id, deleted_auth_id: authUserId, deleted_display: displayName } }])
+  } catch (logErr) {
+    console.warn('Failed to record user_delete log:', logErr?.message || logErr)
   }
 
   return res.json({ success: true })

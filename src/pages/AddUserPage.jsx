@@ -8,6 +8,8 @@ import './PagesStyles.css'
 import SearchForm from '@/components/SearchForm'
 import AdminNavbar from '@/components/AdminNavbar'
 import useUserManager from '@/hooks/useUserManager'
+import { insertLog } from '@/services/logService'
+import { supabase } from '@/utils/supabase'
 
 export default function AddUserPage({
   activePage,
@@ -119,6 +121,23 @@ export default function AddUserPage({
     try {
       setFormError('')
       await deleteItem(user.id)
+      try {
+        let userAuthId = null
+        try {
+          const { data: { user } } = await supabase.auth.getUser()
+          userAuthId = user?.id || null
+        } catch (e) {}
+
+        await insertLog({
+          level: 'audit',
+          source: 'users',
+          action: 'user_delete',
+          userAuthId,
+          details: { id: user.id, deleted_auth_id: user.auth_id || null, deleted_display: displayName }
+        })
+      } catch (e) {
+        console.warn('Failed to record user_delete from UI:', e?.message || e)
+      }
       setFormMessage(`Deleted ${displayName} successfully.`)
     } catch (err) {
       console.error('Delete user error:', err)
