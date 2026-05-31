@@ -6,11 +6,13 @@ import {
   LoaderCircle,
   PlusCircle,
   Save,
+  Trash2,
 } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import SettingsNavbar from '@/components/SettingsNavbar'
 import AdminNavbar from '@/components/AdminNavbar'
 import Toast from '@/components/Toast'
+import { logAction } from '@/services/logService'
 import { supabase as sharedSupabase } from '@/utils/supabase'
 import './ISOStandardsPage.css'
 
@@ -73,7 +75,29 @@ export default function ISOStandardsPage({
   const [bulkSavedCount, setBulkSavedCount] = useState(null)
   const [toggleError, setToggleError] = useState('')
   const [updatingStandardIds, setUpdatingStandardIds] = useState({})
+  const [deletingStandardIds, setDeletingStandardIds] = useState({})
   const [updatedStandardId, setUpdatedStandardId] = useState('')
+
+  const getCurrentAuthId = async () => {
+    try {
+      const { data } = await supabaseClient.auth.getUser()
+      return data?.user?.id || null
+    } catch (error) {
+      return null
+    }
+  }
+
+  const logIsoActivity = async (action, details = {}) => {
+    await logAction({
+      level: 'audit',
+      source: 'iso_standards',
+      action,
+      details: {
+        ...details,
+        actor: userName || null,
+      },
+    })
+  }
 
   useEffect(() => {
     const timer = updatedStandardId
@@ -187,6 +211,11 @@ export default function ISOStandardsPage({
       if (error) throw new Error(error.message)
 
       await refreshStandards()
+      await logIsoActivity('iso_standard_create', {
+        name,
+        version,
+        description: standardForm.description.trim() || null,
+      })
       setStandardForm(initialStandardForm)
       setToast({ message: 'ISO standard saved successfully.', type: 'success' })
     } catch (error) {
@@ -258,6 +287,13 @@ export default function ISOStandardsPage({
           .select('id')
 
         if (insertError) throw new Error(insertError.message)
+
+        await logIsoActivity('iso_clause_create', {
+          standardId: selectedStandardId,
+          clauseNumber,
+          title,
+          description: clauseForm.description.trim() || null,
+        })
       }
 
       setClauseForm(initialClauseForm)
@@ -332,6 +368,11 @@ export default function ISOStandardsPage({
       if (error) throw new Error(error.message)
 
       const savedCount = data?.length || payload.length
+      await logIsoActivity('iso_clause_bulk_create', {
+        standardId: selectedStandardId,
+        count: savedCount,
+        clauses: payload.map((row) => ({ clauseNumber: row.clause_number, title: row.title })),
+      })
       setBulkPaste('')
       setBulkSavedCount(savedCount)
       setToast({ message: `${savedCount} clauses saved successfully.`, type: 'success' })
@@ -363,6 +404,51 @@ export default function ISOStandardsPage({
       setToggleError(error.message || 'Failed to update ISO standard.')
     } finally {
       setUpdatingStandardIds((current) => ({ ...current, [standard.id]: false }))
+    }
+  }
+
+  const handleDeleteStandard = async (standard) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${standard.name}? This will also delete all associated clauses and cannot be undone.`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setToggleError('')
+    setDeletingStandardIds((current) => ({ ...current, [standard.id]: true }))
+
+    try {
+      const { error } = await supabaseClient
+        .from('iso_standards')
+        .delete()
+        .eq('id', standard.id)
+
+      if (error) {
+        console.error('Delete error:', error)
+        throw new Error(error.message)
+      }
+
+      const standardLabel = `${standard.name}${standard.version ? ` - ${standard.version}` : ''}`
+      const performedBy = await getCurrentAuthId()
+
+      await logIsoActivity('DELETE_ISO_STANDARD', {
+        entity_type: 'iso_standard',
+        entity_id: standard.id,
+        entity_name: standardLabel,
+        performed_by: performedBy,
+        timestamp: new Date().toISOString(),
+        details: `Deleted ISO standard '${standardLabel}' along with all associated clause groups and clauses.`,
+      })
+
+      await refreshStandards()
+      setToast({ message: `${standard.name} has been deleted.`, type: 'success' })
+    } catch (error) {
+      console.error('Failed to delete standard:', error)
+      setToast({ message: 'Failed to delete standard.', type: 'error' })
+    } finally {
+      setDeletingStandardIds((current) => ({ ...current, [standard.id]: false }))
     }
   }
 
@@ -667,24 +753,26 @@ export default function ISOStandardsPage({
                             <th>Status</th>
                             <th>Toggle</th>
                             <th>Confirmation</th>
+                            <th>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
                           {loadingStandards ? (
                             <tr>
-                              <td colSpan={5} className="iso-empty-state">
+                              <td colSpan={6} className="iso-empty-state">
                                 Loading standards...
                               </td>
                             </tr>
                           ) : standards.length === 0 ? (
                             <tr>
-                              <td colSpan={5} className="iso-empty-state">
+                              <td colSpan={6} className="iso-empty-state">
                                 No ISO standards have been created yet.
                               </td>
                             </tr>
                           ) : (
                             standards.map((standard) => {
                               const busy = Boolean(updatingStandardIds[standard.id])
+                              const deleting = Boolean(deletingStandardIds[standard.id])
 
                               return (
                                 <tr key={standard.id}>
@@ -722,6 +810,18 @@ export default function ISOStandardsPage({
                                     ) : (
                                       <span className="iso-updated-note iso-updated-note--muted">Idle</span>
                                     )}
+                                  </td>
+                                  <td>
+                                    <button
+                                      type="button"
+                                      className="iso-delete-button"
+                                      onClick={() => handleDeleteStandard(standard)}
+                                      disabled={busy || deleting}
+                                      aria-label={`Delete ${standard.name}`}
+                                    >
+                                      <Trash2 size={14} />
+                                      {deleting ? 'Deleting...' : 'Delete'}
+                                    </button>
                                   </td>
                                 </tr>
                               )

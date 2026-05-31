@@ -72,7 +72,7 @@ export default function SystemLogsPanel({ onClose }) {
                   <td>{l.level}</td>
                   <td>{l.source || '-'}</td>
                   <td style={{maxWidth:400,overflow:'hidden',textOverflow:'ellipsis'}}>{typeof l.action === 'string' ? l.action : JSON.stringify(l.action || l.details || l.metadata)}</td>
-                  <td>{l.user_display || l.user_auth_id || (typeof l.details === 'object' ? l.details?.email : null) || '-'}</td>
+                  <td>{l.user_display || l.user_auth_id || '-'}</td>
                 </tr>
               ))}
             </tbody>
