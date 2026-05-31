@@ -60,6 +60,40 @@
 .admin-users-table td { color: #e2e8f0; }
 .admin-users-table tbody tr:hover { background: rgba(34, 211, 238, 0.05); }
 
+/* ==========================================================================
+   ROW ACTIONS & USER CONTROL UTILITIES
+   ========================================================================== */
+.btn-edit-user {
+  background: rgba(34, 211, 238, 0.08);
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  color: #22d3ee;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-edit-user:hover {
+  background: rgba(34, 211, 238, 0.18);
+  border-color: rgba(34, 211, 238, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.15);
+}
+
+.btn-edit-user:active {
+  background: rgba(34, 211, 238, 0.12);
+  transform: translateY(0);
+}
+
+.btn-edit-user:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Core Authorization Access Guard Notifications */
 .admin-access-denied-message {
   padding: 16px;
