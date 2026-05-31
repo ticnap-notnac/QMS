@@ -66,6 +66,15 @@ export async function assignReportToEmployee(id, payload) {
   })
 }
 
+export async function reviewReportApproval(id, payload) {
+  const headers = await buildAuthHeaders()
+  return await request(`/ncr/${id}/approval`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function deleteReport(id) {
   const headers = await buildAuthHeaders()
   return await request(`/ncr/${id}`, {

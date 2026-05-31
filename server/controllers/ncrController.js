@@ -91,6 +91,10 @@ function parseResolutionTime(resolutionTimeValue, resolutionTimeUnit) {
 }
 
 async function createNotification({ title, message, type = 'info', reportId = null, userId = null }) {
+  if (!userId) {
+    return
+  }
+
   const { error } = await supabase
     .from('notifications')
     .insert([{ user_id: userId, title, message, type, is_read: false, report_id: reportId }])
@@ -98,6 +102,120 @@ async function createNotification({ title, message, type = 'info', reportId = nu
   if (error) {
     throw error
   }
+}
+
+async function getUsersByRoleNames(roleNames = []) {
+  const normalizedRoleNames = [...new Set((roleNames || []).map((name) => String(name || '').trim().toLowerCase()).filter(Boolean))]
+
+  if (normalizedRoleNames.length === 0) {
+    return []
+  }
+
+  const { data: roles, error: rolesError } = await supabase
+    .from('roles')
+    .select('id, role_name')
+
+  if (rolesError) {
+    throw rolesError
+  }
+
+  const targetRoleIds = (roles || [])
+    .filter((role) => normalizedRoleNames.includes(String(role.role_name || '').trim().toLowerCase()))
+    .map((role) => role.id)
+
+  if (targetRoleIds.length === 0) {
+    return []
+  }
+
+  const { data: users, error: usersError } = await supabase
+    .from('users')
+    .select('id, user_name, first_name, last_name, auth_id, role_id')
+    .in('role_id', targetRoleIds)
+
+  if (usersError) {
+    throw usersError
+  }
+
+  return users || []
+}
+
+async function createNotificationsForRoles({
+  roleNames = [],
+  title,
+  message,
+  type = 'info',
+  reportId = null,
+}) {
+  const users = await getUsersByRoleNames(roleNames)
+
+  if (users.length === 0) {
+    return 0
+  }
+
+  const rows = users.map((user) => ({
+    user_id: user.id,
+    title,
+    message,
+    type,
+    report_id: reportId,
+    is_read: false,
+  }))
+
+  const { error } = await supabase
+    .from('notifications')
+    .insert(rows)
+
+  if (error) {
+    throw error
+  }
+
+  return rows.length
+}
+
+async function getCurrentUser(req) {
+  const authId = getRequestActor(req)
+  if (!authId) {
+    throw new Error('Missing x-user-auth-id header.')
+  }
+
+  const { data: profile, error } = await supabase
+    .from('users')
+    .select('id, auth_id, role_id, user_name, first_name, last_name')
+    .eq('auth_id', authId)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  if (!profile) {
+    throw new Error('Current user profile not found.')
+  }
+
+  let roleName = null
+  if (profile.role_id) {
+    const { data: roleData, error: roleError } = await supabase
+      .from('roles')
+      .select('role_name')
+      .eq('id', profile.role_id)
+      .maybeSingle()
+
+    if (roleError) {
+      throw roleError
+    }
+
+    roleName = roleData?.role_name || null
+  }
+
+  return {
+    ...profile,
+    role_name: roleName,
+  }
+}
+
+function isAdminOrAuditor(roleName) {
+  const normalized = String(roleName || '').trim().toLowerCase()
+  return normalized === 'admin' || normalized === 'auditor'
 }
 
 async function buildEnrichedReports(reports) {
@@ -409,6 +527,8 @@ export async function updateReport(req, res) {
     severity,
     department_id,
     description,
+    car_filed,
+    qddr_filed,
     evidence_url,
     status,
   } = req.body || {}
@@ -543,6 +663,9 @@ export async function updateReportInvestigation(req, res) {
     resolution_time: parseResolutionTime(resolution_time_value, resolution_time_unit),
     verification_date: normalizeVerificationDate(verification_date),
     investigation_evidence_url: investigationEvidenceUrl,
+    assigned_to: null,
+    assigned_at: null,
+    assigned_by: null,
     updated_at: new Date().toISOString(),
   }
 
@@ -570,14 +693,15 @@ export async function updateReportInvestigation(req, res) {
   }
 
   try {
-    await createNotification({
-      title: `NCR Updated: ${existing.reference_no}`,
-      message: `Report ${existing.reference_no} now has updated investigation details and resolution data.`,
+    await createNotificationsForRoles({
+      roleNames: ['admin', 'auditor'],
+      title: `Report Ready for Approval: ${existing.reference_no}`,
+      message: `Report ${existing.reference_no} investigation was submitted and is ready for approval.`,
       type: 'info',
       reportId: existing.id,
     })
   } catch (notificationError) {
-    console.warn('Failed to create NCR update notification:', notificationError?.message || notificationError)
+    console.warn('Failed to create investigation-ready notification:', notificationError?.message || notificationError)
   }
 
   return res.json(data)
@@ -667,7 +791,7 @@ export async function createReportSubmit(req, res) {
 
   const { data: reporter, error: reporterError } = await supabase
     .from('users')
-    .select('id')
+    .select('id, user_name, first_name, last_name')
     .eq('auth_id', reportedByAuthId)
     .maybeSingle()
 
@@ -795,9 +919,11 @@ export async function createReportSubmit(req, res) {
   }
 
   try {
-    await createNotification({
-      title: `New NCR Submitted: ${referenceNo}`,
-      message: `Report ${referenceNo} has been submitted and is ready for review.`,
+    const reporterName = `${reporter.first_name || ''} ${reporter.last_name || ''}`.trim() || reporter.user_name || 'a user'
+    await createNotificationsForRoles({
+      roleNames: ['admin', 'auditor'],
+      title: `New Report Submitted: ${referenceNo}`,
+      message: `A new NCR report ${referenceNo} has been submitted by ${reporterName}. Please review and assign it.`,
       type: 'info',
       reportId: data?.id ?? null,
     })
@@ -806,4 +932,109 @@ export async function createReportSubmit(req, res) {
   }
 
   return res.status(201).json({ success: true, data })
+}
+
+export async function reviewReportApproval(req, res) {
+  const { id } = req.params
+  const { decision, reason } = req.body || {}
+  const normalizedDecision = String(decision || '').trim().toLowerCase()
+
+  if (!['approve', 'reject'].includes(normalizedDecision)) {
+    return res.status(400).json({ error: 'Decision must be either approve or reject.' })
+  }
+
+  if (normalizedDecision === 'reject' && !String(reason || '').trim()) {
+    return res.status(400).json({ error: 'Rejection reason is required.' })
+  }
+
+  try {
+    const currentUser = await getCurrentUser(req)
+    if (!isAdminOrAuditor(currentUser.role_name)) {
+      return res.status(403).json({ error: 'Only admin and auditor can approve or reject reports.' })
+    }
+
+    const { data: report, error: reportError } = await supabase
+      .from('ncr_reports')
+      .select('id, reference_no, reported_by, status')
+      .eq('id', id)
+      .maybeSingle()
+
+    if (reportError) {
+      return res.status(500).json({ error: reportError.message })
+    }
+
+    if (!report) {
+      return res.status(404).json({ error: 'NCR report not found.' })
+    }
+
+    const nextStatus = normalizedDecision === 'approve' ? 'CLOSED' : 'OPEN'
+    const rejectionResetFields = normalizedDecision === 'reject'
+      ? {
+          investigation_details: null,
+          resolution_details: null,
+          resolution_time: null,
+          verification_date: null,
+          investigation_evidence_url: null,
+        }
+      : {}
+    const { data: updatedReport, error: updateError } = await supabase
+      .from('ncr_reports')
+      .update({
+        status: nextStatus,
+        ...rejectionResetFields,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select('*')
+      .maybeSingle()
+
+    if (updateError) {
+      return res.status(500).json({ error: updateError.message })
+    }
+
+    try {
+      const trimmedReason = String(reason || '').trim()
+      if (normalizedDecision === 'approve') {
+        await createNotification({
+          userId: report.reported_by,
+          title: `Report Approved: ${report.reference_no}`,
+          message: `Your report ${report.reference_no} has been approved. It is now open for rating.`,
+          type: 'info',
+          reportId: report.id,
+        })
+      } else {
+        await createNotification({
+          userId: report.reported_by,
+          title: `Report Rejected: ${report.reference_no}`,
+          message: `Your report ${report.reference_no} was rejected. Reason: ${trimmedReason}. Please update your investigation and resubmit.`,
+          type: 'warning',
+          reportId: report.id,
+        })
+      }
+    } catch (notificationError) {
+      console.warn('Failed to create review notification:', notificationError?.message || notificationError)
+    }
+
+    try {
+      await writeAudit({
+        level: 'audit',
+        source: 'ncr_reports',
+        action: normalizedDecision === 'approve' ? 'ncr_approve' : 'ncr_reject',
+        userAuthId: currentUser.auth_id,
+        details: {
+          id: report.id,
+          reference_no: report.reference_no,
+          decision: normalizedDecision,
+          reason: String(reason || '').trim() || null,
+          status: nextStatus,
+        },
+      })
+    } catch (auditError) {
+      console.warn('Failed to record NCR review audit:', auditError?.message || auditError)
+    }
+
+    return res.json({ success: true, data: updatedReport })
+  } catch (err) {
+    return res.status(500).json({ error: err?.message || 'Failed to review NCR report.' })
+  }
 }

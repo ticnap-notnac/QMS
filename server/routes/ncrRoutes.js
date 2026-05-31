@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import multer from 'multer'
-import { assignReport, createReport, deleteReport, getReports, updateReport, createReportSubmit, updateReportInvestigation } from '../controllers/ncrController.js'
+import { assignReport, createReport, createReportSubmit, deleteReport, getReports, reviewReportApproval, updateReport, updateReportInvestigation } from '../controllers/ncrController.js'
 
 const router = Router()
 
@@ -12,6 +12,7 @@ router.post('/ncr/submit', upload.single('evidence'), createReportSubmit)
 router.put('/ncr/:id', updateReport)
 router.put('/ncr/:id/investigation', upload.single('investigation_evidence'), updateReportInvestigation)
 router.put('/ncr/:id/assign', assignReport)
+router.put('/ncr/:id/approval', reviewReportApproval)
 router.delete('/ncr/:id', deleteReport)
 
 export default router

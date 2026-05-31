@@ -20,7 +20,7 @@ export default function Navbar({
   const normalizedRole = String(userRole || '').trim().toLowerCase()
   const shouldShowNotifications = typeof canViewNotifications === 'boolean'
     ? canViewNotifications
-    : ['admin', 'auditor', 'employee'].includes(normalizedRole)
+    : true
 
   return (
     <header className="app-navbar">

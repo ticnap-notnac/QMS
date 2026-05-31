@@ -31,6 +31,22 @@ function Login({
 
       if (authError) throw authError
 
+      // Log successful sign-in, but don't block auth flow if logging fails.
+      try {
+        await insertLog({
+          level: 'audit',
+          source: 'auth',
+          action: 'user_login_success',
+          userAuthId: data?.user?.id || null,
+          details: {
+            email,
+            event: 'login_success',
+          },
+        })
+      } catch (logErr) {
+        console.warn('Failed to write successful-login log:', logErr?.message || logErr)
+      }
+
       // Call the parent's onSubmit callback if provided
       if (onSubmit) {
         onSubmit({ user: data.user, session: data.session })

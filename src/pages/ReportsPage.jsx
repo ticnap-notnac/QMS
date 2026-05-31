@@ -11,7 +11,7 @@ import './PagesStyles.css' // 📁 Central stylesheet used by pages
 import { useAuth } from '@/hooks/useAuth'
 import { loadDepartments } from '@/services/departmentService'
 import Toast from '@/components/Toast'
-import { createReport, fetchInvestigatedReports, fetchReports, submitNcrMultipart } from '@/services/ncrService'
+import { createReport, fetchInvestigatedReports, fetchReports, reviewReportApproval, submitNcrMultipart } from '@/services/ncrService'
 import FilterModal from '../components/Modals/FilterModal.jsx'
 import UpdateReportModal from '../components/Modals/UpdateReportModal.jsx'
 import AssignReportModal from '../components/Modals/AssignReportModal.jsx'
@@ -30,7 +30,6 @@ const DEFAULT_CREATE_FORM = {
   verificationDate: '',
   preventiveRating: 'Excellent',
 }
-
 function formatDate(value) {
   if (!value) return 'No date'
   const date = new Date(value)
@@ -93,6 +92,40 @@ function getSeverityStyle(severity) {
   }
 
   return { background: 'rgba(59, 130, 246, 0.18)', color: '#bfdbfe', borderColor: 'rgba(59, 130, 246, 0.32)' }
+}
+
+function toTimestamp(value) {
+  const timestamp = new Date(value || 0).getTime()
+  return Number.isNaN(timestamp) ? 0 : timestamp
+}
+
+function isReportAssignedToCurrentUser(report, currentUserId) {
+  if (!currentUserId) return false
+  return String(report?.assigned_to || '') === String(currentUserId) || String(report?.reported_by || '') === String(currentUserId)
+}
+
+function sortReportsForCurrentUser(reportList, currentUserId) {
+  const list = Array.isArray(reportList) ? [...reportList] : []
+
+  return list.sort((a, b) => {
+    const aMine = isReportAssignedToCurrentUser(a, currentUserId)
+    const bMine = isReportAssignedToCurrentUser(b, currentUserId)
+
+    if (aMine !== bMine) {
+      return aMine ? -1 : 1
+    }
+
+    return toTimestamp(a?.created_at) - toTimestamp(b?.created_at)
+  })
+}
+
+function getApprovalState(report) {
+  return String(report?.status || '').trim().toLowerCase() === 'closed' ? 'approved' : 'pending'
+}
+
+function formatAssignedUser(report) {
+  if (!report?.assigned_to) return ''
+  return `Assigned to user #${report.assigned_to}`
 }
 
 function SearchableDropdown({ label, value, onValueChange, options, loading, placeholder, onSelectOption }) {
@@ -200,13 +233,13 @@ function ReportsPage({
   setIsAdminPanelOpen,
   setIsAuditToolsOpen,
   setProfileTargetTab,
+  currentUserId,
+  unreadNotificationCount,
+  canViewNotifications,
   authUserId,
 }) {
   const { user: authUser } = useAuth()
   const currentAuthId = authUser?.id || authUserId || ''
-
-  const [reports, setReports] = useState([])
-  const [investigatedReports, setInvestigatedReports] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [toast, setToast] = useState(null)
@@ -230,6 +263,13 @@ function ReportsPage({
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
   const [isPreventiveActionModalOpen, setIsPreventiveActionModalOpen] = useState(false)
+  const [reports, setReports] = useState([])
+  const [investigatedReports, setInvestigatedReports] = useState([])
+  const [isApprovalQueueMode, setIsApprovalQueueMode] = useState(false)
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
+  const [rejectTargetReport, setRejectTargetReport] = useState(null)
+  const [rejectReason, setRejectReason] = useState('')
+  const [isReviewSubmitting, setIsReviewSubmitting] = useState(false)
 
   const [productType, setProductType] = useState(DEFAULT_CREATE_FORM.productType)
   const [productTypeId, setProductTypeId] = useState('')
@@ -277,14 +317,14 @@ function ReportsPage({
       const openReports = Array.isArray(openReportsData) ? openReportsData : []
       const resolvedReports = Array.isArray(investigatedReportsData) ? investigatedReportsData : []
 
-      setReports(applyReportFilters(openReports, filters))
-      setInvestigatedReports(applyReportFilters(resolvedReports, filters))
+      setReports(sortReportsForCurrentUser(applyReportFilters(openReports, filters), currentUserId))
+      setInvestigatedReports(sortReportsForCurrentUser(applyReportFilters(resolvedReports, filters), currentUserId))
     } catch (err) {
       setError(err?.message || 'Failed to load NCR reports.')
     } finally {
       setIsLoading(false)
     }
-  }, [reportFilters])
+  }, [reportFilters, currentUserId])
 
   const loadLookupData = useCallback(async () => {
     setDepartmentsLoading(true)
@@ -381,6 +421,61 @@ function ReportsPage({
     closeAssignModal()
     await refreshReportsList()
   }
+
+  const openRejectModal = (report) => {
+    setRejectTargetReport(report)
+    setRejectReason('')
+    setIsRejectModalOpen(true)
+  }
+
+  const closeRejectModal = () => {
+    setIsRejectModalOpen(false)
+    setRejectTargetReport(null)
+    setRejectReason('')
+  }
+
+  const handleReviewReport = async (report, decision, reason = '') => {
+    if (!report?.id) return
+
+    try {
+      setError(null)
+      const normalized = String(decision || '').trim().toLowerCase()
+
+      const trimmedReason = String(reason || '').trim()
+      if (normalized === 'reject' && !trimmedReason) {
+        setToast({ message: 'Rejection cancelled. Reason is required.', type: 'warning' })
+        return
+      }
+
+      setIsReviewSubmitting(true)
+
+      await reviewReportApproval(report.id, {
+        decision: normalized,
+        reason: trimmedReason || undefined,
+      })
+
+      const actionLabel = normalized === 'approve' ? 'approved' : 'rejected'
+      setToast({ message: `Report ${report.reference_no || report.id} ${actionLabel}.`, type: normalized === 'approve' ? 'success' : 'warning' })
+      if (normalized === 'reject') {
+        closeRejectModal()
+      }
+      await refreshReportsList()
+    } catch (err) {
+      setError(err?.message || 'Failed to review report.')
+    } finally {
+      setIsReviewSubmitting(false)
+    }
+  }
+
+  const approvalQueueReports = useMemo(() => {
+    return (investigatedReports || []).filter((report) => {
+      const hasInvestigation = Boolean(report?.investigation_details)
+      const isClosed = String(report?.status || '').trim().toLowerCase() === 'closed'
+      return hasInvestigation && !isClosed
+    })
+  }, [investigatedReports])
+
+  const displayedInvestigatedReports = isApprovalQueueMode ? approvalQueueReports : investigatedReports
 
   const handleSubmitReport = async (event) => {
     event.preventDefault()
@@ -496,6 +591,8 @@ function ReportsPage({
         onLogout={onLogout}
         isNotificationsOpen={isNotificationsOpen}
         onToggleNotifications={onToggleNotifications}
+        unreadNotificationCount={unreadNotificationCount}
+        canViewNotifications={canViewNotifications}
         userRole={userRole}
         userName={userName}
         userPosition={userPosition}
@@ -543,6 +640,16 @@ function ReportsPage({
             >
               QDDR
             </button>
+
+            {canAssignReports ? (
+              <button
+                type="button"
+                className="btn-quick-toggle"
+                onClick={() => setIsApprovalQueueMode((current) => !current)}
+              >
+                {isApprovalQueueMode ? 'Show All Updated' : `Needs Approval (${approvalQueueReports.length})`}
+              </button>
+            ) : null}
           </div>
 
           {/* Far-right submission action point */}
@@ -552,6 +659,134 @@ function ReportsPage({
         </div>
 
         {error ? <div className="user-info-error">{error}</div> : null}
+
+        {isApprovalQueueMode ? (
+          <div className="reports-main-wrap" style={{ marginTop: '24px' }}>
+            <div className="reports-details-title-wrap" style={{ marginBottom: '12px' }}>
+              <h4 className="reports-details-title">Updated Reports Needing Approval</h4>
+            </div>
+
+            <div className="reports-list-stack">
+              {displayedInvestigatedReports.length === 0 ? (
+                <div className="reports-card">
+                  <div className="reports-workspace">
+                    <span className="reports-workspace-text">No updated reports are currently waiting for approval.</span>
+                  </div>
+                </div>
+              ) : null}
+
+              {displayedInvestigatedReports.map((report) => {
+                const reporterName = report.reporter_full_name || 'Name of the User'
+                const reporterRole = report.reporter_role_name || 'Position'
+                const reporterDepartment = report.reporter_department_name || departmentNameById.get(String(report.department_id)) || 'Department'
+                const reportLocation = report.location_name || report.complaint_location || 'Location'
+                const statusStyle = getStatusStyle(report.status)
+                const severityStyle = getSeverityStyle(report.severity)
+                const approvalState = getApprovalState(report)
+                const isApproved = approvalState === 'approved'
+
+                return (
+                  <div className="reports-card" key={`investigated-${report.id}`} id={`report-card-${report.id}`}>
+                    <div className="reports-card-header">
+                      <div className="reports-user-block">
+                        <div className="reports-avatar">
+                          <User size={20} className="icon-cyan" />
+                        </div>
+                        <div className="reports-user-text">
+                          <span className="reports-user-name">{reporterName}</span>
+                          <span className="reports-user-meta">
+                            {reporterRole} • {reporterDepartment} • {reportLocation} • {formatDate(report.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="badges-row">
+                        <span className="status-badge" style={statusStyle}>{String(report.status || 'open').toUpperCase()}</span>
+                        <span className="day-badge" style={severityStyle}>{String(report.severity || 'low').toUpperCase()}</span>
+                        <span
+                          className="status-badge"
+                          style={isApproved
+                            ? { background: 'rgba(34, 197, 94, 0.2)', color: '#bbf7d0', borderColor: 'rgba(34, 197, 94, 0.35)' }
+                            : { background: 'rgba(245, 158, 11, 0.2)', color: '#fde68a', borderColor: 'rgba(245, 158, 11, 0.35)' }}
+                        >
+                          {isApproved ? 'APPROVED' : 'PENDING APPROVAL'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="reports-details-title-wrap"><h4 className="reports-details-title">Investigation Details</h4></div>
+                    <div className="reports-details-box">
+                      <span className="reports-workspace-text">{report.investigation_details || 'No investigation details provided.'}</span>
+                    </div>
+
+                    <div className="reports-details-title-wrap"><h4 className="reports-details-title">Resolution Details</h4></div>
+                    <div className="reports-details-box">
+                      <span className="reports-workspace-text">{report.resolution_details || 'No resolution details provided.'}</span>
+                    </div>
+
+                    <div className="reports-grid-2-16" style={{ marginTop: '12px' }}>
+                      <div className="reports-details-box">
+                        <span className="reports-workspace-text">Resolution Time: {report.resolution_time_value ? `${report.resolution_time_value} ${report.resolution_time_unit || ''}`.trim() : 'Not available'}</span>
+                      </div>
+                      <div className="reports-details-box">
+                        <span className="reports-workspace-text">Verification Date: {formatDate(report.verification_date)}</span>
+                      </div>
+                    </div>
+
+                    <div className="reports-details-title-wrap"><h4 className="reports-details-title">Investigation Evidence</h4></div>
+                    <div className="evidence-box">
+                      {report.investigation_evidence_url ? (
+                        <img
+                          src={report.investigation_evidence_url}
+                          alt="Investigation evidence"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }}
+                          onClick={() => window.open(report.investigation_evidence_url, '_blank', 'noopener,noreferrer')}
+                        />
+                      ) : (
+                        <p style={{ color: 'var(--muted)', textAlign: 'center' }}>
+                          No investigation image attached
+                        </p>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
+                      {canAssignReports ? (
+                        <button
+                          type="button"
+                          className="btn-edit-user"
+                          onClick={() => handleReviewReport(report, 'approve')}
+                          disabled={isApproved}
+                          title="Approve updated report"
+                        >
+                          {isApproved ? 'Approved' : 'Approve'}
+                        </button>
+                      ) : null}
+
+                      {canAssignReports && !isApproved ? (
+                        <button
+                          type="button"
+                          className="btn-edit-user"
+                          onClick={() => openRejectModal(report)}
+                          title="Reject updated report"
+                        >
+                          Reject
+                        </button>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        className="btn-edit-user"
+                        onClick={() => openUpdateModal(report)}
+                        title="Update report"
+                      >
+                        <SquarePen size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ) : null}
 
         {isLoading ? (
           <div className="reports-card">
@@ -571,6 +806,8 @@ function ReportsPage({
             const reportLocation = report.location_name || report.complaint_location || 'Location'
             const statusStyle = getStatusStyle(report.status)
             const severityStyle = getSeverityStyle(report.severity)
+            const assignmentLabel = formatAssignedUser(report)
+            const isAssigned = Boolean(report.assigned_to)
 
             return (
               <div className="reports-card" key={report.id} id={`report-card-${report.id}`}>
@@ -589,6 +826,11 @@ function ReportsPage({
                   <div className="badges-row">
                     <span className="status-badge" style={statusStyle}>{String(report.status || 'open').toUpperCase()}</span>
                     <span className="day-badge" style={severityStyle}>{String(report.severity || 'low').toUpperCase()}</span>
+                    {isAssigned ? (
+                      <span className="status-badge" style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#fde68a', borderColor: 'rgba(245, 158, 11, 0.35)' }}>
+                        ASSIGNED
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 <div className="reports-details-title-wrap"><h4 className="reports-details-title">Details</h4></div>
@@ -597,6 +839,12 @@ function ReportsPage({
                   <span className="reports-workspace-text">{report.description || 'No description provided.'}</span>
                   {/* 🎯 Pencil icon container pulled out clean and simple! */}
                 </div>
+
+                {assignmentLabel ? (
+                  <div className="reports-details-box" style={{ marginTop: '10px' }}>
+                    <span className="reports-workspace-text">{assignmentLabel}</span>
+                  </div>
+                ) : null}
 
                 <div className="reports-details-title-wrap"><h4 className="reports-details-title">Evidence</h4></div>
                 <div className="evidence-box">
@@ -614,7 +862,7 @@ function ReportsPage({
                   )}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
-                  {canAssignReports ? (
+                  {canAssignReports && !isAssigned ? (
                     <button
                       type="button"
                       className="btn-edit-user"
@@ -638,228 +886,6 @@ function ReportsPage({
           })
         )}
       </div>
-
-      {investigatedReports.length > 0 ? (
-        <div className="reports-main-wrap" style={{ marginTop: '24px' }}>
-          <div className="reports-details-title-wrap" style={{ marginBottom: '12px' }}>
-            <h4 className="reports-details-title">Investigated Reports</h4>
-          </div>
-
-          <div className="reports-list-stack">
-            {investigatedReports.map((report) => {
-              const reporterName = report.reporter_full_name || 'Name of the User'
-              const reporterRole = report.reporter_role_name || 'Position'
-              const reporterDepartment = report.reporter_department_name || departmentNameById.get(String(report.department_id)) || 'Department'
-              const reportLocation = report.location_name || report.complaint_location || 'Location'
-              const statusStyle = getStatusStyle(report.status)
-              const severityStyle = getSeverityStyle(report.severity)
-
-              return (
-                <div className="reports-card" key={`investigated-${report.id}`} id={`report-card-${report.id}`}>
-                  <div className="reports-card-header">
-                    <div className="reports-user-block">
-                      <div className="reports-avatar">
-                        <User size={20} className="icon-cyan" />
-                      </div>
-                      <div className="reports-user-text">
-                        <span className="reports-user-name">{reporterName}</span>
-                        <span className="reports-user-meta">
-                          {reporterRole} • {reporterDepartment} • {reportLocation} • {formatDate(report.created_at)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="badges-row">
-                      <span className="status-badge" style={statusStyle}>{String(report.status || 'open').toUpperCase()}</span>
-                      <span className="day-badge" style={severityStyle}>{String(report.severity || 'low').toUpperCase()}</span>
-                    </div>
-                  </div>
-
-                  <div className="reports-details-title-wrap"><h4 className="reports-details-title">Investigation Details</h4></div>
-                  <div className="reports-details-box">
-                    <span className="reports-workspace-text">{report.investigation_details || 'No investigation details provided.'}</span>
-                  </div>
-
-                  <div className="reports-details-title-wrap"><h4 className="reports-details-title">Resolution Details</h4></div>
-                  <div className="reports-details-box">
-                    <span className="reports-workspace-text">{report.resolution_details || 'No resolution details provided.'}</span>
-                  </div>
-
-                  <div className="reports-grid-2-16" style={{ marginTop: '12px' }}>
-                    <div className="reports-details-box">
-                      <span className="reports-workspace-text">Resolution Time: {report.resolution_time_value ? `${report.resolution_time_value} ${report.resolution_time_unit || ''}`.trim() : 'Not available'}</span>
-                    </div>
-                    <div className="reports-details-box">
-                      <span className="reports-workspace-text">Verification Date: {formatDate(report.verification_date)}</span>
-                    </div>
-                  </div>
-
-                  <div className="reports-details-title-wrap"><h4 className="reports-details-title">Investigation Evidence</h4></div>
-                  <div className="evidence-box">
-                    {report.investigation_evidence_url ? (
-                      <img
-                        src={report.investigation_evidence_url}
-                        alt="Investigation evidence"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }}
-                        onClick={() => window.open(report.investigation_evidence_url, '_blank', 'noopener,noreferrer')}
-                      />
-                    ) : (
-                      <p style={{ color: 'var(--muted)', textAlign: 'center' }}>
-                        No investigation image attached
-                      </p>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
-                    {canAssignReports ? (
-                      <button
-                        type="button"
-                        className="btn-edit-user"
-                        onClick={() => openAssignModal(report)}
-                        title="Assign report"
-                      >
-                        Assign
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      className="btn-edit-user"
-                      onClick={() => openUpdateModal(report)}
-                      title="Update report"
-                    >
-                      <SquarePen size={16} />
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      ) : null}
-
-      {/* Main Creation Modal */}
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card">
-            <button onClick={closeCreateModal} className="modal-close-button"><CloseIcon size={18} /></button>
-            <form onSubmit={handleSubmitReport} className="modal-form">
-              <div>
-                <label className="label-field">Evidence:</label>
-                <div
-                  className="upload-box"
-                  onClick={() => fileInputRefMain?.current && fileInputRefMain.current.click()}
-                  style={{ cursor: 'pointer', position: 'relative' }}
-                >
-                  {!evidencePreviewMain ? (
-                    <>
-                      <UploadIcon size={20} className="icon-teal" />
-                      <span className="reports-upload-text">Upload an Image</span>
-                    </>
-                  ) : (
-                    <div style={{ position: 'relative' }}>
-                      <img src={evidencePreviewMain} alt="Evidence preview" style={{ width: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 8 }} />
-                      <button
-                        type="button"
-                        className="remove-preview-btn"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          try { URL.revokeObjectURL(evidencePreviewMain) } catch (err) {}
-                          setEvidenceFileMain(null)
-                          setEvidencePreviewMain(null)
-                          setEvidenceErrorMain(null)
-                        }}
-                        style={{ position: 'absolute', top: 8, right: 8 }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  )}
-
-                  <input
-                    ref={fileInputRefMain}
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/webp"
-                    onChange={(e) => {
-                      const file = e.target.files && e.target.files[0]
-                      if (!file) return
-                      const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-                      if (!allowed.includes(file.type)) {
-                        setEvidenceErrorMain('Only jpg, jpeg, png, webp images are allowed')
-                        return
-                      }
-                      if (file.size > 5 * 1024 * 1024) {
-                        setEvidenceErrorMain('Image must be under 5MB')
-                        return
-                      }
-                      if (evidencePreviewMain) {
-                        try { URL.revokeObjectURL(evidencePreviewMain) } catch (err) {}
-                      }
-                      const url = URL.createObjectURL(file)
-                      setEvidenceFileMain(file)
-                      setEvidencePreviewMain(url)
-                      setEvidenceErrorMain(null)
-                    }}
-                    style={{ display: 'none' }}
-                  />
-                </div>
-                {evidenceErrorMain && <div style={{ marginTop: 6, color: '#fca5a5', fontSize: 12 }}>{evidenceErrorMain}</div>}
-              </div>
-              <div className="reports-grid-3-16">
-                <div>
-                  <SearchableDropdown
-                    label="Product Type:"
-                    value={productType}
-                    onValueChange={(nextValue) => {
-                      setProductType(nextValue)
-                      setProductTypeId('')
-                    }}
-                    options={productTypeOptions}
-                    loading={productTypesLoading}
-                    placeholder={productTypesLoading ? 'Loading product types...' : 'Enter or select product type'}
-                    onSelectOption={(option) => setProductTypeId(String(option.id))}
-                  />
-                </div>
-                <div><label className="label-field">Batch Number:</label><input type="text" value={batchNumber} onChange={(e) => setBatchNumber(e.target.value)} className="input-field" placeholder="Enter batch number" /></div>
-                <div>
-                  <SearchableDropdown
-                    label="Location:"
-                    value={location}
-                    onValueChange={(nextValue) => {
-                      setLocation(nextValue)
-                      setLocationId('')
-                    }}
-                    options={locationOptions}
-                    loading={locationsLoading}
-                    placeholder={locationsLoading ? 'Loading locations...' : 'Enter or select location'}
-                    onSelectOption={(option) => setLocationId(String(option.id))}
-                  />
-                </div>
-              </div>
-              <div className="reports-grid-2-16">
-                <div>
-                  <label className="label-field">Severity Level:</label>
-                  <select value={severity} onChange={(e) => setSeverity(e.target.value)} className="select-field">
-                    <option value="" disabled hidden>Select evaluation risk</option>
-                    <option value="low">Low Risk</option>
-                    <option value="medium">Medium Risk</option>
-                    <option value="high">High Severity</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label-field">Department:</label>
-                  <select value={department} onChange={(e) => setDepartment(e.target.value)} className="select-field" disabled={departmentsLoading || departmentOptions.length === 0}>
-                    <option value="" disabled hidden>{departmentsLoading ? 'Loading departments...' : 'Select targeted module block'}</option>
-                    {departmentOptions.map((item) => (
-                      <option key={item.id} value={item.id}>{item.department_name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div><label className="label-field">Description:</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} className="input-field textarea-large" placeholder="Provide thorough configuration summary report details..." /></div>
-              <div className="modal-submit-row"><button type="submit" className="btn-gradient-primary">Submit Report</button></div>
-            </form>
-          </div>
-        </div>
-      )}
 
       <FilterModal
         isOpen={isFilterModalOpen}
@@ -913,6 +939,54 @@ function ReportsPage({
           </div>
         </div>
       )}
+
+      {isRejectModalOpen && rejectTargetReport ? (
+        <div className="modal-overlay">
+          <div className="modal-card modal-card--tall reports-update-card">
+            <button type="button" onClick={closeRejectModal} className="modal-close-button">×</button>
+            <div className="modal-header-row">
+              <SquarePen size={18} className="icon-teal" />
+              <h3 className="reports-update-title">Reject Updated Report</h3>
+            </div>
+
+            <p className="glass-card-subtext" style={{ marginBottom: '12px' }}>
+              Enter a rejection reason so the reporter can revise the investigation details before resubmitting.
+            </p>
+
+            <div className="modal-form reports-form-compact">
+              <div className="reports-details-box">
+                <span className="reports-workspace-text">
+                  Report: {rejectTargetReport.reference_no || rejectTargetReport.id}
+                </span>
+              </div>
+
+              <div>
+                <label className="label-field">Rejection Reason</label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(event) => setRejectReason(event.target.value)}
+                  className="input-field textarea-medium"
+                  placeholder="Explain what needs to be fixed before resubmission..."
+                />
+              </div>
+
+              <div className="reports-update-submit-row">
+                <button type="button" className="btn-edit-user" onClick={closeRejectModal} disabled={isReviewSubmitting}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-gradient-primary reports-update-button"
+                  onClick={() => handleReviewReport(rejectTargetReport, 'reject', rejectReason)}
+                  disabled={isReviewSubmitting}
+                >
+                  {isReviewSubmitting ? 'Rejecting...' : 'Reject Report'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   )
 }

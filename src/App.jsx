@@ -36,9 +36,7 @@ export default function App() {
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
   const [activePage, setActivePage] = useState('Dashboard')
   const [profileTargetTab, setProfileTargetTab] = useState('User Information')
-  const sessionRole = normalizeRoleValue(user?.role || user?.user_metadata?.role || user?.app_metadata?.role)
-  const normalizedUserRole = normalizeRoleValue(userRole)
-  const canViewNotifications = ['admin', 'auditor'].includes(normalizedUserRole) || ['admin', 'auditor'].includes(sessionRole)
+  const canViewNotifications = Boolean(user)
 
   useEffect(() => {
     console.log('current user:', user)
@@ -46,7 +44,7 @@ export default function App() {
   }, [user])
 
   const refreshUnreadNotificationCount = useCallback(async () => {
-    if (!currentUserId || !canViewNotifications) {
+    if (!currentUserId || !user) {
       setUnreadNotificationCount(0)
       return
     }
@@ -58,7 +56,7 @@ export default function App() {
       console.error('Error fetching unread notifications:', err)
       setUnreadNotificationCount(0)
     }
-  }, [canViewNotifications, currentUserId])
+  }, [currentUserId, user])
 
   const applyUserRoleData = async (profile) => {
     const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
@@ -150,12 +148,6 @@ export default function App() {
       return
     }
 
-    if (!canViewNotifications) {
-      setUnreadNotificationCount(0)
-      setIsNotificationsOpen(false)
-      return
-    }
-
     refreshUnreadNotificationCount()
   }, [user, userRole, refreshUnreadNotificationCount])
 
@@ -227,7 +219,7 @@ export default function App() {
       onToggleMenu: () => setIsUserMenuOpen((open) => !open),
       onLogout: handleLogout,
       isNotificationsOpen,
-      onToggleNotifications: canViewNotifications ? () => setIsNotificationsOpen((open) => !open) : () => {},
+      onToggleNotifications: user ? () => setIsNotificationsOpen((open) => !open) : () => {},
       userRole,
       userName,
       userPosition,

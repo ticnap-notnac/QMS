@@ -68,6 +68,10 @@ export async function assignReportToEmployee({ reportId, assignedToId, currentUs
     throw new Error('NCR report not found.')
   }
 
+  if (report.assigned_to) {
+    throw new Error('This report is already assigned and cannot be reassigned.')
+  }
+
   const assignedAt = new Date().toISOString()
 
   const { data: updatedReport, error: updateError } = await supabase
