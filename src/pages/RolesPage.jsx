@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import Navbar from '@/components/Navbar'
 import SettingsNavbar from '@/components/SettingsNavbar'
 import AdminNavbar from '@/components/AdminNavbar'
@@ -6,89 +5,33 @@ import AddCategoryModal from '@/components/Modals/AddCategoryModal'
 import AdminListPanel from '@/components/AdminListPanel'
 import SearchForm from '@/components/SearchForm'
 import './PagesStyles.css'
-import useCategoryManager from '@/hooks/useCategoryManager'
-import { useLookup } from '@/context/LookupContext'
+import useRolesPageLogic from '@/hooks/useRolesPageLogic'
 import {
   loadRoles as loadRolesController,
   createRole as createRoleController,
   deleteRole as deleteRoleController,
 } from '@/services/roleService'
-import { insertLog, logAction } from '@/services/logService'
-import { supabase } from '@/utils/supabase'
 
-export default function RolesPage({
-  activePage,
-  onPageChange,
-  isUserMenuOpen,
-  onToggleMenu,
-  onLogout,
-  onToggleNotifications,
-  isNotificationsOpen,
-  userRole,
-  userName,
-  userPosition,
-  setProfileTargetTab,
-}) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
-  const [categoryInput, setCategoryInput] = useState('')
-  const [formError, setFormError] = useState('')
-  const [formMessage, setFormMessage] = useState('')
-
-  const { items, loading, deletingId, reload, createItem, deleteItem, error } = useCategoryManager({
-    loadFn: loadRolesController,
-    createFn: createRoleController,
-    deleteFn: deleteRoleController,
-  })
-
-  const { reloadLookups } = useLookup()
-
-  const filtered = items.filter((r) => (r.role_name || '').toLowerCase().includes(searchQuery.trim().toLowerCase()))
-
-  const openCategoryModal = () => {
-    setFormError('')
-    setFormMessage('')
-    setCategoryInput('')
-    setIsCategoryModalOpen(true)
-  }
-
-  const closeCategoryModal = () => {
-    setIsCategoryModalOpen(false)
-    setCategoryInput('')
-  }
-
-  const handleSubmitCategory = async (event) => {
-    event.preventDefault()
-    const nextValue = categoryInput.trim()
-    if (!nextValue) {
-      setFormError('Please enter a name.')
-      return
-    }
-    try {
-      setFormError('')
-      await createItem(nextValue)
-      await reloadLookups()
-      setFormMessage(`Added role ${nextValue} successfully.`)
-      closeCategoryModal()
-    } catch (err) {
-      setFormError(err.message)
-    }
-  }
-
-  const handleDeleteRole = async (role) => {
-    const confirmed = window.confirm(`Delete role "${role.role_name}"?`)
-    if (!confirmed) return
-    try {
-      setFormError('')
-      await deleteItem(role.id)
-      await reloadLookups()
-      // Server records role_delete; avoid duplicate client-side log
-
-      setFormMessage(`Deleted role ${role.role_name} successfully.`)
-    } catch (err) {
-      setFormError(err.message)
-    }
-  }
+export default function RolesPage({ activePage, onPageChange, isUserMenuOpen, onToggleMenu, onLogout, onToggleNotifications, isNotificationsOpen, userRole, userName, userPosition, setProfileTargetTab }) {
+  const {
+    items,
+    filtered,
+    loading,
+    deletingId,
+    reload,
+    searchQuery,
+    setSearchQuery,
+    isCategoryModalOpen,
+    openCategoryModal,
+    closeCategoryModal,
+    categoryInput,
+    setCategoryInput,
+    formError,
+    formMessage,
+    handleSubmitCategory,
+    handleDeleteRole,
+    error,
+  } = useRolesPageLogic({ loadFn: loadRolesController, createFn: createRoleController, deleteFn: deleteRoleController })
 
   return (
     <div className="page-root">
@@ -144,39 +87,17 @@ export default function RolesPage({
                 </div>
               </div>
 
-              <div className="glass-card-content">
-                <div className="panel-narrow">
-                  <p className="glass-card-subtext">Use the add button above to create a new role.</p>
-                  <AdminListPanel
-                    title="Available Roles"
-                    items={filtered}
-                    loading={loading}
-                    labelKey="role_name"
-                    onDelete={handleDeleteRole}
-                    deletingId={deletingId}
-                    noMatchesText="No matches found."
-                  />
-                  {error ? <p className="glass-card-subtext">{error}</p> : null}
-                </div>
-              </div>
+                  <div className="glass-card-content">
+                    <div className="panel-narrow">
+                      <p className="glass-card-subtext">Use the add button above to create a new role.</p>
+                      <AdminListPanel title="Available Roles" items={filtered} loading={loading} labelKey="role_name" onDelete={handleDeleteRole} deletingId={deletingId} noMatchesText="No matches found." />
+                      {error ? <p className="glass-card-subtext">{error}</p> : null}
+                    </div>
+                  </div>
             </div>
           </div>
 
-          <AddCategoryModal
-            isOpen={isCategoryModalOpen}
-            onClose={closeCategoryModal}
-            onSubmit={handleSubmitCategory}
-            title="Create New Role"
-            label="Role Name"
-            value={categoryInput}
-            onChange={(event) => setCategoryInput(event.target.value)}
-            placeholder="Enter role name"
-            loading={false}
-            error={formError}
-            message={formMessage}
-            submitLabel="Create Role"
-            helperText="Create a role entry that will be available in the user modal."
-          />
+          <AddCategoryModal isOpen={isCategoryModalOpen} onClose={closeCategoryModal} onSubmit={handleSubmitCategory} title="Create New Role" label="Role Name" value={categoryInput} onChange={(event) => setCategoryInput(event.target.value)} placeholder="Enter role name" loading={false} error={formError} message={formMessage} submitLabel="Create Role" helperText="Create a role entry that will be available in the user modal." />
         </main>
       ) : (
         <main className="page-main-centered">

@@ -14,6 +14,7 @@ export function getDebug(_req, res) {
     const routesDir = path.join(__dirname, '../routes')
     routes = fs.readdirSync(routesDir).filter((f) => f.endsWith('.js'))
   } catch (err) {
+    console.error('Error reading routes directory:', err)
     routes = []
   }
 
