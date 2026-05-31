@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '@/utils/supabase'
-import { insertLog } from '@/services/logService'
-import Navbar from '@/components/Navbar'
-import SettingsNavbar from '@/components/SettingsNavbar'
-import Toast from '@/components/Toast' // 🍞 Pulling in our universal dynamic feedback manager
+import { supabase } from '../utils/supabase' // 🛠️ Fixed path reference syntax to resolve directory analysis errors
+import { insertLog } from '../services/logService'
+import Navbar from '../components/Navbar'
+import SettingsNavbar from '../components/SettingsNavbar'
+import Toast from '../components/Toast' // 🍞 Pulling in our universal dynamic feedback manager
 import './SettingsPage.css' // 🔌 Link our separate settings style definitions cleanly!
 
 export default function SettingsPage({
@@ -64,7 +64,7 @@ export default function SettingsPage({
               first_name: data.first_name || '',
               last_name: data.last_name || '',
               user_name: data.user_name || '',
-              email: data.email || user.email,
+              email: data.email || user?.email || '',
               employee_no: data.employee_no || '',
               contact_number: data.contact_number || '',
             })

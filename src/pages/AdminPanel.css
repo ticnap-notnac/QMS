@@ -46,31 +46,80 @@
 }
 .admin-add-button:hover { background: #a855f7; }
 
-/* Management Information Table Layouts */
+/* ==========================================================================
+   MANAGEMENT INFORMATION TABLE LAYOUTS (FIXED NO-SCROLL ENGINE)
+   ========================================================================== */
 .admin-users-table-wrap {
   width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden; /* 🚫 Removes awkward horizontal scrollbar completely */
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
   background: rgba(8, 16, 36, 0.55);
 }
-.admin-users-table { width: 100%; border-collapse: collapse; min-width: 760px; }
-.admin-users-table th, .admin-users-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 13px; }
-.admin-users-table th { color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; background: rgba(255, 255, 255, 0.02); }
-.admin-users-table td { color: #e2e8f0; }
-.admin-users-table tbody tr:hover { background: rgba(34, 211, 238, 0.05); }
+
+.admin-users-table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  table-layout: fixed; /* 🔒 Forces columns to stay inside parent container layout bounds */
+}
+
+.admin-users-table th, 
+.admin-users-table td { 
+  padding: 12px 10px; /* 🤏 Space-saving horizontal padding adjustments */
+  text-align: left; 
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+  font-size: 13px; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* ✂️ Safeguard clip strings gracefully with '...' */
+}
+
+.admin-users-table th { 
+  color: #94a3b8; 
+  font-weight: 600; 
+  text-transform: uppercase; 
+  letter-spacing: 0.04em; 
+  background: rgba(255, 255, 255, 0.02); 
+}
+
+.admin-users-table td { 
+  color: #e2e8f0; 
+}
+
+.admin-users-table tbody tr:hover { 
+  background: rgba(34, 211, 238, 0.05); 
+}
+
+/* 📐 Strict Column Width Percentage Distributions */
+.admin-users-table th:nth-child(1), .admin-users-table td:nth-child(1) { width: 14%; } /* Name */
+.admin-users-table th:nth-child(2), .admin-users-table td:nth-child(2) { width: 14%; } /* Username */
+.admin-users-table th:nth-child(3), .admin-users-table td:nth-child(3) { width: 22%; } /* Email (Breathing room) */
+.admin-users-table th:nth-child(4), .admin-users-table td:nth-child(4) { width: 12%; } /* Role */
+.admin-users-table th:nth-child(5), .admin-users-table td:nth-child(5) { width: 15%; } /* Department */
+.admin-users-table th:nth-child(6), .admin-users-table td:nth-child(6) { width: 12%; } /* Contact */
+.admin-users-table th:nth-child(7), .admin-users-table td:nth-child(7) { width: 11%; } /* Employee No. */
+.admin-users-table th:nth-child(8), .admin-users-table td:nth-child(8) { width: 10%; } /* Actions */
+
 
 /* ==========================================================================
-   ROW ACTIONS & USER CONTROL UTILITIES
+   ROW ACTIONS & ICON CONTROL UTILITIES
    ========================================================================== */
+.admin-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Edit Icon Wrapper Button */
 .btn-edit-user {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(34, 211, 238, 0.08);
   border: 1px solid rgba(34, 211, 238, 0.25);
   color: #22d3ee;
-  padding: 6px 14px;
+  padding: 6px; /* Squarish layout optimized for standard icons */
   border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
@@ -89,6 +138,40 @@
 }
 
 .btn-edit-user:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Delete Icon Wrapper Button */
+.btn-delete-user {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.btn-delete-user:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+.btn-delete-user:active {
+  background: rgba(239, 68, 68, 0.12);
+  transform: translateY(0);
+}
+
+.btn-delete-user:disabled {
   opacity: 0.4;
   cursor: not-allowed;
   transform: none;

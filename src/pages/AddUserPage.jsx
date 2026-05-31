@@ -13,6 +13,7 @@ import { insertLog, logAction } from '@/services/logService'
 import { updateUser } from '@/services/userService'
 import { formatDisplayName } from '@/utils/userUtils'
 import { supabase } from '@/utils/supabase'
+import { Pencil, Trash2 } from 'lucide-react' // ✏️🗑️ Brought in our sleek icons to replace text layout blocks
 
 export default function AddUserPage({
   activePage,
@@ -341,8 +342,26 @@ export default function AddUserPage({
                                 <td>{user.contact_number || '-'}</td>
                                 <td>{user.employee_no || '-'}</td>
                                 <td>
-                                  <button type="button" className="btn-edit-user" onClick={() => openEditUserModal(user)} style={{ marginRight: '8px' }}>Edit</button>
-                                  <button type="button" className="btn-delete-user" onClick={() => handleDeleteUser(user)} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Delete'}</button>
+                                  {/* 🎯 Updated row actions container cell to render modular icon buttons cleanly */}
+                                  <div className="admin-actions-cell">
+                                    <button 
+                                      type="button" 
+                                      className="btn-edit-user" 
+                                      onClick={() => openEditUserModal(user)}
+                                      title="Edit User"
+                                    >
+                                      <Pencil size={14} />
+                                    </button>
+                                    <button 
+                                      type="button" 
+                                      className="btn-delete-user" 
+                                      onClick={() => handleDeleteUser(user)} 
+                                      disabled={isDeleting}
+                                      title="Delete User"
+                                    >
+                                      {isDeleting ? '...' : <Trash2 size={14} />}
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             )
