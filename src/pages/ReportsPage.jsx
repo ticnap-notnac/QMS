@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Navbar from '../components/Navbar.jsx'
 import { 
   Upload as UploadIcon, 
@@ -6,15 +6,15 @@ import {
   SlidersHorizontal,
   SquarePen,
   User,
-  Calendar,
-  Filter,
-  FileSearch
 } from 'lucide-react'
 import './PagesStyles.css' // 📁 Central stylesheet used by pages
 import { useAuth } from '@/hooks/useAuth'
 import { loadDepartments } from '@/services/departmentService'
-import { createReport, fetchReports, updateReport, submitNcrMultipart } from '@/services/ncrService'
-import NCRSubmitModal from '../components/modals/NCRSubmitModal.jsx'
+import Toast from '@/components/Toast'
+import { createReport, fetchInvestigatedReports, fetchReports, submitNcrMultipart } from '@/services/ncrService'
+import FilterModal from '../components/Modals/FilterModal.jsx'
+import UpdateReportModal from '../components/Modals/UpdateReportModal.jsx'
+import AssignReportModal from '../components/Modals/AssignReportModal.jsx'
 import { fetchLocations, createLocation } from '@/services/locationService'
 import { fetchProductTypes, createProductType } from '@/services/productTypeService'
 
@@ -39,6 +39,39 @@ function formatDate(value) {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+  })
+}
+
+function normalizeSeverity(value) {
+  return String(value || 'low').trim().toLowerCase()
+}
+
+function applyReportFilters(reportList, filters) {
+  const selectedSeverities = Array.isArray(filters?.severities)
+    ? filters.severities.map((severityValue) => String(severityValue || '').trim().toLowerCase()).filter(Boolean)
+    : []
+
+  return (reportList || []).filter((report) => {
+    if (filters?.departmentId && String(report.department_id || '') !== String(filters.departmentId)) {
+      return false
+    }
+
+    if (filters?.status && String(report.status || '').trim().toLowerCase() !== String(filters.status).trim().toLowerCase()) {
+      return false
+    }
+
+    if (selectedSeverities.length > 0) {
+      const reportSeverity = normalizeSeverity(report.severity)
+      if (!selectedSeverities.includes(reportSeverity)) {
+        return false
+      }
+    }
+
+    if (filters?.date && String(report.occurrence_date || '') !== String(filters.date)) {
+      return false
+    }
+
+    return true
   })
 }
 
@@ -173,9 +206,18 @@ function ReportsPage({
   const currentAuthId = authUser?.id || authUserId || ''
 
   const [reports, setReports] = useState([])
+  const [investigatedReports, setInvestigatedReports] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [toast, setToast] = useState(null)
   const [selectedReport, setSelectedReport] = useState(null)
+  const [selectedAssignmentReport, setSelectedAssignmentReport] = useState(null)
+  const [reportFilters, setReportFilters] = useState({
+    departmentId: '',
+    status: '',
+    severities: [],
+    date: '',
+  })
   const [departments, setDepartments] = useState([])
   const [locations, setLocations] = useState([])
   const [productTypes, setProductTypes] = useState([])
@@ -185,8 +227,8 @@ function ReportsPage({
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
-  
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
   const [isPreventiveActionModalOpen, setIsPreventiveActionModalOpen] = useState(false)
 
   const [productType, setProductType] = useState(DEFAULT_CREATE_FORM.productType)
@@ -209,6 +251,7 @@ function ReportsPage({
   const departmentOptions = useMemo(() => departments || [], [departments])
   const locationOptions = useMemo(() => toOptionList(locations, 'location_name'), [locations])
   const productTypeOptions = useMemo(() => toOptionList(productTypes, 'product_type_name'), [productTypes])
+  const canAssignReports = ['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
 
   const resetCreateForm = () => {
     setProductType(DEFAULT_CREATE_FORM.productType)
@@ -221,55 +264,56 @@ function ReportsPage({
     setDescription(DEFAULT_CREATE_FORM.description)
   }
 
-  const setFormFromReport = (report) => {
-    if (!report) return
-
-    setProductType(report.product_type_name || report.product_type || '')
-    setProductTypeId(report.product_type_id ? String(report.product_type_id) : '')
-    setBatchNumber(report.batch_number || '')
-    setLocation(report.location_name || report.complaint_location || '')
-    setLocationId(report.location_id ? String(report.location_id) : '')
-    setSeverity(report.severity || '')
-    setDepartment(report.department_id ? String(report.department_id) : '')
-    setDescription(report.description || '')
-    setInvestigationText(report.investigation_text || '')
-    setResolutionTime(report.resolution_time || DEFAULT_CREATE_FORM.resolutionTime)
-    setVerificationDate(report.verification_date || '')
-    setPreventiveRating(report.preventive_rating || DEFAULT_CREATE_FORM.preventiveRating)
-  }
-
-  const loadPageData = async () => {
+  const refreshReportsList = useCallback(async (filters = reportFilters) => {
     setIsLoading(true)
-    setDepartmentsLoading(true)
-    setLocationsLoading(true)
-    setProductTypesLoading(true)
     setError(null)
 
     try {
-      const [departmentData, locationData, productTypeData, reportData] = await Promise.all([
+      const [openReportsData, investigatedReportsData] = await Promise.all([
+        fetchReports(),
+        fetchInvestigatedReports(),
+      ])
+
+      const openReports = Array.isArray(openReportsData) ? openReportsData : []
+      const resolvedReports = Array.isArray(investigatedReportsData) ? investigatedReportsData : []
+
+      setReports(applyReportFilters(openReports, filters))
+      setInvestigatedReports(applyReportFilters(resolvedReports, filters))
+    } catch (err) {
+      setError(err?.message || 'Failed to load NCR reports.')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [reportFilters])
+
+  const loadLookupData = useCallback(async () => {
+    setDepartmentsLoading(true)
+    setLocationsLoading(true)
+    setProductTypesLoading(true)
+
+    try {
+      const [departmentData, locationData, productTypeData] = await Promise.all([
         loadDepartments(),
         fetchLocations(),
         fetchProductTypes(),
-        fetchReports(),
       ])
 
       setDepartments(Array.isArray(departmentData) ? departmentData : [])
       setLocations(Array.isArray(locationData) ? locationData : [])
       setProductTypes(Array.isArray(productTypeData) ? productTypeData : [])
-      setReports(Array.isArray(reportData) ? reportData : [])
     } catch (err) {
-      setError(err?.message || 'Failed to load NCR reports.')
+      setError(err?.message || 'Failed to load NCR reference data.')
     } finally {
-      setIsLoading(false)
       setDepartmentsLoading(false)
       setLocationsLoading(false)
       setProductTypesLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    loadPageData()
-  }, [currentAuthId])
+    loadLookupData()
+    refreshReportsList()
+  }, [currentAuthId, loadLookupData, refreshReportsList])
 
   const openCreateModal = () => {
     setError(null)
@@ -289,9 +333,12 @@ function ReportsPage({
 
   const openUpdateModal = (report) => {
     setSelectedReport(report)
-    setError(null)
-    setFormFromReport(report)
     setIsUpdateModalOpen(true)
+  }
+
+  const openAssignModal = (report) => {
+    setSelectedAssignmentReport(report)
+    setIsAssignModalOpen(true)
   }
 
   const closeUpdateModal = () => {
@@ -299,35 +346,40 @@ function ReportsPage({
     setSelectedReport(null)
   }
 
-  const triggerPreventiveActionTransition = () => {
-    setIsUpdateModalOpen(false)
-    setIsPreventiveActionModalOpen(true)
+  const closeAssignModal = () => {
+    setIsAssignModalOpen(false)
+    setSelectedAssignmentReport(null)
   }
 
-  const resolveCatalogSelection = async ({ inputValue, selectedId, options, createFn, optionLabelKey }) => {
-    const trimmed = String(inputValue || '').trim()
-    if (!trimmed) {
-      throw new Error('Location and product type are required.')
+  const handleFilterApply = async (filters) => {
+    setReportFilters(filters)
+    await refreshReportsList(filters)
+  }
+
+  const handleFilterClear = async () => {
+    const clearedFilters = {
+      departmentId: '',
+      status: '',
+      severities: [],
+      date: '',
     }
 
-    if (selectedId) {
-      const existingById = options.find((option) => String(option.id) === String(selectedId))
-      if (existingById) {
-        return { id: existingById.id, label: existingById[optionLabelKey] || existingById.label || trimmed }
-      }
-    }
+    setReportFilters(clearedFilters)
+    await refreshReportsList(clearedFilters)
+  }
 
-    const exactMatch = options.find((option) => String(option[optionLabelKey] || option.label || '').trim().toLowerCase() === trimmed.toLowerCase())
-    if (exactMatch) {
-      return { id: exactMatch.id, label: exactMatch[optionLabelKey] || exactMatch.label || trimmed }
-    }
+  const handleUpdateSuccess = async () => {
+    setToast({ message: 'Report updated successfully', type: 'success' })
+    closeUpdateModal()
+    await refreshReportsList()
+  }
 
-    const created = await createFn(trimmed)
-    const createdItem = Array.isArray(created) ? created[0] : created
-    return {
-      id: createdItem?.id,
-      label: createdItem?.[optionLabelKey] || createdItem?.label || trimmed,
-    }
+  const handleAssignSuccess = async ({ selectedUser }) => {
+    const assignedName = selectedUser?.user_name || 'employee'
+    const referenceNo = selectedAssignmentReport?.reference_no || 'report'
+    setToast({ message: `Report ${referenceNo} assigned to ${assignedName}`, type: 'success' })
+    closeAssignModal()
+    await refreshReportsList()
   }
 
   const handleSubmitReport = async (event) => {
@@ -338,6 +390,32 @@ function ReportsPage({
   const submitReport = async (overrides = {}) => {
     try {
       setError(null)
+
+      const resolveCatalogSelection = async ({ inputValue, selectedId, options, createFn, optionLabelKey }) => {
+        const trimmed = String(inputValue || '').trim()
+        if (!trimmed) {
+          throw new Error('Location and product type are required.')
+        }
+
+        if (selectedId) {
+          const existingById = options.find((option) => String(option.id) === String(selectedId))
+          if (existingById) {
+            return { id: existingById.id, label: existingById[optionLabelKey] || existingById.label || trimmed }
+          }
+        }
+
+        const exactMatch = options.find((option) => String(option[optionLabelKey] || option.label || '').trim().toLowerCase() === trimmed.toLowerCase())
+        if (exactMatch) {
+          return { id: exactMatch.id, label: exactMatch[optionLabelKey] || exactMatch.label || trimmed }
+        }
+
+        const created = await createFn(trimmed)
+        const createdItem = Array.isArray(created) ? created[0] : created
+        return {
+          id: createdItem?.id,
+          label: createdItem?.[optionLabelKey] || createdItem?.label || trimmed,
+        }
+      }
 
       const resolvedProductType = await resolveCatalogSelection({
         inputValue: productType,
@@ -396,50 +474,11 @@ function ReportsPage({
       setEvidenceErrorMain(null)
 
       resetCreateForm()
-      await loadPageData()
+      await loadLookupData()
+      await refreshReportsList()
     } catch (err) {
       setError(err?.message || 'Failed to submit NCR report.')
       throw err
-    }
-  }
-
-  const handleUpdateReport = async (event) => {
-    event.preventDefault()
-    if (!selectedReport?.id) return
-
-    try {
-      setError(null)
-      const resolvedProductType = await resolveCatalogSelection({
-        inputValue: productType,
-        selectedId: productTypeId,
-        options: productTypeOptions,
-        createFn: createProductType,
-        optionLabelKey: 'label',
-      })
-
-      const resolvedLocation = await resolveCatalogSelection({
-        inputValue: location,
-        selectedId: locationId,
-        options: locationOptions,
-        createFn: createLocation,
-        optionLabelKey: 'label',
-      })
-
-      await updateReport(selectedReport.id, {
-        product_type_id: resolvedProductType.id,
-        batch_number: batchNumber,
-        location_id: resolvedLocation.id,
-        severity,
-        department_id: department,
-        description,
-        car_filed: selectedReport.car_filed,
-        qddr_filed: selectedReport.qddr_filed,
-        evidence_url: selectedReport.evidence_url ?? null,
-      })
-      closeUpdateModal()
-      await loadPageData()
-    } catch (err) {
-      setError(err?.message || 'Failed to update NCR report.')
     }
   }
 
@@ -464,6 +503,16 @@ function ReportsPage({
         setIsAuditToolsOpen={setIsAuditToolsOpen}
         setProfileTargetTab={setProfileTargetTab}
       />
+
+      {toast ? (
+        <div style={{ position: 'fixed', right: '24px', top: '88px', zIndex: 50 }}>
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        </div>
+      ) : null}
 
       <div className="reports-main-wrap">
         {/* 🎯 UPDATED: Symmetrical header with an actionable left button group and a single right button */}
@@ -524,7 +573,7 @@ function ReportsPage({
             const severityStyle = getSeverityStyle(report.severity)
 
             return (
-              <div className="reports-card" key={report.id}>
+              <div className="reports-card" key={report.id} id={`report-card-${report.id}`}>
                 <div className="reports-card-header">
                   <div className="reports-user-block">
                     <div className="reports-avatar">
@@ -564,60 +613,128 @@ function ReportsPage({
                     </p>
                   )}
                 </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
+                  {canAssignReports ? (
+                    <button
+                      type="button"
+                      className="btn-edit-user"
+                      onClick={() => openAssignModal(report)}
+                      title="Assign report"
+                    >
+                      Assign
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="btn-edit-user"
+                    onClick={() => openUpdateModal(report)}
+                    title="Update report"
+                  >
+                    <SquarePen size={16} />
+                  </button>
+                </div>
               </div>
             )
           })
         )}
       </div>
 
-      {/* Filter Modal */}
-      {isFilterModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card modal-card--large">
-            <button onClick={() => setIsFilterModalOpen(false)} className="modal-close-button"><CloseIcon size={18} /></button>
-            <div className="modal-header-row">
-              <Filter size={20} className="icon-teal" />
-              <h3 className="modal-title-lg">Filter Reports</h3>
-            </div>
-            <div className="modal-grid">
-              <div className="modal-col">
-                <div className="modal-grid-2">
-                  <div>
-                    <label className="label-field">Department</label>
-                    <select className="input-field" defaultValue="">
-                      <option value="">Select</option>
-                      {departmentOptions.map((item) => (
-                        <option key={item.id} value={item.id}>{item.department_name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label-field">Date</label>
-                    <div className="relative">
-                      <input type="text" placeholder="DD-MM/YYYY" className="input-field" />
-                      <Calendar size={14} className="icon-abs" />
+      {investigatedReports.length > 0 ? (
+        <div className="reports-main-wrap" style={{ marginTop: '24px' }}>
+          <div className="reports-details-title-wrap" style={{ marginBottom: '12px' }}>
+            <h4 className="reports-details-title">Investigated Reports</h4>
+          </div>
+
+          <div className="reports-list-stack">
+            {investigatedReports.map((report) => {
+              const reporterName = report.reporter_full_name || 'Name of the User'
+              const reporterRole = report.reporter_role_name || 'Position'
+              const reporterDepartment = report.reporter_department_name || departmentNameById.get(String(report.department_id)) || 'Department'
+              const reportLocation = report.location_name || report.complaint_location || 'Location'
+              const statusStyle = getStatusStyle(report.status)
+              const severityStyle = getSeverityStyle(report.severity)
+
+              return (
+                <div className="reports-card" key={`investigated-${report.id}`} id={`report-card-${report.id}`}>
+                  <div className="reports-card-header">
+                    <div className="reports-user-block">
+                      <div className="reports-avatar">
+                        <User size={20} className="icon-cyan" />
+                      </div>
+                      <div className="reports-user-text">
+                        <span className="reports-user-name">{reporterName}</span>
+                        <span className="reports-user-meta">
+                          {reporterRole} • {reporterDepartment} • {reportLocation} • {formatDate(report.created_at)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="badges-row">
+                      <span className="status-badge" style={statusStyle}>{String(report.status || 'open').toUpperCase()}</span>
+                      <span className="day-badge" style={severityStyle}>{String(report.severity || 'low').toUpperCase()}</span>
                     </div>
                   </div>
+
+                  <div className="reports-details-title-wrap"><h4 className="reports-details-title">Investigation Details</h4></div>
+                  <div className="reports-details-box">
+                    <span className="reports-workspace-text">{report.investigation_details || 'No investigation details provided.'}</span>
+                  </div>
+
+                  <div className="reports-details-title-wrap"><h4 className="reports-details-title">Resolution Details</h4></div>
+                  <div className="reports-details-box">
+                    <span className="reports-workspace-text">{report.resolution_details || 'No resolution details provided.'}</span>
+                  </div>
+
+                  <div className="reports-grid-2-16" style={{ marginTop: '12px' }}>
+                    <div className="reports-details-box">
+                      <span className="reports-workspace-text">Resolution Time: {report.resolution_time_value ? `${report.resolution_time_value} ${report.resolution_time_unit || ''}`.trim() : 'Not available'}</span>
+                    </div>
+                    <div className="reports-details-box">
+                      <span className="reports-workspace-text">Verification Date: {formatDate(report.verification_date)}</span>
+                    </div>
+                  </div>
+
+                  <div className="reports-details-title-wrap"><h4 className="reports-details-title">Investigation Evidence</h4></div>
+                  <div className="evidence-box">
+                    {report.investigation_evidence_url ? (
+                      <img
+                        src={report.investigation_evidence_url}
+                        alt="Investigation evidence"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }}
+                        onClick={() => window.open(report.investigation_evidence_url, '_blank', 'noopener,noreferrer')}
+                      />
+                    ) : (
+                      <p style={{ color: 'var(--muted)', textAlign: 'center' }}>
+                        No investigation image attached
+                      </p>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
+                    {canAssignReports ? (
+                      <button
+                        type="button"
+                        className="btn-edit-user"
+                        onClick={() => openAssignModal(report)}
+                        title="Assign report"
+                      >
+                        Assign
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="btn-edit-user"
+                      onClick={() => openUpdateModal(report)}
+                      title="Update report"
+                    >
+                      <SquarePen size={16} />
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label className="label-field">Status</label>
-                  <div className="filter-options-row"><button className="filter-option-button">OPEN</button><button className="filter-option-button">CLOSED</button></div>
-                </div>
-                <div>
-                  <label className="label-field">Severity Level</label>
-                  <div className="filter-options-row wrap"><button className="filter-option-button">CRITICAL</button><button className="filter-option-button">MAJOR DEFECTS</button><button className="filter-option-button">MINOR DEFECTS</button></div>
-                </div>
-              </div>
-              <div className="modal-col">
-                <div className="filter-options-row"><button className="filter-option-button">QDDR</button><button className="filter-option-button">CAR</button></div>
-                <div><label className="label-field">Product Type</label><input type="text" className="input-field" /></div>
-                <div><label className="label-field">Cause</label><input type="text" className="input-field" /></div>
-              </div>
-            </div>
-            <div className="modal-actions-center"><button onClick={() => setIsFilterModalOpen(false)} className="btn-gradient-primary">Filter Report</button></div>
+              )
+            })}
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Main Creation Modal */}
       {isModalOpen && (
@@ -744,96 +861,26 @@ function ReportsPage({
         </div>
       )}
 
-      <NCRSubmitModal isOpen={isModalOpen} onClose={closeCreateModal} onSuccess={async () => { await loadPageData(); setIsModalOpen(false) }} />
+      <FilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        onApplyFilters={handleFilterApply}
+        onClearFilters={handleFilterClear}
+      />
 
-      {/* Update Report Modal */}
-      {isUpdateModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card modal-card--tall reports-update-card">
-            <button onClick={closeUpdateModal} className="modal-close-button"><CloseIcon size={18} /></button>
-            <div className="modal-header-row">
-              <FileSearch size={18} className="icon-teal" />
-              <h3 className="reports-update-title">Update Report</h3>
-            </div>
-            <form onSubmit={handleUpdateReport} className="modal-form reports-form-compact">
-              <div>
-                <label className="label-field">Evidence:</label>
-                <div className="upload-box upload-box--padded"><UploadIcon size={18} className="icon-teal" /><span className="reports-upload-text-small">Upload an Image</span></div>
-              </div>
-              <div className="grid-3">
-                <div>
-                  <SearchableDropdown
-                    label="Product Type:"
-                    value={productType}
-                    onValueChange={(nextValue) => {
-                      setProductType(nextValue)
-                      setProductTypeId('')
-                    }}
-                    options={productTypeOptions}
-                    loading={productTypesLoading}
-                    placeholder={productTypesLoading ? 'Loading product types...' : 'Enter or select product type'}
-                    onSelectOption={(option) => setProductTypeId(String(option.id))}
-                  />
-                </div>
-                <div><label className="label-field">Batch Number:</label><input type="text" value={batchNumber} onChange={(e) => setBatchNumber(e.target.value)} className="input-field" /></div>
-                <div>
-                  <SearchableDropdown
-                    label="Location:"
-                    value={location}
-                    onValueChange={(nextValue) => {
-                      setLocation(nextValue)
-                      setLocationId('')
-                    }}
-                    options={locationOptions}
-                    loading={locationsLoading}
-                    placeholder={locationsLoading ? 'Loading locations...' : 'Enter or select location'}
-                    onSelectOption={(option) => setLocationId(String(option.id))}
-                  />
-                </div>
-              </div>
-              <div className="reports-grid-2-14">
-                <div>
-                  <label className="label-field">Severity Level:</label>
-                  <select value={severity} onChange={(e) => setSeverity(e.target.value)} className="select-field">
-                    <option value="low">Low Risk</option>
-                    <option value="medium">Medium Risk</option>
-                    <option value="high">High Severity</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label-field">Department:</label>
-                  <select value={department} onChange={(e) => setDepartment(e.target.value)} className="select-field" disabled={departmentsLoading || departmentOptions.length === 0}>
-                    {departmentOptions.map((item) => (
-                      <option key={item.id} value={item.id}>{item.department_name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div><label className="label-field">Description:</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} className="input-field textarea-medium" /></div>
-              <div><label className="label-field">Investigation:</label><textarea value={investigationText} onChange={(e) => setInvestigationText(e.target.value)} className="input-field textarea-medium" /></div>
-              <div className="modal-grid-2">
-                <div>
-                  <label className="label-field">Resolution Time:</label>
-                  <select value={resolutionTime} onChange={(e) => setResolutionTime(e.target.value)} className="select-field">
-                    <option value="24h">Within 24 Hours</option>
-                    <option value="72h">Within 3 Days</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label-field">Verification Date:</label>
-                  <div className="relative">
-                    <input type="text" value={verificationDate} onChange={(e) => setVerificationDate(e.target.value)} placeholder="DD/MM/YYYY" className="input-field" />
-                    <Calendar size={14} className="icon-abs" />
-                  </div>
-                </div>
-              </div>
-              <div className="reports-update-submit-row">
-                <button type="submit" className="btn-gradient-primary reports-update-button">Update Report</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <UpdateReportModal
+        isOpen={isUpdateModalOpen}
+        onClose={closeUpdateModal}
+        report={selectedReport}
+        onSuccess={handleUpdateSuccess}
+      />
+
+      <AssignReportModal
+        isOpen={isAssignModalOpen}
+        onClose={closeAssignModal}
+        report={selectedAssignmentReport}
+        onSuccess={handleAssignSuccess}
+      />
 
       {/* Preventive Action Modal */}
       {isPreventiveActionModalOpen && (

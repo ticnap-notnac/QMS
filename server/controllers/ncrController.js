@@ -1,6 +1,7 @@
 import { hasServiceRole, supabase } from '../lib/supabase.js'
 import { getRequestActor } from '../lib/requestUtils.js'
 import { writeAudit } from '../lib/audit.js'
+import { assignReportToEmployee } from '../services/ncrAssignmentService.js'
 
 function normalizeId(value) {
   if (value === null || value === undefined || value === '') {
@@ -22,6 +23,15 @@ function buildReferenceNumber(referenceNo) {
 
 function normalizeText(value) {
   return String(value || '').trim()
+}
+
+function normalizeSeverityValue(value) {
+  const normalized = normalizeText(value).toLowerCase()
+  if (normalized === 'critical') return 'CRITICAL'
+  if (normalized === 'high') return 'HIGH'
+  if (normalized === 'medium') return 'MEDIUM'
+  if (normalized === 'low') return 'LOW'
+  return normalizeText(value)
 }
 
 function extractEvidenceStoragePath(rawUrl) {
@@ -47,6 +57,102 @@ async function buildEvidenceDisplayUrl(rawUrl) {
   }
 
   return data.signedUrl
+}
+
+function normalizeVerificationDate(value) {
+  const text = normalizeText(value)
+  if (!text) return null
+
+  const isoMatch = text.match(/^\d{4}-\d{2}-\d{2}$/)
+  if (isoMatch) return text
+
+  const displayMatch = text.match(/^(\d{2})-(\d{2})-(\d{4})$/)
+  if (displayMatch) {
+    const [, day, month, year] = displayMatch
+    return `${year}-${month}-${day}`
+  }
+
+  return text
+}
+
+function parseResolutionTime(resolutionTimeValue, resolutionTimeUnit) {
+  const numericValue = Number(resolutionTimeValue)
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return null
+  }
+
+  const normalizedUnit = String(resolutionTimeUnit || '').trim().toLowerCase()
+  if (!['hour', 'hours', 'day', 'days'].includes(normalizedUnit)) {
+    return null
+  }
+
+  const unit = normalizedUnit.startsWith('day') ? 'days' : 'hours'
+  return `${numericValue} ${unit}`
+}
+
+async function createNotification({ title, message, type = 'info', reportId = null, userId = null }) {
+  const { error } = await supabase
+    .from('notifications')
+    .insert([{ user_id: userId, title, message, type, is_read: false, report_id: reportId }])
+
+  if (error) {
+    throw error
+  }
+}
+
+async function buildEnrichedReports(reports) {
+  const reportList = Array.isArray(reports) ? reports : []
+
+  if (reportList.length === 0) {
+    return []
+  }
+
+  const { userById, roleById, departmentById } = await getReporterMaps(reportList)
+
+  const locationIds = [...new Set(reportList.map((report) => report.location_id).filter(Boolean))]
+  const productTypeIds = [...new Set(reportList.map((report) => report.product_type_id).filter(Boolean))]
+
+  const [locationsResult, productTypesResult] = await Promise.all([
+    locationIds.length > 0
+      ? supabase.from('locations').select('id, location_name').in('id', locationIds)
+      : Promise.resolve({ data: [], error: null }),
+    productTypeIds.length > 0
+      ? supabase.from('product_types').select('id, product_name').in('id', productTypeIds)
+      : Promise.resolve({ data: [], error: null }),
+  ])
+
+  if (locationsResult.error) {
+    throw locationsResult.error
+  }
+
+  if (productTypesResult.error) {
+    throw productTypesResult.error
+  }
+
+  const locationById = new Map((locationsResult.data || []).map((location) => [String(location.id), location.location_name]))
+  const productTypeById = new Map((productTypesResult.data || []).map((productType) => [String(productType.id), productType.product_name]))
+
+  const enriched = reportList.map((report) => {
+    const reporter = userById.get(report.reported_by)
+    const reporterFullName = reporter
+      ? `${reporter.first_name || ''} ${reporter.last_name || ''}`.trim() || reporter.user_name || null
+      : null
+
+    return {
+      ...report,
+      reporter_full_name: reporterFullName,
+      reporter_role_name: reporter ? roleById.get(String(reporter.role_id)) || null : null,
+      reporter_department_name: reporter ? departmentById.get(String(reporter.department_id)) || null : null,
+      location_name: report.location_id ? locationById.get(String(report.location_id)) || null : report.complaint_location || null,
+      product_type_name: report.product_type_id ? productTypeById.get(String(report.product_type_id)) || null : report.product_type || null,
+    }
+  })
+
+  return await Promise.all(enriched.map(async (report) => ({
+    ...report,
+    evidence_url: await buildEvidenceDisplayUrl(report.evidence_url),
+    investigation_evidence_url: await buildEvidenceDisplayUrl(report.investigation_evidence_url),
+  })))
 }
 
 async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, rawName }) {
@@ -148,67 +254,28 @@ async function getReporterMaps(reports) {
 }
 
 export async function getReports(_req, res) {
-  const { data, error } = await supabase
+  const scope = String(_req.query?.scope || 'open').trim().toLowerCase()
+
+  let query = supabase
     .from('ncr_reports')
     .select('*')
-    .order('created_at', { ascending: false })
+
+  if (scope === 'investigated') {
+    query = query.not('investigation_details', 'is', null)
+  } else if (scope === 'all') {
+    query = query.order('created_at', { ascending: false })
+  } else {
+    query = query.is('investigation_details', null)
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false })
 
   if (error) {
     return res.status(500).json({ error: error.message })
   }
 
-  const reports = data || []
-
   try {
-    const { userById, roleById, departmentById } = await getReporterMaps(reports)
-
-    const locationIds = [...new Set(reports.map((report) => report.location_id).filter(Boolean))]
-    const productTypeIds = [...new Set(reports.map((report) => report.product_type_id).filter(Boolean))]
-
-    const [locationsResult, productTypesResult] = await Promise.all([
-      locationIds.length > 0
-        ? supabase.from('locations').select('id, location_name').in('id', locationIds)
-        : Promise.resolve({ data: [], error: null }),
-      productTypeIds.length > 0
-        ? supabase.from('product_types').select('id, product_name').in('id', productTypeIds)
-        : Promise.resolve({ data: [], error: null }),
-    ])
-
-    if (locationsResult.error) {
-      throw locationsResult.error
-    }
-
-    if (productTypesResult.error) {
-      throw productTypesResult.error
-    }
-
-    const locationById = new Map((locationsResult.data || []).map((location) => [String(location.id), location.location_name]))
-    const productTypeById = new Map((productTypesResult.data || []).map((productType) => [String(productType.id), productType.product_name]))
-
-    const enriched = reports.map((report) => {
-      const reporter = userById.get(report.reported_by)
-      const reporterFullName = reporter
-        ? `${reporter.first_name || ''} ${reporter.last_name || ''}`.trim() || reporter.user_name || null
-        : null
-
-      return {
-        ...report,
-        reporter_full_name: reporterFullName,
-        reporter_role_name: reporter ? roleById.get(String(reporter.role_id)) || null : null,
-        reporter_department_name: reporter ? departmentById.get(String(reporter.department_id)) || null : null,
-        location_name: report.location_id ? locationById.get(String(report.location_id)) || null : report.complaint_location || null,
-        product_type_name: report.product_type_id ? productTypeById.get(String(report.product_type_id)) || null : report.product_type || null,
-      }
-    })
-
-    const withEvidenceUrls = await Promise.all(
-      enriched.map(async (report) => ({
-        ...report,
-        evidence_url: await buildEvidenceDisplayUrl(report.evidence_url),
-      }))
-    )
-
-    return res.json(withEvidenceUrls)
+    return res.json(await buildEnrichedReports(data || []))
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }
@@ -299,7 +366,7 @@ export async function createReport(req, res) {
     batch_number,
     complaint_location: resolvedLocationName,
     location_id: resolvedLocationId,
-    severity: null,
+    severity: normalizeSeverityValue(severity),
     department_id: normalizeId(department_id),
     description,
     // Optional CAR/QDDR flags removed to avoid schema mismatch on some installs
@@ -392,7 +459,7 @@ export async function updateReport(req, res) {
     updates.complaint_location = resolvedLocation.name
     updates.location_id = resolvedLocation.id
   }
-  if (severity !== undefined) updates.severity = severity
+  if (severity !== undefined) updates.severity = normalizeSeverityValue(severity)
   if (department_id !== undefined) updates.department_id = normalizeId(department_id)
   if (description !== undefined) updates.description = description
   if (car_filed !== undefined) updates.car_filed = Boolean(car_filed)
@@ -424,6 +491,113 @@ export async function updateReport(req, res) {
   }
 
   return res.json(data)
+}
+
+export async function updateReportInvestigation(req, res) {
+  const { id } = req.params
+  const {
+    investigation_details,
+    resolution_details,
+    resolution_time_value,
+    resolution_time_unit,
+    verification_date,
+  } = req.body || {}
+
+  const { data: existing, error: existingError } = await supabase
+    .from('ncr_reports')
+    .select('id, reference_no, investigation_evidence_url')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (existingError) {
+    return res.status(500).json({ error: existingError.message })
+  }
+
+  if (!existing) {
+    return res.status(404).json({ error: 'NCR report not found.' })
+  }
+
+  let investigationEvidenceUrl = existing.investigation_evidence_url || null
+
+  if (req.file && req.file.buffer) {
+    const orig = req.file.originalname || `${existing.reference_no}-investigation`
+    const ext = (orig.match(/\.([0-9a-zA-Z]+)$/) || [])[1] || ''
+    const filename = `investigation/${existing.reference_no}-investigation${ext ? `.${ext}` : ''}`
+
+    const uploadResult = await supabase.storage.from('ncr-evidence').upload(filename, req.file.buffer, {
+      contentType: req.file.mimetype,
+      upsert: true,
+    })
+
+    if (uploadResult.error) {
+      return res.status(500).json({ error: uploadResult.error.message || 'Failed to upload investigation evidence.' })
+    }
+
+    const { data: publicData } = await supabase.storage.from('ncr-evidence').getPublicUrl(filename)
+    investigationEvidenceUrl = publicData?.publicUrl || null
+  }
+
+  const updates = {
+    investigation_details: normalizeText(investigation_details) || null,
+    resolution_details: normalizeText(resolution_details) || null,
+    resolution_time: parseResolutionTime(resolution_time_value, resolution_time_unit),
+    verification_date: normalizeVerificationDate(verification_date),
+    investigation_evidence_url: investigationEvidenceUrl,
+    updated_at: new Date().toISOString(),
+  }
+
+  const { data, error } = await supabase
+    .from('ncr_reports')
+    .update(updates)
+    .eq('id', id)
+    .select('*')
+    .maybeSingle()
+
+  if (error) {
+    return res.status(500).json({ error: error.message })
+  }
+
+  try {
+    await writeAudit({
+      level: 'audit',
+      source: 'ncr_reports',
+      action: 'ncr_investigation_update',
+      userAuthId: getRequestActor(req),
+      details: { id, updates },
+    })
+  } catch (auditError) {
+    console.warn('Failed to record NCR investigation update audit:', auditError?.message || auditError)
+  }
+
+  try {
+    await createNotification({
+      title: `NCR Updated: ${existing.reference_no}`,
+      message: `Report ${existing.reference_no} now has updated investigation details and resolution data.`,
+      type: 'info',
+      reportId: existing.id,
+    })
+  } catch (notificationError) {
+    console.warn('Failed to create NCR update notification:', notificationError?.message || notificationError)
+  }
+
+  return res.json(data)
+}
+
+export async function assignReport(req, res) {
+  const { id } = req.params
+  const { assignedToId } = req.body || {}
+
+  try {
+    const result = await assignReportToEmployee({
+      reportId: id,
+      assignedToId,
+      currentUserAuthId: getRequestActor(req),
+    })
+
+    return res.json({ success: true, data: result.report, assignedTo: result.assignedTo })
+  } catch (err) {
+    return res.status(500).json({ error: err?.message || 'Failed to assign report.' })
+  }
 }
 
 export async function deleteReport(req, res) {
@@ -592,7 +766,7 @@ export async function createReportSubmit(req, res) {
     batch_number,
     complaint_location: resolvedLocationName,
     location_id: resolvedLocationId,
-    severity: null,
+    severity: normalizeSeverityValue(severity),
     department_id: normalizeId(department_id),
     description,
     evidence_url: evidenceUrl,
@@ -618,6 +792,17 @@ export async function createReportSubmit(req, res) {
     })
   } catch (auditError) {
     console.warn('Failed to record NCR create audit:', auditError?.message || auditError)
+  }
+
+  try {
+    await createNotification({
+      title: `New NCR Submitted: ${referenceNo}`,
+      message: `Report ${referenceNo} has been submitted and is ready for review.`,
+      type: 'info',
+      reportId: data?.id ?? null,
+    })
+  } catch (notificationError) {
+    console.warn('Failed to create NCR submission notification:', notificationError?.message || notificationError)
   }
 
   return res.status(201).json({ success: true, data })

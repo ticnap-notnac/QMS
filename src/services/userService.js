@@ -1,5 +1,16 @@
 import { request } from '@/lib/api'
 import { insertLog } from '@/services/logService'
+import { getCurrentAuthId } from '@/services/authService'
+
+async function buildAuthHeaders() {
+  const authId = await getCurrentAuthId()
+  return authId ? { 'x-user-auth-id': authId } : {}
+}
+
+export async function fetchUsers() {
+  const headers = await buildAuthHeaders()
+  return await request('/users', { headers })
+}
 
 export async function createUser(payload) {
   // payload should contain firstName, lastName, email, password, userName, contactNumber, roleId, departmentId

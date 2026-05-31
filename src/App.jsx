@@ -1,9 +1,10 @@
-﻿import { useState, useEffect } from 'react'
+﻿import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import { supabase } from './utils/supabase'
 import Login from './components/Login.jsx'
 import IntroModal from './components/Modals/IntroModal.jsx'
 import NotificationsModal from './components/NotificationsModal.jsx'
+import { fetchUnreadNotificationCount } from '@/services/notificationService'
 import DashboardPage from './pages/DashboardPage.jsx'
 import ReportsPage from './pages/ReportsPage.jsx'
 import ISOPage from './pages/ISOPage.jsx'
@@ -16,6 +17,10 @@ import SettingsPage from './pages/SettingsPage.jsx'
 import AuditToolsPage from './pages/AuditToolsPage.jsx'
 import { LookupProvider } from './context/LookupContext'
 
+function normalizeRoleValue(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
 export default function App() {
   const [showIntro, setShowIntro] = useState(false)
   const [user, setUser] = useState(null)
@@ -23,12 +28,37 @@ export default function App() {
   const [error, setError] = useState('')
   
   const [userRole, setUserRole] = useState('user')
+  const [currentUserId, setCurrentUserId] = useState(null)
   const [userName, setUserName] = useState('Name of the User')
   const [userPosition, setUserPosition] = useState('Position')
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
   const [activePage, setActivePage] = useState('Dashboard')
   const [profileTargetTab, setProfileTargetTab] = useState('User Information')
+  const sessionRole = normalizeRoleValue(user?.role || user?.user_metadata?.role || user?.app_metadata?.role)
+  const normalizedUserRole = normalizeRoleValue(userRole)
+  const canViewNotifications = ['admin', 'auditor'].includes(normalizedUserRole) || ['admin', 'auditor'].includes(sessionRole)
+
+  useEffect(() => {
+    console.log('current user:', user)
+    console.log('user role:', user?.role)
+  }, [user])
+
+  const refreshUnreadNotificationCount = useCallback(async () => {
+    if (!currentUserId || !canViewNotifications) {
+      setUnreadNotificationCount(0)
+      return
+    }
+
+    try {
+      const count = await fetchUnreadNotificationCount(currentUserId)
+      setUnreadNotificationCount(count)
+    } catch (err) {
+      console.error('Error fetching unread notifications:', err)
+      setUnreadNotificationCount(0)
+    }
+  }, [canViewNotifications, currentUserId])
 
   const applyUserRoleData = async (profile) => {
     const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
@@ -60,6 +90,12 @@ export default function App() {
       }
     }
 
+    if (profile.role && !resolvedRoleName) {
+      resolvedRoleName = profile.role
+      setUserPosition(profile.role)
+      setUserRole(normalizeRoleValue(profile.role))
+    }
+
     // Fallbacks when role couldn't be resolved from roles table
     if (!resolvedRoleName) {
       // use profile.user_name or a generic Position label
@@ -80,11 +116,12 @@ export default function App() {
         if (user) {
           const { data } = await supabase
             .from('users')
-            .select('first_name, last_name, user_name, role_id')
+            .select('id, first_name, last_name, user_name, role_id')
             .eq('auth_id', user.id)
             .maybeSingle()
           
           if (data) {
+            setCurrentUserId(data.id || null)
             await applyUserRoleData(data)
           }
         }
@@ -106,6 +143,22 @@ export default function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!user) {
+      setUnreadNotificationCount(0)
+      setIsNotificationsOpen(false)
+      return
+    }
+
+    if (!canViewNotifications) {
+      setUnreadNotificationCount(0)
+      setIsNotificationsOpen(false)
+      return
+    }
+
+    refreshUnreadNotificationCount()
+  }, [user, userRole, refreshUnreadNotificationCount])
+
   const handleSubmit = async (authData) => {
     try {
       if (authData && authData.user) {
@@ -114,11 +167,12 @@ export default function App() {
         
         const { data, error } = await supabase
           .from('users')
-          .select('first_name, last_name, user_name, role_id')
+          .select('id, first_name, last_name, user_name, role_id')
           .eq('auth_id', authData.user.id)
           .maybeSingle()
         
         if (data) {
+          setCurrentUserId(data.id || null)
           await applyUserRoleData(data)
         }
       }
@@ -133,11 +187,12 @@ export default function App() {
   if (user) {
     const { data } = await supabase
       .from('users')
-      .select('first_name, last_name, user_name, role_id')
+      .select('id, first_name, last_name, user_name, role_id')
       .eq('auth_id', user.id)
       .maybeSingle()
 
     if (data) {
+      setCurrentUserId(data.id || null)
       await applyUserRoleData(data)
     }
   }
@@ -147,7 +202,10 @@ export default function App() {
       await supabase.auth.signOut()
       setUser(null)
       setUserRole('user')
+      setCurrentUserId(null)
       setIsUserMenuOpen(false)
+      setIsNotificationsOpen(false)
+      setUnreadNotificationCount(0)
       setActivePage('Dashboard')
       setError('')
     } catch (err) {
@@ -169,10 +227,13 @@ export default function App() {
       onToggleMenu: () => setIsUserMenuOpen((open) => !open),
       onLogout: handleLogout,
       isNotificationsOpen,
-      onToggleNotifications: () => setIsNotificationsOpen((open) => !open),
+      onToggleNotifications: canViewNotifications ? () => setIsNotificationsOpen((open) => !open) : () => {},
       userRole,
       userName,
       userPosition,
+      currentUserId,
+      unreadNotificationCount,
+      canViewNotifications,
       authUserId: user?.id || '',
       profileTargetTab,
       setProfileTargetTab,
@@ -208,6 +269,18 @@ export default function App() {
     return <DashboardPage {...sharedProps} />
   }
 
+    const handleNotificationSelect = (reportId) => {
+      setIsNotificationsOpen(false)
+      setActivePage('Reports')
+
+      if (reportId) {
+        window.setTimeout(() => {
+          const target = document.getElementById(`report-card-${reportId}`)
+          target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 300)
+      }
+    }
+
   if (loading) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '18px' }}>Loading...</div>
   }
@@ -236,7 +309,14 @@ export default function App() {
       )}
 
         <IntroModal isOpen={showIntro} onClose={() => setShowIntro(false)} />
-        <NotificationsModal isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
+        <NotificationsModal
+          isOpen={isNotificationsOpen}
+          onClose={() => setIsNotificationsOpen(false)}
+          currentUserId={currentUserId}
+          onUnreadCountChange={setUnreadNotificationCount}
+          onRefreshUnreadCount={refreshUnreadNotificationCount}
+          onOpenReport={handleNotificationSelect}
+        />
       </div>
     </LookupProvider>
   )
