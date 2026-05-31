@@ -16,8 +16,6 @@ function DashboardPage({
   setIsAuditToolsOpen,
   setProfileTargetTab
 }) {
-  console.log('DashboardPage - userRole:', userRole)
-  
   return (
     <main className="dashboard">
       <Navbar

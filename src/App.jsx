@@ -71,12 +71,6 @@ export default function App() {
     }
   }
 
-  // Debug useEffect to monitor userRole changes
-  useEffect(() => {
-    console.log('Current userRole:', userRole)
-    console.log('Navbar should show Admin Panel button:', userRole === 'admin')
-  }, [userRole])
-
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -115,7 +109,6 @@ export default function App() {
   const handleSubmit = async (authData) => {
     try {
       if (authData && authData.user) {
-        console.log('handleSubmit called with user:', authData.user.email)
         setUser(authData.user)
         setError('')
         
@@ -124,8 +117,6 @@ export default function App() {
           .select('first_name, last_name, user_name, role_id')
           .eq('auth_id', authData.user.id)
           .maybeSingle()
-        
-        console.log('User fetch result:', { data, error })
         
         if (data) {
           await applyUserRoleData(data)
@@ -219,11 +210,6 @@ export default function App() {
 
   if (loading) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '18px' }}>Loading...</div>
-  }
-
-  // Debug: Log current user role and info
-  if (user) {
-    console.log('Rendering App - User:', user.email, 'Role:', userRole, 'IsAdmin:', userRole === 'admin')
   }
 
   return (

@@ -24,6 +24,31 @@ function normalizeText(value) {
   return String(value || '').trim()
 }
 
+function extractEvidenceStoragePath(rawUrl) {
+  const value = String(rawUrl || '').trim()
+  if (!value) return null
+
+  if (!/^https?:\/\//i.test(value)) {
+    return value.replace(/^\/+/, '')
+  }
+
+  const match = value.match(/\/storage\/v1\/object\/public\/ncr-evidence\/(.+)$/i)
+  if (!match || !match[1]) return null
+  return decodeURIComponent(match[1])
+}
+
+async function buildEvidenceDisplayUrl(rawUrl) {
+  const path = extractEvidenceStoragePath(rawUrl)
+  if (!path) return rawUrl || null
+
+  const { data, error } = await supabase.storage.from('ncr-evidence').createSignedUrl(path, 60 * 60)
+  if (error || !data?.signedUrl) {
+    return rawUrl || null
+  }
+
+  return data.signedUrl
+}
+
 async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, rawName }) {
   const numericId = normalizeId(rawId)
   if (numericId !== null && numericId !== undefined && numericId !== '') {
@@ -75,11 +100,12 @@ async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, rawName
 }
 
 async function getReporterMaps(reports) {
-  const reporterAuthIds = [...new Set(reports.map((report) => report.reported_by).filter(Boolean))]
+  // `reported_by` stores the internal users.id (integer). Query users by id.
+  const reporterIds = [...new Set(reports.map((report) => report.reported_by).filter(Boolean))]
 
-  if (reporterAuthIds.length === 0) {
+  if (reporterIds.length === 0) {
     return {
-      userByAuthId: new Map(),
+      userById: new Map(),
       roleById: new Map(),
       departmentById: new Map(),
     }
@@ -88,7 +114,7 @@ async function getReporterMaps(reports) {
   const { data: users, error: usersError } = await supabase
     .from('users')
     .select('id, first_name, last_name, user_name, auth_id, role_id, department_id')
-    .in('auth_id', reporterAuthIds)
+    .in('id', reporterIds)
 
   if (usersError) {
     throw usersError
@@ -115,7 +141,7 @@ async function getReporterMaps(reports) {
   }
 
   return {
-    userByAuthId: new Map((users || []).map((user) => [user.auth_id, user])),
+    userById: new Map((users || []).map((user) => [user.id, user])),
     roleById: new Map((rolesResult.data || []).map((role) => [String(role.id), role.role_name])),
     departmentById: new Map((departmentsResult.data || []).map((department) => [String(department.id), department.department_name])),
   }
@@ -134,7 +160,7 @@ export async function getReports(_req, res) {
   const reports = data || []
 
   try {
-    const { userByAuthId, roleById, departmentById } = await getReporterMaps(reports)
+    const { userById, roleById, departmentById } = await getReporterMaps(reports)
 
     const locationIds = [...new Set(reports.map((report) => report.location_id).filter(Boolean))]
     const productTypeIds = [...new Set(reports.map((report) => report.product_type_id).filter(Boolean))]
@@ -160,7 +186,7 @@ export async function getReports(_req, res) {
     const productTypeById = new Map((productTypesResult.data || []).map((productType) => [String(productType.id), productType.product_name]))
 
     const enriched = reports.map((report) => {
-      const reporter = userByAuthId.get(report.reported_by)
+      const reporter = userById.get(report.reported_by)
       const reporterFullName = reporter
         ? `${reporter.first_name || ''} ${reporter.last_name || ''}`.trim() || reporter.user_name || null
         : null
@@ -175,7 +201,14 @@ export async function getReports(_req, res) {
       }
     })
 
-    return res.json(enriched)
+    const withEvidenceUrls = await Promise.all(
+      enriched.map(async (report) => ({
+        ...report,
+        evidence_url: await buildEvidenceDisplayUrl(report.evidence_url),
+      }))
+    )
+
+    return res.json(withEvidenceUrls)
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }
@@ -191,9 +224,8 @@ export async function createReport(req, res) {
     severity,
     department_id,
     description,
-    car_filed = false,
-    qddr_filed = false,
     evidence_url = null,
+    occurrence_date = (new Date().toISOString().slice(0, 10)),
   } = req.body || {}
 
   const reportedByAuthId = getRequestActor(req)
@@ -259,17 +291,18 @@ export async function createReport(req, res) {
   const payload = {
     reference_no: referenceNo,
     reported_by: reporter.id,
-    status: 'open',
+    status: 'OPEN',
+    issue_type: 'ncr',
+    occurrence_date: occurrence_date || new Date().toISOString().slice(0, 10),
     product_type: resolvedProductTypeName,
     product_type_id: resolvedProductTypeId,
     batch_number,
     complaint_location: resolvedLocationName,
     location_id: resolvedLocationId,
-    severity,
+    severity: null,
     department_id: normalizeId(department_id),
     description,
-    car_filed: Boolean(car_filed),
-    qddr_filed: Boolean(qddr_filed),
+    // Optional CAR/QDDR flags removed to avoid schema mismatch on some installs
     evidence_url,
   }
 
@@ -309,8 +342,6 @@ export async function updateReport(req, res) {
     severity,
     department_id,
     description,
-    car_filed,
-    qddr_filed,
     evidence_url,
     status,
   } = req.body || {}
@@ -434,4 +465,160 @@ export async function deleteReport(req, res) {
   }
 
   return res.json({ success: true })
+}
+
+export async function createReportSubmit(req, res) {
+  // multer stores file in memory (buffer)
+  const reportedByAuthId = getRequestActor(req)
+
+  if (!reportedByAuthId) {
+    return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+  }
+
+  const {
+    product_type,
+    product_type_id,
+    batch_number,
+    location,
+    location_id,
+    severity,
+    department_id,
+    description,
+    occurrence_date = (new Date().toISOString().slice(0, 10)),
+  } = req.body || {}
+
+  if (!batch_number || !severity || !department_id || !description) {
+    return res.status(400).json({ error: 'Batch number, severity, department, and description are required.' })
+  }
+
+  const { data: reporter, error: reporterError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('auth_id', reportedByAuthId)
+    .maybeSingle()
+
+  if (reporterError) {
+    return res.status(500).json({ error: reporterError.message })
+  }
+
+  if (!reporter) {
+    return res.status(404).json({ error: 'Reporter profile not found.' })
+  }
+
+  const year = new Date().getFullYear()
+  const { data: latest, error: latestError } = await supabase
+    .from('ncr_reports')
+    .select('reference_no')
+    .ilike('reference_no', `NCR-${year}-%`)
+    .order('reference_no', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (latestError) {
+    return res.status(500).json({ error: latestError.message })
+  }
+
+  const nextSequence = buildReferenceNumber(latest?.reference_no) + 1
+  const referenceNo = `NCR-${year}-${String(nextSequence).padStart(4, '0')}`
+
+  const { id: resolvedLocationId, name: resolvedLocationName } = await resolveCatalogEntry({
+    table: 'locations',
+    idColumn: 'id',
+    nameColumn: 'location_name',
+    rawId: location_id,
+    rawName: location,
+  })
+
+  const { id: resolvedProductTypeId, name: resolvedProductTypeName } = await resolveCatalogEntry({
+    table: 'product_types',
+    idColumn: 'id',
+    nameColumn: 'product_name',
+    rawId: product_type_id,
+    rawName: product_type,
+  })
+
+  if (!resolvedLocationId || !resolvedProductTypeId) {
+    return res.status(400).json({ error: 'Location and product type are required.' })
+  }
+
+  let evidenceUrl = null
+  try {
+    if (req.file && req.file.buffer) {
+      if (!hasServiceRole) {
+        return res.status(500).json({ error: 'Service role key is required for uploads.' })
+      }
+
+      const orig = req.file.originalname || `${referenceNo}`
+      const ext = (orig.match(/\.([0-9a-zA-Z]+)$/) || [])[1] || ''
+
+      // Attempt upload; if conflict occurs, retry with a randomized filename
+      let filename = `initial/${referenceNo}-${Date.now()}-evidence${ext ? `.${ext}` : ''}`
+      let uploadData = null
+      let uploadError = null
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const resUpload = await supabase.storage.from('ncr-evidence').upload(filename, req.file.buffer, { contentType: req.file.mimetype, upsert: true })
+        uploadData = resUpload.data
+        uploadError = resUpload.error
+        if (!uploadError) break
+        console.warn('Upload error', { message: uploadError.message, statusCode: uploadError.statusCode || uploadError.status })
+        if ((uploadError.statusCode || uploadError.status) === 409) {
+          // conflict: try a different filename and retry
+          filename = `initial/${referenceNo}-${Date.now()}-${Math.floor(Math.random() * 100000)}-evidence${ext ? `.${ext}` : ''}`
+          continue
+        }
+        break
+      }
+
+      if (uploadError) {
+        return res.status(500).json({ error: uploadError.message || 'Failed to upload evidence' })
+      }
+
+      const { data: publicData } = await supabase.storage.from('ncr-evidence').getPublicUrl(filename)
+      evidenceUrl = publicData?.publicUrl || null
+    }
+  } catch (err) {
+    console.warn('Failed to upload evidence', err)
+    return res.status(500).json({ error: err.message || 'Failed to upload evidence' })
+  }
+
+  const payload = {
+    reference_no: referenceNo,
+    reported_by: reporter.id,
+    status: 'OPEN',
+    issue_type: 'ncr',
+    occurrence_date: occurrence_date || new Date().toISOString().slice(0, 10),
+    product_type: resolvedProductTypeName,
+    product_type_id: resolvedProductTypeId,
+    batch_number,
+    complaint_location: resolvedLocationName,
+    location_id: resolvedLocationId,
+    severity: null,
+    department_id: normalizeId(department_id),
+    description,
+    evidence_url: evidenceUrl,
+  }
+
+  const { data, error } = await supabase
+    .from('ncr_reports')
+    .insert(payload)
+    .select('*')
+    .maybeSingle()
+
+  if (error) {
+    return res.status(500).json({ error: error.message })
+  }
+
+  try {
+    await writeAudit({
+      level: 'audit',
+      source: 'ncr_reports',
+      action: 'ncr_create',
+      userAuthId: reportedByAuthId,
+      details: { id: data?.id ?? null, reference_no: referenceNo },
+    })
+  } catch (auditError) {
+    console.warn('Failed to record NCR create audit:', auditError?.message || auditError)
+  }
+
+  return res.status(201).json({ success: true, data })
 }

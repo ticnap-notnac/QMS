@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import Navbar from '../components/Navbar.jsx'
 import { 
   Upload as UploadIcon, 
@@ -13,7 +13,8 @@ import {
 import './PagesStyles.css'
 import { useAuth } from '@/hooks/useAuth'
 import { loadDepartments } from '@/services/departmentService'
-import { createReport, fetchReports, updateReport } from '@/services/ncrService'
+import { createReport, fetchReports, updateReport, submitNcrMultipart } from '@/services/ncrService'
+import NCRSubmitModal from '../components/modals/NCRSubmitModal.jsx'
 import { fetchLocations, createLocation } from '@/services/locationService'
 import { fetchProductTypes, createProductType } from '@/services/productTypeService'
 
@@ -175,8 +176,6 @@ function ReportsPage({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const [selectedReport, setSelectedReport] = useState(null)
-  const [carFiled, setCarFiled] = useState(false)
-  const [qddrFiled, setQddrFiled] = useState(false)
   const [departments, setDepartments] = useState([])
   const [locations, setLocations] = useState([])
   const [productTypes, setProductTypes] = useState([])
@@ -186,8 +185,7 @@ function ReportsPage({
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
-  const [isCarModalOpen, setIsCarModalOpen] = useState(false)
-  const [isQddrModalOpen, setIsQddrModalOpen] = useState(false)
+  
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
   const [isPreventiveActionModalOpen, setIsPreventiveActionModalOpen] = useState(false)
 
@@ -203,6 +201,10 @@ function ReportsPage({
   const [resolutionTime, setResolutionTime] = useState(DEFAULT_CREATE_FORM.resolutionTime)
   const [verificationDate, setVerificationDate] = useState(DEFAULT_CREATE_FORM.verificationDate)
   const [preventiveRating, setPreventiveRating] = useState(DEFAULT_CREATE_FORM.preventiveRating)
+  const fileInputRefMain = useRef(null)
+  const [evidenceFileMain, setEvidenceFileMain] = useState(null)
+  const [evidencePreviewMain, setEvidencePreviewMain] = useState(null)
+  const [evidenceErrorMain, setEvidenceErrorMain] = useState(null)
 
   const departmentOptions = useMemo(() => departments || [], [departments])
   const locationOptions = useMemo(() => toOptionList(locations, 'location_name'), [locations])
@@ -217,8 +219,7 @@ function ReportsPage({
     setSeverity(DEFAULT_CREATE_FORM.severity)
     setDepartment(DEFAULT_CREATE_FORM.department)
     setDescription(DEFAULT_CREATE_FORM.description)
-    setCarFiled(false)
-    setQddrFiled(false)
+    
   }
 
   const setFormFromReport = (report) => {
@@ -236,8 +237,7 @@ function ReportsPage({
     setResolutionTime(report.resolution_time || DEFAULT_CREATE_FORM.resolutionTime)
     setVerificationDate(report.verification_date || '')
     setPreventiveRating(report.preventive_rating || DEFAULT_CREATE_FORM.preventiveRating)
-    setCarFiled(Boolean(report.car_filed))
-    setQddrFiled(Boolean(report.qddr_filed))
+    // preserve existing flags from report when editing if needed
   }
 
   const loadPageData = async () => {
@@ -281,29 +281,15 @@ function ReportsPage({
 
   const closeCreateModal = () => {
     setIsModalOpen(false)
+    if (evidencePreviewMain) {
+      try { URL.revokeObjectURL(evidencePreviewMain) } catch (e) {}
+    }
+    setEvidenceFileMain(null)
+    setEvidencePreviewMain(null)
+    setEvidenceErrorMain(null)
   }
 
-  const openCarModal = () => {
-    setCarFiled(true)
-    setIsModalOpen(false)
-    setIsCarModalOpen(true)
-  }
 
-  const closeCarModal = () => {
-    setIsCarModalOpen(false)
-    setIsModalOpen(true)
-  }
-
-  const openQddrModal = () => {
-    setQddrFiled(true)
-    setIsModalOpen(false)
-    setIsQddrModalOpen(true)
-  }
-
-  const closeQddrModal = () => {
-    setIsQddrModalOpen(false)
-    setIsModalOpen(true)
-  }
 
   const openUpdateModal = (report) => {
     setSelectedReport(report)
@@ -374,25 +360,48 @@ function ReportsPage({
         optionLabelKey: 'label',
       })
 
-      const payload = {
-        product_type_id: resolvedProductType.id,
-        batch_number: batchNumber,
-        location_id: resolvedLocation.id,
-        severity,
-        department_id: department,
-        description,
-        car_filed: Boolean(carFiled),
-        qddr_filed: Boolean(qddrFiled),
-        evidence_url: null,
-        ...overrides,
+      // If an evidence file is present, submit as multipart to the server endpoint
+      if (evidenceFileMain) {
+        if (!currentAuthId) {
+          throw new Error('Missing authenticated user. Please log in again.')
+        }
+        const fd = new FormData()
+        fd.append('product_type_id', resolvedProductType.id)
+        fd.append('batch_number', batchNumber)
+        fd.append('location_id', resolvedLocation.id)
+        fd.append('severity', severity)
+        fd.append('department_id', department)
+        fd.append('description', description)
+        fd.append('car_filed', 'false')
+        fd.append('qddr_filed', 'false')
+        fd.append('evidence', evidenceFileMain)
+        // send via server multipart handler which will return created row
+        await submitNcrMultipart(fd, currentAuthId)
+      } else {
+        const payload = {
+          product_type_id: resolvedProductType.id,
+          batch_number: batchNumber,
+          location_id: resolvedLocation.id,
+          severity,
+          department_id: department,
+          description,
+          car_filed: false,
+          qddr_filed: false,
+          evidence_url: null,
+          ...overrides,
+        }
+
+        await createReport(payload)
       }
 
-      await createReport(payload)
-
-      // close any open creation-related modals
-      setIsCarModalOpen(false)
-      setIsQddrModalOpen(false)
+      // close the main creation modal
       setIsModalOpen(false)
+      if (evidencePreviewMain) {
+        try { URL.revokeObjectURL(evidencePreviewMain) } catch (e) {}
+      }
+      setEvidenceFileMain(null)
+      setEvidencePreviewMain(null)
+      setEvidenceErrorMain(null)
 
       resetCreateForm()
       await loadPageData()
@@ -431,8 +440,8 @@ function ReportsPage({
         severity,
         department_id: department,
         description,
-        car_filed: carFiled,
-        qddr_filed: qddrFiled,
+        car_filed: selectedReport.car_filed,
+        qddr_filed: selectedReport.qddr_filed,
         evidence_url: selectedReport.evidence_url ?? null,
       })
       closeUpdateModal()
@@ -513,9 +522,25 @@ function ReportsPage({
                 </div>
                 <div className="reports-details-title-wrap"><h4 className="reports-details-title">Details</h4></div>
 
-                <div className="reports-workspace">
+                <div className="reports-details-box">
                   <span className="reports-workspace-text">{report.description || 'No description provided.'}</span>
                   <div onClick={() => openUpdateModal(report)} className="edit-icon-container"><SquarePen size={18} /></div>
+                </div>
+
+                <div className="reports-details-title-wrap"><h4 className="reports-details-title">Evidence</h4></div>
+                <div className="evidence-box">
+                  {report.evidence_url ? (
+                    <img
+                      src={report.evidence_url}
+                      alt="Evidence"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }}
+                      onClick={() => window.open(report.evidence_url, '_blank', 'noopener,noreferrer')}
+                    />
+                  ) : (
+                    <p style={{ color: 'var(--muted)', textAlign: 'center' }}>
+                      No evidence image attached
+                    </p>
+                  )}
                 </div>
               </div>
             )
@@ -584,7 +609,64 @@ function ReportsPage({
             <form onSubmit={handleSubmitReport} className="modal-form">
               <div>
                 <label className="label-field">Evidence:</label>
-                <div className="upload-box"><UploadIcon size={20} className="icon-teal" /><span className="reports-upload-text">Upload an Image</span></div>
+                <div
+                  className="upload-box"
+                  onClick={() => fileInputRefMain?.current && fileInputRefMain.current.click()}
+                  style={{ cursor: 'pointer', position: 'relative' }}
+                >
+                  {!evidencePreviewMain ? (
+                    <>
+                      <UploadIcon size={20} className="icon-teal" />
+                      <span className="reports-upload-text">Upload an Image</span>
+                    </>
+                  ) : (
+                    <div style={{ position: 'relative' }}>
+                      <img src={evidencePreviewMain} alt="Evidence preview" style={{ width: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 8 }} />
+                      <button
+                        type="button"
+                        className="remove-preview-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          try { URL.revokeObjectURL(evidencePreviewMain) } catch (err) {}
+                          setEvidenceFileMain(null)
+                          setEvidencePreviewMain(null)
+                          setEvidenceErrorMain(null)
+                        }}
+                        style={{ position: 'absolute', top: 8, right: 8 }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+
+                  <input
+                    ref={fileInputRefMain}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files && e.target.files[0]
+                      if (!file) return
+                      const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+                      if (!allowed.includes(file.type)) {
+                        setEvidenceErrorMain('Only jpg, jpeg, png, webp images are allowed')
+                        return
+                      }
+                      if (file.size > 5 * 1024 * 1024) {
+                        setEvidenceErrorMain('Image must be under 5MB')
+                        return
+                      }
+                      if (evidencePreviewMain) {
+                        try { URL.revokeObjectURL(evidencePreviewMain) } catch (err) {}
+                      }
+                      const url = URL.createObjectURL(file)
+                      setEvidenceFileMain(file)
+                      setEvidencePreviewMain(url)
+                      setEvidenceErrorMain(null)
+                    }}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+                {evidenceErrorMain && <div style={{ marginTop: 6, color: '#fca5a5', fontSize: 12 }}>{evidenceErrorMain}</div>}
               </div>
               <div className="reports-grid-3-16">
                 <div>
@@ -638,39 +720,16 @@ function ReportsPage({
                 </div>
               </div>
               <div><label className="label-field">Description:</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} className="input-field textarea-large" placeholder="Provide thorough configuration summary report details..." /></div>
-              <div className="modal-badges-row">
-                <button type="button" onClick={openCarModal} className="badge-button">File for CAR</button>
-                <button type="button" onClick={openQddrModal} className="badge-button">File for QDDR</button>
-              </div>
+              {/* CAR/QDDR removed — modal extracted to component */}
               <div className="modal-submit-row"><button type="submit" className="btn-gradient-primary">Submit Report</button></div>
             </form>
           </div>
         </div>
       )}
 
-      {/* CAR Modal */}
-      {isCarModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card modal-card--large">
-            <button onClick={closeCarModal} className="modal-close-button"><CloseIcon size={18} /></button>
-            <h3 className="reports-uppercase-title">Corrective Action Report</h3>
-            <div className="workspace-placeholder"><span className="reports-placeholder-text">Corrective Actions Configuration Sheet</span><div className="cross-line-bg"></div></div>
-            <div className="center-row"><button type="button" onClick={async () => { try { await submitReport({ car_filed: true }) } catch (e) {} }} className="secondary-action-button">Submit Report</button></div>
-          </div>
-        </div>
-      )}
+      {/* CAR/QDDR modals removed — replaced by centralized NCR submit modal component */}
 
-      {/* QDDR Modal */}
-      {isQddrModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card modal-card--large">
-            <button onClick={closeQddrModal} className="modal-close-button"><CloseIcon size={18} /></button>
-            <h3 className="reports-uppercase-title">Quality Defects / Damaged / Discrepancy Report</h3>
-            <div className="workspace-placeholder"><span className="reports-placeholder-text">Quality Discrepancy Analysis Canvas</span><div className="cross-line-bg"></div></div>
-            <div className="center-row"><button type="button" onClick={async () => { try { await submitReport({ qddr_filed: true }) } catch (e) {} }} className="secondary-action-button">Submit Report</button></div>
-          </div>
-        </div>
-      )}
+      <NCRSubmitModal isOpen={isModalOpen} onClose={closeCreateModal} onSuccess={async () => { await loadPageData(); setIsModalOpen(false) }} />
 
       {/* Update Report Modal */}
       {isUpdateModalOpen && (
