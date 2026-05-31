@@ -2,7 +2,7 @@
 import './App.css'
 import { supabase } from './utils/supabase'
 import Login from './components/Login.jsx'
-import IntroModal from './components/IntroModal.jsx'
+import IntroModal from './components/Modals/IntroModal.jsx'
 import NotificationsModal from './components/NotificationsModal.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import ReportsPage from './pages/ReportsPage.jsx'
@@ -12,13 +12,9 @@ import UserInformationPage from './pages/UserInformationPage.jsx'
 import AddUserPage from './pages/AddUserPage.jsx'
 import RolesPage from './pages/RolesPage.jsx'
 import DepartmentsPage from './pages/DepartmentsPage.jsx'
-import LocationsPage from './pages/LocationsPage.jsx'
-import ProductTypesPage from './pages/ProductTypesPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AuditToolsPage from './pages/AuditToolsPage.jsx'
-import ISOStandardsPage from './pages/ISOStandardsPage.jsx'
 import { LookupProvider } from './context/LookupContext'
-import { insertLog } from '@/services/logService'
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(false)
@@ -107,123 +103,12 @@ export default function App() {
 
     checkUser()
 
-    const activityTimers = {
-      expiry: null,
-      warning: null,
-    }
-
-    // 30 minutes inactivity, warn 2 minutes before expiry
-    const TIMEOUT_MS = 30 * 60 * 1000
-    const WARNING_MS = 2 * 60 * 1000
-
-    const clearActivityTimers = () => {
-      clearTimeout(activityTimers.expiry)
-      clearTimeout(activityTimers.warning)
-      activityTimers.expiry = null
-      activityTimers.warning = null
-    }
-
-    const startActivityTimers = async () => {
-      clearActivityTimers()
-      activityTimers.warning = setTimeout(async () => {
-        try {
-          const keep = window.confirm('You have been inactive. Stay signed in for another 2 minutes?')
-          if (keep) {
-            // user chose to stay signed in: reset timers
-            startActivityTimers()
-          } else {
-            await handleLogout()
-          }
-        } catch (err) {
-          console.error('Warning dialog error:', err)
-        }
-      }, TIMEOUT_MS - WARNING_MS)
-
-      activityTimers.expiry = setTimeout(async () => {
-        try {
-          await handleLogout()
-        } catch (err) {
-          console.error('Auto-logout error:', err)
-        }
-      }, TIMEOUT_MS)
-    }
-
-    const resetActivity = () => {
-      // ignore rapid-fire events
-      startActivityTimers()
-    }
-
-    const addActivityListeners = () => {
-      window.addEventListener('mousemove', resetActivity)
-      window.addEventListener('keydown', resetActivity)
-      window.addEventListener('click', resetActivity)
-      window.addEventListener('scroll', resetActivity)
-    }
-
-    const removeActivityListeners = () => {
-      window.removeEventListener('mousemove', resetActivity)
-      window.removeEventListener('keydown', resetActivity)
-      window.removeEventListener('click', resetActivity)
-      window.removeEventListener('scroll', resetActivity)
-    }
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user || null)
-
-      if (event === 'SIGNED_IN' && session?.user?.id) {
-        try {
-          // Only log the first login per browser session
-          if (!sessionStorage.getItem('login_logged')) {
-            await insertLog({
-              level: 'audit',
-              source: 'auth',
-              action: 'user_login',
-              userAuthId: session.user.id,
-              details: {
-                event: 'auth_state_signed_in',
-                email: session.user.email || null,
-              },
-            })
-            sessionStorage.setItem('login_logged', 'true')
-          }
-        } catch (err) {
-          console.warn('Failed to log SIGNED_IN event:', err?.message || err)
-        }
-
-        // start inactivity timers and listeners
-        addActivityListeners()
-        startActivityTimers()
-      }
-
-      if (event === 'SIGNED_OUT') {
-        // clear the per-session login flag on sign out
-        try {
-          sessionStorage.removeItem('login_logged')
-        } catch (e) {
-          /* ignore */
-        }
-        clearActivityTimers()
-        removeActivityListeners()
-      }
     })
-
-    // If the app started with an active session (user already signed in), start timers/listeners
-    ;(async () => {
-      try {
-        const { data: { user: existingUser } } = await supabase.auth.getUser()
-        if (existingUser) {
-          addActivityListeners()
-          startActivityTimers()
-        }
-      } catch (err) {
-        // ignore
-      }
-    })()
 
     return () => {
       subscription?.unsubscribe()
-      clearActivityTimers()
-      removeActivityListeners()
     }
   }, [])
 
@@ -268,30 +153,6 @@ export default function App() {
 }
   const handleLogout = async () => {
     try {
-      if (user?.id) {
-        try {
-          await insertLog({
-            level: 'audit',
-            source: 'auth',
-            action: 'user_logout',
-            userAuthId: user.id,
-            details: {
-              event: 'explicit_logout',
-              email: user.email || null,
-            },
-          })
-        } catch (err) {
-          console.warn('Failed to write logout log:', err?.message || err)
-        }
-      }
-
-      try {
-        // clear the per-session login flag when user explicitly logs out
-        sessionStorage.removeItem('login_logged')
-      } catch (e) {
-        /* ignore */
-      }
-
       await supabase.auth.signOut()
       setUser(null)
       setUserRole('user')
@@ -346,15 +207,6 @@ export default function App() {
     }
     if (activePage === 'Departments') {
       return <DepartmentsPage {...sharedProps} />
-    }
-    if (activePage === 'Locations') {
-      return <LocationsPage {...sharedProps} />
-    }
-    if (activePage === 'Product Types') {
-      return <ProductTypesPage {...sharedProps} />
-    }
-    if (activePage === 'ISO Standards') {
-      return <ISOStandardsPage {...sharedProps} />
     }
     if (activePage === 'Settings') {
       return <SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />

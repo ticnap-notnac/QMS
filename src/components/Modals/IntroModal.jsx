@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, ShieldCheck, Sparkles, Target } from 'lucide-react';
-import learnMoreRaw from '../../LEARN_MORE.md?raw'
+import learnMoreRaw from '../../../LEARN_MORE.md?raw'
 
 export default function IntroModal({ isOpen, onClose }) {
   if (!isOpen) return null;
