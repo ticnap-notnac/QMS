@@ -10,7 +10,7 @@ import {
   Filter,
   FileSearch
 } from 'lucide-react'
-import './PagesStyles.css'
+import './PagesStyles.css' // 📁 Central stylesheet used by pages
 import { useAuth } from '@/hooks/useAuth'
 import { loadDepartments } from '@/services/departmentService'
 import { createReport, fetchReports, updateReport, submitNcrMultipart } from '@/services/ncrService'
@@ -219,7 +219,6 @@ function ReportsPage({
     setSeverity(DEFAULT_CREATE_FORM.severity)
     setDepartment(DEFAULT_CREATE_FORM.department)
     setDescription(DEFAULT_CREATE_FORM.description)
-    
   }
 
   const setFormFromReport = (report) => {
@@ -237,7 +236,6 @@ function ReportsPage({
     setResolutionTime(report.resolution_time || DEFAULT_CREATE_FORM.resolutionTime)
     setVerificationDate(report.verification_date || '')
     setPreventiveRating(report.preventive_rating || DEFAULT_CREATE_FORM.preventiveRating)
-    // preserve existing flags from report when editing if needed
   }
 
   const loadPageData = async () => {
@@ -289,8 +287,6 @@ function ReportsPage({
     setEvidenceErrorMain(null)
   }
 
-
-
   const openUpdateModal = (report) => {
     setSelectedReport(report)
     setError(null)
@@ -339,7 +335,6 @@ function ReportsPage({
     await submitReport()
   }
 
-  // Shared create flow used by the main create form and CAR/QDDR modals
   const submitReport = async (overrides = {}) => {
     try {
       setError(null)
@@ -360,7 +355,6 @@ function ReportsPage({
         optionLabelKey: 'label',
       })
 
-      // If an evidence file is present, submit as multipart to the server endpoint
       if (evidenceFileMain) {
         if (!currentAuthId) {
           throw new Error('Missing authenticated user. Please log in again.')
@@ -375,7 +369,6 @@ function ReportsPage({
         fd.append('car_filed', 'false')
         fd.append('qddr_filed', 'false')
         fd.append('evidence', evidenceFileMain)
-        // send via server multipart handler which will return created row
         await submitNcrMultipart(fd, currentAuthId)
       } else {
         const payload = {
@@ -394,7 +387,6 @@ function ReportsPage({
         await createReport(payload)
       }
 
-      // close the main creation modal
       setIsModalOpen(false)
       if (evidencePreviewMain) {
         try { URL.revokeObjectURL(evidencePreviewMain) } catch (e) {}
@@ -474,9 +466,39 @@ function ReportsPage({
       />
 
       <div className="reports-main-wrap">
-        <div className="flex-start-row">
-          <button type="button" onClick={() => setIsFilterModalOpen(true)} className="btn-glass-action">
-            <SlidersHorizontal size={18} />
+        {/* 🎯 UPDATED: Symmetrical header with an actionable left button group and a single right button */}
+        <div className="reports-action-header-row">
+          {/* Left-aligned controls block group */}
+          <div className="reports-header-controls-left">
+            <button
+              type="button"
+              onClick={() => setIsFilterModalOpen(true)}
+              className="btn-glass-action"
+              title="Open Filters"
+            >
+              <SlidersHorizontal size={18} />
+            </button>
+
+            <button
+              type="button"
+              className="btn-quick-toggle"
+              onClick={() => console.log('Toggle CAR filter')}
+            >
+              CAR
+            </button>
+
+            <button
+              type="button"
+              className="btn-quick-toggle"
+              onClick={() => console.log('Toggle QDDR filter')}
+            >
+              QDDR
+            </button>
+          </div>
+
+          {/* Far-right submission action point */}
+          <button type="button" onClick={openCreateModal} className="btn-gradient-primary reports-submit-primary">
+            Submit a Report
           </button>
         </div>
 
@@ -524,7 +546,7 @@ function ReportsPage({
 
                 <div className="reports-details-box">
                   <span className="reports-workspace-text">{report.description || 'No description provided.'}</span>
-                  <div onClick={() => openUpdateModal(report)} className="edit-icon-container"><SquarePen size={18} /></div>
+                  {/* 🎯 Pencil icon container pulled out clean and simple! */}
                 </div>
 
                 <div className="reports-details-title-wrap"><h4 className="reports-details-title">Evidence</h4></div>
@@ -546,10 +568,6 @@ function ReportsPage({
             )
           })
         )}
-
-        <div className="reports-submit-row">
-          <button type="button" onClick={openCreateModal} className="btn-gradient-primary reports-submit-primary">Submit a Report</button>
-        </div>
       </div>
 
       {/* Filter Modal */}
@@ -720,14 +738,11 @@ function ReportsPage({
                 </div>
               </div>
               <div><label className="label-field">Description:</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} className="input-field textarea-large" placeholder="Provide thorough configuration summary report details..." /></div>
-              {/* CAR/QDDR removed — modal extracted to component */}
               <div className="modal-submit-row"><button type="submit" className="btn-gradient-primary">Submit Report</button></div>
             </form>
           </div>
         </div>
       )}
-
-      {/* CAR/QDDR modals removed — replaced by centralized NCR submit modal component */}
 
       <NCRSubmitModal isOpen={isModalOpen} onClose={closeCreateModal} onSuccess={async () => { await loadPageData(); setIsModalOpen(false) }} />
 

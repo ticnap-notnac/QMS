@@ -1992,7 +1992,25 @@
   position: relative;
 }
 
-.reports-workspace-text { font-size: 13px; color: #475569; }
+/* ==========================================================================
+   REPORTS DETAIL CONTENT IMPROVEMENTS
+   ========================================================================== */
+
+/* 🎯 Targets the main description content text container */
+.reports-details-box .reports-workspace-text {
+  font-size: 15px;            /* 📐 Bumped up from standard tiny fonts for clear readability */
+  line-height: 1.6;          /* ↕️ Added comfortable line spacing for longer report descriptions */
+  color: #f8fafc;            /* 🎨 Brightened slightly to a crisp off-white for better contrast */
+  font-weight: 400;          /* Clean weight balance */
+  word-break: break-word;    /* Safety fallback rule to prevent text overflow layout issues */
+}
+
+.reports-details-box {
+  padding: 14px 16px;        /* Balanced internal spacing cushion */
+  background: rgba(15, 23, 42, 0.3); /* Keeps it on-theme with your dark glass sheets */
+  border-radius: 8px;
+  position: relative;
+}
 
 .reports-submit-row {
   display: flex;
@@ -2378,7 +2396,74 @@
 .progress-w-10 { width: 10%; }
 .progress-w-5 { width: 5%; }
 
+/* ==========================================================================
+   REPORTS HUB HEADER ACTION ROW UPDATES
+   ========================================================================== */
+.reports-action-header-row {
+  display: flex;
+  justify-content: space-between; /* Keeps left cluster on far left, submit on far right */
+  align-items: center;
+  margin-bottom: 24px;
+  width: 100%;
+}
 
+/* Flex row grouping the icon and text toggle chips together on the left boundary */
+.reports-header-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Uniform grid spacing gap between filter icon, CAR, and QDDR */
+}
 
+/* Sync element heights symmetrically across the row line */
+.reports-submit-primary {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+/* Quick toggle buttons styled to match the dark glassmorphic design theme */
+.btn-quick-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px; /* Syncs height alignment with filter icon and submit button */
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #bfdbfe; /* Subtle text tone accent */
+  background: rgba(30, 41, 59, 0.45); /* Translucent container backdrop */
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-quick-toggle:hover {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(6, 182, 212, 0.4); /* Neon accent flare highlight on hover */
+  color: #fff;
+}
+
+/* Active/selected state configuration placeholder for your filters */
+.btn-quick-toggle.active {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(6, 182, 212, 0.6);
+  color: #22d3ee;
+}
+
+.btn-glass-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  width: 38px;
+  box-sizing: border-box;
+}
 
 
