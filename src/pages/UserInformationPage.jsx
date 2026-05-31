@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '@/utils/supabase'
+import { useUserProfile } from '@/hooks/useUserProfile'
 import Navbar from '@/components/Navbar'
 import SettingsNavbar from '@/components/SettingsNavbar'
 import './PagesStyles.css'
@@ -19,17 +19,9 @@ export default function UserInformationPage({
   setProfileTargetTab,
   profileTargetTab = 'User Information',
 }) {
-  const [userProfile, setUserProfile] = useState({
-    first_name: '',
-    last_name: '',
-    user_name: '',
-    email: '',
-    employee_no: '',
-    contact_number: '',
-  })
+
+  const { userProfile, loading, error } = useUserProfile(authUserId)
   const [activeTab, setActiveTab] = useState(profileTargetTab || 'User Information')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
 
   useEffect(() => {
     if (profileTargetTab) {
@@ -37,51 +29,18 @@ export default function UserInformationPage({
     }
   }, [profileTargetTab])
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        const currentAuthId = authUserId || user?.id
-
-        if (currentAuthId) {
-          const { data, error } = await supabase
-            .from('users')
-            .select('first_name, last_name, user_name, email, employee_no, contact_number')
-            .eq('auth_id', currentAuthId)
-            .maybeSingle()
-
-          if (error) {
-            console.error('Error fetching user profile:', error)
-            setError(error.message)
-          } else if (data) {
-            setUserProfile({
-              first_name: data.first_name || '',
-              last_name: data.last_name || '',
-              user_name: data.user_name || '',
-              email: data.email || user.email,
-              employee_no: data.employee_no || '',
-              contact_number: data.contact_number || '',
-            })
-          } else {
-            setUserProfile(prev => ({ ...prev, email: user?.email || prev.email }))
-          }
-        }
-      } catch (err) {
-        setError(err.message)
-        console.error('Error fetching user profile:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchUserProfile()
-  }, [authUserId])
-
   if (loading) {
     return (
       <div className="page-root">
-        <Navbar activePage={activePage} onPageChange={onPageChange} isUserMenuOpen={isUserMenuOpen} onToggleMenu={onToggleMenu} onLogout={onLogout} isNotificationsOpen={isNotificationsOpen} onToggleNotifications={onToggleNotifications} userRole={userRole} userName={userName} userPosition={userPosition} setProfileTargetTab={setProfileTargetTab} />
-        <main className="page-main-centered">Loading...</main>
+        <div className="page-main-centered">Loading...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="page-root">
+        <div className="page-main-centered">Error: {error}</div>
       </div>
     )
   }
@@ -102,28 +61,30 @@ export default function UserInformationPage({
         setProfileTargetTab={setProfileTargetTab}
       />
 
-      {/* 📐 STANDARD UNIFORM SYSTEM CONTAINER */}
       <main className="page-container user-info-page-container">
         <h1 className="page-heading user-info-page-title">User Information</h1>
 
         <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
 
-        {error && <div className="user-info-error">{error}</div>}
-
         {/* 🔮 UNIFORM METRIC CANVAS CARD GLASS DESIGN */}
         <div className="settings-container user-info-container--profile">
-          
+
           {/* Sidebar Navigation */}
           <div className="settings-sidebar user-info-sidebar--profile">
-            <button className="sidebar-button active">Overview Summary</button>
+            <button
+              className={`sidebar-button ${activeTab === 'Overview Summary' ? 'active' : ''}`}
+              onClick={() => setActiveTab('Overview Summary')}
+            >
+              Overview Summary
+            </button>
           </div>
 
           {/* Main Content Pane Area Canvas */}
           <div className="settings-main user-info-main--profile">
-            
+
             {/* User Details Section */}
             <div className="settings-content user-info-content--profile">
-              
+
               <div className="profile-header profile-header-strong user-info-header--profile">
                 <div className="profile-avatar-large user-info-avatar--profile">
                   {userProfile.first_name?.charAt(0) || 'U'}
