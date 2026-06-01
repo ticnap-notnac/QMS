@@ -31,6 +31,22 @@ function Login({
 
       if (authError) throw authError
 
+      // Check if user status is DEACTIVATED
+      if (data?.user?.id) {
+        const { data: dbUser, error: dbError } = await supabase
+          .from('users')
+          .select('status')
+          .eq('auth_id', data.user.id)
+          .maybeSingle()
+
+        if (dbError) throw dbError
+
+        if (dbUser && String(dbUser.status).toUpperCase() === 'DEACTIVATED') {
+          await supabase.auth.signOut()
+          throw new Error('Your account has been deactivated. Please contact an administrator.')
+        }
+      }
+
       // Log successful sign-in, but don't block auth flow if logging fails.
       try {
         await insertLog({

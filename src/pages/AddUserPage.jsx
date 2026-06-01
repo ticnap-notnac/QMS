@@ -153,7 +153,7 @@ export default function AddUserPage({
       contactNumber: user.contact_number || '',
       roleId: user.role_id ? String(user.role_id) : '',
       departmentId: user.department_id ? String(user.department_id) : '',
-      password: '',
+      status: user.status || 'ACTIVE',
     })
     setIsEditUserModalOpen(true)
   }
@@ -185,7 +185,7 @@ export default function AddUserPage({
       if (editingUser.contactNumber !== undefined) payload.contactNumber = editingUser.contactNumber
       if (editingUser.roleId !== undefined) payload.roleId = editingUser.roleId || null
       if (editingUser.departmentId !== undefined) payload.departmentId = editingUser.departmentId || null
-      if (editingUser.password) payload.password = editingUser.password // optional
+      if (editingUser.status !== undefined) payload.status = editingUser.status
 
       await updateUser(editingUser.id, payload)
       setEditFormMessage('User updated successfully.')

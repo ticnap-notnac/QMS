@@ -10,7 +10,7 @@ export async function fetchAllUsers() {
   const [usersResult, rolesResult, departmentsResult] = await Promise.all([
     supabase
       .from('users')
-      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, created_at')
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, created_at, status')
       .order('created_at', { ascending: false }),
     supabase.from('roles').select('id, role_name'),
     supabase.from('departments').select('id, department_name'),
@@ -149,10 +149,10 @@ export async function deleteUserById(id, actorAuthId) {
  * @param {string} actorAuthId - Auth ID of the requesting admin
  * @returns {{ profile: object|null, error: string|null, status: number }}
  */
-export async function updateUserById(id, { firstName, lastName, email, userName, contactNumber, roleId, departmentId, password }, actorAuthId) {
+export async function updateUserById(id, { firstName, lastName, email, userName, contactNumber, roleId, departmentId, password, status }, actorAuthId) {
   const { data: existing, error: fetchError } = await supabase
     .from('users')
-    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id')
+    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status')
     .eq('id', id)
     .maybeSingle()
 
@@ -167,6 +167,12 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
   if (roleId !== undefined && String(roleId) !== String(existing.role_id)) updates.role_id = roleId || null
   if (departmentId !== undefined && String(departmentId) !== String(existing.department_id)) updates.department_id = departmentId || null
   if (email !== undefined && email !== (existing.email || '')) updates.email = email
+  if (status !== undefined && status !== (existing.status || '')) {
+    const VALID_STATUSES = ['ACTIVE', 'INACTIVE', 'DEACTIVATED', 'Active', 'Inactive', 'Deactivated']
+    if (VALID_STATUSES.includes(status)) {
+      updates.status = status.toUpperCase()
+    }
+  }
 
   let updatedProfile = existing
 
@@ -175,7 +181,7 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
       .from('users')
       .update(updates)
       .eq('id', id)
-      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no')
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, status')
       .maybeSingle()
 
     if (profileError) return { profile: null, error: profileError.message, status: 500 }
@@ -207,7 +213,7 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
 
 
 export async function updateUserStatusById(id, status, actorAuthId) {
-  const VALID_STATUSES = ['Active', 'Inactive', 'Deactivated']
+  const VALID_STATUSES = ['Active', 'Inactive', 'Deactivated', 'ACTIVE', 'INACTIVE', 'DEACTIVATED']
 
   if (!VALID_STATUSES.includes(status)) {
     return { success: false, error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}.`, status: 400 }
@@ -215,7 +221,7 @@ export async function updateUserStatusById(id, status, actorAuthId) {
 
   const { error: dbError } = await supabase
     .from('users')
-    .update({ status })
+    .update({ status: status.toUpperCase() })
     .eq('id', id)
 
   if (dbError) return { success: false, error: dbError.message, status: 500 }
@@ -225,7 +231,7 @@ export async function updateUserStatusById(id, status, actorAuthId) {
       source: 'users',
       action: 'user_status_update',
       userAuthId: actorAuthId,
-      details: { id, status },
+      details: { id, status: status.toUpperCase() },
     })
   } catch (logErr) {
     console.warn('Failed to record user_status_update log:', logErr?.message || logErr)

@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import { supabase } from './utils/supabase'
 import Login from './components/Login.jsx'
@@ -40,299 +40,136 @@ export default function App() {
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
   const [activePage, setActivePage] = useState('Dashboard')
   const [profileTargetTab, setProfileTargetTab] = useState('User Information')
+
   const canViewNotifications = Boolean(user)
 
+  // Initialization: Auth state listener
   useEffect(() => {
-    console.log('current user:', user)
-    console.log('user role:', user?.role)
-  }, [user])
+    const initializeAuth = async () => {
+      setLoading(true)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        await refreshUserData(session.user)
+      }
+      setLoading(false)
+    }
+
+    initializeAuth()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null)
+      if (event === 'SIGNED_OUT') {
+        setUser(null)
+        setCurrentUserId(null)
+      }
+    })
+
+    return () => subscription?.unsubscribe()
+  }, [])
+
+  const applyUserRoleData = async (profile) => {
+    const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+    const displayName = fullName || profile.user_name || profile.email || 'Name of the User'
+    setUserName(displayName)
+
+    let resolvedRoleName = null
+    if (profile.role_id) {
+      const { data: roleData } = await supabase.from('roles').select('role_name').eq('id', profile.role_id).maybeSingle()
+      if (roleData?.role_name) {
+        resolvedRoleName = roleData.role_name
+        setUserPosition(resolvedRoleName)
+        setUserRole(resolvedRoleName.toLowerCase() === 'admin' ? 'admin' : resolvedRoleName.toLowerCase())
+      }
+    }
+  }
+
+
+  const refreshUserData = async (authUser) => {
+    const { data } = await supabase
+      .from('users')
+      .select('id, first_name, last_name, user_name, role_id, status')
+      .eq('auth_id', authUser.id)
+      .maybeSingle()
+
+    if (data) {
+      if (String(data.status).toUpperCase() === 'DEACTIVATED') {
+        await supabase.auth.signOut()
+        setUser(null)
+        return
+      }
+      setCurrentUserId(data.id || null)
+      await applyUserRoleData(data)
+    }
+  }
 
   const refreshUnreadNotificationCount = useCallback(async () => {
     if (!currentUserId || !user) {
       setUnreadNotificationCount(0)
       return
     }
-
-    try {
-      const count = await fetchUnreadNotificationCount(currentUserId)
-      setUnreadNotificationCount(count)
-    } catch (err) {
-      console.error('Error fetching unread notifications:', err)
-      setUnreadNotificationCount(0)
-    }
+    const count = await fetchUnreadNotificationCount(currentUserId)
+    setUnreadNotificationCount(count)
   }, [currentUserId, user])
 
-  const applyUserRoleData = async (profile) => {
-    const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
-    // Prefer full name for display (first + last). Fall back to username, then email.
-    const displayName = fullName || profile.user_name || profile.email || 'Name of the User'
-    setUserName(displayName)
-
-    let resolvedRoleName = null
-
-    if (profile.role_id) {
-      try {
-        const { data: roleData, error: roleError } = await supabase
-          .from('roles')
-          .select('role_name')
-          .eq('id', profile.role_id)
-          .maybeSingle()
-
-        if (roleError) {
-          console.error('Role query error:', roleError)
-        } else if (roleData && roleData.role_name) {
-          resolvedRoleName = roleData.role_name
-          // Display the role name as-is (capitalization preserved) for the UI
-          setUserPosition(resolvedRoleName)
-          const normalized = resolvedRoleName.toLowerCase()
-          setUserRole(normalized === 'admin' ? 'admin' : normalized)
-        }
-      } catch (err) {
-        console.error('Role fetch error:', err)
-      }
-    }
-
-    if (profile.role && !resolvedRoleName) {
-      resolvedRoleName = profile.role
-      setUserPosition(profile.role)
-      setUserRole(normalizeRoleValue(profile.role))
-    }
-
-    // Fallbacks when role couldn't be resolved from roles table
-    if (!resolvedRoleName) {
-      // use profile.user_name or a generic Position label
-      setUserPosition(profile.user_name || 'Position')
-      // detect admin heuristically from username if needed
-      if (profile.user_name && profile.user_name.toLowerCase().includes('admin')) {
-        setUserRole('admin')
-      }
-    }
-  }
-
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        setUser(user)
-
-        if (user) {
-          const { data } = await supabase
-            .from('users')
-            .select('id, first_name, last_name, user_name, role_id')
-            .eq('auth_id', user.id)
-            .maybeSingle()
-
-          if (data) {
-            setCurrentUserId(data.id || null)
-            await applyUserRoleData(data)
-          }
-        }
-      } catch (err) {
-        console.error('Error checking user:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    checkUser()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null)
-    })
-
-    return () => {
-      subscription?.unsubscribe()
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!user) {
-      setUnreadNotificationCount(0)
-      setIsNotificationsOpen(false)
-      return
-    }
-
-    refreshUnreadNotificationCount()
-  }, [user, userRole, refreshUnreadNotificationCount])
+    if (user) refreshUnreadNotificationCount()
+  }, [user, refreshUnreadNotificationCount])
 
   const handleSubmit = async (authData) => {
     try {
-      if (authData && authData.user) {
-        setUser(authData.user)
-        setError('')
-
-        const { data, error } = await supabase
-          .from('users')
-          .select('id, first_name, last_name, user_name, role_id')
-          .eq('auth_id', authData.user.id)
-          .maybeSingle()
-
-        if (data) {
-          setCurrentUserId(data.id || null)
-          await applyUserRoleData(data)
-        }
-      }
-    } catch (err) {
-      setError(err.message)
-      console.error('Submit error:', err)
-    }
-  }
-
-  const refreshUserData = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
       const { data } = await supabase
         .from('users')
-        .select('id, first_name, last_name, user_name, role_id')
-        .eq('auth_id', user.id)
+        .select('id, first_name, last_name, user_name, role_id, status')
+        .eq('auth_id', authData.user.id)
         .maybeSingle()
 
-      if (data) {
-        setCurrentUserId(data.id || null)
-        await applyUserRoleData(data)
+      if (data && String(data.status).toUpperCase() === 'DEACTIVATED') {
+        await supabase.auth.signOut()
+        throw new Error('Your account has been deactivated. Please contact an administrator.')
       }
+      setUser(authData.user)
+      await refreshUserData(authData.user)
+    } catch (err) {
+      setError(err.message)
     }
   }
 
   const handleLogout = async () => {
-    try {
-      // Log BEFORE signOut so getCurrentAuthId() still resolves
-      await logAction({
-        level: 'audit',
-        source: 'auth',
-        action: 'user_logout_success',
-        details: { event: 'logout_success' },
-      })
-
-      await supabase.auth.signOut()
-      setUser(null)
-      // ...rest of your state resets
-    } catch (err) {
-      setError(err.message)
-      console.error('Logout error:', err)
-
-      await logAction({
-        level: 'warn',
-        source: 'auth',
-        action: 'user_logout_failed',
-        details: { event: 'logout_failed', message: err?.message || 'Logout failed' },
-      })
-    }
-  }
-
-
-  const handlePageChange = (page) => {
-    setActivePage(page)
-    setIsUserMenuOpen(false)
+    await logAction({ level: 'audit', source: 'auth', action: 'user_logout_success' })
+    await supabase.auth.signOut()
+    setUser(null)
   }
 
   const renderPage = () => {
-    const sharedProps = {
-      activePage,
-      onPageChange: handlePageChange,
-      isUserMenuOpen,
-      onToggleMenu: () => setIsUserMenuOpen((open) => !open),
-      onLogout: handleLogout,
-      isNotificationsOpen,
-      onToggleNotifications: user ? () => setIsNotificationsOpen((open) => !open) : () => { },
-      userRole,
-      userName,
-      userPosition,
-      currentUserId,
-      unreadNotificationCount,
-      canViewNotifications,
-      authUserId: user?.id || '',
-      profileTargetTab,
-      setProfileTargetTab,
+    const sharedProps = { activePage, onPageChange: setActivePage, isUserMenuOpen, onToggleMenu: () => setIsUserMenuOpen(!isUserMenuOpen), onLogout: handleLogout, isNotificationsOpen, onToggleNotifications: () => setIsNotificationsOpen(!isNotificationsOpen), userRole, userName, userPosition, currentUserId, unreadNotificationCount, canViewNotifications, authUserId: user?.id || '', profileTargetTab, setProfileTargetTab }
+
+    const pages = {
+      'Reports': ReportsPage, 'ISO': ISOPage, 'DCC': DCCPage, 'Profile': UserInformationPage,
+      'Admin Panel': AddUserPage, 'Roles': RolesPage, 'Departments': DepartmentsPage,
+      'Locations': LocationsPage, 'Product Types': ProductTypesPage, 'ISO Standards': ISOStandardsPage,
+      'Settings': SettingsPage, 'Audit Tools': AuditToolsPage
     }
 
-    if (activePage === 'Reports') {
-      return <ReportsPage {...sharedProps} />
-    }
-    if (activePage === 'ISO') {
-      return <ISOPage {...sharedProps} />
-    }
-    if (activePage === 'DCC') {
-      return <DCCPage {...sharedProps} />
-    }
-    if (activePage === 'Profile') {
-      return <UserInformationPage {...sharedProps} />
-    }
-    if (activePage === 'Admin Panel') {
-      return <AddUserPage {...sharedProps} />
-    }
-    if (activePage === 'Roles') {
-      return <RolesPage {...sharedProps} />
-    }
-    if (activePage === 'Departments') {
-      return <DepartmentsPage {...sharedProps} />
-    }
-    if (activePage === 'Locations') {
-      return <LocationsPage {...sharedProps} />
-    }
-    if (activePage === 'Product Types') {
-      return <ProductTypesPage {...sharedProps} />
-    }
-    if (activePage === 'ISO Standards') {
-      return <ISOStandardsPage {...sharedProps} />
-    }
-    if (activePage === 'Settings') {
-      return <SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />
-    }
-    if (activePage === 'Audit Tools') {
-      return <AuditToolsPage {...sharedProps} />
-    }
-    return <DashboardPage {...sharedProps} />
+    const Component = pages[activePage] || DashboardPage
+    return <Component {...sharedProps} onProfileUpdate={() => refreshUserData(user)} />
   }
 
-  const handleNotificationSelect = (reportId) => {
-    setIsNotificationsOpen(false)
-    setActivePage('Reports')
-
-    if (reportId) {
-      window.setTimeout(() => {
-        const target = document.getElementById(`report-card-${reportId}`)
-        target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 300)
-    }
-  }
-
-  if (loading) {
-    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '18px' }}>Loading...</div>
-  }
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>Loading...</div>
 
   return (
     <LookupProvider>
       <div className="page">
-        <div className="bg-orb bg-orb--one" aria-hidden="true"></div>
-        <div className="bg-orb bg-orb--two" aria-hidden="true"></div>
-
-        {!user ? (
+        <div className="bg-orb bg-orb--one"></div>
+        <div className="bg-orb bg-orb--two"></div>
+        {!user && (
           <header className="brand">
-            <div className="logo">
-              <span className="logo-mark">Q</span>
-              <span className="logo-text">Flow</span>
-            </div>
+            <div className="logo"><span className="logo-mark">Q</span><span className="logo-text">Flow</span></div>
             <p className="brand-subtitle">QUALITY MANAGEMENT SYSTEM</p>
           </header>
-        ) : null}
-
-        {user ? renderPage() : (
-          <Login
-            onSubmit={handleSubmit}
-            onLearnMore={() => setShowIntro(true)}
-          />
         )}
-
+        {user ? renderPage() : <Login onSubmit={handleSubmit} onLearnMore={() => setShowIntro(true)} />}
         <IntroModal isOpen={showIntro} onClose={() => setShowIntro(false)} />
-        <NotificationsModal
-          isOpen={isNotificationsOpen}
-          onClose={() => setIsNotificationsOpen(false)}
-          currentUserId={currentUserId}
-          onUnreadCountChange={setUnreadNotificationCount}
-          onRefreshUnreadCount={refreshUnreadNotificationCount}
-          onOpenReport={handleNotificationSelect}
-        />
+        <NotificationsModal isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} currentUserId={currentUserId} onRefreshUnreadCount={refreshUnreadNotificationCount} />
       </div>
     </LookupProvider>
   )

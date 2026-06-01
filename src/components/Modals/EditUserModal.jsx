@@ -45,8 +45,12 @@ function EditUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Password (optional)</span>
-              <input type="password" name="password" value={formData.password} onChange={onChange} className="form-input-reports" placeholder="Leave blank to keep password" />
+              <span className="small-label">Status</span>
+              <select name="status" value={formData.status ?? 'ACTIVE'} onChange={onChange} className="form-input-reports">
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+                <option value="DEACTIVATED">DEACTIVATED</option>
+              </select>
             </label>
           </div>
 
