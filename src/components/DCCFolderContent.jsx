@@ -10,16 +10,16 @@ import SystemLogsPanel from './SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
 
 const TASK_REPORT_SUBFOLDERS = [
-  { id: 'car',  label: 'CAR'  },
+  { id: 'car', label: 'CAR' },
   { id: 'qddr', label: 'QDDR' },
-  { id: 'ncr',  label: 'NCR'  },
+  { id: 'ncr', label: 'NCR' },
 ]
 
 const SEVERITY_COLORS = {
   Critical: 'severity-critical',
-  High:     'severity-high',
-  Medium:   'severity-medium',
-  Low:      'severity-low',
+  High: 'severity-high',
+  Medium: 'severity-medium',
+  Low: 'severity-low',
 }
 
 // ---------------------------------------------------------------------------
@@ -138,6 +138,15 @@ function TaskReportsFolderList({ onOpenTaskFolder }) {
   )
 }
 
+// ---------------------------------------------------------------------------
+// Sub-view: Task Reports › NCR – 1×1 evidence thumbnail
+//
+// Columns evidence_url and investigation_evidence_url store storage paths
+// (e.g. "evidence/abc.jpg"), NOT full URLs.
+// We resolve them via supabase.storage.from('ncr-evidence').getPublicUrl().
+// If the value is already a full https:// URL it is used as-is.
+// ---------------------------------------------------------------------------
+
 const NCR_EVIDENCE_BUCKET = 'ncr-evidence'
 
 function resolveStorageUrl(path) {
@@ -243,9 +252,8 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
               <td>
                 {ncr.severity ? (
                   <span
-                    className={`iso-status-pill ${
-                      SEVERITY_COLORS[ncr.severity] ?? ''
-                    }`}
+                    className={`iso-status-pill ${SEVERITY_COLORS[ncr.severity] ?? ''
+                      }`}
                   >
                     {ncr.severity}
                   </span>
@@ -254,9 +262,9 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
                 )}
               </td>
               <td>{ncr.department_id ?? '—'}</td>
-              <td>{ncr.product_type ?? '—'}</td>
+              <td>{ncr.product_type_name ?? ncr.product_type ?? '—'}</td>
               <td>{ncr.batch_number ?? '—'}</td>
-              <td>{ncr.complaint_location ?? '—'}</td>
+              <td>{ncr.location_name ?? ncr.complaint_location ?? '—'}</td>
               <td>
                 {ncr.occurrence_date
                   ? new Date(ncr.occurrence_date).toLocaleDateString()
