@@ -5,6 +5,7 @@ import AdminNavbar from '@/components/AdminNavbar'
 import AddCategoryModal from '@/components/Modals/AddCategoryModal'
 import AdminListPanel from '@/components/AdminListPanel'
 import SearchForm from '@/components/SearchForm'
+import './adminPanel.css'
 import './PagesStyles.css'
 import useCategoryManager from '@/hooks/useCategoryManager'
 import {

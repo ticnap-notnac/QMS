@@ -1,14 +1,3 @@
-/**
- * pages/ReportsPage.jsx
- *
- * refactor(reports): slim page shell — delegates all logic to useReportsLogic
- *
- * Responsibilities:
- *   - Compose layout from imported components
- *   - Pass props down; never own business logic
- *   - Target: ≤ 100 lines of JSX (excluding imports)
- */
-
 import { X as CloseIcon, SlidersHorizontal, SquarePen } from 'lucide-react'
 import Navbar from '../components/Navbar.jsx'
 import Toast from '@/components/Toast'
@@ -19,6 +8,7 @@ import CreateReportModal from '../components/Modals/CreateReportModal.jsx'
 import ReportCard from '../components/ReportCard.jsx'
 import InvestigatedReportCard from '../components/InvestigatedReportCard.jsx'
 import { useReportsLogic } from '@/hooks/useReportsLogic'
+import './ReportsPage.css'
 import './PagesStyles.css'
 
 function ReportsPage({

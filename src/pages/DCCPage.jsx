@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar.jsx'
 import { Folder, FileText, Search, ArrowLeft } from 'lucide-react'
+import './DCCPage.css'
 import './PagesStyles.css'
 import SystemLogsPanel from '../components/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
