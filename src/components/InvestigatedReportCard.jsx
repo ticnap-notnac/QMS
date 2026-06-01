@@ -1,0 +1,164 @@
+/**
+ * components/InvestigatedReportCard.jsx
+ *
+ * feat(reports): extract InvestigatedReportCard from ReportsPage approval queue
+ *
+ * Renders a single investigated/resolved NCR report with:
+ *   - Reporter identity block
+ *   - Status / severity / approval badges
+ *   - Investigation + resolution detail panels
+ *   - Resolution time & verification date grid
+ *   - Investigation evidence image
+ *   - Approve / Reject / Update action row (role-gated)
+ */
+
+import { User, SquarePen } from 'lucide-react'
+import { formatDate, getStatusStyle, getSeverityStyle, getApprovalState } from '@/hooks/useReportsLogic'
+
+/**
+ * @param {{
+ *   report: object,
+ *   departmentNameById: Map<string, string>,
+ *   canAssignReports: boolean,
+ *   onApprove: (report: object) => void,
+ *   onReject: (report: object) => void,
+ *   onUpdate: (report: object) => void,
+ * }} props
+ */
+function InvestigatedReportCard({ report, departmentNameById, canAssignReports, onApprove, onReject, onUpdate }) {
+  const reporterName = report.reporter_full_name || 'Name of the User'
+  const reporterRole = report.reporter_role_name || 'Position'
+  const reporterDepartment =
+    report.reporter_department_name ||
+    departmentNameById.get(String(report.department_id)) ||
+    'Department'
+  const reportLocation = report.location_name || report.complaint_location || 'Location'
+
+  const statusStyle = getStatusStyle(report.status)
+  const severityStyle = getSeverityStyle(report.severity)
+  const approvalState = getApprovalState(report)
+  const isApproved = approvalState === 'approved'
+
+  const approvalBadgeStyle = isApproved
+    ? { background: 'rgba(34, 197, 94, 0.2)', color: '#bbf7d0', borderColor: 'rgba(34, 197, 94, 0.35)' }
+    : { background: 'rgba(245, 158, 11, 0.2)', color: '#fde68a', borderColor: 'rgba(245, 158, 11, 0.35)' }
+
+  const resolutionTimeLabel = report.resolution_time_value
+    ? `${report.resolution_time_value} ${report.resolution_time_unit || ''}`.trim()
+    : 'Not available'
+
+  return (
+    <div className="reports-card" id={`report-card-${report.id}`}>
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="reports-card-header">
+        <div className="reports-user-block">
+          <div className="reports-avatar">
+            <User size={20} className="icon-cyan" />
+          </div>
+          <div className="reports-user-text">
+            <span className="reports-user-name">{reporterName}</span>
+            <span className="reports-user-meta">
+              {reporterRole} • {reporterDepartment} • {reportLocation} • {formatDate(report.created_at)}
+            </span>
+          </div>
+        </div>
+
+        <div className="badges-row">
+          <span className="status-badge" style={statusStyle}>
+            {String(report.status || 'open').toUpperCase()}
+          </span>
+          <span className="day-badge" style={severityStyle}>
+            {String(report.severity || 'low').toUpperCase()}
+          </span>
+          <span className="status-badge" style={approvalBadgeStyle}>
+            {isApproved ? 'APPROVED' : 'PENDING APPROVAL'}
+          </span>
+        </div>
+      </div>
+
+      {/* ── Investigation details ───────────────────────────────────────── */}
+      <div className="reports-details-title-wrap">
+        <h4 className="reports-details-title">Investigation Details</h4>
+      </div>
+      <div className="reports-details-box">
+        <span className="reports-workspace-text">
+          {report.investigation_details || 'No investigation details provided.'}
+        </span>
+      </div>
+
+      {/* ── Resolution details ──────────────────────────────────────────── */}
+      <div className="reports-details-title-wrap">
+        <h4 className="reports-details-title">Resolution Details</h4>
+      </div>
+      <div className="reports-details-box">
+        <span className="reports-workspace-text">
+          {report.resolution_details || 'No resolution details provided.'}
+        </span>
+      </div>
+
+      {/* ── Resolution time / verification date ────────────────────────── */}
+      <div className="reports-grid-2-16" style={{ marginTop: '12px' }}>
+        <div className="reports-details-box">
+          <span className="reports-workspace-text">Resolution Time: {resolutionTimeLabel}</span>
+        </div>
+        <div className="reports-details-box">
+          <span className="reports-workspace-text">Verification Date: {formatDate(report.verification_date)}</span>
+        </div>
+      </div>
+
+      {/* ── Investigation evidence ──────────────────────────────────────── */}
+      <div className="reports-details-title-wrap">
+        <h4 className="reports-details-title">Investigation Evidence</h4>
+      </div>
+      <div className="evidence-box">
+        {report.investigation_evidence_url ? (
+          <img
+            src={report.investigation_evidence_url}
+            alt="Investigation evidence"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }}
+            onClick={() => window.open(report.investigation_evidence_url, '_blank', 'noopener,noreferrer')}
+          />
+        ) : (
+          <p style={{ color: 'var(--muted)', textAlign: 'center' }}>No investigation image attached</p>
+        )}
+      </div>
+
+      {/* ── Action row ─────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
+        {canAssignReports && (
+          <button
+            type="button"
+            className="btn-edit-user"
+            onClick={() => onApprove(report)}
+            disabled={isApproved}
+            title="Approve updated report"
+          >
+            {isApproved ? 'Approved' : 'Approve'}
+          </button>
+        )}
+
+        {canAssignReports && !isApproved && (
+          <button
+            type="button"
+            className="btn-edit-user"
+            onClick={() => onReject(report)}
+            title="Reject updated report"
+          >
+            Reject
+          </button>
+        )}
+
+        <button
+          type="button"
+          className="btn-edit-user"
+          onClick={() => onUpdate(report)}
+          title="Update report"
+        >
+          <SquarePen size={16} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default InvestigatedReportCard
