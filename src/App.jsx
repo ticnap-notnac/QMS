@@ -13,9 +13,13 @@ import UserInformationPage from './pages/UserInformationPage.jsx'
 import AddUserPage from './pages/AddUserPage.jsx'
 import RolesPage from './pages/RolesPage.jsx'
 import DepartmentsPage from './pages/DepartmentsPage.jsx'
+import LocationsPage from './pages/LocationsPage.jsx'
+import ProductTypesPage from './pages/ProductTypesPage.jsx'
+import ISOStandardsPage from './pages/ISOStandardsPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AuditToolsPage from './pages/AuditToolsPage.jsx'
 import { LookupProvider } from './context/LookupContext'
+
 
 function normalizeRoleValue(value) {
   return String(value || '').trim().toLowerCase()
@@ -251,6 +255,15 @@ export default function App() {
     }
     if (activePage === 'Departments') {
       return <DepartmentsPage {...sharedProps} />
+    }
+    if (activePage === 'Locations') {
+      return <LocationsPage {...sharedProps} />
+    }
+    if (activePage === 'Product Types') {
+      return <ProductTypesPage {...sharedProps} />
+    }
+    if (activePage === 'ISO Standards') {
+      return <ISOStandardsPage {...sharedProps} />
     }
     if (activePage === 'Settings') {
       return <SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />
