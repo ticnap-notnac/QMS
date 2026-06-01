@@ -1,64 +1,38 @@
-import { supabase } from '../lib/supabase.js'
-import { writeAudit } from '../lib/audit.js'
 import { getRequestActor } from '../lib/requestUtils.js'
+import {
+  fetchAllDepartments,
+  createDepartment,
+  deleteDepartment,
+} from '../services/departmentService.js'
 
+// GET /departments
 export async function getDepartments(_req, res) {
-  const { data, error } = await supabase
-    .from('departments')
-    .select('id, department_name')
-    .order('department_name', { ascending: true })
+  const { data, error } = await fetchAllDepartments()
 
-  if (error) {
-    return res.status(500).json({ error: error.message })
-  }
-
-  return res.json(data || [])
+  if (error) return res.status(500).json({ error: error.message })
+  return res.json(data)
 }
 
-export async function createDepartment(req, res) {
-  const { departmentName } = req.body || {}
-  if (!departmentName) {
-    return res.status(400).json({ error: 'Department name is required.' })
-  }
+// POST /departments
+export async function postDepartment(req, res) {
+  const { departmentName } = req.body ?? {}
+  const actorAuthId = getRequestActor(req)
 
-  const { data, error } = await supabase
-    .from('departments')
-    .insert([{ department_name: departmentName }])
-    .select('id, department_name')
+  const { data, error, validationError } = await createDepartment({ departmentName, actorAuthId })
 
-  if (error) {
-    return res.status(500).json({ error: error.message })
-  }
+  if (validationError) return res.status(400).json({ error: validationError })
+  if (error)           return res.status(500).json({ error: error.message })
 
-  return res.json(data || [])
+  return res.json(data)
 }
 
-export async function deleteDepartment(req, res) {
+// DELETE /departments/:id
+export async function removeDepartment(req, res) {
   const { id } = req.params
-  // fetch record for details
-  const { data: existing, error: fetchError } = await supabase
-    .from('departments')
-    .select('id, department_name')
-    .eq('id', id)
-    .maybeSingle()
+  const actorAuthId = getRequestActor(req)
 
-  if (fetchError) {
-    return res.status(500).json({ error: fetchError.message })
-  }
+  const { success, error } = await deleteDepartment({ id, actorAuthId })
 
-  const { error } = await supabase.from('departments').delete().eq('id', id)
-
-  if (error) {
-    return res.status(500).json({ error: error.message })
-  }
-
-  // record audit log (non-blocking)
-  try {
-    const userAuthId = getRequestActor(req)
-    await writeAudit({ source: 'departments', action: 'department_delete', userAuthId, details: { id: existing?.id ?? id, department_name: existing?.department_name || null } })
-  } catch (logErr) {
-    console.warn('Failed to record department_delete log:', logErr?.message || logErr)
-  }
-
-  return res.json({ success: true })
+  if (error)   return res.status(500).json({ error: error.message })
+  if (success) return res.json({ success: true })
 }
