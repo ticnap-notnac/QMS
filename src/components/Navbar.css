@@ -1,4 +1,5 @@
 /* src/components/Navbar.css */
+/* 🎯 Target your main horizontal navbar wrapper panel */
 .app-navbar {
   width: 100%;
   display: flex;
@@ -7,8 +8,15 @@
   gap: 20px;
   padding: 12px 0;
   box-sizing: border-box;
-  position: relative;
-  z-index: 30;
+  /* 🚀 CRITICAL: z-index is completely ignored unless a position is explicitly set! */
+  position: relative !important;
+  
+  /* 💡 Lower its plane to a baseline tier so floating windows can cleanly pass over it */
+  z-index: 10 !important;
+  
+  /* 🛑 Extra safety: ensure it doesn't isolate its stack context group */
+  isolation: auto !important;
+  
   background: transparent;
 }
 .app-navbar nav { display: flex; gap: 8px; align-items: center; }

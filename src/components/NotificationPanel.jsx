@@ -31,13 +31,14 @@ export default function NotificationPanel({
   const list = Array.isArray(notifications) ? notifications : []
 
   return (
-    <div
-      className="modal notifications-modal-shell"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="notifications-title"
-      onClick={(event) => event.stopPropagation()}
-    >
+    <div className="notification-floating-dropdown">
+      <div
+        className="modal notifications-modal-shell"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="notifications-title"
+        onClick={(event) => event.stopPropagation()}
+      >
       <div className="modal-header notifications-modal-header">
         <div className="notifications-title-cluster">
           <span className="notifications-modal-icon"><Bell size={18} /></span>
@@ -117,6 +118,7 @@ export default function NotificationPanel({
           </article>
         ))}
       </div>
+    </div>
     </div>
   )
 }

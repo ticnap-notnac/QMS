@@ -3,7 +3,6 @@ import Navbar from '@/components/Navbar'
 import SettingsNavbar from '@/components/SettingsNavbar'
 import useUserInformationPageLogic from '@/hooks/useUserInformationPageLogic'
 import ProfileCard from '@/components/ProfileCard'
-import './UserInformationPage.css'
 import './PagesStyles.css'
 
 export default function UserInformationPage(props) {

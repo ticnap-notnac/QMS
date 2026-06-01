@@ -122,3 +122,95 @@
   .system-logs-panel table { font-size: 12px; }
   .system-logs-panel .admin-search-input { min-width: 140px; }
 }
+
+/* ==========================================================================
+   FIX: FORCING NOTIFICATION PANEL TO SCREEN CENTER & ABSOLUTE FRONT
+   ========================================================================== */
+
+.notification-floating-dropdown {
+  /* 🚀 FIXED breaks out of ANY parent container limits, forcing it to look at the screen window directly */
+  position: fixed !important;
+  
+  /* 📐 Perfect Screen Centering Math Engine */
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important; /* Pulls itself exactly back into the center of the viewport */
+  
+  /* 👑 Dominates the navbar's position layer level of 10 easily */
+  z-index: 99999 !important;
+  
+  /* Layout stability safety settings */
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  right: auto !important;
+}
+
+/* Ensure the background content panel element respects the stacking layer priority */
+.notification-floating-dropdown .modal-card {
+  z-index: 9999999 !important;
+  position: relative !important;
+  
+  /* Deep shadow backdrop glow separating it completely from the page components behind it */
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* ==========================================================================
+   THE NUCLEAR OVERRIDE: SIBLING STACKING ENGINE CORRECTION
+   ========================================================================== */
+
+/* 🎯 Forcefully sets the layer priority by looking at the sibling relationship */
+.navbar + .notification-floating-dropdown,
+.navbar-container + .notification-floating-dropdown,
+.notification-floating-dropdown {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  
+  /* 👑 An absolute layer priority depth value to smash past parent container restrictions */
+  z-index: 2147483647 !important;
+}
+
+/* 🎯 This tells the browser engine to clip down the navbar banner context plane */
+.navbar,
+.navbar-container,
+div[class*="navbar"] {
+  position: relative !important;
+  z-index: 1 !important; /* Lowers its stacking priority to the baseline tier */
+}
+
+/* ==========================================================================
+   PORTAL-POWERED NOTIFICATION OVERLAY STYLES
+   ========================================================================== */
+
+/* Spans the entire display workspace screen independently of any navbar constraints */
+.notification-portal-overlay {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(11, 24, 53, 0.4); /* Translucent backdrop overlay tint */
+  backdrop-filter: blur(4px);        /* Soft focus background blurring */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  /* 👑 Sits safely above absolutely everything on the web document body plane */
+  z-index: 9999999 !important;
+}
+
+/* Centralized modal card item card panel box wrapper specifications */
+.notification-modal-card {
+  position: relative !important;
+  background: rgba(11, 24, 53, 0.95); /* Deep dark theme glass box color */
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 650px; /* Adjust width dimension size to match your theme specification specs */
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8);
+  padding: 24px;
+}

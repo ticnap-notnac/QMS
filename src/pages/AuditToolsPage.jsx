@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
-import './SettingsPage.css'
 import './PagesStyles.css'
 
 export default function AuditToolsPage({

@@ -6,7 +6,6 @@ import useSettingsPageLogic from '@/hooks/useSettingsPageLogic'
 import SettingsProfileForm from '@/components/SettingsProfileForm'
 import PasswordSection from '@/components/PasswordSection'
 import './SettingsPage.css'
-import './PagesStyles.css'
 
 export default function SettingsPage(props) {
   const {
