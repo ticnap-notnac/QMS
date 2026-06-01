@@ -138,15 +138,6 @@ function TaskReportsFolderList({ onOpenTaskFolder }) {
   )
 }
 
-// ---------------------------------------------------------------------------
-// Sub-view: Task Reports › NCR – 1×1 evidence thumbnail
-//
-// Columns evidence_url and investigation_evidence_url store storage paths
-// (e.g. "evidence/abc.jpg"), NOT full URLs.
-// We resolve them via supabase.storage.from('ncr-evidence').getPublicUrl().
-// If the value is already a full https:// URL it is used as-is.
-// ---------------------------------------------------------------------------
-
 const NCR_EVIDENCE_BUCKET = 'ncr-evidence'
 
 function resolveStorageUrl(path) {
@@ -263,9 +254,9 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
                 )}
               </td>
               <td>{ncr.department_id ?? '—'}</td>
-              <td>{ncr.product_type_name ?? ncr.product_type ?? '—'}</td>
+              <td>{ncr.product_type ?? '—'}</td>
               <td>{ncr.batch_number ?? '—'}</td>
-              <td>{ncr.location_name ?? ncr.complaint_location ?? '—'}</td>
+              <td>{ncr.complaint_location ?? '—'}</td>
               <td>
                 {ncr.occurrence_date
                   ? new Date(ncr.occurrence_date).toLocaleDateString()

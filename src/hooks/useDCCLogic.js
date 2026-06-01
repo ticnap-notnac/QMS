@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../utils/supabase'
-import { fetchAllReports } from '../services/ncrService'
 
 const RECENTLY_VIEWED_KEY = 'dcc_recently_viewed'
 const RECENTLY_VIEWED_LIMIT = 10
 
-// ---------------------------------------------------------------------------
-// helpers
-// ---------------------------------------------------------------------------
+// helpers---------------------------------------------------------------------------
 
 function loadPersistedRecentlyViewed() {
   try {
@@ -246,11 +243,26 @@ export function useDCCLogic() {
   async function loadClosedNCRs() {
     setLoadingNcr(true)
     try {
-      const data = await fetchAllReports()
-      const closedReports = (data || []).filter((r) => r.status === 'CLOSED')
-      console.debug('[useDCCLogic] loadClosedNCRs → rows returned:', closedReports.length)
-      setNcrReports(closedReports)
+      const { data, error } = await supabase
+        .from('ncr_reports')
+        .select(
+          'id, reference_no, reported_by, department_id, product_type, ' +
+          'batch_number, complaint_location, issue_type, description, ' +
+          'severity, status, occurrence_date, created_at, ' +
+          'resolution_details, resolution_time, verification_date, ' +
+          'verified_by, updated_at, assigned_to, assigned_at, assigned_by, ' +
+          'evidence_url, investigation_evidence_url',
+        )
+        .eq('status', 'CLOSED')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      console.debug('[useDCCLogic] loadClosedNCRs → rows returned:', data?.length ?? 0)
+      setNcrReports(data ?? [])
     } catch (err) {
+      // If rows are 0 but no error, suspect RLS: enable SELECT policy for
+      // authenticated role on ncr_reports and re-test.
       console.error('[useDCCLogic] loadClosedNCRs error:', err?.message ?? err, err)
       setNcrReports([])
     } finally {
