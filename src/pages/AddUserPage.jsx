@@ -3,14 +3,13 @@ import Navbar from '@/components/Navbar'
 import SettingsNavbar from '@/components/SettingsNavbar'
 import AddUserModal from '@/components/Modals/AddUserModal'
 import EditUserModal from '@/components/Modals/EditUserModal'
-import { createUser } from '@/services/userService'
+import { createUser, updateUser, updateUserStatus } from '@/services/userService'
 import { useLookup } from '@/context/LookupContext'
 import './PagesStyles.css'
 import SearchForm from '@/components/SearchForm'
 import AdminNavbar from '@/components/AdminNavbar'
 import useUserManager from '@/hooks/useUserManager'
 import { insertLog, logAction } from '@/services/logService'
-import { updateUser } from '@/services/userService'
 import { formatDisplayName } from '@/utils/userUtils'
 import { supabase } from '@/utils/supabase'
 import { Pencil, Trash2 } from 'lucide-react' // ✏️🗑️ Brought in our sleek icons to replace text layout blocks
@@ -29,7 +28,7 @@ export default function AddUserPage({
   setProfileTargetTab,
 }) {
   const [searchQuery, setSearchQuery] = useState('')
-  
+
   const { roles, departments, loading: lookupsLoading, reloadLookups } = useLookup()
   const [formMessage, setFormMessage] = useState('')
   const [formError, setFormError] = useState('')
@@ -40,7 +39,7 @@ export default function AddUserPage({
   const [editFormError, setEditFormError] = useState('')
   const [editFormMessage, setEditFormMessage] = useState('')
   const [editSubmitting, setEditSubmitting] = useState(false)
-  
+
   const [newUser, setNewUser] = useState({
     firstName: '',
     lastName: '',
@@ -213,6 +212,24 @@ export default function AddUserPage({
     }
   }
 
+  const handleToggleStatus = async (user) => {
+    const newStatus = user.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
+    const displayName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.user_name || user.email
+    const confirmed = window.confirm(
+      `Set ${displayName} to ${newStatus}?`
+    )
+    if (!confirmed) return
+
+    try {
+      setFormError('')
+      await updateUserStatus(user.id, newStatus)
+      setFormMessage(`${displayName} is now ${newStatus}.`)
+      await reloadUsers()
+    } catch (err) {
+      setFormError(`Failed to update status: ${err.message}`)
+    }
+  }
+
   const roleNameById = new Map((roles || []).map((role) => [String(role.id), role.role_name]))
   const departmentNameById = new Map((departments || []).map((department) => [String(department.id), department.department_name]))
 
@@ -322,6 +339,7 @@ export default function AddUserPage({
                             <th>Department</th>
                             <th>Contact</th>
                             <th>Employee No.</th>
+                            <th>Status</th>
                             <th>Actions</th>
                           </tr>
                         </thead>
@@ -342,20 +360,28 @@ export default function AddUserPage({
                                 <td>{user.contact_number || '-'}</td>
                                 <td>{user.employee_no || '-'}</td>
                                 <td>
+                                  <span className={`status-badge ${user.status === 'ACTIVE' ? 'status-active' :
+                                      user.status === 'DEACTIVATED' ? 'status-deactivated' :
+                                        'status-inactive'
+                                    }`}>
+                                    {user.status ?? 'ACTIVE'}
+                                  </span>
+                                </td>
+                                <td>
                                   {/* 🎯 Updated row actions container cell to render modular icon buttons cleanly */}
                                   <div className="admin-actions-cell">
-                                    <button 
-                                      type="button" 
-                                      className="btn-edit-user" 
+                                    <button
+                                      type="button"
+                                      className="btn-edit-user"
                                       onClick={() => openEditUserModal(user)}
                                       title="Edit User"
                                     >
                                       <Pencil size={14} />
                                     </button>
-                                    <button 
-                                      type="button" 
-                                      className="btn-delete-user" 
-                                      onClick={() => handleDeleteUser(user)} 
+                                    <button
+                                      type="button"
+                                      className="btn-delete-user"
+                                      onClick={() => handleDeleteUser(user)}
                                       disabled={isDeleting}
                                       title="Delete User"
                                     >
