@@ -19,6 +19,7 @@ import ISOStandardsPage from './pages/ISOStandardsPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AuditToolsPage from './pages/AuditToolsPage.jsx'
 import { LookupProvider } from './context/LookupContext'
+import { logAction } from '@/services/logService'
 
 function normalizeRoleValue(value) {
   return String(value || '').trim().toLowerCase()
@@ -29,7 +30,7 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  
+
   const [userRole, setUserRole] = useState('user')
   const [currentUserId, setCurrentUserId] = useState(null)
   const [userName, setUserName] = useState('Name of the User')
@@ -113,14 +114,14 @@ export default function App() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
-        
+
         if (user) {
           const { data } = await supabase
             .from('users')
             .select('id, first_name, last_name, user_name, role_id')
             .eq('auth_id', user.id)
             .maybeSingle()
-          
+
           if (data) {
             setCurrentUserId(data.id || null)
             await applyUserRoleData(data)
@@ -159,13 +160,13 @@ export default function App() {
       if (authData && authData.user) {
         setUser(authData.user)
         setError('')
-        
+
         const { data, error } = await supabase
           .from('users')
           .select('id, first_name, last_name, user_name, role_id')
           .eq('auth_id', authData.user.id)
           .maybeSingle()
-        
+
         if (data) {
           setCurrentUserId(data.id || null)
           await applyUserRoleData(data)
@@ -178,36 +179,47 @@ export default function App() {
   }
 
   const refreshUserData = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (user) {
-    const { data } = await supabase
-      .from('users')
-      .select('id, first_name, last_name, user_name, role_id')
-      .eq('auth_id', user.id)
-      .maybeSingle()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data } = await supabase
+        .from('users')
+        .select('id, first_name, last_name, user_name, role_id')
+        .eq('auth_id', user.id)
+        .maybeSingle()
 
-    if (data) {
-      setCurrentUserId(data.id || null)
-      await applyUserRoleData(data)
+      if (data) {
+        setCurrentUserId(data.id || null)
+        await applyUserRoleData(data)
+      }
     }
   }
-}
+
   const handleLogout = async () => {
     try {
+      // Log BEFORE signOut so getCurrentAuthId() still resolves
+      await logAction({
+        level: 'audit',
+        source: 'auth',
+        action: 'user_logout_success',
+        details: { event: 'logout_success' },
+      })
+
       await supabase.auth.signOut()
       setUser(null)
-      setUserRole('user')
-      setCurrentUserId(null)
-      setIsUserMenuOpen(false)
-      setIsNotificationsOpen(false)
-      setUnreadNotificationCount(0)
-      setActivePage('Dashboard')
-      setError('')
+      // ...rest of your state resets
     } catch (err) {
       setError(err.message)
       console.error('Logout error:', err)
+
+      await logAction({
+        level: 'warn',
+        source: 'auth',
+        action: 'user_logout_failed',
+        details: { event: 'logout_failed', message: err?.message || 'Logout failed' },
+      })
     }
   }
+
 
   const handlePageChange = (page) => {
     setActivePage(page)
@@ -222,7 +234,7 @@ export default function App() {
       onToggleMenu: () => setIsUserMenuOpen((open) => !open),
       onLogout: handleLogout,
       isNotificationsOpen,
-      onToggleNotifications: user ? () => setIsNotificationsOpen((open) => !open) : () => {},
+      onToggleNotifications: user ? () => setIsNotificationsOpen((open) => !open) : () => { },
       userRole,
       userName,
       userPosition,
@@ -273,17 +285,17 @@ export default function App() {
     return <DashboardPage {...sharedProps} />
   }
 
-    const handleNotificationSelect = (reportId) => {
-      setIsNotificationsOpen(false)
-      setActivePage('Reports')
+  const handleNotificationSelect = (reportId) => {
+    setIsNotificationsOpen(false)
+    setActivePage('Reports')
 
-      if (reportId) {
-        window.setTimeout(() => {
-          const target = document.getElementById(`report-card-${reportId}`)
-          target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }, 300)
-      }
+    if (reportId) {
+      window.setTimeout(() => {
+        const target = document.getElementById(`report-card-${reportId}`)
+        target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 300)
     }
+  }
 
   if (loading) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '18px' }}>Loading...</div>
@@ -292,25 +304,25 @@ export default function App() {
   return (
     <LookupProvider>
       <div className="page">
-      <div className="bg-orb bg-orb--one" aria-hidden="true"></div>
-      <div className="bg-orb bg-orb--two" aria-hidden="true"></div>
+        <div className="bg-orb bg-orb--one" aria-hidden="true"></div>
+        <div className="bg-orb bg-orb--two" aria-hidden="true"></div>
 
-      {!user ? (
-        <header className="brand">
-          <div className="logo">
-            <span className="logo-mark">Q</span>
-            <span className="logo-text">Flow</span>
-          </div>
-          <p className="brand-subtitle">QUALITY MANAGEMENT SYSTEM</p>
-        </header>
-      ) : null}
+        {!user ? (
+          <header className="brand">
+            <div className="logo">
+              <span className="logo-mark">Q</span>
+              <span className="logo-text">Flow</span>
+            </div>
+            <p className="brand-subtitle">QUALITY MANAGEMENT SYSTEM</p>
+          </header>
+        ) : null}
 
-      {user ? renderPage() : (
-        <Login
-          onSubmit={handleSubmit}
-          onLearnMore={() => setShowIntro(true)}
-        />
-      )}
+        {user ? renderPage() : (
+          <Login
+            onSubmit={handleSubmit}
+            onLearnMore={() => setShowIntro(true)}
+          />
+        )}
 
         <IntroModal isOpen={showIntro} onClose={() => setShowIntro(false)} />
         <NotificationsModal

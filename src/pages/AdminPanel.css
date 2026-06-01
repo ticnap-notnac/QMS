@@ -51,7 +51,7 @@
    ========================================================================== */
 .admin-users-table-wrap {
   width: 100%;
-  overflow-x: hidden; /* 🚫 Removes awkward horizontal scrollbar completely */
+  overflow-x: hidden; 
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
   background: rgba(8, 16, 36, 0.55);
@@ -60,12 +60,13 @@
 .admin-users-table { 
   width: 100%; 
   border-collapse: collapse; 
+  min-width: unset;
   table-layout: fixed; /* 🔒 Forces columns to stay inside parent container layout bounds */
 }
 
 .admin-users-table th, 
 .admin-users-table td { 
-  padding: 12px 10px; /* 🤏 Space-saving horizontal padding adjustments */
+  padding: 14px 8px; /* 🤏 Space-saving horizontal padding adjustments */
   text-align: left; 
   border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
   font-size: 13px; 
@@ -91,14 +92,32 @@
 }
 
 /* 📐 Strict Column Width Percentage Distributions */
-.admin-users-table th:nth-child(1), .admin-users-table td:nth-child(1) { width: 14%; } /* Name */
-.admin-users-table th:nth-child(2), .admin-users-table td:nth-child(2) { width: 14%; } /* Username */
-.admin-users-table th:nth-child(3), .admin-users-table td:nth-child(3) { width: 22%; } /* Email (Breathing room) */
-.admin-users-table th:nth-child(4), .admin-users-table td:nth-child(4) { width: 12%; } /* Role */
-.admin-users-table th:nth-child(5), .admin-users-table td:nth-child(5) { width: 15%; } /* Department */
-.admin-users-table th:nth-child(6), .admin-users-table td:nth-child(6) { width: 12%; } /* Contact */
-.admin-users-table th:nth-child(7), .admin-users-table td:nth-child(7) { width: 11%; } /* Employee No. */
-.admin-users-table th:nth-child(8), .admin-users-table td:nth-child(8) { width: 10%; } /* Actions */
+.admin-users-table th:nth-child(1),
+.admin-users-table td:nth-child(1) { width: 13%; } /* Name */
+
+.admin-users-table th:nth-child(2),
+.admin-users-table td:nth-child(2) { width: 10%; } /* Username */
+
+.admin-users-table th:nth-child(3),
+.admin-users-table td:nth-child(3) { width: 18%; } /* Email */
+
+.admin-users-table th:nth-child(4),
+.admin-users-table td:nth-child(4) { width: 8%;  } /* Role */
+
+.admin-users-table th:nth-child(5),
+.admin-users-table td:nth-child(5) { width: 14%; } /* Department */
+
+.admin-users-table th:nth-child(6),
+.admin-users-table td:nth-child(6) { width: 11%; } /* Contact */
+
+.admin-users-table th:nth-child(7),
+.admin-users-table td:nth-child(7) { width: 10%; } /* Employee No. */
+
+.admin-users-table th:nth-child(8),
+.admin-users-table td:nth-child(8) { width: 9%;  } /* Status */
+
+.admin-users-table th:nth-child(9),
+.admin-users-table td:nth-child(9) { width: 7%;  } /* Actions */
 
 
 /* ==========================================================================

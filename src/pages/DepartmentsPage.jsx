@@ -13,8 +13,6 @@ import {
   createDepartment as createDepartmentController,
   deleteDepartment as deleteDepartmentController,
 } from '@/services/departmentService'
-import { insertLog, logAction } from '@/services/logService'
-import { supabase } from '@/utils/supabase'
 
 export default function DepartmentsPage({
   activePage,

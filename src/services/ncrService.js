@@ -17,6 +17,11 @@ export async function fetchInvestigatedReports() {
   return await request('/ncr?scope=investigated', { headers })
 }
 
+export async function fetchAllReports() {
+  const headers = await buildAuthHeaders()
+  return await request('/ncr?scope=all', { headers })
+}
+
 export async function createReport(payload) {
   const headers = await buildAuthHeaders()
   return await request('/ncr', {

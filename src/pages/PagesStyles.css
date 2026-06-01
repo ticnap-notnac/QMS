@@ -264,7 +264,7 @@
 
 .admin-page-container-narrow {
   width: 95%;
-  max-width: 1050px;
+  max-width: 1200px;
   margin: 24px auto 0;
   padding: 0 16px;
   box-sizing: border-box;
@@ -1517,7 +1517,8 @@
 .admin-users-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 760px;
+  min-width: unset;
+  table-layout:fixed;
 }
 
 .admin-users-table th,
@@ -1526,31 +1527,6 @@
   text-align: left;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   font-size: 13px;
-}
-
-.admin-users-table th {
-  color: #94a3b8;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.admin-users-table td {
-  color: #e2e8f0;
-}
-
-.admin-users-table tbody tr:hover {
-  background: rgba(34, 211, 238, 0.05);
-}
-
-.admin-users-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.admin-users-table td:last-child {
-  width: 1%;
-  white-space: nowrap;
 }
 
 .btn-delete-user {

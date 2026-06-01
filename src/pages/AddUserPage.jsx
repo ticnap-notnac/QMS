@@ -212,24 +212,6 @@ export default function AddUserPage({
     }
   }
 
-  const handleToggleStatus = async (user) => {
-    const newStatus = user.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
-    const displayName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.user_name || user.email
-    const confirmed = window.confirm(
-      `Set ${displayName} to ${newStatus}?`
-    )
-    if (!confirmed) return
-
-    try {
-      setFormError('')
-      await updateUserStatus(user.id, newStatus)
-      setFormMessage(`${displayName} is now ${newStatus}.`)
-      await reloadUsers()
-    } catch (err) {
-      setFormError(`Failed to update status: ${err.message}`)
-    }
-  }
-
   const roleNameById = new Map((roles || []).map((role) => [String(role.id), role.role_name]))
   const departmentNameById = new Map((departments || []).map((department) => [String(department.id), department.department_name]))
 
