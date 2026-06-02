@@ -2675,7 +2675,10 @@
   box-sizing: border-box !important;
 }
 
-/* 5. Anchor your button selectors permanently at the base of the layout card */
+/* ==========================================================================
+   📦 APPLIED MODAL VIEWPORT MAX-HEIGHT & INNER FORM SCROLL ENGINE
+   ========================================================================== */
+
 .modal-footer-actions {
   flex-shrink: 0 !important;   /* ⚓ Keeps footer completely stationary and un-shrinkable */
   display: flex !important;
@@ -2683,7 +2686,10 @@
   align-items: center !important;
   gap: 12px !important;
   padding: 18px 28px !important;
-  background: #0d172a !important; /* Solid contrasting dark bottom shadow shading */
+  
+  /* 🎯 THE FIX: Changed from #0d172a to transparent to get rid of the dark strip! */
+  background: transparent !important; 
+  
   border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
   width: 100% !important;
   box-sizing: border-box !important;

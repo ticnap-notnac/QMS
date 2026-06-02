@@ -194,21 +194,20 @@ export default function FilterModal({
 
         </div>
 
-        {/* ── ⚓ FIXED FOOTER ACTIONS (Anchored cleanly at base bottom row) ── */}
         <div 
-          style={{
-            flexShrink: 0,
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '16px 24px',
-            background: '#0d172a',
-            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-            boxSizing: 'border-box',
-            width: '100%'
-          }}
-        >
+  style={{
+    flexShrink: 0,
+    display: 'flex',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '16px 24px',
+    background: 'transparent',  // 👈 This is causing the dark blue strip!
+    borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+    boxSizing: 'border-box',
+    width: '100%'
+  }}
+>
           <button 
             type="button" 
             className="btn-secondary-light" 
