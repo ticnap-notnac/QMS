@@ -35,16 +35,7 @@ export default function ISOStandardsPage({
   supabaseAnonKey,
   currentUserId,
 }) {
-  const supabaseClient = useMemo(() => {
-    const resolvedUrl = stripQuotes(supabaseUrl || import.meta.env.VITE_SUPABASE_URL || '')
-    const resolvedKey = stripQuotes(
-      supabaseAnonKey || import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
-    )
-    if (resolvedUrl && resolvedKey) {
-      return createClient(resolvedUrl, resolvedKey)
-    }
-    return sharedSupabase
-  }, [supabaseAnonKey, supabaseUrl])
+  const supabaseClient = sharedSupabase
   const [toast, setToast] = useState(null)
   const [activeSection, setActiveSection] = useState('Add Standard')
   const [clauseMode, setClauseMode] = useState('single')
