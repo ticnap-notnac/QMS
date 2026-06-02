@@ -204,8 +204,8 @@ export default function App() {
       setUnreadNotificationCount(0)
       setIsNotificationsOpen(false)
 
-      // Fire logging without awaiting to unblock the main thread
-      logAction({
+      // Wait for logging to finish before destroying the session
+      await logAction({
         level: 'audit',
         source: 'auth',
         action: 'user_logout_success',
