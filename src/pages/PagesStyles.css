@@ -2468,3 +2468,286 @@
   z-index: 100; /* Keeps it layered safely underneath modal overlays */
 }
 
+/* ==========================================================================
+   🎯 TASK REPORTS: COMPLETE TABLE COMPRESSION & CONTAINER BOX BOUNDING
+   ========================================================================== */
+
+/* 1. Establish strict maximum boundary limits on the parent glass card */
+.glass-card-dcc {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important; /* Retains your symmetric rounded corners perfectly */
+  padding-right: 32px !important; /* Matches left padding for pristine symmetry */
+}
+
+/* 2. Target the table container and force it to snap to 100% width without overflow */
+.dcc-scrollable-table-box {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important; /* 🚀 Prevents horizontal scrollbars entirely */
+  overflow-y: hidden !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  margin-top: 15px !important;
+}
+
+/* 3. Tell the layout engine to divide column fractions strictly inside the card width */
+.dcc-scrollable-table-box table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important; /* 🚀 Crucial: Locks column structural limits inside 100% width */
+  border-collapse: collapse !important;
+}
+
+/* 4. Clip overlapping text with clean ellipses (...) exactly like your layout image */
+.dcc-scrollable-table-box th,
+.dcc-scrollable-table-box td {
+  padding: 12px 6px !important; /* Tightens padding to maximize space across all 12 columns */
+  font-size: 0.78rem !important; /* Slightly sizes down text to prevent row wrapping */
+  text-align: left !important;
+  vertical-align: middle !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important; /* ✂️ Appends '...' automatically to long clipping strings */
+  white-space: nowrap !important;
+}
+
+/* ==========================================================================
+   📐 OPTIMAL INDIVIDUAL COLUMN WIDTH RATIOS (TOTAL: 100%)
+   ========================================================================== */
+.dcc-scrollable-table-box th:nth-child(1), .dcc-scrollable-table-box td:nth-child(1) { width: 9% !important; }  /* Ref No */
+.dcc-scrollable-table-box th:nth-child(2), .dcc-scrollable-table-box td:nth-child(2) { width: 6% !important; }  /* Issue Type */
+.dcc-scrollable-table-box th:nth-child(3), .dcc-scrollable-table-box td:nth-child(3) { width: 11% !important; } /* Description */
+.dcc-scrollable-table-box th:nth-child(4), .dcc-scrollable-table-box td:nth-child(4) { width: 8% !important; }  /* Severity */
+.dcc-scrollable-table-box th:nth-child(5), .dcc-scrollable-table-box td:nth-child(5) { width: 6% !important; }  /* Department */
+.dcc-scrollable-table-box th:nth-child(6), .dcc-scrollable-table-box td:nth-child(6) { width: 8% !important; }  /* Product Type */
+.dcc-scrollable-table-box th:nth-child(7), .dcc-scrollable-table-box td:nth-child(7) { width: 7% !important; }  /* Batch No */
+.dcc-scrollable-table-box th:nth-child(8), .dcc-scrollable-table-box td:nth-child(8) { width: 7% !important; }  /* Location */
+.dcc-scrollable-table-box th:nth-child(9), .dcc-scrollable-table-box td:nth-child(9) { width: 8% !important; }  /* Occurrence Date */
+.dcc-scrollable-table-box th:nth-child(10), .dcc-scrollable-table-box td:nth-child(10) { width: 8% !important; } /* Created At */
+.dcc-scrollable-table-box th:nth-child(11), .dcc-scrollable-table-box td:nth-child(11) { width: 6% !important; } /* Evidence */
+.dcc-scrollable-table-box th:nth-child(12), .dcc-scrollable-table-box td:nth-child(12) { width: 8% !important; } /* Inv. Evidence */
+.dcc-scrollable-table-box th:nth-child(13), .dcc-scrollable-table-box td:nth-child(13) { width: 8% !important; } /* Status */
+
+.dcc-scrollable-table-box::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.45) !important;
+}
+
+/* ==========================================================================
+   📦 PREMIUM OVERFLOW-SAFE CREATION MODAL FIX
+   ========================================================================== */
+
+/* 1. Ensure the modal container blocks leaking content and centers itself */
+.modal-overlay {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(4px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
+}
+
+/* 2. Fix the main card container shape and lock down layout boundaries */
+.modal-card {
+  width: 100% !important;
+  max-width: 680px !important; /* Premium wide view layout */
+  max-height: 85vh !important;  /* 🚀 Prevents modal from shooting past viewport edges */
+  background: #111e38 !important; /* Matches your rich dark blue dashboard theme */
+  border-radius: 16px !important;
+  display: flex !important;
+  flex-direction: column !important; /* Separates form container from static buttons */
+  overflow: hidden !important;    /* 🚀 Master Lock: Eliminates the ugly bleeding white scroll track */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 3. Confine scrolling EXCLUSIVELY to the inner form field zone */
+.modal-form-content {
+  flex: 1 !important;
+  overflow-y: auto !important; /* 🚀 Gives you a clean, isolated scrolling canvas */
+  padding: 32px !important;
+  box-sizing: border-box !important;
+}
+
+/* 📐 OPTIONAL GRID: Mix simple short fields side-by-side to save huge vertical space */
+.modal-form-grid-2 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 20px !important;
+  margin-bottom: 20px !important;
+}
+
+/* 4. Fix Action Buttons to stay anchored permanently at the bottom footer */
+.modal-footer-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 20px 32px !important;
+  background: #0d172a !important; /* Slightly darker shading to frame the buttons dynamically */
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* ==========================================================================
+   🧼 CLEAN MINIMALIST INTERNAL SCROLLBAR FOR THE FORM DATA TRACK
+   ========================================================================== */
+.modal-form-content::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.modal-form-content::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.modal-form-content::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.2) !important; /* Theme cyan color tracker */
+  border-radius: 10px !important;
+}
+
+.modal-form-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.4) !important;
+}
+
+/* ==========================================================================
+   📦 APPLIED MODAL VIEWPORT MAX-HEIGHT & INNER FORM SCROLL ENGINE
+   ========================================================================== */
+
+/* 1. Force the overlay layer into a strict fixed viewport bounding box context */
+.modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(4px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
+}
+
+/* 2. Hard-clamp your main card element to fit cleanly inside your screen window bounds */
+.modal-card {
+  width: 100% !important;
+  max-width: 580px !important;
+  height: 85vh !important;       /* 🚀 Hard cap: Keeps the form tightly bounded inside screen margins */
+  max-height: 85vh !important;
+  background: #111e38 !important; /* Rich dark QMS dashboard panel background tone */
+  border-radius: 14px !important;
+  display: flex !important;
+  flex-direction: column !important; /* 📐 Structured ordering layout stack: Header -> Content -> Footer */
+  overflow: hidden !important;       /* 🚀 Hides component leakage so corner curves clip beautifully */
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+  box-sizing: border-box !important;
+}
+
+/* 3. Freeze the title header elements block at the top */
+.modal-header {
+  flex-shrink: 0 !important; /* 🛑 Prevents header size warping or sliding away */
+  padding: 24px 28px 12px 28px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+}
+
+.modal-header h3 {
+  margin: 0 !important;
+  font-size: 1.25rem !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+/* 4. TRANSFER THE SCROLLBAR RESPONSIBILITY EXCLUSIVELY TO THE INTERNAL CONTENT BODY */
+.modal-form-content {
+  flex: 1 !important;          /* 🚀 Instructs content container to occupy all remaining middle area dynamically */
+  overflow-y: auto !important; /* 🚀 Enables clean internal vertical scrollbars inside your input box fields */
+  padding: 12px 28px 24px 28px !important;
+  box-sizing: border-box !important;
+}
+
+/* 5. Anchor your button selectors permanently at the base of the layout card */
+.modal-footer-actions {
+  flex-shrink: 0 !important;   /* ⚓ Keeps footer completely stationary and un-shrinkable */
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 18px 28px !important;
+  background: #0d172a !important; /* Solid contrasting dark bottom shadow shading */
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* ==========================================================================
+   🧼 CLEAN INTERNAL TRACK MINIMALIST SCROLLBAR DESIGN
+   ========================================================================== */
+.modal-form-content::-webkit-scrollbar {
+  width: 6px !important;
+  display: block !important;
+}
+
+.modal-form-content::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.modal-form-content::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.25) !important; /* Premium cyan theme accent highlight track */
+  border-radius: 10px !important;
+}
+
+.modal-form-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.45) !important;
+}
+/* ==========================================================================
+   🟢🟡🔴 DYNAMIC STATUS BADGE STYLING (ACTIVE, INACTIVE, DEACTIVATED)
+   ========================================================================== */
+
+.status-badge {
+  display: inline-flex !important;     /* 🚀 Switches to inline layout so the container naturally wraps the text length */
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  height: 22px !important;             /* Crisp vertical dimension height mapping */
+  
+  /* 🎯 THE SECRET SAET: Replaces fixed widths with comfortable left/right cushioning gaps */
+  padding: 0 12px !important;          
+  min-width: unset !important;         /* ✂️ Removes the rigid fixed box width limit constraints */
+  max-width: unset !important;         /* ✂️ Removes the rigid fixed box width limit constraints */
+  
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+}
+
+.status-active {
+  background: rgba(16, 185, 129, 0.14) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.status-inactive {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.status-deactivated {
+  background: rgba(245, 158, 11, 0.14) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}

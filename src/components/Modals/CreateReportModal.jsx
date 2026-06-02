@@ -4,10 +4,10 @@
  * feat(reports): extract create-report modal into standalone component
  *
  * Owns:
- *   - All form field rendering (product type, batch, location, severity, department, description)
- *   - Evidence file upload + preview
- *   - Submit / cancel wiring via props
- *   - No internal state — fully controlled by useReportsLogic via createFormState
+ * - All form field rendering (product type, batch, location, severity, department, description)
+ * - Evidence file upload + preview
+ * - Submit / cancel wiring via props
+ * - No internal state — fully controlled by useReportsLogic via createFormState
  */
 
 import { useRef } from 'react'
@@ -16,44 +16,6 @@ import SearchableDropdown from '@/components/SearchableDropdown'
 
 const SEVERITY_OPTIONS = ['low', 'medium', 'high']
 
-/**
- * @param {{
- *   isOpen: boolean,
- *   onClose: () => void,
- *   onSubmit: (e: Event) => void,
- *   error: string | null,
- *   isLoading: boolean,
- *
- *   // form fields
- *   createFormState: {
- *     productType: string, setProductType: fn,
- *     productTypeId: string, setProductTypeId: fn,
- *     batchNumber: string, setBatchNumber: fn,
- *     location: string, setLocation: fn,
- *     locationId: string, setLocationId: fn,
- *     severity: string, setSeverity: fn,
- *     department: string, setDepartment: fn,
- *     description: string, setDescription: fn,
- *   },
- *
- *   // lookup options
- *   locationOptions: Array<{ id, label }>,
- *   productTypeOptions: Array<{ id, label }>,
- *   departments: Array<{ id, department_name }>,
- *   locationsLoading: boolean,
- *   productTypesLoading: boolean,
- *   departmentsLoading: boolean,
- *
- *   // evidence
- *   fileInputRef: React.RefObject,
- *   evidenceFile: File | null,
- *   setEvidenceFile: fn,
- *   evidencePreview: string | null,
- *   setEvidencePreview: fn,
- *   evidenceError: string | null,
- *   setEvidenceError: fn,
- * }} props
- */
 function CreateReportModal({
   isOpen,
   onClose,
@@ -122,155 +84,211 @@ function CreateReportModal({
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-card modal-card--tall">
-        {/* ── Header ─────────────────────────────────────────────────── */}
-        <button type="button" onClick={onClose} className="modal-close-button">
+    <div className="modal-overlay" onClick={onClose}>
+      {/* 📦 Container Box Card context wrapper */}
+      <div 
+        className="modal-card" 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}
+      >
+        {/* ── HEADER (Fixed at top) ── */}
+        <button type="button" onClick={onClose} className="modal-close-button" style={{ zIndex: 10 }}>
           <CloseIcon size={18} />
         </button>
-        <div className="modal-header-row">
+        <div className="modal-header-row" style={{ flexShrink: 0, marginBottom: '16px' }}>
           <h3 className="reports-update-title">Submit NCR Report</h3>
         </div>
 
-        {error && <div className="user-info-error" style={{ marginBottom: '12px' }}>{error}</div>}
+        {error && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0 }}>{error}</div>}
 
-        {/* ── Form ───────────────────────────────────────────────────── */}
-        <form className="modal-form reports-form-compact" onSubmit={onSubmit}>
+        {/* 📜 SCROLLABLE CANVAS BODY TRACK ── */}
+        <div 
+          className="modal-form-content" 
+          style={{ 
+            flex: 1, 
+            overflowY: 'auto', 
+            paddingRight: '4px' 
+          }}
+        >
+          <form className="modal-form reports-form-compact" onSubmit={onSubmit} style={{ gap: '16px' }}>
 
-          {/* Product Type */}
-          <SearchableDropdown
-            label="Product Type"
-            value={productType}
-            onValueChange={setProductType}
-            options={productTypeOptions}
-            loading={productTypesLoading}
-            placeholder="Search or enter product type…"
-            onSelectOption={(opt) => { setProductType(opt.label); setProductTypeId(String(opt.id)) }}
-          />
-
-          {/* Batch Number */}
-          <div>
-            <label className="label-field">Batch Number</label>
-            <input
-              type="text"
-              value={batchNumber}
-              onChange={(e) => setBatchNumber(e.target.value)}
-              className="input-field"
-              placeholder="e.g. BATCH-2024-001"
-            />
-          </div>
-
-          {/* Location */}
-          <SearchableDropdown
-            label="Location"
-            value={location}
-            onValueChange={setLocation}
-            options={locationOptions}
-            loading={locationsLoading}
-            placeholder="Search or enter location…"
-            onSelectOption={(opt) => { setLocation(opt.label); setLocationId(String(opt.id)) }}
-          />
-
-          {/* Severity */}
-          <div>
-            <label className="label-field">Severity</label>
-            <select
-              value={severity}
-              onChange={(e) => setSeverity(e.target.value)}
-              className="input-field"
-            >
-              <option value="">Select severity…</option>
-              {SEVERITY_OPTIONS.map((s) => (
-                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Department */}
-          <div>
-            <label className="label-field">Department</label>
-            <select
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="input-field"
-              disabled={departmentsLoading}
-            >
-              <option value="">{departmentsLoading ? 'Loading…' : 'Select department…'}</option>
-              {departments.map((d) => (
-                <option key={d.id} value={String(d.id)}>{d.department_name}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="label-field">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="input-field textarea-medium"
-              placeholder="Describe the non-conformance…"
-              required
-            />
-          </div>
-
-          {/* Evidence upload */}
-          <div>
-            <label className="label-field">Evidence (optional)</label>
-            {evidencePreview ? (
-              <div style={{ position: 'relative', marginTop: '8px' }}>
-                <img
-                  src={evidencePreview}
-                  alt="Evidence preview"
-                  style={{ width: '100%', maxHeight: '180px', objectFit: 'cover', borderRadius: '10px' }}
-                />
-                <button
-                  type="button"
-                  onClick={clearEvidence}
-                  style={{
-                    position: 'absolute', top: '8px', right: '8px',
-                    background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%',
-                    width: '28px', height: '28px', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-                  }}
+            {/* 📸 WIREFRAME ROW 1: Evidence / Image Upload Box at the Top */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label className="label-field" style={{ margin: 0 }}>Evidence:</label>
+              {evidencePreview ? (
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <img
+                    src={evidencePreview}
+                    alt="Evidence preview"
+                    style={{ width: '100%', height: '130px', objectFit: 'cover', borderRadius: '8px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={clearEvidence}
+                    style={{
+                      position: 'absolute', top: '8px', right: '8px',
+                      background: 'rgba(15, 23, 42, 0.8)', border: 'none', borderRadius: '50%',
+                      width: '24px', height: '24px', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                    }}
+                  >
+                    <CloseIcon size={12} />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className="upload-box"
+                  style={{ cursor: 'pointer', padding: '14px', margin: 0 }}
+                  onClick={() => fileInputRef.current?.click()}
                 >
-                  <CloseIcon size={14} />
-                </button>
-              </div>
-            ) : (
-              <div
-                className="evidence-box"
-                style={{ cursor: 'pointer' }}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <UploadIcon size={22} style={{ color: 'var(--muted)', marginBottom: '6px' }} />
-                <p style={{ color: 'var(--muted)', textAlign: 'center', fontSize: '13px' }}>
-                  Click to upload image evidence
-                </p>
-              </div>
-            )}
-            {evidenceError && (
-              <p style={{ color: '#fca5a5', fontSize: '12px', marginTop: '6px' }}>{evidenceError}</p>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={handleFileChange}
-            />
-          </div>
+                  <UploadIcon size={18} style={{ color: 'var(--muted)' }} />
+                  <p style={{ color: 'var(--muted)', margin: 0, fontSize: '13px' }}>
+                    Upload an Image
+                  </p>
+                </div>
+              )}
+              {evidenceError && (
+                <p style={{ color: '#fca5a5', fontSize: '12px', margin: '4px 0 0 0' }}>{evidenceError}</p>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
+            </div>
 
-          {/* Actions */}
-          <div className="reports-update-submit-row">
-            <button type="button" className="btn-edit-user" onClick={onClose} disabled={isLoading}>
-              Cancel
-            </button>
-            <button type="submit" className="btn-gradient-primary reports-update-button" disabled={isLoading}>
-              {isLoading ? 'Submitting…' : 'Submit Report'}
-            </button>
-          </div>
-        </form>
+            {/* 📐 WIREFRAME ROW 2: 3-Column Compact Selection Rows (Product, Batch, Location) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+              {/* Product Type Search Dropdown */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <SearchableDropdown
+                  label="Product Type:"
+                  value={productType}
+                  onValueChange={setProductType}
+                  options={productTypeOptions}
+                  loading={productTypesLoading}
+                  placeholder="Search product…"
+                  onSelectOption={(opt) => { setProductType(opt.label); setProductTypeId(String(opt.id)) }}
+                />
+              </div>
+
+              {/* Batch Number Field */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label className="label-field">Batch Number:</label>
+                <input
+                  type="text"
+                  value={batchNumber}
+                  onChange={(e) => setBatchNumber(e.target.value)}
+                  className="input-field"
+                  placeholder="e.g. BATCH-2026-001"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              {/* Location Search Dropdown */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <SearchableDropdown
+                  label="Location:"
+                  value={location}
+                  onValueChange={setLocation}
+                  options={locationOptions}
+                  loading={locationsLoading}
+                  placeholder="Search location…"
+                  onSelectOption={(opt) => { setLocation(opt.label); setLocationId(String(opt.id)) }}
+                />
+              </div>
+            </div>
+
+            {/* 📐 WIREFRAME ROW 3: 2-Column Balanced Selection Rows (Severity, Department) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              {/* Severity Dropdown Select */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label className="label-field">Severity Level:</label>
+                <select
+                  value={severity}
+                  onChange={(e) => setSeverity(e.target.value)}
+                  className="input-field"
+                  style={{ width: '100%', height: '38px', background: 'rgba(8, 18, 35, 0.5)' }}
+                >
+                  <option value="">Select Severity…</option>
+                  {SEVERITY_OPTIONS.map((s) => (
+                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Department Dropdown Select */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label className="label-field">Department:</label>
+                <select
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  className="input-field"
+                  disabled={departmentsLoading}
+                  style={{ width: '100%', height: '38px', background: 'rgba(8, 18, 35, 0.5)' }}
+                >
+                  <option value="">{departmentsLoading ? 'Loading…' : 'Select Department…'}</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={String(d.id)}>{d.department_name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* 📝 WIREFRAME ROW 4: Full-Width Description Entry Block */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label className="label-field" style={{ margin: 0 }}>Description:</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="input-field"
+                placeholder="Describe the non-conformance details…"
+                required
+                style={{ width: '100%', height: '75px', padding: '10px', resize: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {/* Hidden button to hook up standard HTML form enter key submit wiring handling */}
+            <button type="submit" style={{ display: 'none' }} disabled={isLoading} />
+          </form>
+        </div>
+
+        {/* ── FOOTER ACTIONS ACTIONS (Fixed at absolute bottom base) ── */}
+        <div 
+          className="modal-footer-actions"
+          style={{
+            flexShrink: 0,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '14px 0 0 0',
+            background: 'transparent',
+            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            marginTop: '12px'
+          }}
+        >
+          <button type="button" className="btn-secondary-light" onClick={onClose} disabled={isLoading} style={{ margin: 0, padding: '8px 20px', fontSize: '13px' }}>
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            className="btn-gradient-primary" 
+            disabled={isLoading}
+            onClick={onSubmit}
+            style={{ margin: 0, padding: '8px 24px', fontSize: '13px', height: 'auto', boxShadow: 'none' }}
+          >
+            {isLoading ? 'Submitting…' : 'Submit Report'}
+          </button>
+        </div>
+
       </div>
     </div>
   )

@@ -216,7 +216,9 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
 
   return (
     <div className="glass-card-dcc">
-      <table className="iso-table" style={{ width: '100%' }}>
+      {/* 🚀 THE FIXED WRAPPER: Contains the table width tightly inside the card margins */}
+      <div className="dcc-scrollable-table-box">
+        <table className="iso-table" style={{ width: '100%' }}>
         <thead>
           <tr>
             <th>Ref No.</th>
@@ -237,15 +239,12 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
         <tbody>
           {ncrReports.map((ncr) => (
             <tr key={ncr.id}>
-              <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>
+              <td style={{ fontWeight: 600 }}>
                 {ncr.reference_no ?? '—'}
               </td>
               <td>{ncr.issue_type ?? '—'}</td>
               <td>
-                <div
-                  className="clause-description"
-                  style={{ maxWidth: 260, whiteSpace: 'normal' }}
-                >
+                <div className="clause-description">
                   {ncr.description ?? <span className="muted">No description</span>}
                 </div>
               </td>
@@ -290,6 +289,7 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }
