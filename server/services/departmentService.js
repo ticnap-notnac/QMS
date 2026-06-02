@@ -28,7 +28,7 @@ export async function createDepartment({ departmentName, actorAuthId }) {
   await _auditSafe({
     action: 'department_create',
     actorAuthId,
-    details: { id: data?.[0]?.id ?? null, department_name: data?.[0]?.department_name ?? departmentName },
+    details: _buildAuditDetails(data?.[0], null, departmentName),
   })
 
   return { data: data ?? [], error: null, validationError: null }
@@ -53,7 +53,7 @@ export async function deleteDepartment({ id, actorAuthId }) {
   await _auditSafe({
     action: 'department_delete',
     actorAuthId,
-    details: { id: existing?.id ?? id, department_name: existing?.department_name ?? null },
+    details: _buildAuditDetails(existing, id, null),
   })
 
   return { success: true, error: null }
@@ -71,5 +71,12 @@ async function _auditSafe({ action, actorAuthId, details }) {
     })
   } catch (err) {
     console.warn(`[DepartmentService] Failed to record ${action} audit:`, err?.message ?? err)
+  }
+}
+
+function _buildAuditDetails(record, fallbackId, fallbackName) {
+  return {
+    id: record?.id ?? fallbackId ?? null,
+    department_name: record?.department_name ?? fallbackName ?? null,
   }
 }
