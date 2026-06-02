@@ -3,6 +3,17 @@ import useNCRSubmitModal from '../../hooks/useNCRSubmitModal'
 import { useAuth } from '../../hooks/useAuth'
 import { Upload as UploadIcon, X } from 'lucide-react'
 
+const NCR_ISSUE_TYPES = [
+  { value: 'quality_food_safety',           label: 'Quality / Food Safety Issue' },
+  { value: 'environment_health_safety',     label: 'Environment, Health & Safety Issue' },
+  { value: 'security_issue',                label: 'Security Issue' },
+  { value: 'internal_audit',               label: 'Internal Audit' },
+  { value: 'customer_complaint',           label: 'Customer Complaint' },
+  { value: 'government_agency_audit',      label: 'Government Agency Audit Non-Conformance' },
+  { value: 'customer_audit_nonconformance', label: 'Customer Audit Non-Conformance' },
+  { value: 'vendor_nonconformance',        label: 'Vendor Non-Conformance' },
+]
+
 export default function NCRSubmitModal({ isOpen, onClose, onSuccess }) {
   const { user } = useAuth()
   const {
@@ -252,6 +263,22 @@ export default function NCRSubmitModal({ isOpen, onClose, onSuccess }) {
               </select>
               {errors.departmentId && <div style={{ color: '#f87171', fontSize: '0.75rem', marginTop: '2px' }}>{errors.departmentId}</div>}
             </div>
+          </div>
+
+          {/* 📐 WIREFRAME POSITION 3B: Full-Width Issue Category */}
+          <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
+            <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Issue Category:</label>
+            <select
+              value={form.issueType}
+              onChange={(e) => setField('issueType', e.target.value)}
+              style={{ width: '100%', boxSizing: 'border-box' }}
+            >
+              <option value="">Select issue category...</option>
+              {NCR_ISSUE_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+            {errors.issueType && <div style={{ color: '#f87171', fontSize: '0.75rem', marginTop: '2px' }}>{errors.issueType}</div>}
           </div>
 
           {/* 📝 WIREFRAME POSITION 4: Wide Description Textarea Input block */}

@@ -11,6 +11,7 @@ export default function useNCRSubmitModal({ onSuccess }) {
     location: '',
     locationId: '',
     severity: '',
+    issueType: '',
     description: '',
     file: null,
     previewUrl: null,
@@ -60,6 +61,7 @@ export default function useNCRSubmitModal({ onSuccess }) {
     const e = {}
     if (!form.departmentId) e.departmentId = 'Department is required'
     if (!form.severity) e.severity = 'Severity is required'
+    if (!form.issueType) e.issueType = 'Issue category is required'
     if (!form.description || form.description.length < 20)
       e.description = 'Description must be at least 20 characters'
     if (form.file) {
@@ -116,6 +118,7 @@ export default function useNCRSubmitModal({ onSuccess }) {
       fd.append('location', form.location)
       fd.append('location_id', form.locationId)
       fd.append('severity', form.severity)
+      fd.append('issue_type', form.issueType || 'ncr')
       fd.append('description', form.description)
       if (form.file) {
         // add both field names to be compatible with different server expectations
@@ -133,6 +136,7 @@ export default function useNCRSubmitModal({ onSuccess }) {
           location: '',
           locationId: '',
           severity: '',
+          issueType: '',
           description: '',
           file: null,
           previewUrl: null,

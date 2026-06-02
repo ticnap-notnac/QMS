@@ -82,7 +82,17 @@ export default function ReportDetailModal({
                                     background: 'rgba(34,197,94,0.15)', color: '#86efac',
                                     border: '1px solid rgba(34,197,94,0.25)'
                                 }}>
-                                    from repository
+                                    CBR match
+                                </span>
+                            )}
+
+                            {suggestion?.matchedFeatures?.length > 0 && !suggestion?.cached && (
+                                <span style={{
+                                    fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                                    background: 'rgba(99,102,241,0.12)', color: '#c4b5fd',
+                                    border: '1px solid rgba(99,102,241,0.25)'
+                                }}>
+                                    ✓ {suggestion.matchedFeatures.join(' · ')}
                                 </span>
                             )}
 

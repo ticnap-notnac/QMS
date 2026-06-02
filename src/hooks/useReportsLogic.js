@@ -156,10 +156,14 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     try {
       const payload = new FormData()
       payload.append('investigation_details', updateFormState.form.investigationDetails)
+      payload.append('corrective_action', updateFormState.form.correctiveAction)
       payload.append('resolution_details', updateFormState.form.resolutionDetails)
       payload.append('resolution_time_value', updateFormState.form.resolutionTimeValue)
       payload.append('resolution_time_unit', updateFormState.form.resolutionTimeUnit)
       payload.append('verification_date', updateFormState.form.verificationDate)
+      if (updateFormState.form.issueType) {
+        payload.append('issue_type', updateFormState.form.issueType)
+      }
 
       if (updateFormState.form.file) {
         payload.append('investigation_evidence', updateFormState.form.file)
@@ -261,6 +265,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
         fd.append('severity', formState.createFormState.severity)
         fd.append('department_id', formState.createFormState.department)
         fd.append('description', formState.createFormState.description)
+        fd.append('issue_type', formState.createFormState.issueType || 'ncr')
         fd.append('car_filed', 'false')
         fd.append('qddr_filed', 'false')
         fd.append('evidence', formState.evidenceState.evidenceFileMain)
@@ -273,6 +278,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
           severity: formState.createFormState.severity,
           department_id: formState.createFormState.department,
           description: formState.createFormState.description,
+          issue_type: formState.createFormState.issueType || 'ncr',
           car_filed: false,
           qddr_filed: false,
           evidence_url: null,

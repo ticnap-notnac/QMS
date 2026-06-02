@@ -16,6 +16,17 @@ import SearchableDropdown from '@/components/Forms/SearchableDropdown'
 
 const SEVERITY_OPTIONS = ['low', 'medium', 'high']
 
+const NCR_ISSUE_TYPES = [
+  { value: 'quality_food_safety',          label: 'Quality / Food Safety Issue' },
+  { value: 'environment_health_safety',    label: 'Environment, Health & Safety Issue' },
+  { value: 'security_issue',               label: 'Security Issue' },
+  { value: 'internal_audit',              label: 'Internal Audit' },
+  { value: 'customer_complaint',          label: 'Customer Complaint' },
+  { value: 'government_agency_audit',     label: 'Government Agency Audit Non-Conformance' },
+  { value: 'customer_audit_nonconformance', label: 'Customer Audit Non-Conformance' },
+  { value: 'vendor_nonconformance',       label: 'Vendor Non-Conformance' },
+]
+
 function CreateReportModal({
   isOpen,
   onClose,
@@ -48,6 +59,7 @@ function CreateReportModal({
     severity, setSeverity,
     department, setDepartment,
     description, setDescription,
+    issueType, setIssueType,
   } = createFormState
 
   const handleFileChange = (e) => {
@@ -206,8 +218,8 @@ function CreateReportModal({
               </div>
             </div>
 
-            {/* 📐 WIREFRAME ROW 3: 2-Column Balanced Selection Rows (Severity, Department) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            {/* 📐 WIREFRAME ROW 3: 3-Column — Severity, Department, Issue Category */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
               {/* Severity Dropdown Select */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <label className="label-field">Severity Level:</label>
@@ -237,6 +249,22 @@ function CreateReportModal({
                   <option value="">{departmentsLoading ? 'Loading…' : 'Select Department…'}</option>
                   {departments.map((d) => (
                     <option key={d.id} value={String(d.id)}>{d.department_name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Issue Category Dropdown */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label className="label-field">Issue Category:</label>
+                <select
+                  value={issueType}
+                  onChange={(e) => setIssueType(e.target.value)}
+                  className="input-field"
+                  style={{ width: '100%', height: '38px', background: 'rgba(8, 18, 35, 0.5)' }}
+                >
+                  <option value="">Select Category…</option>
+                  {NCR_ISSUE_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
                 </select>
               </div>

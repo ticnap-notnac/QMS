@@ -2,6 +2,7 @@
 // feat(ncr): extract NCR business logic into ncrReportsService
 
 import { supabase, hasServiceRole } from '../lib/supabase.js'
+import { extractKeywordsAsString } from '../utils/cbr.js'
 import { writeAudit } from '../lib/audit.js'
 
 // ─── Pure Utilities ──────────────────────────────────────────────────────────
@@ -308,6 +309,7 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     severity,
     department_id,
     description,
+    issue_type,
     evidence_url = null,
     occurrence_date = new Date().toISOString().slice(0, 10),
   } = body
@@ -349,7 +351,7 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     reference_no: referenceNo,
     reported_by: reporter.id,
     status: 'OPEN',
-    issue_type: 'ncr',
+    issue_type: issue_type || 'ncr',
     occurrence_date: occurrence_date || new Date().toISOString().slice(0, 10),
     product_type: resolvedProductTypeName,
     product_type_id: resolvedProductTypeId,
@@ -381,6 +383,7 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
     severity,
     department_id,
     description,
+    issue_type,
     occurrence_date = new Date().toISOString().slice(0, 10),
   } = body
 
@@ -451,7 +454,7 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
     reference_no: referenceNo,
     reported_by: reporter.id,
     status: 'OPEN',
-    issue_type: 'ncr',
+    issue_type: issue_type || 'ncr',
     occurrence_date: occurrence_date || new Date().toISOString().slice(0, 10),
     product_type: resolvedProductTypeName,
     product_type_id: resolvedProductTypeId,
@@ -524,8 +527,9 @@ export async function updateNcrReport({ id, body }) {
  */
 export async function updateNcrInvestigation({ id, body, file }) {
   const {
-    investigation_details, resolution_details,
+    investigation_details, resolution_details, corrective_action,
     resolution_time_value, resolution_time_unit, verification_date,
+    issue_type,
   } = body
 
   const { data: existing, error: existingError } = await supabase
@@ -554,6 +558,7 @@ export async function updateNcrInvestigation({ id, body, file }) {
 
   const updates = {
     investigation_details: normalizeText(investigation_details) || null,
+    corrective_action: normalizeText(corrective_action) || null,
     resolution_details: normalizeText(resolution_details) || null,
     resolution_time: parseResolutionTime(resolution_time_value, resolution_time_unit),
     verification_date: normalizeVerificationDate(verification_date),
@@ -563,6 +568,8 @@ export async function updateNcrInvestigation({ id, body, file }) {
     assigned_by: null,
     updated_at: new Date().toISOString(),
   }
+
+  if (issue_type) updates.issue_type = issue_type
 
   const { data, error } = await supabase
     .from('ncr_reports').update(updates).eq('id', id).select('*').maybeSingle()
@@ -747,14 +754,18 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
         .eq('preventive_action', report.resolution_details)
         .maybeSingle()
       
-      if (!existingCase && !existingCaseError && report.investigation_details) {
+      if (!existingCase && !existingCaseError && (report.corrective_action || report.investigation_details)) {
         await supabase.from('case_repository').insert([{
-          issue_type: report.issue_type || 'ncr',
-          corrective_action: report.investigation_details,
-          preventive_action: report.resolution_details || 'None provided',
+          issue_type:          report.issue_type || 'ncr',
+          corrective_action:   report.corrective_action || report.investigation_details || 'None provided',
+          preventive_action:   report.resolution_details || 'None provided',
           effectiveness_score: avg,
-          problem_keywords: (report.description || '').slice(0, 200),
-          times_used: 1
+          // CBR: store extracted keywords (not raw slice) + new feature columns
+          problem_keywords:    extractKeywordsAsString(report.description),
+          severity:            report.severity || null,
+          department_id:       report.department_id || null,
+          product_type:        report.product_type || null,
+          times_used:          1
         }])
       } else if (existingCase) {
         // Update effectiveness score

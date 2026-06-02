@@ -1,5 +1,16 @@
 import { useRef } from 'react'
 import { Calendar, FileSearch, Upload as UploadIcon } from 'lucide-react'
+
+const NCR_ISSUE_TYPES = [
+  { value: 'quality_food_safety',           label: 'Quality / Food Safety Issue' },
+  { value: 'environment_health_safety',     label: 'Environment, Health & Safety Issue' },
+  { value: 'security_issue',                label: 'Security Issue' },
+  { value: 'internal_audit',               label: 'Internal Audit' },
+  { value: 'customer_complaint',           label: 'Customer Complaint' },
+  { value: 'government_agency_audit',      label: 'Government Agency Audit Non-Conformance' },
+  { value: 'customer_audit_nonconformance', label: 'Customer Audit Non-Conformance' },
+  { value: 'vendor_nonconformance',        label: 'Vendor Non-Conformance' },
+]
 function FieldCard({ label, value }) {
   return (
     <div>
@@ -75,6 +86,22 @@ export default function UpdateReportModal({
             <FieldCard label="Description" value={report?.description} />
           </div>
 
+          {/* Issue Category — editable so old null-type reports can be fixed */}
+          <div>
+            <label className="label-field">Issue Category</label>
+            <select
+              value={form.issueType || ''}
+              onChange={(e) => setField('issueType', e.target.value)}
+              className="input-field"
+              style={{ width: '100%', height: '38px', background: 'rgba(8, 18, 35, 0.5)' }}
+            >
+              <option value="">Select category…</option>
+              {NCR_ISSUE_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="label-field">Evidence</label>
             {report?.evidence_url ? (
@@ -96,12 +123,22 @@ export default function UpdateReportModal({
           </div>
 
           <div>
-            <label className="label-field">Resolution Details</label>
+            <label className="label-field">Corrective Action</label>
+            <textarea
+              value={form.correctiveAction || ''}
+              onChange={(event) => setField('correctiveAction', event.target.value)}
+              className="input-field textarea-medium"
+              placeholder="Describe the immediate corrective action taken..."
+            />
+          </div>
+
+          <div>
+            <label className="label-field">Resolution Details (Preventive Action)</label>
             <textarea
               value={form.resolutionDetails}
               onChange={(event) => setField('resolutionDetails', event.target.value)}
               className="input-field textarea-medium"
-              placeholder="Describe the resolution or corrective action..."
+              placeholder="Describe the resolution or preventive action..."
             />
             {errors.resolutionDetails ? <div className="user-info-error">{errors.resolutionDetails}</div> : null}
           </div>

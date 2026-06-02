@@ -2,10 +2,12 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 
 const DEFAULT_FORM = {
   investigationDetails: '',
+  correctiveAction: '',
   resolutionDetails: '',
   resolutionTimeValue: '24',
   resolutionTimeUnit: 'hours',
   verificationDate: '',
+  issueType: '',
   file: null,
   previewUrl: null,
 }
@@ -66,10 +68,12 @@ export function useReportsUpdateForm({ report }) {
     const parsedResolution = parseResolutionTime(report.resolution_time)
     setForm({
       investigationDetails: report.investigation_details || '',
+      correctiveAction: report.corrective_action || '',
       resolutionDetails: report.resolution_details || '',
       resolutionTimeValue: parsedResolution.resolutionTimeValue,
       resolutionTimeUnit: parsedResolution.resolutionTimeUnit,
       verificationDate: report.verification_date || '',
+      issueType: report.issue_type || '',
       file: null,
       previewUrl: null,
     })
