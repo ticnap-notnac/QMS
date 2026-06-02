@@ -1,31 +1,7 @@
-/**
- * components/ReportCard.jsx
- *
- * feat(reports): extract ReportCard from ReportsPage open reports render map
- *
- * Renders a single open NCR report with:
- *   - Reporter identity block
- *   - Status / severity / assignment badges
- *   - Description detail panel
- *   - Assignment label (if assigned)
- *   - Evidence image
- *   - Assign / Update action row (role-gated)
- */
-
 import { User, SquarePen } from 'lucide-react'
 import { formatDate, getStatusStyle, getSeverityStyle, formatAssignedUser } from '@/hooks/useReportsLogic'
 
-/**
- * @param {{
- *   report: object,
- *   departmentNameById: Map<string, string>,
- *   canAssignReports: boolean,
- *   canUpdateReport: (report: object) => boolean,
- *   onUpdate: (report: object) => void,
- *   onAssign: (report: object) => void,
- * }} props
- */
-function ReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, onUpdate, onAssign }) {
+function ReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, onUpdate, onAssign, onViewDetail }) {
   const reporterName = report.reporter_full_name || 'Name of the User'
   const reporterRole = report.reporter_role_name || 'Position'
   const reporterDepartment =
@@ -109,6 +85,14 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
 
       {/* ── Action row ──────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
+        <button
+          type="button"
+          className="btn-edit-user"
+          onClick={() => onViewDetail?.(report)}
+          title="View report details"
+        >
+          View Details
+        </button>
         {canAssignReports && !isAssigned && (
           <button
             type="button"

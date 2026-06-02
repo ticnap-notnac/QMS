@@ -7,6 +7,7 @@ import AssignReportModal from '../components/Modals/AssignReportModal.jsx'
 import CreateReportModal from '../components/Modals/CreateReportModal.jsx'
 import ReportCard from '../components/ReportCard.jsx'
 import InvestigatedReportCard from '../components/InvestigatedReportCard.jsx'
+import ReportDetailModal from '../components/Modals/ReportDetailModal.jsx'
 import { useReportsLogic } from '@/hooks/useReportsLogic'
 import './PagesStyles.css'
 
@@ -112,6 +113,7 @@ function ReportsPage({
               canUpdateReport={logic.canUpdateReport}
               onUpdate={logic.openUpdateModal}
               onAssign={logic.openAssignModal}
+              onViewDetail={logic.openDetailView}
             />
           ))
         )}
@@ -160,6 +162,16 @@ function ReportsPage({
         evidenceError={logic.evidenceErrorMain}
         setEvidenceError={logic.setEvidenceErrorMain}
       />
+
+      {logic.isDetailOpen && logic.detailReport && (
+        <ReportDetailModal
+          report={logic.detailReport}
+          currentAuthId={authUserId}
+          canUpdateReport={logic.canUpdateReport}
+          departmentNameById={logic.departmentNameById}
+          onClose={logic.closeDetailView}
+        />
+      )}
 
       {/* Reject modal */}
       {logic.isRejectModalOpen && logic.rejectTargetReport && (

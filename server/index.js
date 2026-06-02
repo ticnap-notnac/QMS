@@ -9,6 +9,7 @@ import productTypeRoutes from './routes/productTypeRoutes.js'
 import logRoutes from './routes/logRoutes.js'
 import debugRoutes from './routes/debugRoutes.js'
 import ncrRoutes from './routes/ncrRoutes.js'
+import suggestionRoutes from './routes/suggestionRoutes.js'
 
 const app = express()
 
@@ -23,6 +24,7 @@ app.use('/api', productTypeRoutes)
 app.use('/api/logs', logRoutes)
 app.use('/api/debug', debugRoutes)
 app.use('/api', ncrRoutes)
+app.use('/api/suggestions', suggestionRoutes)
 
 const PORT = process.env.PORT || 3000
 
