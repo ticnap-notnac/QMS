@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
-import { submitNcrMultipart } from '../services/ncrService'
-import { supabase } from '../utils/supabase'
+import { submitNcrMultipart } from '../../services/ncrService'
+import { supabase } from '../../utils/supabase'
 
 export default function useNCRSubmitModal({ onSuccess }) {
   const [form, setForm] = useState({

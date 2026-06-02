@@ -1,18 +1,12 @@
 import { useMemo } from 'react'
 import { FileSignature } from 'lucide-react'
-import useAssignReportModal from '@/hooks/useAssignReportModal'
 
-export default function AssignReportModal({ isOpen, onClose, report, onSuccess }) {
-  const {
-    selectedUserId,
-    setSelectedUserId,
-    userOptions,
-    loadingUsers,
-    isSubmitting,
-    error,
-    handleAssign,
-  } = useAssignReportModal({ report, onSuccess, onClose })
-
+export default function AssignReportModal({ 
+  isOpen, onClose, report, onSuccess,
+  selectedUserId, setSelectedUserId,
+  userOptions, loadingUsers,
+  isSubmitting, error, handleAssign
+}) {
   const reportLabel = useMemo(() => report?.reference_no || 'NCR Report', [report])
 
   if (!isOpen) return null

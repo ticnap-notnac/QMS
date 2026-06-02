@@ -10,6 +10,8 @@ import { useReportsModals } from './useReports/useReportsModals'
 import { useReportsUpdateForm } from './useReports/useReportsUpdateForm'
 import { useCARForm } from './useReports/useCARForm'
 import { useQDDRForm } from './useReports/useQDDRForm'
+import useAssignReportModal from './useReports/useAssignReportModal'
+import useNCRSubmitModal from './useReports/useNCRSubmitModal'
 import { updateReportInvestigationMultipart } from '@/services/ncrService'
 import { submitCarReport } from '@/services/carService'
 import { submitQddrReport } from '@/services/qddrService'
@@ -359,6 +361,20 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     }
   }
 
+  const assignModalState = useAssignReportModal({
+    report: modalsState.selectedAssignmentReport,
+    onSuccess: handleAssignSuccess,
+    onClose: modalsState.closeAssignModal
+  })
+
+  const ncrSubmitModalState = useNCRSubmitModal({
+    onSuccess: async (data) => {
+      setToast({ message: 'Report submitted successfully', type: 'success' })
+      modalsState.closeCreateModal()
+      await dataState.refreshReportsList()
+    }
+  })
+
   // ─── Returned API ──────────────────────────────────────────────────────────
 
   return {
@@ -435,6 +451,12 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       onClose: modalsState.closeAssignModal,
       report: modalsState.selectedAssignmentReport,
       onSuccess: handleAssignSuccess,
+      ...assignModalState,
+    },
+    ncrSubmitModalProps: {
+      isOpen: modalsState.isModalOpen,
+      onClose: modalsState.closeCreateModal,
+      ...ncrSubmitModalState,
     },
     createModalProps: {
       isOpen: modalsState.isModalOpen,

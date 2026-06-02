@@ -1,5 +1,4 @@
 import React, { useRef } from 'react'
-import useNCRSubmitModal from '../../hooks/useNCRSubmitModal'
 import { useAuth } from '../../hooks/useAuth'
 import { Upload as UploadIcon, X } from 'lucide-react'
 
@@ -14,21 +13,13 @@ const NCR_ISSUE_TYPES = [
   { value: 'vendor_nonconformance',        label: 'Vendor Non-Conformance' },
 ]
 
-export default function NCRSubmitModal({ isOpen, onClose, onSuccess }) {
+export default function NCRSubmitModal({ 
+  isOpen, onClose, onSuccess,
+  form, setField, handleFile, errors,
+  isSubmitting, handleSubmit, departments,
+  locations, productTypes, loadingDropdowns, evidenceError
+}) {
   const { user } = useAuth()
-  const {
-    form,
-    setField,
-    handleFile,
-    errors,
-    isSubmitting,
-    handleSubmit,
-    departments,
-    locations,
-    productTypes,
-    loadingDropdowns,
-    evidenceError,
-  } = useNCRSubmitModal({ onSuccess })
 
   const fileInputRef = useRef(null)
 
