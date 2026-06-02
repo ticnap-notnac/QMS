@@ -10,6 +10,7 @@ import logRoutes from './routes/logRoutes.js'
 import debugRoutes from './routes/debugRoutes.js'
 import ncrRoutes from './routes/ncrRoutes.js'
 import suggestionRoutes from './routes/suggestionRoutes.js'
+import carRoutes from './routes/carRoutes.js'
 import { authMiddleware } from './middlewares/authMiddleware.js'
 
 const app = express()
@@ -26,6 +27,7 @@ app.use('/api/logs', authMiddleware, logRoutes)
 app.use('/api/debug', authMiddleware, debugRoutes)
 app.use('/api', authMiddleware, ncrRoutes)
 app.use('/api/suggestions', authMiddleware, suggestionRoutes)
+app.use('/api', authMiddleware, carRoutes)
 
 const PORT = process.env.PORT || 3000
 

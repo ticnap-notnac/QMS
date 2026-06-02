@@ -5,6 +5,7 @@ import FilterModal from '../components/Modals/FilterModal.jsx'
 import UpdateReportModal from '../components/Modals/UpdateReportModal.jsx'
 import AssignReportModal from '../components/Modals/AssignReportModal.jsx'
 import CreateReportModal from '../components/Modals/CreateReportModal.jsx'
+import CARModal from '../components/Modals/CARModal.jsx'
 import ReportCard from '../components/Cards/ReportCard.jsx'
 import InvestigatedReportCard from '../components/Cards/InvestigatedReportCard.jsx'
 import ReportDetailModal from '../components/Modals/ReportDetailModal.jsx'
@@ -36,8 +37,6 @@ function ReportsPage({
             <button type="button" onClick={() => logic.setIsFilterModalOpen(true)} className="btn-glass-action" title="Open Filters">
               <SlidersHorizontal size={18} />
             </button>
-            <button type="button" className="btn-quick-toggle" onClick={() => console.log('Toggle CAR filter')}>CAR</button>
-            <button type="button" className="btn-quick-toggle" onClick={() => console.log('Toggle QDDR filter')}>QDDR</button>
             {logic.canAssignReports && (
               <button type="button" className="btn-quick-toggle" onClick={() => logic.setIsApprovalQueueMode((c) => !c)}>
                 {logic.isApprovalQueueMode ? 'Show All Updated' : `Needs Approval (${logic.approvalQueueReports.length})`}
@@ -47,9 +46,14 @@ function ReportsPage({
               {logic.isClosedMode ? 'Show Open' : `Closed Reports (${logic.closedReports.length})`}
             </button>
           </div>
-          <button type="button" onClick={logic.openCreateModal} className="btn-gradient-primary reports-submit-primary">
-            Submit a Report
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button type="button" onClick={() => logic.openCARModal()} className="btn-gradient-primary reports-submit-primary">
+              Submit CAR
+            </button>
+            <button type="button" onClick={logic.openCreateModal} className="btn-gradient-primary reports-submit-primary">
+              Submit a Report
+            </button>
+          </div>
         </div>
 
         {logic.error && <div className="user-info-error">{logic.error}</div>}
@@ -131,6 +135,7 @@ function ReportsPage({
       <UpdateReportModal {...logic.updateModalProps} />
       <AssignReportModal {...logic.assignModalProps} />
       <CreateReportModal {...logic.createModalProps} />
+      <CARModal {...logic.carModalProps} />
       {logic.isDetailOpen && logic.detailReport && <ReportDetailModal {...logic.detailModalProps} />}
       <RejectReportModal {...logic.rejectModalProps} />
       <PreventiveActionModal {...logic.preventiveActionModalProps} />

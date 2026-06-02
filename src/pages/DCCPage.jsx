@@ -30,6 +30,8 @@ export default function DCCPage({
     closeTaskFolder,
     ncrReports,
     loadingNcr,
+    carReports,
+    loadingCar,
   } = useDCCLogic()
 
   return (
@@ -63,6 +65,9 @@ export default function DCCPage({
             // NCR
             ncrReports={ncrReports}
             loadingNcr={loadingNcr}
+            // CAR
+            carReports={carReports}
+            loadingCar={loadingCar}
             // access control
             userRole={userRole}
           />

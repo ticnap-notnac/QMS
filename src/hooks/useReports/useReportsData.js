@@ -3,6 +3,7 @@ import { loadDepartments } from '@/services/departmentService'
 import { fetchAllReports } from '@/services/ncrService'
 import { fetchLocations } from '@/services/locationService'
 import { fetchProductTypes } from '@/services/productTypeService'
+import { fetchUsers } from '@/services/userService'
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
@@ -60,10 +61,12 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
   const [departments, setDepartments] = useState([])
   const [locations, setLocations] = useState([])
   const [productTypes, setProductTypes] = useState([])
+  const [users, setUsers] = useState([])
 
   const [departmentsLoading, setDepartmentsLoading] = useState(false)
   const [locationsLoading, setLocationsLoading] = useState(false)
   const [productTypesLoading, setProductTypesLoading] = useState(false)
+  const [usersLoading, setUsersLoading] = useState(false)
 
   const refreshReportsList = useCallback(
     async (filters = reportFilters) => {
@@ -94,17 +97,20 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
     setDepartmentsLoading(true)
     setLocationsLoading(true)
     setProductTypesLoading(true)
+    setUsersLoading(true)
     try {
-      const [deptData, locData, ptData] = await Promise.all([loadDepartments(), fetchLocations(), fetchProductTypes()])
+      const [deptData, locData, ptData, userData] = await Promise.all([loadDepartments(), fetchLocations(), fetchProductTypes(), fetchUsers()])
       setDepartments(Array.isArray(deptData) ? deptData : [])
       setLocations(Array.isArray(locData) ? locData : [])
       setProductTypes(Array.isArray(ptData) ? ptData : [])
+      setUsers(Array.isArray(userData) ? userData : [])
     } catch (err) {
       setError(err?.message || 'Failed to load NCR reference data.')
     } finally {
       setDepartmentsLoading(false)
       setLocationsLoading(false)
       setProductTypesLoading(false)
+      setUsersLoading(false)
     }
   }, [setError])
 
@@ -130,9 +136,11 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
     departments,
     locations,
     productTypes,
+    users,
     departmentsLoading,
     locationsLoading,
     productTypesLoading,
+    usersLoading,
     locationOptions,
     productTypeOptions,
     departmentNameById,

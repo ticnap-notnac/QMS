@@ -77,6 +77,10 @@ export function useDCCLogic() {
   const [ncrReports, setNcrReports] = useState([])
   const [loadingNcr, setLoadingNcr] = useState(false)
 
+  // CAR closed reports
+  const [carReports, setCarReports] = useState([])
+  const [loadingCar, setLoadingCar] = useState(false)
+
   // Load ISO standards whenever the iso_modules folder is opened
   useEffect(() => {
     if (selectedFolder?.id === 'iso_modules') {
@@ -116,6 +120,7 @@ export function useDCCLogic() {
     setClauses([])
     setSelectedTaskFolder(null)
     setNcrReports([])
+    setCarReports([])
     addRecentlyViewed(item)
   }
 
@@ -125,6 +130,7 @@ export function useDCCLogic() {
     setClauses([])
     setSelectedTaskFolder(null)
     setNcrReports([])
+    setCarReports([])
   }
 
   // Task Reports sub-folder navigation------------------------------------------------------------------
@@ -132,14 +138,18 @@ export function useDCCLogic() {
   function openTaskFolder(item) {
     setSelectedTaskFolder(item)
     setNcrReports([])
+    setCarReports([])
     if (item.id === 'ncr') {
       loadClosedNCRs()
+    } else if (item.id === 'car') {
+      loadClosedCARs()
     }
   }
 
   function closeTaskFolder() {
     setSelectedTaskFolder(null)
     setNcrReports([])
+    setCarReports([])
   }
 
   // ISO standards  (iso_standards -> iso_clause_groups -> iso_clauses)------------------------------------------------------------------
@@ -258,6 +268,29 @@ export function useDCCLogic() {
     }
   }
 
+  // ------------------------------------------------------------------
+  // CAR closed reports  (car_reports table, status = 'closed')
+  // ------------------------------------------------------------------
+
+  async function loadClosedCARs() {
+    setLoadingCar(true)
+    try {
+      const { data, error } = await supabase
+        .from('car_reports')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      console.debug('[useDCCLogic] loadClosedCARs → rows returned:', data?.length || 0)
+      setCarReports(data || [])
+    } catch (err) {
+      console.error('[useDCCLogic] loadClosedCARs error:', err?.message ?? err)
+      setCarReports([])
+    } finally {
+      setLoadingCar(false)
+    }
+  }
+
   // public API------------------------------------------------------------------
 
   return {
@@ -292,5 +325,9 @@ export function useDCCLogic() {
     // NCR closed reports
     ncrReports,
     loadingNcr,
+
+    // CAR closed reports
+    carReports,
+    loadingCar,
   }
 }

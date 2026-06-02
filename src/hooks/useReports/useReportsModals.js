@@ -7,12 +7,14 @@ export function useReportsModals({ clearEvidenceState, resetCreateForm, setRejec
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
   const [isPreventiveActionModalOpen, setIsPreventiveActionModalOpen] = useState(false)
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
+  const [isCARModalOpen, setIsCARModalOpen] = useState(false)
   
   const [detailReport, setDetailReport] = useState(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [selectedReport, setSelectedReport] = useState(null)
   const [selectedAssignmentReport, setSelectedAssignmentReport] = useState(null)
   const [rejectTargetReport, setRejectTargetReport] = useState(null)
+  const [selectedCARReport, setSelectedCARReport] = useState(null)
 
   const openDetailView = (report) => { setDetailReport(report); setIsDetailOpen(true) }
   const closeDetailView = () => { setIsDetailOpen(false); setDetailReport(null) }
@@ -29,6 +31,9 @@ export function useReportsModals({ clearEvidenceState, resetCreateForm, setRejec
   const openRejectModal = (report) => { setRejectTargetReport(report); setRejectReason(''); setIsRejectModalOpen(true) }
   const closeRejectModal = () => { setIsRejectModalOpen(false); setRejectTargetReport(null); setRejectReason('') }
 
+  const openCARModal = (report = null) => { setSelectedCARReport(report); setIsCARModalOpen(true) }
+  const closeCARModal = () => { setIsCARModalOpen(false); setSelectedCARReport(null) }
+
   return {
     isModalOpen, setIsModalOpen,
     isFilterModalOpen, setIsFilterModalOpen,
@@ -36,17 +41,20 @@ export function useReportsModals({ clearEvidenceState, resetCreateForm, setRejec
     isAssignModalOpen, setIsAssignModalOpen,
     isPreventiveActionModalOpen, setIsPreventiveActionModalOpen,
     isRejectModalOpen, setIsRejectModalOpen,
+    isCARModalOpen, setIsCARModalOpen,
     isDetailOpen, setIsDetailOpen,
     
     detailReport, setDetailReport,
     selectedReport, setSelectedReport,
     selectedAssignmentReport, setSelectedAssignmentReport,
     rejectTargetReport, setRejectTargetReport,
+    selectedCARReport, setSelectedCARReport,
 
     openDetailView, closeDetailView,
     openCreateModal, closeCreateModal,
     openUpdateModal, closeUpdateModal,
     openAssignModal, closeAssignModal,
     openRejectModal, closeRejectModal,
+    openCARModal, closeCARModal,
   }
 }

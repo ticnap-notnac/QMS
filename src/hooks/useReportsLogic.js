@@ -8,7 +8,9 @@ import { useReportsData } from './useReports/useReportsData'
 import { useReportsForm } from './useReports/useReportsForm'
 import { useReportsModals } from './useReports/useReportsModals'
 import { useReportsUpdateForm } from './useReports/useReportsUpdateForm'
+import { useCARForm } from './useReports/useCARForm'
 import { updateReportInvestigationMultipart } from '@/services/ncrService'
+import { submitCarReport } from '@/services/carService'
 
 // ─── Pure helpers (no side-effects, safe to unit-test independently) ──────────
 
@@ -82,6 +84,8 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
   const updateFormState = useReportsUpdateForm({
     report: modalsState.selectedReport,
   })
+
+  const carFormState = useCARForm()
 
   // ─── Derived / memoised ────────────────────────────────────────────────────
 
@@ -282,6 +286,38 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     }
   }
 
+  const handleSubmitCAR = async (event) => {
+    if (event) event.preventDefault()
+    
+    if (!carFormState.validate()) {
+      return { success: false }
+    }
+
+    carFormState.setIsSubmitting(true)
+    carFormState.setError(null)
+    setError(null)
+
+    try {
+      // If we launched the CAR from an NCR, attach its ID
+      if (modalsState.selectedCARReport?.id) {
+        carFormState.form.ncr_ids = [String(modalsState.selectedCARReport.id)]
+      }
+      
+      await submitCarReport(carFormState.form, currentAuthId)
+      
+      setToast({ message: 'CAR report submitted successfully', type: 'success' })
+      modalsState.closeCARModal()
+      carFormState.resetForm()
+      await dataState.refreshReportsList()
+      return { success: true }
+    } catch (submitError) {
+      carFormState.setError(submitError?.message || 'Failed to submit CAR.')
+      return { success: false }
+    } finally {
+      carFormState.setIsSubmitting(false)
+    }
+  }
+
   // ─── Returned API ──────────────────────────────────────────────────────────
 
   return {
@@ -402,5 +438,20 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       departmentNameById: dataState.departmentNameById,
       onClose: modalsState.closeDetailView,
     },
+    carModalProps: {
+      isOpen: modalsState.isCARModalOpen,
+      onClose: modalsState.closeCARModal,
+      form: carFormState.form,
+      handleChange: carFormState.handleChange,
+      toggleNcrSelection: carFormState.toggleNcrSelection,
+      error: carFormState.error,
+      isSubmitting: carFormState.isSubmitting,
+      onSubmit: handleSubmitCAR,
+      departments: dataState.departments.map(d => ({ id: d.id, label: d.department_name })),
+      departmentsLoading: dataState.departmentsLoading,
+      users: dataState.users.map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
+      usersLoading: dataState.usersLoading,
+      allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    }
   }
 }

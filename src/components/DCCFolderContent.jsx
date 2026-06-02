@@ -288,6 +288,80 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
 }
 
 // ---------------------------------------------------------------------------
+// Sub-view: Task Reports › CAR – closed reports table
+// ---------------------------------------------------------------------------
+
+function CARClosedTable({ carReports, loadingCar }) {
+  if (loadingCar) return <div>Loading CAR reports...</div>
+
+  if (!carReports.length) {
+    return (
+      <div className="empty-state">
+        <AlertCircle size={20} style={{ marginBottom: 6 }} />
+        <div>No CAR reports found.</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="glass-card-dcc">
+      <div className="dcc-scrollable-table-box">
+        <table className="iso-table" style={{ width: '100%' }}>
+          <thead>
+            <tr>
+              <th>Ref No.</th>
+              <th>Requestor</th>
+              <th>Recipient</th>
+              <th>Requesting Dept</th>
+              <th>Responsible Dept</th>
+              <th>Product / Material</th>
+              <th>Model / Type</th>
+              <th>Control No.</th>
+              <th>Affected Qty</th>
+              <th>Nonconformance Details</th>
+              <th>Request Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {carReports.map((car) => (
+              <tr key={car.id}>
+                <td style={{ fontWeight: 600 }}>
+                  {car.reference_no ?? '—'}
+                </td>
+                <td>{car.requestor ?? '—'}</td>
+                <td>{car.recipient ?? '—'}</td>
+                <td>{car.requesting_department ?? '—'}</td>
+                <td>{car.responsible_department ?? '—'}</td>
+                <td>{car.product_material_name ?? '—'}</td>
+                <td>{car.model_type ?? '—'}</td>
+                <td>{car.control_no ?? '—'}</td>
+                <td>{car.affected_quantity ?? '—'}</td>
+                <td>
+                  <div className="clause-description" title={car.details_of_nonconformance}>
+                    {car.details_of_nonconformance ?? <span className="muted">No details</span>}
+                  </div>
+                </td>
+                <td>
+                  {car.request_date
+                    ? new Date(car.request_date).toLocaleDateString()
+                    : '—'}
+                </td>
+                <td>
+                  <span className={`iso-status-pill ${String(car.status || '').toLowerCase() === 'closed' ? 'is-inactive' : 'is-active'}`} style={{ textTransform: 'capitalize' }}>
+                    {car.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
 
@@ -323,6 +397,10 @@ export default function DCCFolderContent({
   // NCR
   ncrReports,
   loadingNcr,
+
+  // CAR
+  carReports,
+  loadingCar,
 
   // access
   userRole,
@@ -450,8 +528,14 @@ export default function DCCFolderContent({
               <div className="breadcrumb">Task Reports &gt; NCR &gt; Closed</div>
               <NCRClosedTable ncrReports={ncrReports} loadingNcr={loadingNcr} />
             </div>
+          ) : selectedTaskFolder.id === 'car' ? (
+            /* Level 2 – CAR: closed reports table */
+            <div className="flex-column full-height">
+              <div className="breadcrumb">Task Reports &gt; CAR &gt; Closed</div>
+              <CARClosedTable carReports={carReports} loadingCar={loadingCar} />
+            </div>
           ) : (
-            /* Level 2 – CAR / QDDR: not yet implemented */
+            /* Level 2 – QDDR: not yet implemented */
             <div className="empty-state">
               {selectedTaskFolder.label} reports are not yet implemented.
             </div>
