@@ -333,8 +333,8 @@ export default function AddUserPage({
                             <th>Department</th>
                             <th>Contact</th>
                             <th>Employee No.</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th style={{ width: '10%' }} className="text-center">STATUS</th>
+                            <th style={{ width: '12%' }} className="text-center">ACTION</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -361,12 +361,11 @@ export default function AddUserPage({
                                     {user.status ?? 'ACTIVE'}
                                   </span>
                                 </td>
-                                <td>
-                                  {/* 🎯 Updated row actions container cell to render modular icon buttons cleanly */}
-                                  <div className="admin-actions-cell">
+                                <td className="table-cell-actions">
+                                  <div className="action-buttons-wrapper">
                                     <button
                                       type="button"
-                                      className="btn-edit-user"
+                                      className="action-btn edit-btn"
                                       onClick={() => openEditUserModal(user)}
                                       title="Edit User"
                                     >
@@ -374,7 +373,7 @@ export default function AddUserPage({
                                     </button>
                                     <button
                                       type="button"
-                                      className="btn-delete-user"
+                                      className="action-btn delete-btn"
                                       onClick={() => handleDeleteUser(user)}
                                       disabled={isDeleting}
                                       title="Delete User"
