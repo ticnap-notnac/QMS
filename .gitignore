@@ -1,3 +1,6 @@
+SYSTEM_WALKTHROUGH.md
+QFlow_System_Walkthrough__Submission.txt
+
 # Logs
 logs
 *.log
@@ -7,7 +10,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build outputs
 dist
 dist-ssr
 *.local
@@ -23,14 +29,16 @@ dist-ssr
 *.sln
 *.sw?
 
-# Ignore server environment file containing secrets
+# Environment variables (secrets)
 server/.env
 
-# Local planning draft
+# Local planning / documentation drafts
 thesis-roadmap.md
-
-# Local code review note
 CODE_REVIEW.md
-
-# System Architecture
 SYSTEM_ARCHITECTURE.md
+
+# Optional system documentation (if auto-generated locally)
+SYSTEM_WALKTHROUGH.md
+
+# Optional submission/export file
+QFlow_System_Walkthrough__Submission.txt
