@@ -31,25 +31,12 @@ const initialClauseForm = {
 const stripQuotes = (value) => value.replace(/['\"]/g, '').trim()
 
 export default function ISOStandardsPage({
-  activePage,
-  onPageChange,
-  isUserMenuOpen,
-  onToggleMenu,
-  onLogout,
-  onToggleNotifications,
-  isNotificationsOpen,
   userRole,
   userName,
   userPosition,
-  setProfileTargetTab,
   supabaseUrl,
   supabaseAnonKey,
   currentUserId,
-  unreadNotificationCount,
-  canViewNotifications,
-  onUnreadCountChange,
-  onRefreshUnreadCount,
-  onOpenReport,
 }) {
   const supabaseClient = useMemo(() => {
     const resolvedUrl = stripQuotes(supabaseUrl || import.meta.env.VITE_SUPABASE_URL || '')
@@ -458,17 +445,7 @@ export default function ISOStandardsPage({
     }
   }
 
-  const activeTab = activePage === 'Roles'
-    ? 'Roles'
-    : activePage === 'Departments'
-      ? 'Dept'
-      : activePage === 'Locations'
-        ? 'Locations'
-        : activePage === 'Product Types'
-          ? 'Product Types'
-          : activePage === 'ISO Standards'
-            ? 'ISO Standards'
-            : 'Users'
+  const activeTab = 'ISO Standards'
 
   return (
     <div className="page-root">
@@ -480,51 +457,19 @@ export default function ISOStandardsPage({
         />
       )}
 
-      <Navbar
-        activePage={activePage}
-        onPageChange={onPageChange}
-        isUserMenuOpen={isUserMenuOpen}
-        onToggleMenu={onToggleMenu}
-        onLogout={onLogout}
-        isNotificationsOpen={isNotificationsOpen}
-        onToggleNotifications={onToggleNotifications}
-        userRole={userRole}
-        userName={userName}
-        userPosition={userPosition}
-        setProfileTargetTab={setProfileTargetTab}
-        currentUserId={currentUserId}
-        unreadNotificationCount={unreadNotificationCount}
-        canViewNotifications={canViewNotifications}
-        onUnreadCountChange={onUnreadCountChange}
-        onRefreshUnreadCount={onRefreshUnreadCount}
-        onOpenReport={onOpenReport}
-      />
+
 
       {userRole === 'admin' ? (
         <main className="page-main-wide iso-standards-page">
           <h1 className="page-title">Admin - ISO Standards</h1>
 
-          <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
+          <SettingsNavbar userRole={userRole} />
 
           <div className="glass-card-rounded-bottom">
             <div className="admin-inner-panel iso-standards-panel">
               <div className="admin-top-row">
                 <div className="admin-tabs-wrap">
-                  <AdminNavbar
-                    activeTab={activeTab}
-                    onTabChange={(tab) => {
-                      const map = {
-                        Users: 'Admin Panel',
-                        Dept: 'Departments',
-                        Roles: 'Roles',
-                        Locations: 'Locations',
-                        'Product Types': 'Product Types',
-                        'ISO Standards': 'ISO Standards',
-                      }
-                      const target = map[tab] || 'Admin Panel'
-                      onPageChange?.(target)
-                    }}
-                  />
+                  <AdminNavbar activeTab={activeTab} />
                 </div>
               </div>
 

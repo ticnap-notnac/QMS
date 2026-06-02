@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import './App.css'
 import { supabase } from './utils/supabase'
 import Login from './components/Login.jsx'
@@ -18,6 +18,8 @@ import ISOStandardsPage from './pages/ISOStandardsPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AuditToolsPage from './pages/AuditToolsPage.jsx'
 import { LookupProvider } from './context/LookupContext'
+import { Routes, Route, useNavigate } from 'react-router-dom'
+import Navbar from './components/Navbar.jsx'
 import { logAction } from '@/services/logService'
 
 function normalizeRoleValue(value) {
@@ -37,9 +39,10 @@ export default function App() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
-  const [activePage, setActivePage] = useState('Dashboard')
   const [profileTargetTab, setProfileTargetTab] = useState('User Information')
   const canViewNotifications = Boolean(user)
+  const navigate = useNavigate()
+  const isLoggingOutRef = useRef(false)
 
   useEffect(() => {
     console.log('current user:', user)
@@ -166,6 +169,7 @@ export default function App() {
           setCurrentUserId(data.id || null)
           await applyUserRoleData(data)
         }
+        navigate('/')
       }
     } catch (err) {
       setError(err.message)
@@ -190,19 +194,27 @@ export default function App() {
   }
 
   const handleLogout = async () => {
+    if (isLoggingOutRef.current) return
+    isLoggingOutRef.current = true
     try {
-      // Log BEFORE signOut so getCurrentAuthId() still resolves
-      await logAction({
-        level: 'audit',
-        source: 'auth',
-        action: 'user_logout_success',
-        details: { event: 'logout_success' },
-      })
+      const authId = user?.id
 
-      await supabase.auth.signOut()
+      // Optimistically clear UI state for instant feedback
       setUser(null)
       setUnreadNotificationCount(0)
       setIsNotificationsOpen(false)
+
+      // Fire logging without awaiting to unblock the main thread
+      logAction({
+        level: 'audit',
+        source: 'auth',
+        action: 'user_logout_success',
+        userAuthId: authId,
+        details: { event: 'logout_success' },
+      }).catch(console.error)
+
+      // Perform actual network signout
+      await supabase.auth.signOut()
     } catch (err) {
       setError(err.message)
       console.error('Logout error:', err)
@@ -213,80 +225,26 @@ export default function App() {
         action: 'user_logout_failed',
         details: { event: 'logout_failed', message: err?.message || 'Logout failed' },
       })
+    } finally {
+      isLoggingOutRef.current = false
     }
   }
 
 
-  const handlePageChange = (page) => {
-    setActivePage(page)
-    setIsUserMenuOpen(false)
-  }
-
-  const renderPage = () => {
-    const sharedProps = {
-      activePage,
-      onPageChange: handlePageChange,
-      isUserMenuOpen,
-      onToggleMenu: () => setIsUserMenuOpen((open) => !open),
-      onLogout: handleLogout,
-      isNotificationsOpen,
-      onToggleNotifications: user ? () => setIsNotificationsOpen((open) => !open) : () => { },
-      userRole,
-      userName,
-      userPosition,
-      currentUserId,
-      unreadNotificationCount,
-      canViewNotifications,
-      authUserId: user?.id || '',
-      profileTargetTab,
-      setProfileTargetTab,
-      onUnreadCountChange: setUnreadNotificationCount,
-      onRefreshUnreadCount: refreshUnreadNotificationCount,
-      onOpenReport: handleNotificationSelect,
-    }
-
-    if (activePage === 'Reports') {
-      return <ReportsPage {...sharedProps} />
-    }
-    if (activePage === 'ISO') {
-      return <ISOPage {...sharedProps} />
-    }
-    if (activePage === 'DCC') {
-      return <DCCPage {...sharedProps} />
-    }
-    if (activePage === 'Profile') {
-      return <UserInformationPage {...sharedProps} />
-    }
-    if (activePage === 'Admin Panel') {
-      return <AddUserPage {...sharedProps} />
-    }
-    if (activePage === 'Roles') {
-      return <RolesPage {...sharedProps} />
-    }
-    if (activePage === 'Departments') {
-      return <DepartmentsPage {...sharedProps} />
-    }
-    if (activePage === 'Locations') {
-      return <LocationsPage {...sharedProps} />
-    }
-    if (activePage === 'Product Types') {
-      return <ProductTypesPage {...sharedProps} />
-    }
-    if (activePage === 'ISO Standards') {
-      return <ISOStandardsPage {...sharedProps} />
-    }
-    if (activePage === 'Settings') {
-      return <SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />
-    }
-    if (activePage === 'Audit Tools') {
-      return <AuditToolsPage {...sharedProps} />
-    }
-    return <DashboardPage {...sharedProps} />
+  const sharedProps = {
+    userRole,
+    userName,
+    userPosition,
+    currentUserId,
+    authUserId: user?.id || '',
+    profileTargetTab,
+    setProfileTargetTab,
+    onRefreshUnreadCount: refreshUnreadNotificationCount,
   }
 
   const handleNotificationSelect = (reportId) => {
     setIsNotificationsOpen(false)
-    setActivePage('Reports')
+    navigate('/reports')
 
     if (reportId) {
       window.setTimeout(() => {
@@ -316,7 +274,42 @@ export default function App() {
           </header>
         ) : null}
 
-        {user ? renderPage() : (
+        {user ? (
+          <>
+            <Navbar
+              isUserMenuOpen={isUserMenuOpen}
+              onToggleMenu={() => setIsUserMenuOpen((open) => !open)}
+              onLogout={handleLogout}
+              isNotificationsOpen={isNotificationsOpen}
+              onToggleNotifications={() => setIsNotificationsOpen((open) => !open)}
+              userRole={userRole}
+              userName={userName}
+              userPosition={userPosition}
+              currentUserId={currentUserId}
+              unreadNotificationCount={unreadNotificationCount}
+              canViewNotifications={canViewNotifications}
+              onUnreadCountChange={setUnreadNotificationCount}
+              onRefreshUnreadCount={refreshUnreadNotificationCount}
+              onOpenReport={handleNotificationSelect}
+              setProfileTargetTab={setProfileTargetTab}
+            />
+            <Routes>
+              <Route path="/" element={<DashboardPage {...sharedProps} />} />
+              <Route path="/reports" element={<ReportsPage {...sharedProps} />} />
+              <Route path="/iso" element={<ISOPage {...sharedProps} />} />
+              <Route path="/dcc" element={<DCCPage {...sharedProps} />} />
+              <Route path="/settings" element={<SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />} />
+              <Route path="/settings/profile" element={<UserInformationPage {...sharedProps} />} />
+              <Route path="/settings/roles" element={<RolesPage {...sharedProps} />} />
+              <Route path="/settings/departments" element={<DepartmentsPage {...sharedProps} />} />
+              <Route path="/settings/locations" element={<LocationsPage {...sharedProps} />} />
+              <Route path="/settings/product-types" element={<ProductTypesPage {...sharedProps} />} />
+              <Route path="/settings/iso-standards" element={<ISOStandardsPage {...sharedProps} />} />
+              <Route path="/admin" element={<AddUserPage {...sharedProps} />} />
+              <Route path="/audit-tools" element={<AuditToolsPage {...sharedProps} />} />
+            </Routes>
+          </>
+        ) : (
           <Login
             onSubmit={handleSubmit}
             onLearnMore={() => setShowIntro(true)}

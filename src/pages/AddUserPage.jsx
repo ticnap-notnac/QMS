@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import Navbar from '@/components/Navbar'
+
 
 import SettingsNavbar from '@/components/SettingsNavbar'
 
@@ -31,41 +31,7 @@ import { Pencil, Trash2 } from 'lucide-react' // ✏️🗑️ Brought in our sl
 
 
 export default function AddUserPage({
-
-  activePage,
-
-  onPageChange,
-
-  isUserMenuOpen,
-
-  onToggleMenu,
-
-  onLogout,
-
-  onToggleNotifications,
-
-  isNotificationsOpen,
-
   userRole,
-
-  userName,
-
-  userPosition,
-
-  setProfileTargetTab,
-
-  currentUserId,
-
-  unreadNotificationCount,
-
-  canViewNotifications,
-
-  onUnreadCountChange,
-
-  onRefreshUnreadCount,
-
-  onOpenReport,
-
 }) {
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -484,43 +450,7 @@ export default function AddUserPage({
 
     <div className="page-root">
 
-      <Navbar
 
-        activePage={activePage}
-
-        onPageChange={onPageChange}
-
-        isUserMenuOpen={isUserMenuOpen}
-
-        onToggleMenu={onToggleMenu}
-
-        onLogout={onLogout}
-
-        isNotificationsOpen={isNotificationsOpen}
-
-        onToggleNotifications={onToggleNotifications}
-
-        userRole={userRole}
-
-        userName={userName}
-
-        userPosition={userPosition}
-
-        setProfileTargetTab={setProfileTargetTab}
-
-        currentUserId={currentUserId}
-
-        unreadNotificationCount={unreadNotificationCount}
-
-        canViewNotifications={canViewNotifications}
-
-        onUnreadCountChange={onUnreadCountChange}
-
-        onRefreshUnreadCount={onRefreshUnreadCount}
-
-        onOpenReport={onOpenReport}
-
-      />
 
 
 
@@ -532,7 +462,7 @@ export default function AddUserPage({
 
 
 
-          <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
+          <SettingsNavbar userRole={userRole} />
 
 
 
@@ -546,35 +476,7 @@ export default function AddUserPage({
 
                   <div className="admin-tabs-wrap">
 
-                    <AdminNavbar
-
-                      activeTab={activePage === 'Roles' ? 'Roles' : activePage === 'Departments' ? 'Dept' : activePage === 'Locations' ? 'Locations' : activePage === 'Product Types' ? 'Product Types' : activePage === 'ISO Standards' ? 'ISO Standards' : 'Users'}
-
-                      onTabChange={(tab) => {
-
-                        const map = {
-
-                          Users: 'Admin Panel',
-
-                          Dept: 'Departments',
-
-                          Roles: 'Roles',
-
-                          Locations: 'Locations',
-
-                          'Product Types': 'Product Types',
-
-                          'ISO Standards': 'ISO Standards'
-
-                        }
-
-                        const target = map[tab] || 'Admin Panel'
-
-                        onPageChange?.(target)
-
-                      }}
-
-                    />
+                    <AdminNavbar activeTab="Users" />
 
                   </div>
 

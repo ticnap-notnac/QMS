@@ -1,4 +1,4 @@
-import Navbar from '../components/Navbar.jsx'
+
 import DCCFolderContent from '../components/DCCFolderContent.jsx'
 import { useDCCLogic } from '../hooks/useDCCLogic.js'
 import './PagesStyles.css'
@@ -10,25 +10,7 @@ const FOLDER_ITEMS = [
 ]
 
 export default function DCCPage({
-  activePage,
-  onPageChange,
-  isUserMenuOpen,
-  onToggleMenu,
-  onLogout,
-  isNotificationsOpen,
-  onToggleNotifications,
   userRole,
-  userName,
-  userPosition,
-  setIsAdminPanelOpen,
-  setIsAuditToolsOpen,
-  setProfileTargetTab,
-  currentUserId,
-  unreadNotificationCount,
-  canViewNotifications,
-  onUnreadCountChange,
-  onRefreshUnreadCount,
-  onOpenReport,
 }) {
   const {
     searchQuery,
@@ -52,27 +34,7 @@ export default function DCCPage({
 
   return (
     <div className="dcc-root">
-      <Navbar
-        activePage={activePage}
-        onPageChange={onPageChange}
-        isUserMenuOpen={isUserMenuOpen}
-        onToggleMenu={onToggleMenu}
-        onLogout={onLogout}
-        isNotificationsOpen={isNotificationsOpen}
-        onToggleNotifications={onToggleNotifications}
-        userRole={userRole}
-        userName={userName}
-        userPosition={userPosition}
-        setIsAdminPanelOpen={setIsAdminPanelOpen}
-        setIsAuditToolsOpen={setIsAuditToolsOpen}
-        setProfileTargetTab={setProfileTargetTab}
-        currentUserId={currentUserId}
-        unreadNotificationCount={unreadNotificationCount}
-        canViewNotifications={canViewNotifications}
-        onUnreadCountChange={onUnreadCountChange}
-        onRefreshUnreadCount={onRefreshUnreadCount}
-        onOpenReport={onOpenReport}
-      />
+
 
       <div className="dcc-main-wrapper">
         <div className="glass-card-dcc">

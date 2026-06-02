@@ -1,27 +1,27 @@
 import {
   User,
   Settings,
-  FileText,
   ShieldCheck,
-  ClipboardCheck,
-  FolderKanban
 } from 'lucide-react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
-function SettingsNavbar({ userRole, activePage, onNavigate }) {
-  const navItem = (label, page, Icon) => {
-    let isActive = activePage === page
+function SettingsNavbar({ userRole }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const navItem = (label, path, Icon) => {
+    let isActive = location.pathname === path
 
-    // Treat the Admin Panel tab as active for several admin-related pages (case-sensitive exact match)
-    if (page === 'Admin Panel') {
-      const adminPages = ['Admin Panel', 'Departments', 'Roles', 'Locations', 'Product Types', 'Add User', 'Users']
-      isActive = adminPages.includes(activePage)
+    // Treat the Admin Panel tab as active for several admin-related pages
+    if (path === '/admin') {
+      const adminPaths = ['/admin', '/settings/departments', '/settings/roles', '/settings/locations', '/settings/product-types', '/settings/users']
+      isActive = adminPaths.includes(location.pathname)
     }
 
     return (
       <button
         type="button"
         className={`user-info-tab-button ${isActive ? 'active' : ''}`}
-        onClick={() => onNavigate?.(page)}
+        onClick={() => navigate(path)}
       >
         <Icon size={16} />
         <span className="settings-nav-label">{label}</span>
@@ -31,11 +31,11 @@ function SettingsNavbar({ userRole, activePage, onNavigate }) {
 
   return (
     <div className="settings-top-nav">
-      {navItem('User Information', 'Profile', User)}
-      {navItem('Settings', 'Settings', Settings)}
+      {navItem('User Information', '/settings/profile', User)}
+      {navItem('Settings', '/settings', Settings)}
       
       {/* 🔒 Top-level Protection Lock */}
-      {userRole === 'admin' && navItem('Admin Panel', 'Admin Panel', ShieldCheck)}
+      {userRole === 'admin' && navItem('Admin Panel', '/admin', ShieldCheck)}
     </div>
   )
 }

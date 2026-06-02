@@ -1,4 +1,4 @@
-import Navbar from '@/components/Navbar'
+
 import SettingsNavbar from '@/components/SettingsNavbar'
 import AdminNavbar from '@/components/AdminNavbar'
 import AddCategoryModal from '@/components/Modals/AddCategoryModal'
@@ -13,23 +13,7 @@ import {
 } from '@/services/roleService'
 
 export default function RolesPage({
-  activePage,
-  onPageChange,
-  isUserMenuOpen,
-  onToggleMenu,
-  onLogout,
-  onToggleNotifications,
-  isNotificationsOpen,
   userRole,
-  userName,
-  userPosition,
-  setProfileTargetTab,
-  currentUserId,
-  unreadNotificationCount,
-  canViewNotifications,
-  onUnreadCountChange,
-  onRefreshUnreadCount,
-  onOpenReport
 }) {
   const {
     items,
@@ -53,51 +37,20 @@ export default function RolesPage({
 
   return (
     <div className="page-root">
-      <Navbar
-        activePage={activePage}
-        onPageChange={onPageChange}
-        isUserMenuOpen={isUserMenuOpen}
-        onToggleMenu={onToggleMenu}
-        onLogout={onLogout}
-        isNotificationsOpen={isNotificationsOpen}
-        onToggleNotifications={onToggleNotifications}
-        userRole={userRole}
-        userName={userName}
-        userPosition={userPosition}
-        setProfileTargetTab={setProfileTargetTab}
-        currentUserId={currentUserId}
-        unreadNotificationCount={unreadNotificationCount}
-        canViewNotifications={canViewNotifications}
-        onUnreadCountChange={onUnreadCountChange}
-        onRefreshUnreadCount={onRefreshUnreadCount}
-        onOpenReport={onOpenReport}
-      />
+
 
       {userRole === 'admin' ? (
         <main className="page-main-wide">
           <h1 className="page-title">Manage Roles</h1>
 
-          <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
+          <SettingsNavbar userRole={userRole} />
 
           <div className="glass-card-rounded-bottom">
             <div className="admin-inner-panel">
               <div className="search-row">
                 <div className="admin-top-row">
                   <div className="admin-tabs-wrap">
-                    <AdminNavbar
-                      activeTab={activePage === 'Roles' ? 'Roles' : activePage === 'Departments' ? 'Dept' : activePage === 'Locations' ? 'Locations' : activePage === 'Product Types' ? 'Product Types' : activePage === 'ISO Standards' ? 'ISO Standards' : 'Users'}
-                      onTabChange={(tab) => {
-                        const map = {
-                          Users: 'Admin Panel',
-                          Dept: 'Departments',
-                          Roles: 'Roles',
-                          Locations: 'Locations',
-                          'Product Types': 'Product Types',
-                          'ISO Standards': 'ISO Standards',
-                        }
-                        onPageChange?.(map[tab] || 'Admin Panel')
-                      }}
-                    />
+                    <AdminNavbar activeTab="Roles" />
                   </div>
                 </div>
 

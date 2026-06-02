@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Navbar from '../components/Navbar.jsx'
+
 import Toast from '../components/Toast.jsx' // 🍞 Import our toast notification component
 import { 
   X, 
@@ -13,27 +13,7 @@ import {
 } from 'lucide-react'
 import './ISOPage.css' // 🔌 Link our separated stylesheet module directly!
 
-function ISOPage({
-  activePage,
-  onPageChange,
-  isUserMenuOpen,
-  onToggleMenu,
-  onLogout,
-  isNotificationsOpen,
-  onToggleNotifications,
-  userRole,
-  userName,
-  userPosition,
-  setIsAdminPanelOpen,      
-  setIsAuditToolsOpen,
-  setProfileTargetTab,
-  currentUserId,
-  unreadNotificationCount,
-  canViewNotifications,
-  onUnreadCountChange,
-  onRefreshUnreadCount,
-  onOpenReport,
-}) {
+function ISOPage() {
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
   const [isAuditTaskModalOpen, setIsAuditTaskModalOpen] = useState(false);
   const [isCapaTaskModalOpen, setIsCapaTaskModalOpen] = useState(false);
@@ -71,27 +51,7 @@ function ISOPage({
         />
       )}
 
-      <Navbar
-        activePage={activePage}
-        onPageChange={onPageChange}
-        isUserMenuOpen={isUserMenuOpen}
-        onToggleMenu={onToggleMenu}
-        onLogout={onLogout}
-        isNotificationsOpen={isNotificationsOpen}
-        onToggleNotifications={onToggleNotifications}
-        userRole={userRole}
-        userName={userName}
-        userPosition={userPosition}
-        setIsAdminPanelOpen={setIsAdminPanelOpen}
-        setIsAuditToolsOpen={setIsAuditToolsOpen}
-        setProfileTargetTab={setProfileTargetTab}
-        currentUserId={currentUserId}
-        unreadNotificationCount={unreadNotificationCount}
-        canViewNotifications={canViewNotifications}
-        onUnreadCountChange={onUnreadCountChange}
-        onRefreshUnreadCount={onRefreshUnreadCount}
-        onOpenReport={onOpenReport}
-      />
+
 
       <div className="page-main iso-page-main">
         

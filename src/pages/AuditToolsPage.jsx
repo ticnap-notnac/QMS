@@ -1,37 +1,13 @@
 import { useState, useEffect } from 'react'
-import Navbar from '@/components/Navbar'
+
 import './PagesStyles.css'
 
-export default function AuditToolsPage({
-  activePage,
-  onPageChange,
-  isUserMenuOpen,
-  onToggleMenu,
-  onLogout,
-  onToggleNotifications,
-  isNotificationsOpen,
-  userRole,
-  userName,
-  userPosition,
-  setProfileTargetTab,
-}) {
+export default function AuditToolsPage() {
   const [activeTab, setActiveTab] = useState('Logs')
 
   return (
     <>
-      <Navbar
-        activePage={activePage}
-        onPageChange={onPageChange}
-        isUserMenuOpen={isUserMenuOpen}
-        onToggleMenu={onToggleMenu}
-        onLogout={onLogout}
-        isNotificationsOpen={isNotificationsOpen}
-        onToggleNotifications={onToggleNotifications}
-        userRole={userRole}
-        userName={userName}
-        userPosition={userPosition}
-        setProfileTargetTab={setProfileTargetTab}
-      />
+
 
       <main className="audit-main">
         <h1>Audit Tools</h1>

@@ -1,5 +1,5 @@
 import { X as CloseIcon, SlidersHorizontal, SquarePen } from 'lucide-react'
-import Navbar from '../components/Navbar.jsx'
+
 import Toast from '@/components/Toast'
 import FilterModal from '../components/Modals/FilterModal.jsx'
 import UpdateReportModal from '../components/Modals/UpdateReportModal.jsx'
@@ -12,31 +12,14 @@ import { useReportsLogic } from '@/hooks/useReportsLogic'
 import './PagesStyles.css'
 
 function ReportsPage({
-  activePage, onPageChange,
-  isUserMenuOpen, onToggleMenu, onLogout,
-  isNotificationsOpen, onToggleNotifications,
   userRole, userName, userPosition,
-  setIsAdminPanelOpen, setIsAuditToolsOpen, setProfileTargetTab,
-  currentUserId, unreadNotificationCount, canViewNotifications, authUserId,
-  onUnreadCountChange, onRefreshUnreadCount, onOpenReport,
+  currentUserId, authUserId,
 }) {
   const logic = useReportsLogic({ currentUserId, userRole, authUserId })
 
   return (
     <main className="dashboard page-root">
-      <Navbar
-        activePage={activePage} onPageChange={onPageChange}
-        isUserMenuOpen={isUserMenuOpen} onToggleMenu={onToggleMenu} onLogout={onLogout}
-        isNotificationsOpen={isNotificationsOpen} onToggleNotifications={onToggleNotifications}
-        unreadNotificationCount={unreadNotificationCount} canViewNotifications={canViewNotifications}
-        userRole={userRole} userName={userName} userPosition={userPosition}
-        setIsAdminPanelOpen={setIsAdminPanelOpen} setIsAuditToolsOpen={setIsAuditToolsOpen}
-        setProfileTargetTab={setProfileTargetTab}
-        currentUserId={currentUserId}
-        onUnreadCountChange={onUnreadCountChange}
-        onRefreshUnreadCount={onRefreshUnreadCount}
-        onOpenReport={onOpenReport}
-      />
+
 
       {logic.toast && (
         <div style={{ position: 'fixed', right: '24px', top: '88px', zIndex: 50 }}>

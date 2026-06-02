@@ -5,9 +5,9 @@ export async function insertLog(payload = {}) {
   return await request('/logs', { method: 'POST', body: JSON.stringify(payload) })
 }
 
-export async function logAction({ level = 'audit', source, action, details = {} } = {}) {
+export async function logAction({ level = 'audit', source, action, details = {}, userAuthId: providedAuthId } = {}) {
   try {
-    const userAuthId = await getCurrentAuthId()
+    const userAuthId = providedAuthId !== undefined ? providedAuthId : await getCurrentAuthId()
     const payload = { level, source, action, userAuthId, details }
     return await insertLog(payload)
   } catch (err) {

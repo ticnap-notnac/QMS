@@ -1,5 +1,5 @@
 import React from 'react'
-import Navbar from '@/components/Navbar'
+
 import SettingsNavbar from '@/components/SettingsNavbar'
 import Toast from '@/components/Toast'
 import useSettingsPageLogic from '@/hooks/useSettingsPageLogic'
@@ -9,25 +9,9 @@ import './SettingsPage.css'
 
 export default function SettingsPage(props) {
   const {
-    activePage,
-    onPageChange,
-    isUserMenuOpen,
-    onToggleMenu,
-    onLogout,
-    onToggleNotifications,
-    isNotificationsOpen,
     userRole,
-    userName,
-    userPosition,
     authUserId,
-    setProfileTargetTab,
     onProfileUpdate,
-    currentUserId,
-    unreadNotificationCount,
-    canViewNotifications,
-    onUnreadCountChange,
-    onRefreshUnreadCount,
-    onOpenReport,
   } = props
 
   const {
@@ -47,19 +31,6 @@ export default function SettingsPage(props) {
   if (loading) {
     return (
       <>
-        <Navbar
-          activePage={activePage}
-          onPageChange={onPageChange}
-          isUserMenuOpen={isUserMenuOpen}
-          onToggleMenu={onToggleMenu}
-          onLogout={onLogout}
-          isNotificationsOpen={isNotificationsOpen}
-          onToggleNotifications={onToggleNotifications}
-          userRole={userRole}
-          userName={userName}
-          userPosition={userPosition}
-          setProfileTargetTab={setProfileTargetTab}
-        />
         <main className="page-padding">Loading...</main>
       </>
     )
@@ -69,30 +40,12 @@ export default function SettingsPage(props) {
     <>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <Navbar
-        activePage={activePage}
-        onPageChange={onPageChange}
-        isUserMenuOpen={isUserMenuOpen}
-        onToggleMenu={onToggleMenu}
-        onLogout={onLogout}
-        isNotificationsOpen={isNotificationsOpen}
-        onToggleNotifications={onToggleNotifications}
-        userRole={userRole}
-        userName={userName}
-        userPosition={userPosition}
-        setProfileTargetTab={setProfileTargetTab}
-        currentUserId={currentUserId}
-        unreadNotificationCount={unreadNotificationCount}
-        canViewNotifications={canViewNotifications}
-        onUnreadCountChange={onUnreadCountChange}
-        onRefreshUnreadCount={onRefreshUnreadCount}
-        onOpenReport={onOpenReport}
-      />
+
 
       <main className="page-container settings-page-container">
         <h1 className="page-heading settings-page-title">Settings</h1>
 
-        <SettingsNavbar userRole={userRole} activePage={activePage} onNavigate={onPageChange} />
+        <SettingsNavbar userRole={userRole} />
 
         <div className="settings-container settings-container--profile">
           <div className="settings-sidebar settings-sidebar--profile">
