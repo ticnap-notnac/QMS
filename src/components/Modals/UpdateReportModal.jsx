@@ -41,16 +41,17 @@ export default function UpdateReportModal({ isOpen, onClose, report, onSuccess }
   return (
     <div className="modal-overlay">
       <div className="modal-card modal-card--tall reports-update-card">
-        <button type="button" onClick={onClose} className="modal-close-button">×</button>
-        <div className="modal-header-row">
-          <FileSearch size={18} className="icon-teal" />
-          <h3 className="reports-update-title">Update Report</h3>
+        <button type="button" onClick={onClose} className="modal-close-button" style={{ zIndex: 10 }}>×</button>
+        
+        <div className="modal-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FileSearch size={18} className="icon-teal" />
+            <h3 className="reports-update-title">Update Report</h3>
+          </div>
         </div>
 
-        {error ? <div className="user-info-error">{error}</div> : null}
-
         <form
-          className="modal-form reports-form-compact"
+          className="modal-form-content reports-form-compact"
           onSubmit={async (event) => {
             const result = await handleSubmit(event)
             if (result?.success) {
@@ -58,6 +59,7 @@ export default function UpdateReportModal({ isOpen, onClose, report, onSuccess }
             }
           }}
         >
+          {error ? <div className="user-info-error" style={{ marginBottom: '16px' }}>{error}</div> : null}
           <div className="modal-grid-2">
             <FieldCard label="Product Type" value={report?.product_type_name || report?.product_type} />
             <FieldCard label="Batch Number" value={report?.batch_number} />
@@ -181,7 +183,7 @@ export default function UpdateReportModal({ isOpen, onClose, report, onSuccess }
             </div>
           </div>
 
-          <div className="reports-update-submit-row">
+          <div className="modal-footer-actions">
             <button type="submit" className="btn-gradient-primary reports-update-button" disabled={isSubmitting}>
               {isSubmitting ? 'Updating...' : 'Update Report'}
             </button>
