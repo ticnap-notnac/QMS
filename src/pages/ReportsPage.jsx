@@ -24,7 +24,6 @@ function ReportsPage({
   return (
     <main className="dashboard page-root">
 
-
       {logic.toast && (
         <div style={{ position: 'fixed', right: '24px', top: '88px', zIndex: 50 }}>
           <Toast message={logic.toast.message} type={logic.toast.type} onClose={() => logic.setToast(null)} />
@@ -62,48 +61,69 @@ function ReportsPage({
 
         {logic.error && <div className="user-info-error">{logic.error}</div>}
 
-        {/* ── Approval queue ──────────────────────────────────────────── */}
-        {logic.isApprovalQueueMode && (
-          <div className="reports-main-wrap" style={{ marginTop: '24px' }}>
-            <div className="reports-details-title-wrap" style={{ marginBottom: '12px' }}>
-              <h4 className="reports-details-title">Updated Reports Needing Approval</h4>
-            </div>
-            <div className="reports-list-stack">
-              {logic.displayedInvestigatedReports.length === 0 && (
-                <div className="reports-card">
-                  <div className="reports-workspace">
-                    <span className="reports-workspace-text">No updated reports are currently waiting for approval.</span>
+        {/* ── 📱 CENTRALIZED SOCIAL FEED WRAPPER ── */}
+        <div className="facebook-feed-layout-wrapper">
+
+          {/* ── Approval queue ──────────────────────────────────────────── */}
+          {logic.isApprovalQueueMode && (
+            <div className="reports-main-wrap" style={{ marginTop: '24px' }}>
+              <div className="reports-details-title-wrap" style={{ marginBottom: '12px' }}>
+                <h4 className="reports-details-title">Updated Reports Needing Approval</h4>
+              </div>
+              <div className="reports-list-stack">
+                {logic.displayedInvestigatedReports.length === 0 && (
+                  <div className="reports-card">
+                    <div className="reports-workspace">
+                      <span className="reports-workspace-text">No updated reports are currently waiting for approval.</span>
+                    </div>
                   </div>
-                </div>
-              )}
-              {logic.displayedInvestigatedReports.map((report) => (
-                <InvestigatedReportCard
-                  key={`investigated-${report.id}`}
+                )}
+                {logic.displayedInvestigatedReports.map((report) => (
+                  <InvestigatedReportCard
+                    key={`investigated-${report.id}`}
+                    report={report}
+                    departmentNameById={logic.departmentNameById}
+                    canAssignReports={logic.canAssignReports}
+                    canUpdateReport={logic.canUpdateReport}
+                    onApprove={(r) => logic.handleReviewReport(r, 'approve')}
+                    onReject={logic.openRejectModal}
+                    onUpdate={logic.openUpdateModal}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Main reports list ───────────────────────────────────────── */}
+          {logic.isLoading ? (
+            <div className="reports-card"><div className="glass-card-subtext">Loading reports...</div></div>
+          ) : logic.isClosedMode ? (
+            logic.closedReports.length === 0 ? (
+              <div className="reports-card">
+                <div className="reports-workspace"><span className="reports-workspace-text">No closed reports found</span></div>
+              </div>
+            ) : (
+              logic.closedReports.map((report) => (
+                <ReportCard
+                  key={`closed-${report.id}`}
                   report={report}
                   departmentNameById={logic.departmentNameById}
                   canAssignReports={logic.canAssignReports}
                   canUpdateReport={logic.canUpdateReport}
-                  onApprove={(r) => logic.handleReviewReport(r, 'approve')}
-                  onReject={logic.openRejectModal}
                   onUpdate={logic.openUpdateModal}
+                  onAssign={logic.openAssignModal}
+                  onViewDetail={logic.openDetailView}
                 />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Main reports list ───────────────────────────────────────── */}
-        {logic.isLoading ? (
-          <div className="reports-card"><div className="glass-card-subtext">Loading reports...</div></div>
-        ) : logic.isClosedMode ? (
-          logic.closedReports.length === 0 ? (
+              ))
+            )
+          ) : logic.reports.length === 0 ? (
             <div className="reports-card">
-              <div className="reports-workspace"><span className="reports-workspace-text">No closed reports found</span></div>
+              <div className="reports-workspace"><span className="reports-workspace-text">No open reports</span></div>
             </div>
           ) : (
-            logic.closedReports.map((report) => (
+            logic.reports.map((report) => (
               <ReportCard
-                key={`closed-${report.id}`}
+                key={report.id}
                 report={report}
                 departmentNameById={logic.departmentNameById}
                 canAssignReports={logic.canAssignReports}
@@ -113,25 +133,8 @@ function ReportsPage({
                 onViewDetail={logic.openDetailView}
               />
             ))
-          )
-        ) : logic.reports.length === 0 ? (
-          <div className="reports-card">
-            <div className="reports-workspace"><span className="reports-workspace-text">No open reports</span></div>
-          </div>
-        ) : (
-          logic.reports.map((report) => (
-            <ReportCard
-              key={report.id}
-              report={report}
-              departmentNameById={logic.departmentNameById}
-              canAssignReports={logic.canAssignReports}
-              canUpdateReport={logic.canUpdateReport}
-              onUpdate={logic.openUpdateModal}
-              onAssign={logic.openAssignModal}
-              onViewDetail={logic.openDetailView}
-            />
-          ))
-        )}
+          )}
+        </div>
       </div>
 
       {/* ── Modals ──────────────────────────────────────────────────────── */}

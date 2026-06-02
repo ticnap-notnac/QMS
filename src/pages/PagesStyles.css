@@ -2757,3 +2757,235 @@
   color: #fbbf24 !important;
   border: 1px solid rgba(245, 158, 11, 0.3) !important;
 }
+
+.brand-logo-box {
+  display: flex;
+  height: 32px;
+  width: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #22d3ee, #3b82f6);
+  font-weight: bold;
+  color: white;
+}
+
+.brand-text-stack { display: flex; flex-direction: column; align-items: flex-start; }
+.brand-text { font-size: 16px; font-weight: 600; color: #22d3ee; line-height: 1.2; }
+.brand-sub { font-size: 8px; text-transform: uppercase; color: #94a3b8; line-height: 1; }
+
+.nav-tab-button { background: none; border: none; color: #94a3b8; padding: 6px 12px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.nav-tab-button:hover { color: #e7f1ff; }
+.nav-tab-button.active { color: #22d3ee; }
+
+.nav-icon-button { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; position: relative; }
+.nav-bell-button { padding: 6px; border-radius: 999px; transition: color 0.2s ease, background 0.2s ease; }
+.nav-bell-button:hover { background: rgba(34,211,238,0.08); color: #22d3ee; }
+.nav-bell-badge { position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; border-radius: 999px; padding: 0 5px; background: linear-gradient(135deg, #22d3ee, #3b82f6); color: #ffffff; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px rgba(13, 27, 49, 0.95); }
+
+.nav-user-info { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.nav-user-name { font-size: 12px; font-weight: 500; color: #e2e8f0; }
+.nav-user-position { font-size: 10px; color: #64748b; }
+
+.user-avatar { height: 32px; width: 32px; border-radius: 50%; }
+.user-avatar.admin { background: rgba(167,139,250,0.2); border: 1px solid #a78bfa; }
+.user-avatar.default { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.1); }
+
+.user-menu-dropdown { position: absolute; right: 24px; top: 64px; background: rgba(13, 27, 49, 0.96); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 6px; min-width: 170px; display: flex; flex-direction: column; z-index: 250; box-shadow: 0 12px 30px rgba(0,0,0,0.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.user-menu-item { background: none; border: none; color: #cbd5e1; padding: 10px 14px; text-align: left; font-size: 13px; font-weight: 500; cursor: pointer; border-radius: 5px; width: 100%; transition: background 0.15s ease; }
+.user-menu-item:hover { background: rgba(255,255,255,0.05); }
+.user-menu-item.admin { color: #c084fc; }
+.user-menu-item.logout { color: #ef4444; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 4px; padding-top: 8px; }
+
+/* SettingsNavbar styles */
+.settings-top-nav { display: flex; gap: 12px; margin-bottom: 20px; align-items: center; }
+.settings-top-nav .user-info-tab-button { padding: 8px 14px; }
+
+/* UserMenu component styles */
+.user { display: flex; align-items: center; gap: 16px; }
+.bell-button { background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 6px; border-radius: 50%; transition: all 0.2s ease; position: relative; }
+.bell-button:hover { color: #22d3ee; }
+.bell-dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #22d3ee; border-radius: 50%; box-shadow: 0 0 8px #22d3ee; }
+.user-trigger { background: none; border: none; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 0; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.04); }
+.user-info { display: flex; flex-direction: column; align-items: flex-start; }
+.user-name { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+.user-role { font-size: 12px; color: #94a3b8; }
+.user-menu { position: absolute; right: 0; top: 100%; margin-top: 8px; background: #0d1b31; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 4px; min-width: 160px; display: flex; flex-direction: column; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+.menu-item { background: none; border: none; color: #cbd5e1; padding: 10px 12px; text-align: left; font-size: 13px; cursor: pointer; border-radius: 4px; width: 100%; }
+.menu-item:hover { background: rgba(255,255,255,0.03); }
+
+/* Notifications modal messages */
+.modal-message { padding: 16px; text-align: center; color: #94a3b8; }
+.modal-message.error { color: #ef4444; }
+.modal-message.loading { color: #94a3b8; }
+
+.notifications-modal-shell { width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 48px); display: flex; flex-direction: column; gap: 16px; }
+.notifications-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.notifications-title-cluster { display: flex; align-items: center; gap: 12px; }
+.notifications-modal-icon { width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: rgba(34,211,238,0.12); color: #67e8f9; }
+.notifications-modal-subtitle { margin: 2px 0 0; color: #94a3b8; font-size: 12px; }
+.notifications-header-actions { display: flex; align-items: center; gap: 10px; }
+.notifications-mark-all { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(34,211,238,0.18); background: rgba(34,211,238,0.08); color: #a5f3fc; padding: 8px 12px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+.notifications-mark-all:hover { background: rgba(34,211,238,0.14); }
+.notifications-list { display: flex; flex-direction: column; gap: 12px; overflow: auto; max-height: calc(100vh - 180px); padding-right: 4px; }
+.notifications-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px 16px; color: #94a3b8; border: 1px dashed rgba(148,163,184,0.2); border-radius: 16px; background: rgba(255,255,255,0.02); }
+.notification-card { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: start; padding: 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.03); }
+.notification-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 72px; height: 30px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.notification-pill--warning { background: rgba(245, 158, 11, 0.14); color: #fcd34d; }
+.notification-pill--overdue { background: rgba(239, 68, 68, 0.14); color: #fca5a5; }
+.notification-pill--success { background: rgba(16, 185, 129, 0.14); color: #6ee7b7; }
+.notification-pill--info { background: rgba(34, 211, 238, 0.14); color: #67e8f9; }
+.notification-card-body { display: flex; flex-direction: column; gap: 8px; }
+.notification-card-title { margin: 0; color: #e2e8f0; font-size: 14px; font-weight: 700; }
+.notification-card-message { margin: 0; color: #cbd5e1; font-size: 13px; line-height: 1.5; }
+.notification-card-meta { display: flex; flex-wrap: wrap; gap: 10px; color: #94a3b8; font-size: 11px; }
+.notification-mark-read { border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #e2e8f0; border-radius: 12px; padding: 8px 12px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+.notification-mark-read:hover { background: rgba(34,211,238,0.08); border-color: rgba(34,211,238,0.2); color: #a5f3fc; }
+
+/* SettingsNavbar label */
+.settings-nav-label { margin-left: 8px; }
+
+/* AdminNavbar styles */
+.admin-top-nav { display: flex; gap: 20px; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.admin-tabs { display: flex; gap: 8px; align-items: center; }
+.admin-tab-button { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); color: #94a3b8; padding: 8px 12px; border-radius: 14px; cursor: pointer; font-weight: 600; font-size: 13px; }
+.admin-tab-button.active { background: rgba(34,211,238,0.08); color: #22d3ee; border-color: rgba(34,211,238,0.18); }
+.admin-tab-button.disabled,
+.admin-tab-button:disabled { opacity: 0.45; cursor: not-allowed; color: #64748b; }
+
+.admin-controls { display: flex; gap: 14px; align-items: center; }
+.admin-search { display: flex; align-items: center; background: rgba(255,255,255,0.02); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); }
+.admin-search-input { background: transparent; border: none; outline: none; color: #cbd5e1; padding: 6px 10px; min-width: 360px; }
+.admin-search-input::placeholder { color: #6b7280; }
+.admin-search-btn { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; padding: 6px; }
+
+.admin-actions { display: flex; gap: 12px; align-items: center; }
+.btn-add-action { background: linear-gradient(180deg,#0ea5b1,#0369a1); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; font-weight: 600; }
+.admin-count-bubble { background: rgba(34,211,238,0.14); color: #22d3ee; padding: 6px 10px; border-radius: 20px; font-weight: 700; font-size: 13px; }
+
+/* System Logs panel */
+.system-logs-panel { padding: 12px; color: #e2e8f0; }
+.system-logs-panel .panel-header { display:flex; align-items:center; gap:12px; justify-content:space-between; margin-bottom:12px; }
+.system-logs-panel .panel-actions { display:flex; gap:8px; align-items:center; }
+.system-logs-panel .btn { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); color: #cbd5e1; padding:6px 8px; border-radius:6px; cursor:pointer; }
+.system-logs-panel .btn--ghost { background: transparent; border: none; color: #94a3b8; }
+.system-logs-panel .btn--muted { background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); }
+.system-logs-panel .logs-table { margin-top:12px; overflow:auto; }
+.system-logs-panel table { width:100%; border-collapse: collapse; color: #e2e8f0; }
+.system-logs-panel th, .system-logs-panel td { padding: 8px 10px; text-align: left; font-size: 13px; }
+.system-logs-panel thead th { color: #94a3b8; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.system-logs-panel tbody tr:nth-child(odd) { background: rgba(255,255,255,0.01); }
+.system-logs-panel .pagination { display:flex; gap:12px; align-items:center; justify-content:flex-end; margin-top:8px; }
+
+@media (max-width: 768px) {
+  .system-logs-panel table { font-size: 12px; }
+  .system-logs-panel .admin-search-input { min-width: 140px; }
+}
+
+/* ==========================================================================
+   FIX: FORCING NOTIFICATION PANEL TO SCREEN CENTER & ABSOLUTE FRONT
+   ========================================================================== */
+
+.notification-floating-dropdown {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 99999 !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  right: auto !important;
+}
+
+.notification-floating-dropdown .modal-card {
+  z-index: 9999999 !important;
+  position: relative !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* ==========================================================================
+   THE NUCLEAR OVERRIDE: SIBLING STACKING ENGINE CORRECTION
+   ========================================================================== */
+
+.navbar + .notification-floating-dropdown,
+.navbar-container + .notification-floating-dropdown,
+.notification-floating-dropdown {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 2147483647 !important;
+}
+
+.navbar,
+.navbar-container,
+div[class*="navbar"] {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* ==========================================================================
+   PORTAL-POWERED NOTIFICATION OVERLAY STYLES
+   ========================================================================== */
+
+.notification-portal-overlay {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(11, 24, 53, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999999 !important;
+}
+
+.notification-modal-card {
+  position: relative !important;
+  background: rgba(11, 24, 53, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 650px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8);
+  padding: 24px;
+}
+
+/* ==========================================================================
+   📱 FACEBOOK-STYLE LAYOUT ENGINE FOR REPORT TIMELINE CARDS
+   ========================================================================== */
+
+/* 1. Alignment wrapper constraining column width sizing dimensions */
+.facebook-feed-layout-wrapper {
+  max-width: 620px !important;       /* 🎯 Matches standard desktop timeline post feed width sizes */
+  margin: 24px auto 0 auto !important; /* Centers column layouts and balances header separation padding gaps */
+  width: 100% !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;              /* Provides clean gaps between structural timeline events */
+}
+
+/* 2. Global card scaling limits for all children nodes */
+.facebook-feed-layout-wrapper .reports-card,
+.facebook-feed-layout-wrapper .reports-list-stack > div {
+  width: 100% !important;
+  max-width: 620px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* 3. Image attachments display container scaling control bounds */
+.facebook-feed-layout-wrapper img {
+  max-height: 440px !important;      /* 🛑 Clamps vertical stretch height limit completely */
+  object-fit: contain !important;    /* 🎯 Scales images uniformly without ruining their aspect ratios */
+  background: #ffffff !important;     /* Ensures white backdrop canvas space handles dynamic margin spaces */
+  width: 100% !important;
+}
