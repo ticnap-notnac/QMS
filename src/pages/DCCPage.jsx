@@ -23,6 +23,12 @@ export default function DCCPage({
   setIsAdminPanelOpen,
   setIsAuditToolsOpen,
   setProfileTargetTab,
+  currentUserId,
+  unreadNotificationCount,
+  canViewNotifications,
+  onUnreadCountChange,
+  onRefreshUnreadCount,
+  onOpenReport,
 }) {
   const {
     searchQuery,
@@ -60,6 +66,12 @@ export default function DCCPage({
         setIsAdminPanelOpen={setIsAdminPanelOpen}
         setIsAuditToolsOpen={setIsAuditToolsOpen}
         setProfileTargetTab={setProfileTargetTab}
+        currentUserId={currentUserId}
+        unreadNotificationCount={unreadNotificationCount}
+        canViewNotifications={canViewNotifications}
+        onUnreadCountChange={onUnreadCountChange}
+        onRefreshUnreadCount={onRefreshUnreadCount}
+        onOpenReport={onOpenReport}
       />
 
       <div className="dcc-main-wrapper">

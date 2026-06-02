@@ -26,6 +26,12 @@ export default function AddUserPage({
   userName,
   userPosition,
   setProfileTargetTab,
+  currentUserId,
+  unreadNotificationCount,
+  canViewNotifications,
+  onUnreadCountChange,
+  onRefreshUnreadCount,
+  onOpenReport,
 }) {
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -247,6 +253,12 @@ export default function AddUserPage({
         userName={userName}
         userPosition={userPosition}
         setProfileTargetTab={setProfileTargetTab}
+        currentUserId={currentUserId}
+        unreadNotificationCount={unreadNotificationCount}
+        canViewNotifications={canViewNotifications}
+        onUnreadCountChange={onUnreadCountChange}
+        onRefreshUnreadCount={onRefreshUnreadCount}
+        onOpenReport={onOpenReport}
       />
 
       {userRole === 'admin' ? (
@@ -343,8 +355,8 @@ export default function AddUserPage({
                                 <td>{user.employee_no || '-'}</td>
                                 <td>
                                   <span className={`status-badge ${user.status === 'ACTIVE' ? 'status-active' :
-                                      user.status === 'DEACTIVATED' ? 'status-deactivated' :
-                                        'status-inactive'
+                                    user.status === 'DEACTIVATED' ? 'status-deactivated' :
+                                      'status-inactive'
                                     }`}>
                                     {user.status ?? 'ACTIVE'}
                                   </span>

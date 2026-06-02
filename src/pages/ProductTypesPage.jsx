@@ -25,6 +25,12 @@ export default function ProductTypesPage({
   userName,
   userPosition,
   setProfileTargetTab,
+  currentUserId,
+  unreadNotificationCount,
+  canViewNotifications,
+  onUnreadCountChange,
+  onRefreshUnreadCount,
+  onOpenReport,
 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
@@ -95,6 +101,12 @@ export default function ProductTypesPage({
         userName={userName}
         userPosition={userPosition}
         setProfileTargetTab={setProfileTargetTab}
+        currentUserId={currentUserId}
+        unreadNotificationCount={unreadNotificationCount}
+        canViewNotifications={canViewNotifications}
+        onUnreadCountChange={onUnreadCountChange}
+        onRefreshUnreadCount={onRefreshUnreadCount}
+        onOpenReport={onOpenReport}
       />
 
       {userRole === 'admin' ? (

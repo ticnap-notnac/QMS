@@ -22,6 +22,12 @@ export default function SettingsPage(props) {
     authUserId,
     setProfileTargetTab,
     onProfileUpdate,
+    currentUserId,
+    unreadNotificationCount,
+    canViewNotifications,
+    onUnreadCountChange,
+    onRefreshUnreadCount,
+    onOpenReport,
   } = props
 
   const {
@@ -75,6 +81,12 @@ export default function SettingsPage(props) {
         userName={userName}
         userPosition={userPosition}
         setProfileTargetTab={setProfileTargetTab}
+        currentUserId={currentUserId}
+        unreadNotificationCount={unreadNotificationCount}
+        canViewNotifications={canViewNotifications}
+        onUnreadCountChange={onUnreadCountChange}
+        onRefreshUnreadCount={onRefreshUnreadCount}
+        onOpenReport={onOpenReport}
       />
 
       <main className="page-container settings-page-container">

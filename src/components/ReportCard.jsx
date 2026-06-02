@@ -20,11 +20,12 @@ import { formatDate, getStatusStyle, getSeverityStyle, formatAssignedUser } from
  *   report: object,
  *   departmentNameById: Map<string, string>,
  *   canAssignReports: boolean,
+ *   canUpdateReport: (report: object) => boolean,
  *   onUpdate: (report: object) => void,
  *   onAssign: (report: object) => void,
  * }} props
  */
-function ReportCard({ report, departmentNameById, canAssignReports, onUpdate, onAssign }) {
+function ReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, onUpdate, onAssign }) {
   const reporterName = report.reporter_full_name || 'Name of the User'
   const reporterRole = report.reporter_role_name || 'Position'
   const reporterDepartment =
@@ -118,14 +119,16 @@ function ReportCard({ report, departmentNameById, canAssignReports, onUpdate, on
             Assign
           </button>
         )}
-        <button
-          type="button"
-          className="btn-edit-user"
-          onClick={() => onUpdate(report)}
-          title="Update report"
-        >
-          <SquarePen size={16} />
-        </button>
+        {canUpdateReport && canUpdateReport(report) && (
+          <button
+            type="button"
+            className="btn-edit-user"
+            onClick={() => onUpdate(report)}
+            title="Update report"
+          >
+            <SquarePen size={16} />
+          </button>
+        )}
       </div>
     </div>
   )

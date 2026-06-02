@@ -57,6 +57,12 @@ export default function UserInformationPage(props) {
         userName={userName}
         userPosition={userPosition}
         setProfileTargetTab={setProfileTargetTab}
+        currentUserId={props.currentUserId}
+        unreadNotificationCount={props.unreadNotificationCount}
+        canViewNotifications={props.canViewNotifications}
+        onUnreadCountChange={props.onUnreadCountChange}
+        onRefreshUnreadCount={props.onRefreshUnreadCount}
+        onOpenReport={props.onOpenReport}
       />
 
       <main className="page-container user-info-page-container">

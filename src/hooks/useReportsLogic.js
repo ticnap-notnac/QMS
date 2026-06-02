@@ -167,6 +167,21 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     [userRole],
   )
 
+  /**
+   * Returns true if the current user is allowed to update the given report.
+   * - Admins and auditors can always update.
+   * - Regular users can only update if they are the assigned user.
+   */
+  const canUpdateReport = useCallback(
+    (report) => {
+      if (!report) return false
+      if (canAssignReports) return true
+      return String(report.assigned_to || '') !== '' &&
+        String(report.assigned_to) === String(currentAuthId)
+    },
+    [canAssignReports, currentAuthId],
+  )
+
   const locationOptions = useMemo(() => toOptionList(locations, 'location_name'), [locations])
   const productTypeOptions = useMemo(() => toOptionList(productTypes, 'product_type_name'), [productTypes])
 
@@ -245,7 +260,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
 
   const clearEvidenceState = () => {
     if (evidencePreviewMain) {
-      try { URL.revokeObjectURL(evidencePreviewMain) } catch (_) {}
+      try { URL.revokeObjectURL(evidencePreviewMain) } catch (_) { }
     }
     setEvidenceFileMain(null)
     setEvidencePreviewMain(null)
@@ -470,6 +485,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
 
     // Derived
     canAssignReports,
+    canUpdateReport,
 
     // Handlers
     openCreateModal,

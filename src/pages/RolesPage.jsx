@@ -12,7 +12,25 @@ import {
   deleteRole as deleteRoleController,
 } from '@/services/roleService'
 
-export default function RolesPage({ activePage, onPageChange, isUserMenuOpen, onToggleMenu, onLogout, onToggleNotifications, isNotificationsOpen, userRole, userName, userPosition, setProfileTargetTab }) {
+export default function RolesPage({
+  activePage,
+  onPageChange,
+  isUserMenuOpen,
+  onToggleMenu,
+  onLogout,
+  onToggleNotifications,
+  isNotificationsOpen,
+  userRole,
+  userName,
+  userPosition,
+  setProfileTargetTab,
+  currentUserId,
+  unreadNotificationCount,
+  canViewNotifications,
+  onUnreadCountChange,
+  onRefreshUnreadCount,
+  onOpenReport
+}) {
   const {
     items,
     filtered,
@@ -47,6 +65,12 @@ export default function RolesPage({ activePage, onPageChange, isUserMenuOpen, on
         userName={userName}
         userPosition={userPosition}
         setProfileTargetTab={setProfileTargetTab}
+        currentUserId={currentUserId}
+        unreadNotificationCount={unreadNotificationCount}
+        canViewNotifications={canViewNotifications}
+        onUnreadCountChange={onUnreadCountChange}
+        onRefreshUnreadCount={onRefreshUnreadCount}
+        onOpenReport={onOpenReport}
       />
 
       {userRole === 'admin' ? (
@@ -87,13 +111,13 @@ export default function RolesPage({ activePage, onPageChange, isUserMenuOpen, on
                 </div>
               </div>
 
-                  <div className="glass-card-content">
-                    <div className="panel-narrow">
-                      <p className="glass-card-subtext">Use the add button above to create a new role.</p>
-                      <AdminListPanel title="Available Roles" items={filtered} loading={loading} labelKey="role_name" onDelete={handleDeleteRole} deletingId={deletingId} noMatchesText="No matches found." />
-                      {error ? <p className="glass-card-subtext">{error}</p> : null}
-                    </div>
-                  </div>
+              <div className="glass-card-content">
+                <div className="panel-narrow">
+                  <p className="glass-card-subtext">Use the add button above to create a new role.</p>
+                  <AdminListPanel title="Available Roles" items={filtered} loading={loading} labelKey="role_name" onDelete={handleDeleteRole} deletingId={deletingId} noMatchesText="No matches found." />
+                  {error ? <p className="glass-card-subtext">{error}</p> : null}
+                </div>
+              </div>
             </div>
           </div>
 

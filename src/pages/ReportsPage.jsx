@@ -17,6 +17,7 @@ function ReportsPage({
   userRole, userName, userPosition,
   setIsAdminPanelOpen, setIsAuditToolsOpen, setProfileTargetTab,
   currentUserId, unreadNotificationCount, canViewNotifications, authUserId,
+  onUnreadCountChange, onRefreshUnreadCount, onOpenReport,
 }) {
   const logic = useReportsLogic({ currentUserId, userRole, authUserId })
 
@@ -30,6 +31,10 @@ function ReportsPage({
         userRole={userRole} userName={userName} userPosition={userPosition}
         setIsAdminPanelOpen={setIsAdminPanelOpen} setIsAuditToolsOpen={setIsAuditToolsOpen}
         setProfileTargetTab={setProfileTargetTab}
+        currentUserId={currentUserId}
+        onUnreadCountChange={onUnreadCountChange}
+        onRefreshUnreadCount={onRefreshUnreadCount}
+        onOpenReport={onOpenReport}
       />
 
       {logic.toast && (
@@ -80,6 +85,7 @@ function ReportsPage({
                   report={report}
                   departmentNameById={logic.departmentNameById}
                   canAssignReports={logic.canAssignReports}
+                  canUpdateReport={logic.canUpdateReport}
                   onApprove={(r) => logic.handleReviewReport(r, 'approve')}
                   onReject={logic.openRejectModal}
                   onUpdate={logic.openUpdateModal}
@@ -103,6 +109,7 @@ function ReportsPage({
               report={report}
               departmentNameById={logic.departmentNameById}
               canAssignReports={logic.canAssignReports}
+              canUpdateReport={logic.canUpdateReport}
               onUpdate={logic.openUpdateModal}
               onAssign={logic.openAssignModal}
             />

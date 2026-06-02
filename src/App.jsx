@@ -3,7 +3,6 @@ import './App.css'
 import { supabase } from './utils/supabase'
 import Login from './components/Login.jsx'
 import IntroModal from './components/Modals/IntroModal.jsx'
-import NotificationsModal from './components/NotificationsModal.jsx'
 import { fetchUnreadNotificationCount } from '@/services/notificationService'
 import DashboardPage from './pages/DashboardPage.jsx'
 import ReportsPage from './pages/ReportsPage.jsx'
@@ -244,6 +243,9 @@ export default function App() {
       authUserId: user?.id || '',
       profileTargetTab,
       setProfileTargetTab,
+      onUnreadCountChange: setUnreadNotificationCount,
+      onRefreshUnreadCount: refreshUnreadNotificationCount,
+      onOpenReport: handleNotificationSelect,
     }
 
     if (activePage === 'Reports') {
@@ -325,14 +327,6 @@ export default function App() {
         )}
 
         <IntroModal isOpen={showIntro} onClose={() => setShowIntro(false)} />
-        <NotificationsModal
-          isOpen={isNotificationsOpen}
-          onClose={() => setIsNotificationsOpen(false)}
-          currentUserId={currentUserId}
-          onUnreadCountChange={setUnreadNotificationCount}
-          onRefreshUnreadCount={refreshUnreadNotificationCount}
-          onOpenReport={handleNotificationSelect}
-        />
       </div>
     </LookupProvider>
   )

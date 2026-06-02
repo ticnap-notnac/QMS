@@ -20,12 +20,13 @@ import { formatDate, getStatusStyle, getSeverityStyle, getApprovalState } from '
  *   report: object,
  *   departmentNameById: Map<string, string>,
  *   canAssignReports: boolean,
+ *   canUpdateReport: (report: object) => boolean,
  *   onApprove: (report: object) => void,
  *   onReject: (report: object) => void,
  *   onUpdate: (report: object) => void,
  * }} props
  */
-function InvestigatedReportCard({ report, departmentNameById, canAssignReports, onApprove, onReject, onUpdate }) {
+function InvestigatedReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, onApprove, onReject, onUpdate }) {
   const reporterName = report.reporter_full_name || 'Name of the User'
   const reporterRole = report.reporter_role_name || 'Position'
   const reporterDepartment =
@@ -148,14 +149,16 @@ function InvestigatedReportCard({ report, departmentNameById, canAssignReports, 
           </button>
         )}
 
-        <button
-          type="button"
-          className="btn-edit-user"
-          onClick={() => onUpdate(report)}
-          title="Update report"
-        >
-          <SquarePen size={16} />
-        </button>
+        {canUpdateReport && canUpdateReport(report) && (
+          <button
+            type="button"
+            className="btn-edit-user"
+            onClick={() => onUpdate(report)}
+            title="Update report"
+          >
+            <SquarePen size={16} />
+          </button>
+        )}
       </div>
     </div>
   )

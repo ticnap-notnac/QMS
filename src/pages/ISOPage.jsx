@@ -26,7 +26,13 @@ function ISOPage({
   userPosition,
   setIsAdminPanelOpen,      
   setIsAuditToolsOpen,
-  setProfileTargetTab
+  setProfileTargetTab,
+  currentUserId,
+  unreadNotificationCount,
+  canViewNotifications,
+  onUnreadCountChange,
+  onRefreshUnreadCount,
+  onOpenReport,
 }) {
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
   const [isAuditTaskModalOpen, setIsAuditTaskModalOpen] = useState(false);
@@ -79,6 +85,12 @@ function ISOPage({
         setIsAdminPanelOpen={setIsAdminPanelOpen}
         setIsAuditToolsOpen={setIsAuditToolsOpen}
         setProfileTargetTab={setProfileTargetTab}
+        currentUserId={currentUserId}
+        unreadNotificationCount={unreadNotificationCount}
+        canViewNotifications={canViewNotifications}
+        onUnreadCountChange={onUnreadCountChange}
+        onRefreshUnreadCount={onRefreshUnreadCount}
+        onOpenReport={onOpenReport}
       />
 
       <div className="page-main iso-page-main">

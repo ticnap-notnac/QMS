@@ -14,7 +14,13 @@ function DashboardPage({
   userPosition,
   setIsAdminPanelOpen,      
   setIsAuditToolsOpen,
-  setProfileTargetTab
+  setProfileTargetTab,
+  currentUserId,
+  unreadNotificationCount,
+  canViewNotifications,
+  onUnreadCountChange,
+  onRefreshUnreadCount,
+  onOpenReport,
 }) {
   return (
     <main className="dashboard">
@@ -32,6 +38,12 @@ function DashboardPage({
         setIsAdminPanelOpen={setIsAdminPanelOpen}
         setIsAuditToolsOpen={setIsAuditToolsOpen}
         setProfileTargetTab={setProfileTargetTab}
+        currentUserId={currentUserId}
+        unreadNotificationCount={unreadNotificationCount}
+        canViewNotifications={canViewNotifications}
+        onUnreadCountChange={onUnreadCountChange}
+        onRefreshUnreadCount={onRefreshUnreadCount}
+        onOpenReport={onOpenReport}
       />
       <Dashboard 
         activePage={activePage}

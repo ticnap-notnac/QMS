@@ -1,4 +1,5 @@
 import { Bell } from 'lucide-react'
+import NotificationsModal from './NotificationsModal.jsx'
 import './components.css'
 
 export default function Navbar({
@@ -7,15 +8,20 @@ export default function Navbar({
   isUserMenuOpen,
   onToggleMenu,
   onLogout,
+  isNotificationsOpen,
   onToggleNotifications,
   userRole,
   userName,
   userPosition,
   unreadNotificationCount = 0,
   canViewNotifications,
+  currentUserId,
+  onUnreadCountChange,
+  onRefreshUnreadCount,
+  onOpenReport,
   setIsAdminPanelOpen,
   setIsAuditToolsOpen,
-  setProfileTargetTab 
+  setProfileTargetTab
 }) {
   const normalizedRole = String(userRole || '').trim().toLowerCase()
   const shouldShowNotifications = typeof canViewNotifications === 'boolean'
@@ -72,6 +78,15 @@ export default function Navbar({
         </div>
       )}
       </div>
+
+      <NotificationsModal
+        isOpen={isNotificationsOpen}
+        onClose={onToggleNotifications}
+        currentUserId={currentUserId}
+        onUnreadCountChange={onUnreadCountChange}
+        onRefreshUnreadCount={onRefreshUnreadCount}
+        onOpenReport={onOpenReport}
+      />
     </header>
   )
 }

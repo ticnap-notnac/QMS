@@ -44,6 +44,12 @@ export default function ISOStandardsPage({
   setProfileTargetTab,
   supabaseUrl,
   supabaseAnonKey,
+  currentUserId,
+  unreadNotificationCount,
+  canViewNotifications,
+  onUnreadCountChange,
+  onRefreshUnreadCount,
+  onOpenReport,
 }) {
   const supabaseClient = useMemo(() => {
     const resolvedUrl = stripQuotes(supabaseUrl || import.meta.env.VITE_SUPABASE_URL || '')
@@ -486,6 +492,12 @@ export default function ISOStandardsPage({
         userName={userName}
         userPosition={userPosition}
         setProfileTargetTab={setProfileTargetTab}
+        currentUserId={currentUserId}
+        unreadNotificationCount={unreadNotificationCount}
+        canViewNotifications={canViewNotifications}
+        onUnreadCountChange={onUnreadCountChange}
+        onRefreshUnreadCount={onRefreshUnreadCount}
+        onOpenReport={onOpenReport}
       />
 
       {userRole === 'admin' ? (
