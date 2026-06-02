@@ -112,6 +112,11 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
   const [isPreventiveActionModalOpen, setIsPreventiveActionModalOpen] = useState(false)
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
+  const [detailReport, setDetailReport] = useState(null)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
+
+  const openDetailView = (report) => { setDetailReport(report); setIsDetailOpen(true) }
+  const closeDetailView = () => { setIsDetailOpen(false); setDetailReport(null) }
 
   // ── Async / UI state ────────────────────────────────────────────────────────
   const [isLoading, setIsLoading] = useState(false)
@@ -502,5 +507,9 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     handleAssignSuccess,
     handleReviewReport,
     handleSubmitReport,
+    detailReport,
+    isDetailOpen,
+    openDetailView,
+    closeDetailView,
   }
 }
