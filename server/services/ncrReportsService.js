@@ -282,7 +282,9 @@ export async function fetchReports(scope = 'open') {
   let query = supabase.from('ncr_reports').select('*')
 
   if (scope === 'investigated') {
-    query = query.not('investigation_details', 'is', null)
+    query = query.not('investigation_details', 'is', null).not('status', 'ilike', 'closed')
+  } else if (scope === 'closed') {
+    query = query.ilike('status', 'closed')
   } else if (scope !== 'all') {
     query = query.is('investigation_details', null)
   }
@@ -695,4 +697,117 @@ export async function assignReportToEmployee({ reportId, assignedToId, currentUs
   }
 
   return { report: updatedReport || null, assignedTo: assignee }
+}
+
+export async function submitReportRating({ reportId, rating, userAuthId }) {
+  const normalizedReportId = normalizeId(reportId)
+  if (!normalizedReportId) throw new Error('Report id is required.')
+
+  const { data: currentUser, error: currentUserError } = await supabase
+    .from('users').select('id, user_name').eq('auth_id', userAuthId).maybeSingle()
+  if (currentUserError) throw currentUserError
+  if (!currentUser) throw new Error('Current user profile not found.')
+
+  const { data: report, error: reportError } = await supabase
+    .from('ncr_reports')
+    .select('id, reference_no, status, issue_type, investigation_details, resolution_details')
+    .eq('id', normalizedReportId)
+    .maybeSingle()
+  if (reportError) throw reportError
+  if (!report) throw new Error('NCR report not found.')
+  if (String(report.status || '').trim().toUpperCase() !== 'CLOSED') {
+    throw Object.assign(new Error('Only closed reports can be rated.'), { status: 400 })
+  }
+
+  // Insert or update rating
+  const { data: ratingData, error: ratingError } = await supabase
+    .from('ncr_report_ratings')
+    .upsert(
+      { report_id: report.id, rated_by: currentUser.id, rating },
+      { onConflict: 'report_id,rated_by' }
+    )
+    .select('*')
+    .maybeSingle()
+  if (ratingError) throw ratingError
+
+  // Fetch updated average
+  const { data: allRatings, error: allRatingsError } = await supabase
+    .from('ncr_report_ratings')
+    .select('rating')
+    .eq('report_id', report.id)
+  
+  if (!allRatingsError && allRatings && allRatings.length > 0) {
+    const avg = allRatings.reduce((sum, r) => sum + Number(r.rating), 0) / allRatings.length
+    if (avg >= 3.0) {
+      // Promote to case_repository
+      const { data: existingCase, error: existingCaseError } = await supabase
+        .from('case_repository')
+        .select('id')
+        .eq('corrective_action', report.investigation_details)
+        .eq('preventive_action', report.resolution_details)
+        .maybeSingle()
+      
+      if (!existingCase && !existingCaseError && report.investigation_details) {
+        await supabase.from('case_repository').insert([{
+          issue_type: report.issue_type || 'ncr',
+          corrective_action: report.investigation_details,
+          preventive_action: report.resolution_details || 'None provided',
+          effectiveness_score: avg,
+          problem_keywords: (report.description || '').slice(0, 200),
+          times_used: 1
+        }])
+      } else if (existingCase) {
+        // Update effectiveness score
+        await supabase.from('case_repository').update({ effectiveness_score: avg })
+          .eq('id', existingCase.id)
+      }
+    }
+  }
+
+  try {
+    await writeAudit({
+      source: 'report_ratings',
+      action: 'rate_report',
+      userAuthId,
+      details: { report_id: report.id, rating }
+    })
+  } catch (err) {
+    console.warn('Failed to audit rate_report:', err)
+  }
+
+  return ratingData
+}
+
+export async function getReportRatingsStats({ reportId, userAuthId }) {
+  const normalizedReportId = normalizeId(reportId)
+  if (!normalizedReportId) throw new Error('Report id is required.')
+
+  const { data: currentUser } = await supabase
+    .from('users').select('id').eq('auth_id', userAuthId).maybeSingle()
+
+  const { data: allRatings, error: allRatingsError } = await supabase
+    .from('ncr_report_ratings')
+    .select('rating, rated_by')
+    .eq('report_id', normalizedReportId)
+  
+  if (allRatingsError) throw allRatingsError
+
+  const userRating = allRatings && currentUser
+    ? allRatings.find(r => String(r.rated_by) === String(currentUser.id))?.rating || null
+    : null
+  
+  let total = 0
+  
+  const validRatings = allRatings || []
+  for (const r of validRatings) {
+    total += Number(r.rating)
+  }
+
+  const average = validRatings.length > 0 ? (total / validRatings.length) : 0
+
+  return {
+    average: Number(average.toFixed(1)),
+    count: validRatings.length,
+    userRating
+  }
 }

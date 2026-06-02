@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, useRef } from 'react'
 import './App.css'
 import { supabase } from './utils/supabase'
-import Login from './components/Login.jsx'
+import Login from './components/Auth/Login.jsx'
 import IntroModal from './components/Modals/IntroModal.jsx'
 import { fetchUnreadNotificationCount } from '@/services/notificationService'
 import DashboardPage from './pages/DashboardPage.jsx'
@@ -19,7 +19,7 @@ import SettingsPage from './pages/SettingsPage.jsx'
 import AuditToolsPage from './pages/AuditToolsPage.jsx'
 import { LookupProvider } from './context/LookupContext'
 import { Routes, Route, useNavigate } from 'react-router-dom'
-import Navbar from './components/Navbar.jsx'
+import Navbar from './components/Navbars/Navbar.jsx'
 import { logAction } from '@/services/logService'
 
 function normalizeRoleValue(value) {

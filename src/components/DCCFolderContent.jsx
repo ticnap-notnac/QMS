@@ -1,12 +1,5 @@
-/**
- * feat(dcc): extract folder-content rendering into DCCFolderContent
- *
- * Pure presentational component; owns zero state.
- * All handlers and data are injected via props from DCCPage.
- */
-
 import { Folder, FileText, Search, ArrowLeft, AlertCircle } from 'lucide-react'
-import SystemLogsPanel from './SystemLogsPanel.jsx'
+import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
 
 const TASK_REPORT_SUBFOLDERS = [
@@ -219,76 +212,76 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
       {/* 🚀 THE FIXED WRAPPER: Contains the table width tightly inside the card margins */}
       <div className="dcc-scrollable-table-box">
         <table className="iso-table" style={{ width: '100%' }}>
-        <thead>
-          <tr>
-            <th>Ref No.</th>
-            <th>Issue Type</th>
-            <th>Description</th>
-            <th>Severity</th>
-            <th>Department</th>
-            <th>Product Type</th>
-            <th>Batch No.</th>
-            <th>Location</th>
-            <th>Occurrence Date</th>
-            <th>Created At</th>
-            <th>Evidence</th>
-            <th>Inv. Evidence</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ncrReports.map((ncr) => (
-            <tr key={ncr.id}>
-              <td style={{ fontWeight: 600 }}>
-                {ncr.reference_no ?? '—'}
-              </td>
-              <td>{ncr.issue_type ?? '—'}</td>
-              <td>
-                <div className="clause-description">
-                  {ncr.description ?? <span className="muted">No description</span>}
-                </div>
-              </td>
-              <td>
-                {ncr.severity ? (
-                  <span
-                    className={`iso-status-pill ${SEVERITY_COLORS[ncr.severity] ?? ''
-                      }`}
-                  >
-                    {ncr.severity}
-                  </span>
-                ) : (
-                  '—'
-                )}
-              </td>
-              <td>{ncr.department_id ?? '—'}</td>
-              <td>{ncr.product_type_name ?? ncr.product_type ?? '—'}</td>
-              <td>{ncr.batch_number ?? '—'}</td>
-              <td>{ncr.location_name ?? ncr.complaint_location ?? '—'}</td>
-              <td>
-                {ncr.occurrence_date
-                  ? new Date(ncr.occurrence_date).toLocaleDateString()
-                  : '—'}
-              </td>
-              <td style={{ whiteSpace: 'nowrap' }}>
-                {ncr.created_at
-                  ? new Date(ncr.created_at).toLocaleString()
-                  : '—'}
-              </td>
-              <td style={{ width: 48, textAlign: 'center' }}>
-                <EvidenceThumbnail path={ncr.evidence_url} label="Evidence" />
-              </td>
-              <td style={{ width: 48, textAlign: 'center' }}>
-                <EvidenceThumbnail path={ncr.investigation_evidence_url} label="Inv. Evidence" />
-              </td>
-              <td>
-                <span className="iso-status-pill is-inactive">
-                  {ncr.status}
-                </span>
-              </td>
+          <thead>
+            <tr>
+              <th>Ref No.</th>
+              <th>Issue Type</th>
+              <th>Description</th>
+              <th>Severity</th>
+              <th>Department</th>
+              <th>Product Type</th>
+              <th>Batch No.</th>
+              <th>Location</th>
+              <th>Occurrence Date</th>
+              <th>Created At</th>
+              <th>Evidence</th>
+              <th>Inv. Evidence</th>
+              <th>Status</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {ncrReports.map((ncr) => (
+              <tr key={ncr.id}>
+                <td style={{ fontWeight: 600 }}>
+                  {ncr.reference_no ?? '—'}
+                </td>
+                <td>{ncr.issue_type ?? '—'}</td>
+                <td>
+                  <div className="clause-description">
+                    {ncr.description ?? <span className="muted">No description</span>}
+                  </div>
+                </td>
+                <td>
+                  {ncr.severity ? (
+                    <span
+                      className={`iso-status-pill ${SEVERITY_COLORS[ncr.severity] ?? ''
+                        }`}
+                    >
+                      {ncr.severity}
+                    </span>
+                  ) : (
+                    '—'
+                  )}
+                </td>
+                <td>{ncr.department_id ?? '—'}</td>
+                <td>{ncr.product_type_name ?? ncr.product_type ?? '—'}</td>
+                <td>{ncr.batch_number ?? '—'}</td>
+                <td>{ncr.location_name ?? ncr.complaint_location ?? '—'}</td>
+                <td>
+                  {ncr.occurrence_date
+                    ? new Date(ncr.occurrence_date).toLocaleDateString()
+                    : '—'}
+                </td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  {ncr.created_at
+                    ? new Date(ncr.created_at).toLocaleString()
+                    : '—'}
+                </td>
+                <td style={{ width: 48, textAlign: 'center' }}>
+                  <EvidenceThumbnail path={ncr.evidence_url} label="Evidence" />
+                </td>
+                <td style={{ width: 48, textAlign: 'center' }}>
+                  <EvidenceThumbnail path={ncr.investigation_evidence_url} label="Inv. Evidence" />
+                </td>
+                <td>
+                  <span className="iso-status-pill is-inactive">
+                    {ncr.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )

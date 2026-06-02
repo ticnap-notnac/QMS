@@ -1,10 +1,10 @@
 import React from 'react'
 
-import SettingsNavbar from '@/components/SettingsNavbar'
-import Toast from '@/components/Toast'
+import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
+import Toast from '@/components/UI/Toast'
 import useSettingsPageLogic from '@/hooks/useSettingsPageLogic'
-import SettingsProfileForm from '@/components/SettingsProfileForm'
-import PasswordSection from '@/components/PasswordSection'
+import SettingsProfileForm from '@/components/Forms/SettingsProfileForm'
+import PasswordSection from '@/components/Auth/PasswordSection'
 import './SettingsPage.css'
 
 export default function SettingsPage(props) {

@@ -1,8 +1,8 @@
 import React from 'react'
 
-import SettingsNavbar from '@/components/SettingsNavbar'
+import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import useUserInformationPageLogic from '@/hooks/useUserInformationPageLogic'
-import ProfileCard from '@/components/ProfileCard'
+import ProfileCard from '@/components/Cards/ProfileCard'
 import './PagesStyles.css'
 
 export default function UserInformationPage(props) {

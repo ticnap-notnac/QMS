@@ -9,10 +9,10 @@ import {
   Trash2,
   List,
 } from 'lucide-react'
-import Navbar from '@/components/Navbar'
-import SettingsNavbar from '@/components/SettingsNavbar'
-import AdminNavbar from '@/components/AdminNavbar'
-import Toast from '@/components/Toast'
+import Navbar from '@/components/Navbars/Navbar'
+import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
+import AdminNavbar from '@/components/Navbars/AdminNavbar'
+import Toast from '@/components/UI/Toast'
 import { logAction } from '@/services/logService'
 import { supabase as sharedSupabase } from '@/utils/supabase'
 import './ISOStandardsPage.css'

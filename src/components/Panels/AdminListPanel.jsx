@@ -1,6 +1,6 @@
 import React from 'react'
 import { Pencil, Trash2 } from 'lucide-react' // ✏️🗑️ Brought in our sleek icons to replace text layout blocks
-import '../pages/AdminPanel.css' // 📁 Steps up out of components/ and into pages/ where the file lives!
+import '../../pages/AdminPanel.css' // 📁 Steps up out of components/ and into pages/ where the file lives!
 
 export default function AdminListPanel({
   title,
@@ -8,7 +8,7 @@ export default function AdminListPanel({
   loading = false,
   labelKey = 'name',
   onEdit, // 🔌 Wire up onEdit to cleanly support updating Departments, Roles, and Locations!
-  onDelete = () => {},
+  onDelete = () => { },
   deletingId = null,
   noMatchesText = 'No matches found.',
 }) {
@@ -32,14 +32,14 @@ export default function AdminListPanel({
 
             return (
               <div className="admin-list-item" key={item.id}>
-                
+
                 {/* Text Label and Optional Color Status Badge Container Row */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <span>{label}</span>
-                  
+
                   {/* 🚀 Dynamic Status Badge: Active (Green), Inactive (Red), Deactivated (Orange) */}
                   {itemStatus && (
-                    <span 
+                    <span
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -52,30 +52,30 @@ export default function AdminListPanel({
                         letterSpacing: '0.5px',
                         whiteSpace: 'nowrap',
                         /* 🟢 Background Hue Logic Switcher */
-                        background: 
-                          itemStatus === 'active' ? 'rgba(16, 185, 129, 0.12)' : 
-                          itemStatus === 'inactive' ? 'rgba(239, 68, 68, 0.12)' : 
-                          'rgba(245, 158, 11, 0.12)', 
+                        background:
+                          itemStatus === 'active' ? 'rgba(16, 185, 129, 0.12)' :
+                            itemStatus === 'inactive' ? 'rgba(239, 68, 68, 0.12)' :
+                              'rgba(245, 158, 11, 0.12)',
                         /* 🎨 Text Color Custom Mapping */
-                        color: 
-                          itemStatus === 'active' ? '#34d399' : 
-                          itemStatus === 'inactive' ? '#f87171' : 
-                          '#fbbf24', 
+                        color:
+                          itemStatus === 'active' ? '#34d399' :
+                            itemStatus === 'inactive' ? '#f87171' :
+                              '#fbbf24',
                         /* 📐 Perimeter Highlight Border Styling */
-                        border: 
-                          itemStatus === 'active' ? '1px solid rgba(16, 185, 129, 0.25)' : 
-                          itemStatus === 'inactive' ? '1px solid rgba(239, 68, 68, 0.25)' : 
-                          '1px solid rgba(245, 158, 11, 0.25)'
+                        border:
+                          itemStatus === 'active' ? '1px solid rgba(16, 185, 129, 0.25)' :
+                            itemStatus === 'inactive' ? '1px solid rgba(239, 68, 68, 0.25)' :
+                              '1px solid rgba(245, 158, 11, 0.25)'
                       }}
                     >
                       {item.status}
                     </span>
                   )}
                 </div>
-                
+
                 {/* 🎯 Layout context cluster wrapper to securely house multiple side-by-side action points */}
                 <div className="admin-actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  
+
                   {/* ✏️ Pencil Icon Button for Modifying Entries */}
                   {onEdit && (
                     <button

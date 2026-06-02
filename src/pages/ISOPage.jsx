@@ -1,14 +1,14 @@
 import { useState } from 'react'
 
-import Toast from '../components/Toast.jsx' // 🍞 Import our toast notification component
-import { 
-  X, 
-  ClipboardCheck, 
-  AlertTriangle, 
-  FileText, 
-  GraduationCap, 
-  CheckCircle2, 
-  AlertCircle, 
+import Toast from '../components/UI/Toast.jsx' // 🍞 Import our toast notification component
+import {
+  X,
+  ClipboardCheck,
+  AlertTriangle,
+  FileText,
+  GraduationCap,
+  CheckCircle2,
+  AlertCircle,
   HelpCircle
 } from 'lucide-react'
 import './ISOPage.css' // 🔌 Link our separated stylesheet module directly!
@@ -32,7 +32,7 @@ function ISOPage() {
     setIsCapaTaskModalOpen(false);
     setIsDocumentTaskModalOpen(false);
     setIsTrainingTaskModalOpen(false);
-    
+
     // Fire a success toast notification pop-up
     setToast({
       message: `${taskName} was initialized and committed securely!`,
@@ -44,37 +44,37 @@ function ISOPage() {
     <main className="dashboard page-root">
       {/* 🍞 Dynamic Toast Alert Handler */}
       {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={() => setToast(null)} 
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
 
 
 
       <div className="page-main iso-page-main">
-        
+
         {/* 📐 TOP GRID ROW: Split-Pane compliance tracking card structure */}
         <div className="iso-top-grid">
-          
+
           {/* Left Block Stack: Metrics & Sub-buttons */}
           <div className="iso-left-stack">
             <div className="metric-card iso-compliance-card">
               <span className="metric-subtext">ISO Compliance:</span>
               <h2 className="metric-value iso-compliance-value">85%</h2>
             </div>
-            
+
             <div className="iso-button-grid">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn-metric-card iso-metric-button"
                 onClick={() => setToast({ message: "Loading comprehensive ISO core compliance modules...", type: 'info' })}
               >
                 ISO Modules
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn-metric-card iso-metric-button"
                 onClick={() => setToast({ message: "Fetching audit regulatory clause checklists...", type: 'info' })}
               >
@@ -112,21 +112,21 @@ function ISOPage() {
       {isSelectionModalOpen && (
         <div className="iso-modal-overlay">
           <div className="iso-modal-card">
-            
+
             {/* Modal Top Navigation Header Bar */}
             <div className="iso-modal-header">
-              <button 
-                type="button" 
-                onClick={() => setIsSelectionModalOpen(false)} 
+              <button
+                type="button"
+                onClick={() => setIsSelectionModalOpen(false)}
                 className="iso-modal-icon-button"
                 title="Go back"
               >
                 <span className="iso-back-arrow">←</span>
               </button>
-              
-              <button 
-                type="button" 
-                onClick={() => setIsSelectionModalOpen(false)} 
+
+              <button
+                type="button"
+                onClick={() => setIsSelectionModalOpen(false)}
                 className="iso-modal-icon-button"
                 title="Close window"
               >
@@ -140,17 +140,17 @@ function ISOPage() {
                 <ClipboardCheck size={20} className="icon-cyan iso-task-icon" />
                 <span className="iso-task-item-text">Internal Audit Task</span>
               </div>
-              
+
               <div className="iso-task-item-button" onClick={openCapaTask}>
                 <AlertTriangle size={20} className="icon-amber iso-task-icon" />
                 <span className="iso-task-item-text">CAPA Task</span>
               </div>
-              
+
               <div className="iso-task-item-button" onClick={openDocumentTask}>
                 <FileText size={20} className="icon-blue iso-task-icon" />
                 <span className="iso-task-item-text">Document Update Task</span>
               </div>
-              
+
               <div className="iso-task-item-button" onClick={openTrainingTask}>
                 <GraduationCap size={20} className="icon-green iso-task-icon" />
                 <span className="iso-task-item-text">Training Task</span>

@@ -12,7 +12,7 @@
 
 import { useRef } from 'react'
 import { X as CloseIcon, Upload as UploadIcon } from 'lucide-react'
-import SearchableDropdown from '@/components/SearchableDropdown'
+import SearchableDropdown from '@/components/Forms/SearchableDropdown'
 
 const SEVERITY_OPTIONS = ['low', 'medium', 'high']
 

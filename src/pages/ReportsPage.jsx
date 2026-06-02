@@ -1,13 +1,15 @@
-import { X as CloseIcon, SlidersHorizontal, SquarePen } from 'lucide-react'
+import { SlidersHorizontal } from 'lucide-react'
 
-import Toast from '@/components/Toast'
+import Toast from '@/components/UI/Toast'
 import FilterModal from '../components/Modals/FilterModal.jsx'
 import UpdateReportModal from '../components/Modals/UpdateReportModal.jsx'
 import AssignReportModal from '../components/Modals/AssignReportModal.jsx'
 import CreateReportModal from '../components/Modals/CreateReportModal.jsx'
-import ReportCard from '../components/ReportCard.jsx'
-import InvestigatedReportCard from '../components/InvestigatedReportCard.jsx'
+import ReportCard from '../components/Cards/ReportCard.jsx'
+import InvestigatedReportCard from '../components/Cards/InvestigatedReportCard.jsx'
 import ReportDetailModal from '../components/Modals/ReportDetailModal.jsx'
+import RejectReportModal from '../components/Modals/RejectReportModal.jsx'
+import PreventiveActionModal from '../components/Modals/PreventiveActionModal.jsx'
 import { useReportsLogic } from '@/hooks/useReportsLogic'
 import './PagesStyles.css'
 
@@ -41,6 +43,9 @@ function ReportsPage({
                 {logic.isApprovalQueueMode ? 'Show All Updated' : `Needs Approval (${logic.approvalQueueReports.length})`}
               </button>
             )}
+            <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>
+              {logic.isClosedMode ? 'Show Open' : `Closed Reports (${logic.closedReports.length})`}
+            </button>
           </div>
           <button type="button" onClick={logic.openCreateModal} className="btn-gradient-primary reports-submit-primary">
             Submit a Report
@@ -79,12 +84,31 @@ function ReportsPage({
           </div>
         )}
 
-        {/* ── Open reports list ───────────────────────────────────────── */}
+        {/* ── Main reports list ───────────────────────────────────────── */}
         {logic.isLoading ? (
           <div className="reports-card"><div className="glass-card-subtext">Loading reports...</div></div>
+        ) : logic.isClosedMode ? (
+          logic.closedReports.length === 0 ? (
+            <div className="reports-card">
+              <div className="reports-workspace"><span className="reports-workspace-text">No closed reports found</span></div>
+            </div>
+          ) : (
+            logic.closedReports.map((report) => (
+              <ReportCard
+                key={`closed-${report.id}`}
+                report={report}
+                departmentNameById={logic.departmentNameById}
+                canAssignReports={logic.canAssignReports}
+                canUpdateReport={logic.canUpdateReport}
+                onUpdate={logic.openUpdateModal}
+                onAssign={logic.openAssignModal}
+                onViewDetail={logic.openDetailView}
+              />
+            ))
+          )
         ) : logic.reports.length === 0 ? (
           <div className="reports-card">
-            <div className="reports-workspace"><span className="reports-workspace-text">No reports yet</span></div>
+            <div className="reports-workspace"><span className="reports-workspace-text">No open reports</span></div>
           </div>
         ) : (
           logic.reports.map((report) => (
@@ -103,138 +127,13 @@ function ReportsPage({
       </div>
 
       {/* ── Modals ──────────────────────────────────────────────────────── */}
-      <FilterModal
-        isOpen={logic.isFilterModalOpen}
-        onClose={() => logic.setIsFilterModalOpen(false)}
-        onApplyFilters={logic.handleFilterApply}
-        onClearFilters={logic.handleFilterClear}
-      />
-
-      <UpdateReportModal
-        isOpen={logic.isUpdateModalOpen}
-        onClose={logic.closeUpdateModal}
-        report={logic.selectedReport}
-        onSuccess={logic.handleUpdateSuccess}
-      />
-
-      <AssignReportModal
-        isOpen={logic.isAssignModalOpen}
-        onClose={logic.closeAssignModal}
-        report={logic.selectedAssignmentReport}
-        onSuccess={logic.handleAssignSuccess}
-      />
-
-      <CreateReportModal
-        isOpen={logic.isModalOpen}
-        onClose={logic.closeCreateModal}
-        onSubmit={logic.handleSubmitReport}
-        error={logic.error}
-        isLoading={logic.isLoading}
-        createFormState={logic.createFormState}
-        locationOptions={logic.locationOptions}
-        productTypeOptions={logic.productTypeOptions}
-        departments={logic.departments}
-        locationsLoading={logic.locationsLoading}
-        productTypesLoading={logic.productTypesLoading}
-        departmentsLoading={logic.departmentsLoading}
-        fileInputRef={logic.fileInputRefMain}
-        evidenceFile={logic.evidenceFileMain}
-        setEvidenceFile={logic.setEvidenceFileMain}
-        evidencePreview={logic.evidencePreviewMain}
-        setEvidencePreview={logic.setEvidencePreviewMain}
-        evidenceError={logic.evidenceErrorMain}
-        setEvidenceError={logic.setEvidenceErrorMain}
-      />
-
-      {logic.isDetailOpen && logic.detailReport && (
-        <ReportDetailModal
-          report={logic.detailReport}
-          currentAuthId={authUserId}
-          canUpdateReport={logic.canUpdateReport}
-          departmentNameById={logic.departmentNameById}
-          onClose={logic.closeDetailView}
-        />
-      )}
-
-      {/* Reject modal */}
-      {logic.isRejectModalOpen && logic.rejectTargetReport && (
-        <div className="modal-overlay">
-          <div className="modal-card modal-card--tall reports-update-card">
-            <button type="button" onClick={logic.closeRejectModal} className="modal-close-button">×</button>
-            <div className="modal-header-row">
-              <SquarePen size={18} className="icon-teal" />
-              <h3 className="reports-update-title">Reject Updated Report</h3>
-            </div>
-            <p className="glass-card-subtext" style={{ marginBottom: '12px' }}>
-              Enter a rejection reason so the reporter can revise before resubmitting.
-            </p>
-            <div className="modal-form reports-form-compact">
-              <div className="reports-details-box">
-                <span className="reports-workspace-text">Report: {logic.rejectTargetReport.reference_no || logic.rejectTargetReport.id}</span>
-              </div>
-              <div>
-                <label className="label-field">Rejection Reason</label>
-                <textarea
-                  value={logic.rejectReason}
-                  onChange={(e) => logic.setRejectReason(e.target.value)}
-                  className="input-field textarea-medium"
-                  placeholder="Explain what needs to be fixed before resubmission..."
-                />
-              </div>
-              <div className="reports-update-submit-row">
-                <button type="button" className="btn-edit-user" onClick={logic.closeRejectModal} disabled={logic.isReviewSubmitting}>Cancel</button>
-                <button
-                  type="button"
-                  className="btn-gradient-primary reports-update-button"
-                  onClick={() => logic.handleReviewReport(logic.rejectTargetReport, 'reject', logic.rejectReason)}
-                  disabled={logic.isReviewSubmitting}
-                >
-                  {logic.isReviewSubmitting ? 'Rejecting...' : 'Reject Report'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Preventive Action modal — unchanged, no business logic */}
-      {logic.isPreventiveActionModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card reports-preventive-card">
-            <button onClick={() => logic.setIsPreventiveActionModalOpen(false)} className="modal-close-button"><CloseIcon size={18} /></button>
-            <div className="modal-body-col">
-              <div>
-                <label className="label-field">Suggested Preventive Action:</label>
-                <div className="workspace-placeholder workspace-placeholder--small">
-                  <span className="reports-upload-text-small">Preventive Directives Content Sheet Panel</span>
-                  <div className="cross-line-bg" />
-                </div>
-              </div>
-              <div className="preventive-panel">
-                <span className="label-field label-field--small">Suggested Preventive Action Rating:</span>
-                <div className="preventive-options">
-                  {['Excellent', 'Good', 'Ok', 'Poor', 'Very Poor'].map((rating) => (
-                    <label key={rating} className="preventive-option">
-                      <input
-                        type="radio"
-                        name="preventiveRating"
-                        value={rating}
-                        checked={logic.createFormState.preventiveRating === rating}
-                        onChange={(e) => logic.createFormState.setPreventiveRating(e.target.value)}
-                        className="radio-accent"
-                      />
-                      {rating}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div className="reports-preventive-submit-row">
-                <button type="button" onClick={() => logic.setIsPreventiveActionModalOpen(false)} className="reports-secondary-muted">Submit</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <FilterModal {...logic.filterModalProps} />
+      <UpdateReportModal {...logic.updateModalProps} />
+      <AssignReportModal {...logic.assignModalProps} />
+      <CreateReportModal {...logic.createModalProps} />
+      {logic.isDetailOpen && logic.detailReport && <ReportDetailModal {...logic.detailModalProps} />}
+      <RejectReportModal {...logic.rejectModalProps} />
+      <PreventiveActionModal {...logic.preventiveActionModalProps} />
     </main>
   )
 }

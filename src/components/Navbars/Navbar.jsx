@@ -1,7 +1,7 @@
 import { Bell } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import NotificationsModal from './NotificationsModal.jsx'
-import './components.css'
+import NotificationsModal from '../Modals/NotificationsModal.jsx'
+import '../components.css'
 
 export default function Navbar({
   isUserMenuOpen,

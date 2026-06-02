@@ -13,6 +13,10 @@ export async function fetchAllReports() {
   return await request('/ncr?scope=all')
 }
 
+export async function fetchClosedReports() {
+  return await request('/ncr?scope=closed')
+}
+
 export async function createReport(payload) {
   return await request('/ncr', {
     method: 'POST',
@@ -60,6 +64,17 @@ export async function reviewReportApproval(id, payload) {
     method: 'PUT',
     body: JSON.stringify(payload),
   })
+}
+
+export async function rateReport(id, rating) {
+  return await request(`/ncr/${id}/rate`, {
+    method: 'POST',
+    body: JSON.stringify({ rating }),
+  })
+}
+
+export async function getReportRating(id) {
+  return await request(`/ncr/${id}/rating`)
 }
 
 export async function deleteReport(id) {

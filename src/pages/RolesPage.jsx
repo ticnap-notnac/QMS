@@ -1,9 +1,9 @@
 
-import SettingsNavbar from '@/components/SettingsNavbar'
-import AdminNavbar from '@/components/AdminNavbar'
+import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
+import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import AddCategoryModal from '@/components/Modals/AddCategoryModal'
-import AdminListPanel from '@/components/AdminListPanel'
-import SearchForm from '@/components/SearchForm'
+import AdminListPanel from '@/components/Panels/AdminListPanel'
+import SearchForm from '@/components/Forms/SearchForm'
 import './PagesStyles.css'
 import useRolesPageLogic from '@/hooks/useRolesPageLogic'
 import {

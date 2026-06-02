@@ -1,8 +1,8 @@
 import React from 'react'
 import { createPortal } from 'react-dom' // 🌀 Import the React Portal teleportation engine
-import NotificationPanel from '@/components/NotificationPanel'
+import NotificationPanel from '@/components/Panels/NotificationPanel'
 import useNotifications from '@/hooks/useNotifications'
-import './components.css' // Or whichever style file handles your component UI
+import '../components.css' // Or whichever style file handles your component UI
 
 export default function NotificationsModal({
   isOpen,

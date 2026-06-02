@@ -1,5 +1,8 @@
 import { User, SquarePen } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { formatDate, getStatusStyle, getSeverityStyle, formatAssignedUser } from '@/hooks/useReportsLogic'
+import { getReportRating, rateReport } from '@/services/ncrService'
+import StarRating from '../UI/StarRating'
 
 function ReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, onUpdate, onAssign, onViewDetail }) {
   const reporterName = report.reporter_full_name || 'Name of the User'
@@ -14,6 +17,41 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
   const severityStyle = getSeverityStyle(report.severity)
   const assignmentLabel = formatAssignedUser(report)
   const isAssigned = Boolean(report.assigned_to)
+  const isClosed = String(report.status || '').toLowerCase() === 'closed'
+
+  const [ratingStats, setRatingStats] = useState({ average: 0, count: 0, userRating: null })
+  const [isRatingLoading, setIsRatingLoading] = useState(false)
+  const [ratingError, setRatingError] = useState(null)
+
+  useEffect(() => {
+    if (isClosed) {
+      setIsRatingLoading(true)
+      getReportRating(report.id)
+        .then((res) => {
+          if (res && res.data) setRatingStats(res.data)
+        })
+        .catch((err) => console.error('Failed to load rating stats:', err))
+        .finally(() => setIsRatingLoading(false))
+    }
+  }, [isClosed, report.id])
+
+  const handleRatingChange = async (newRating) => {
+    if (ratingStats.userRating !== null) return // already rated
+    try {
+      setRatingError(null)
+      const res = await rateReport(report.id, newRating)
+      // Optimistically update
+      setRatingStats(prev => {
+        const newCount = prev.count + 1
+        const newAvg = ((prev.average * prev.count) + newRating) / newCount
+        return { average: newAvg, count: newCount, userRating: newRating }
+      })
+      alert('Rating submitted successfully!')
+    } catch (err) {
+      setRatingError('Failed to submit rating: ' + (err.message || 'Unknown error'))
+      console.error(err)
+    }
+  }
 
   return (
     <div className="reports-card" id={`report-card-${report.id}`}>
@@ -82,6 +120,31 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
           <p style={{ color: 'var(--muted)', textAlign: 'center' }}>No evidence image attached</p>
         )}
       </div>
+
+      {/* ── Rating Section (Closed Reports) ─────────────────────────────── */}
+      {isClosed && (
+        <>
+          <div className="reports-details-title-wrap">
+            <h4 className="reports-details-title">Report Rating</h4>
+          </div>
+          <div className="reports-details-box" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <StarRating
+                rating={ratingStats.userRating !== null ? ratingStats.userRating : ratingStats.average}
+                onRatingChange={handleRatingChange}
+                readOnly={ratingStats.userRating !== null}
+              />
+              <span className="reports-workspace-text">
+                {ratingStats.average > 0 ? `${ratingStats.average.toFixed(1)} ★ · ${ratingStats.count} ratings` : 'No ratings yet'}
+              </span>
+            </div>
+            {ratingStats.userRating !== null && (
+              <span style={{ fontSize: '12px', color: 'var(--muted)' }}>You rated this report {ratingStats.userRating} stars.</span>
+            )}
+            {ratingError && <span style={{ fontSize: '12px', color: 'var(--error, #ef4444)' }}>{ratingError}</span>}
+          </div>
+        </>
+      )}
 
       {/* ── Action row ──────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>

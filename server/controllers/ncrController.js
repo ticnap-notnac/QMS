@@ -16,6 +16,8 @@ import {
   createNotification,
   getCurrentUser,
   isAdminOrAuditor,
+  submitReportRating,
+  getReportRatingsStats,
 } from '../services/ncrReportsService.js'
 
 export async function getReports(req, res) {
@@ -165,5 +167,37 @@ export async function reviewReportApproval(req, res) {
     return res.json({ success: true, data: updatedReport })
   } catch (err) {
     return res.status(err.status || 500).json({ error: err?.message || 'Failed to review NCR report.' })
+  }
+}
+
+export async function rateReport(req, res) {
+  const { id } = req.params
+  const { rating } = req.body || {}
+  const reportedByAuthId = getRequestActor(req)
+  if (!reportedByAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+
+  if (typeof rating !== 'number' || rating < 0.5 || rating > 5.0) {
+    return res.status(400).json({ error: 'Rating must be a number between 0.5 and 5.0.' })
+  }
+
+  try {
+    const data = await submitReportRating({ reportId: id, rating, userAuthId: reportedByAuthId })
+    return res.status(200).json({ success: true, data })
+  } catch (err) {
+    import('fs').then(fs => fs.appendFileSync('backend-error.log', new Date().toISOString() + ' rateReport error: ' + (err.stack || err.message) + '\n'));
+    return res.status(err.status || 500).json({ error: err.message })
+  }
+}
+
+export async function getReportRating(req, res) {
+  const { id } = req.params
+  const reportedByAuthId = getRequestActor(req)
+  if (!reportedByAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+
+  try {
+    const stats = await getReportRatingsStats({ reportId: id, userAuthId: reportedByAuthId })
+    return res.status(200).json({ success: true, data: stats })
+  } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message })
   }
 }
