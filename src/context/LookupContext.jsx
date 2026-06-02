@@ -1,6 +1,7 @@
 import { createContext, useContext, useCallback, useEffect, useState } from 'react'
 import { loadRoles as loadRolesController } from '@/services/roleService'
 import { loadDepartments as loadDepartmentsController } from '@/services/departmentService'
+import { supabase } from '@/utils/supabase'
 
 const LookupContext = createContext({
   roles: [],
@@ -17,6 +18,12 @@ export function LookupProvider({ children }) {
   const [error, setError] = useState('')
 
   const reloadLookups = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      // Bypass loading database lookups if not logged in to prevent 401 console errors
+      return
+    }
+
     setLoading(true)
     setError('')
     try {
@@ -49,7 +56,21 @@ export function LookupProvider({ children }) {
     }
   }, [])
 
-  useEffect(() => { reloadLookups() }, [reloadLookups])
+  useEffect(() => {
+    // Initial load check
+    reloadLookups()
+
+    // Listen for auth state changes (e.g. user logs in)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        reloadLookups()
+      }
+    })
+
+    return () => {
+      subscription?.unsubscribe()
+    }
+  }, [reloadLookups])
 
   return (
     <LookupContext.Provider value={{ roles, departments, loading, error, reloadLookups }}>
