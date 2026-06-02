@@ -1,7 +1,5 @@
 import { useRef } from 'react'
 import { Calendar, FileSearch, Upload as UploadIcon } from 'lucide-react'
-import useUpdateReportModal from '@/hooks/useUpdateReportModal'
-
 function FieldCard({ label, value }) {
   return (
     <div>
@@ -23,18 +21,20 @@ function formatDate(value) {
   return date.toLocaleDateString('en-GB')
 }
 
-export default function UpdateReportModal({ isOpen, onClose, report, onSuccess }) {
+export default function UpdateReportModal({ 
+  isOpen, 
+  onClose, 
+  report,
+  form,
+  previewUrl,
+  setField,
+  handleFile,
+  errors,
+  error,
+  isSubmitting,
+  handleSubmit
+}) {
   const fileInputRef = useRef(null)
-  const {
-    form,
-    previewUrl,
-    setField,
-    handleFile,
-    errors,
-    error,
-    isSubmitting,
-    handleSubmit,
-  } = useUpdateReportModal({ report, onSuccess })
 
   if (!isOpen) return null
 

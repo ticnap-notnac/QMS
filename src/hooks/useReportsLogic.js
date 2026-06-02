@@ -7,6 +7,8 @@ import { createProductType } from '@/services/productTypeService'
 import { useReportsData } from './useReports/useReportsData'
 import { useReportsForm } from './useReports/useReportsForm'
 import { useReportsModals } from './useReports/useReportsModals'
+import { useReportsUpdateForm } from './useReports/useReportsUpdateForm'
+import { updateReportInvestigationMultipart } from '@/services/ncrService'
 
 // ─── Pure helpers (no side-effects, safe to unit-test independently) ──────────
 
@@ -77,6 +79,10 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     setError
   })
 
+  const updateFormState = useReportsUpdateForm({
+    report: modalsState.selectedReport,
+  })
+
   // ─── Derived / memoised ────────────────────────────────────────────────────
 
   const canAssignReports = useMemo(
@@ -123,6 +129,45 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     setToast({ message: 'Report updated successfully', type: 'success' })
     modalsState.closeUpdateModal()
     await dataState.refreshReportsList()
+  }
+
+  const handleUpdateReport = async (event) => {
+    if (event) event.preventDefault()
+
+    if (!modalsState.selectedReport?.id) {
+      updateFormState.setError('No report selected for update.')
+      return { success: false }
+    }
+
+    if (!updateFormState.validate()) {
+      return { success: false }
+    }
+
+    updateFormState.setIsSubmitting(true)
+    updateFormState.setError(null)
+
+    try {
+      const payload = new FormData()
+      payload.append('investigation_details', updateFormState.form.investigationDetails)
+      payload.append('resolution_details', updateFormState.form.resolutionDetails)
+      payload.append('resolution_time_value', updateFormState.form.resolutionTimeValue)
+      payload.append('resolution_time_unit', updateFormState.form.resolutionTimeUnit)
+      payload.append('verification_date', updateFormState.form.verificationDate)
+
+      if (updateFormState.form.file) {
+        payload.append('investigation_evidence', updateFormState.form.file)
+      }
+
+      await updateReportInvestigationMultipart(modalsState.selectedReport.id, payload)
+      
+      await handleUpdateSuccess()
+      return { success: true }
+    } catch (submitError) {
+      updateFormState.setError(submitError?.message || 'Failed to update NCR report.')
+      return { success: false }
+    } finally {
+      updateFormState.setIsSubmitting(false)
+    }
   }
 
   const handleAssignSuccess = async ({ selectedUser }) => {
@@ -299,7 +344,14 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       isOpen: modalsState.isUpdateModalOpen,
       onClose: modalsState.closeUpdateModal,
       report: modalsState.selectedReport,
-      onSuccess: handleUpdateSuccess,
+      form: updateFormState.form,
+      previewUrl: updateFormState.previewUrl,
+      setField: updateFormState.setField,
+      handleFile: updateFormState.handleFile,
+      errors: updateFormState.errors,
+      error: updateFormState.error,
+      isSubmitting: updateFormState.isSubmitting,
+      handleSubmit: handleUpdateReport,
     },
     assignModalProps: {
       isOpen: modalsState.isAssignModalOpen,
