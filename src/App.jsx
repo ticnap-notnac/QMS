@@ -145,13 +145,9 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (!user) {
-      setUnreadNotificationCount(0)
-      setIsNotificationsOpen(false)
-      return
+    if (user) {
+      refreshUnreadNotificationCount()
     }
-
-    refreshUnreadNotificationCount()
   }, [user, userRole, refreshUnreadNotificationCount])
 
   const handleSubmit = async (authData) => {
@@ -205,7 +201,8 @@ export default function App() {
 
       await supabase.auth.signOut()
       setUser(null)
-      // ...rest of your state resets
+      setUnreadNotificationCount(0)
+      setIsNotificationsOpen(false)
     } catch (err) {
       setError(err.message)
       console.error('Logout error:', err)

@@ -246,9 +246,11 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
   }, [])
 
   useEffect(() => {
-    loadLookupData()
-    refreshReportsList()
-  }, [currentAuthId]) // re-fetch when auth identity changes
+    Promise.resolve().then(() => {
+      loadLookupData()
+      refreshReportsList()
+    })
+  }, [currentAuthId, loadLookupData, refreshReportsList]) // re-fetch when auth identity changes
 
   // ─── Form helpers ──────────────────────────────────────────────────────────
 

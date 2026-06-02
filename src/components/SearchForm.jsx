@@ -4,7 +4,10 @@ export default function SearchForm({ value, onChange, onSubmit, placeholder = 'S
   const [local, setLocal] = useState(value || '')
   const timer = useRef(null)
 
-  useEffect(() => setLocal(value || ''), [value])
+  // Keep local state in sync with incoming value if it changes externally
+  if (value !== undefined && value !== null && value !== local && !timer.current) {
+    setLocal(value)
+  }
 
   useEffect(() => {
     return () => clearTimeout(timer.current)

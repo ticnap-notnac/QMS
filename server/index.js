@@ -10,21 +10,22 @@ import logRoutes from './routes/logRoutes.js'
 import debugRoutes from './routes/debugRoutes.js'
 import ncrRoutes from './routes/ncrRoutes.js'
 import suggestionRoutes from './routes/suggestionRoutes.js'
+import { authMiddleware } from './middlewares/authMiddleware.js'
 
 const app = express()
 
 app.use(cors())
 app.use(express.json())
 
-app.use('/api/users', userRoutes)
-app.use('/api/roles', roleRoutes)
-app.use('/api/departments', departmentRoutes)
-app.use('/api', locationRoutes)
-app.use('/api', productTypeRoutes)
-app.use('/api/logs', logRoutes)
-app.use('/api/debug', debugRoutes)
-app.use('/api', ncrRoutes)
-app.use('/api/suggestions', suggestionRoutes)
+app.use('/api/users', authMiddleware, userRoutes)
+app.use('/api/roles', authMiddleware, roleRoutes)
+app.use('/api/departments', authMiddleware, departmentRoutes)
+app.use('/api', authMiddleware, locationRoutes)
+app.use('/api', authMiddleware, productTypeRoutes)
+app.use('/api/logs', authMiddleware, logRoutes)
+app.use('/api/debug', authMiddleware, debugRoutes)
+app.use('/api', authMiddleware, ncrRoutes)
+app.use('/api/suggestions', authMiddleware, suggestionRoutes)
 
 const PORT = process.env.PORT || 3000
 

@@ -1,10 +1,4 @@
 import { request } from '@/lib/api'
-import { getCurrentAuthId } from '@/services/authService'
-
-async function buildAuthHeaders() {
-  const userAuthId = await getCurrentAuthId()
-  return userAuthId ? { 'x-user-auth-id': userAuthId } : {}
-}
 
 export async function fetchProductTypes() {
   const data = await request('/product-types')
@@ -17,12 +11,10 @@ export async function fetchProductTypes() {
 export const loadProductTypes = fetchProductTypes
 
 export async function createProductType(productName) {
-  const headers = await buildAuthHeaders()
-  return await request('/product-types', { method: 'POST', headers, body: JSON.stringify({ productName }) })
+  return await request('/product-types', { method: 'POST', body: JSON.stringify({ productName }) })
 }
 
 export async function deleteProductType(id) {
-  const headers = await buildAuthHeaders()
-  await request(`/product-types/${id}`, { method: 'DELETE', headers })
+  await request(`/product-types/${id}`, { method: 'DELETE' })
   return true
 }

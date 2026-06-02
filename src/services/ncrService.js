@@ -1,49 +1,35 @@
-import { request } from '@/lib/api'
-import { getCurrentAuthId } from '@/services/authService'
-import { API_BASE_URL } from '@/lib/api'
-
-async function buildAuthHeaders() {
-  const authId = await getCurrentAuthId()
-  return authId ? { 'x-user-auth-id': authId } : {}
-}
+import { request, API_BASE_URL } from '@/lib/api'
+import { supabase } from '@/utils/supabase'
 
 export async function fetchReports() {
-  const headers = await buildAuthHeaders()
-  return await request('/ncr', { headers })
+  return await request('/ncr')
 }
 
 export async function fetchInvestigatedReports() {
-  const headers = await buildAuthHeaders()
-  return await request('/ncr?scope=investigated', { headers })
+  return await request('/ncr?scope=investigated')
 }
 
 export async function fetchAllReports() {
-  const headers = await buildAuthHeaders()
-  return await request('/ncr?scope=all', { headers })
+  return await request('/ncr?scope=all')
 }
 
 export async function createReport(payload) {
-  const headers = await buildAuthHeaders()
   return await request('/ncr', {
     method: 'POST',
-    headers,
     body: JSON.stringify(payload),
   })
 }
 
 export async function updateReport(id, payload) {
-  const headers = await buildAuthHeaders()
   return await request(`/ncr/${id}`, {
     method: 'PUT',
-    headers,
     body: JSON.stringify(payload),
   })
 }
 
-export async function updateReportInvestigationMultipart(id, formData, authId) {
-  const headers = {}
-  const userAuthId = authId || (await getCurrentAuthId())
-  if (userAuthId) headers['x-user-auth-id'] = userAuthId
+export async function updateReportInvestigationMultipart(id, formData) {
+  const { data: { session } } = await supabase.auth.getSession()
+  const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
 
   const res = await fetch(`${API_BASE_URL}/ncr/${id}/investigation`, {
     method: 'PUT',
@@ -63,35 +49,28 @@ export async function updateReportInvestigationMultipart(id, formData, authId) {
 }
 
 export async function assignReportToEmployee(id, payload) {
-  const headers = await buildAuthHeaders()
   return await request(`/ncr/${id}/assign`, {
     method: 'PUT',
-    headers,
     body: JSON.stringify(payload),
   })
 }
 
 export async function reviewReportApproval(id, payload) {
-  const headers = await buildAuthHeaders()
   return await request(`/ncr/${id}/approval`, {
     method: 'PUT',
-    headers,
     body: JSON.stringify(payload),
   })
 }
 
 export async function deleteReport(id) {
-  const headers = await buildAuthHeaders()
   return await request(`/ncr/${id}`, {
     method: 'DELETE',
-    headers,
   })
 }
 
-export async function submitNcrMultipart(formData, authId) {
-  const headers = {}
-  const id = authId || (await getCurrentAuthId())
-  if (id) headers['x-user-auth-id'] = id
+export async function submitNcrMultipart(formData) {
+  const { data: { session } } = await supabase.auth.getSession()
+  const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
 
   const res = await fetch(`${API_BASE_URL}/ncr/submit`, {
     method: 'POST',

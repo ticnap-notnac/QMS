@@ -28,7 +28,9 @@ export default function SystemLogsPanel({ onClose }) {
     }
   }
 
-  useEffect(() => { load({ page: 0 }) }, [])
+  useEffect(() => {
+    Promise.resolve().then(() => load({ page: 0 }))
+  }, [])
 
   const handleSearch = async () => {
     setPage(0)
