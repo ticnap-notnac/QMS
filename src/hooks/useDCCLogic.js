@@ -81,6 +81,10 @@ export function useDCCLogic() {
   const [carReports, setCarReports] = useState([])
   const [loadingCar, setLoadingCar] = useState(false)
 
+  // QDDR reports
+  const [qddrReports, setQddrReports] = useState([])
+  const [loadingQddr, setLoadingQddr] = useState(false)
+
   // Load ISO standards whenever the iso_modules folder is opened
   useEffect(() => {
     if (selectedFolder?.id === 'iso_modules') {
@@ -121,6 +125,7 @@ export function useDCCLogic() {
     setSelectedTaskFolder(null)
     setNcrReports([])
     setCarReports([])
+    setQddrReports([])
     addRecentlyViewed(item)
   }
 
@@ -131,6 +136,7 @@ export function useDCCLogic() {
     setSelectedTaskFolder(null)
     setNcrReports([])
     setCarReports([])
+    setQddrReports([])
   }
 
   // Task Reports sub-folder navigation------------------------------------------------------------------
@@ -139,10 +145,13 @@ export function useDCCLogic() {
     setSelectedTaskFolder(item)
     setNcrReports([])
     setCarReports([])
+    setQddrReports([])
     if (item.id === 'ncr') {
       loadClosedNCRs()
     } else if (item.id === 'car') {
       loadClosedCARs()
+    } else if (item.id === 'qddr') {
+      loadClosedQDDRs()
     }
   }
 
@@ -150,6 +159,7 @@ export function useDCCLogic() {
     setSelectedTaskFolder(null)
     setNcrReports([])
     setCarReports([])
+    setQddrReports([])
   }
 
   // ISO standards  (iso_standards -> iso_clause_groups -> iso_clauses)------------------------------------------------------------------
@@ -291,6 +301,29 @@ export function useDCCLogic() {
     }
   }
 
+  // ------------------------------------------------------------------
+  // QDDR closed reports (qddr_reports table)
+  // ------------------------------------------------------------------
+
+  async function loadClosedQDDRs() {
+    setLoadingQddr(true)
+    try {
+      const { data, error } = await supabase
+        .from('qddr_reports')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      console.debug('[useDCCLogic] loadClosedQDDRs → rows returned:', data?.length || 0)
+      setQddrReports(data || [])
+    } catch (err) {
+      console.error('[useDCCLogic] loadClosedQDDRs error:', err?.message ?? err)
+      setQddrReports([])
+    } finally {
+      setLoadingQddr(false)
+    }
+  }
+
   // public API------------------------------------------------------------------
 
   return {
@@ -329,5 +362,9 @@ export function useDCCLogic() {
     // CAR closed reports
     carReports,
     loadingCar,
+
+    // QDDR closed reports
+    qddrReports,
+    loadingQddr,
   }
 }

@@ -6,6 +6,7 @@ import UpdateReportModal from '../components/Modals/UpdateReportModal.jsx'
 import AssignReportModal from '../components/Modals/AssignReportModal.jsx'
 import CreateReportModal from '../components/Modals/CreateReportModal.jsx'
 import CARModal from '../components/Modals/CARModal.jsx'
+import QDDRModal from '../components/Modals/QDDRModal.jsx'
 import ReportCard from '../components/Cards/ReportCard.jsx'
 import InvestigatedReportCard from '../components/Cards/InvestigatedReportCard.jsx'
 import ReportDetailModal from '../components/Modals/ReportDetailModal.jsx'
@@ -49,6 +50,9 @@ function ReportsPage({
           <div style={{ display: 'flex', gap: '12px' }}>
             <button type="button" onClick={() => logic.openCARModal()} className="btn-gradient-primary reports-submit-primary">
               Submit CAR
+            </button>
+            <button type="button" onClick={() => logic.openQDDRModal()} className="btn-gradient-primary reports-submit-primary">
+              Submit QDDR
             </button>
             <button type="button" onClick={logic.openCreateModal} className="btn-gradient-primary reports-submit-primary">
               Submit a Report
@@ -136,6 +140,7 @@ function ReportsPage({
       <AssignReportModal {...logic.assignModalProps} />
       <CreateReportModal {...logic.createModalProps} />
       <CARModal {...logic.carModalProps} />
+      <QDDRModal {...logic.qddrModalProps} />
       {logic.isDetailOpen && logic.detailReport && <ReportDetailModal {...logic.detailModalProps} />}
       <RejectReportModal {...logic.rejectModalProps} />
       <PreventiveActionModal {...logic.preventiveActionModalProps} />

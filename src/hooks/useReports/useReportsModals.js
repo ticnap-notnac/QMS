@@ -8,6 +8,7 @@ export function useReportsModals({ clearEvidenceState, resetCreateForm, setRejec
   const [isPreventiveActionModalOpen, setIsPreventiveActionModalOpen] = useState(false)
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
   const [isCARModalOpen, setIsCARModalOpen] = useState(false)
+  const [isQDDRModalOpen, setIsQDDRModalOpen] = useState(false)
   
   const [detailReport, setDetailReport] = useState(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
@@ -15,6 +16,7 @@ export function useReportsModals({ clearEvidenceState, resetCreateForm, setRejec
   const [selectedAssignmentReport, setSelectedAssignmentReport] = useState(null)
   const [rejectTargetReport, setRejectTargetReport] = useState(null)
   const [selectedCARReport, setSelectedCARReport] = useState(null)
+  const [selectedQDDRReport, setSelectedQDDRReport] = useState(null)
 
   const openDetailView = (report) => { setDetailReport(report); setIsDetailOpen(true) }
   const closeDetailView = () => { setIsDetailOpen(false); setDetailReport(null) }
@@ -34,6 +36,9 @@ export function useReportsModals({ clearEvidenceState, resetCreateForm, setRejec
   const openCARModal = (report = null) => { setSelectedCARReport(report); setIsCARModalOpen(true) }
   const closeCARModal = () => { setIsCARModalOpen(false); setSelectedCARReport(null) }
 
+  const openQDDRModal = (report = null) => { setSelectedQDDRReport(report); setIsQDDRModalOpen(true) }
+  const closeQDDRModal = () => { setIsQDDRModalOpen(false); setSelectedQDDRReport(null) }
+
   return {
     isModalOpen, setIsModalOpen,
     isFilterModalOpen, setIsFilterModalOpen,
@@ -42,6 +47,7 @@ export function useReportsModals({ clearEvidenceState, resetCreateForm, setRejec
     isPreventiveActionModalOpen, setIsPreventiveActionModalOpen,
     isRejectModalOpen, setIsRejectModalOpen,
     isCARModalOpen, setIsCARModalOpen,
+    isQDDRModalOpen, setIsQDDRModalOpen,
     isDetailOpen, setIsDetailOpen,
     
     detailReport, setDetailReport,
@@ -49,6 +55,7 @@ export function useReportsModals({ clearEvidenceState, resetCreateForm, setRejec
     selectedAssignmentReport, setSelectedAssignmentReport,
     rejectTargetReport, setRejectTargetReport,
     selectedCARReport, setSelectedCARReport,
+    selectedQDDRReport, setSelectedQDDRReport,
 
     openDetailView, closeDetailView,
     openCreateModal, closeCreateModal,
@@ -56,5 +63,6 @@ export function useReportsModals({ clearEvidenceState, resetCreateForm, setRejec
     openAssignModal, closeAssignModal,
     openRejectModal, closeRejectModal,
     openCARModal, closeCARModal,
+    openQDDRModal, closeQDDRModal,
   }
 }

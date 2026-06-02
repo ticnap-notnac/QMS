@@ -362,6 +362,89 @@ function CARClosedTable({ carReports, loadingCar }) {
 }
 
 // ---------------------------------------------------------------------------
+// Sub-view: Task Reports › QDDR – closed reports table
+// ---------------------------------------------------------------------------
+
+function QDDRClosedTable({ qddrReports, loadingQddr }) {
+  if (loadingQddr) return <div>Loading QDDR reports...</div>
+
+  if (!qddrReports.length) {
+    return (
+      <div className="empty-state">
+        <AlertCircle size={20} style={{ marginBottom: 6 }} />
+        <div>No QDDR reports found.</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="glass-card-dcc">
+      <div className="dcc-scrollable-table-box">
+        <table className="iso-table" style={{ width: '100%' }}>
+          <thead>
+            <tr>
+              <th>Ref No.</th>
+              <th>Location</th>
+              <th>Date & Time</th>
+              <th>Trucker / Broker</th>
+              <th>Plate No.</th>
+              <th>PO Reference</th>
+              <th>Material Description</th>
+              <th>Material Code</th>
+              <th>Qty</th>
+              <th>Reason of Discrepancy</th>
+              <th>Corrective Action</th>
+              <th>Preventive Action</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {qddrReports.map((qddr) => (
+              <tr key={qddr.id}>
+                <td style={{ fontWeight: 600 }}>
+                  {qddr.reference_no ?? '—'}
+                </td>
+                <td>{qddr.location ?? '—'}</td>
+                <td>
+                  {qddr.date ? new Date(qddr.date).toLocaleDateString() : '—'}
+                  {qddr.time ? ` ${qddr.time.slice(0, 5)}` : ''}
+                </td>
+                <td>{qddr.trucker_broker ?? '—'}</td>
+                <td>{qddr.plate_number ?? '—'}</td>
+                <td>{qddr.po_reference ?? '—'}</td>
+                <td>{qddr.material_description ?? '—'}</td>
+                <td>{qddr.material_code ?? '—'}</td>
+                <td>{qddr.qty ?? '—'}</td>
+                <td>
+                  <div className="clause-description" title={qddr.reason_of_discrepancy}>
+                    {qddr.reason_of_discrepancy ?? <span className="muted">No reason</span>}
+                  </div>
+                </td>
+                <td>
+                  <div className="clause-description" title={qddr.corrective_action}>
+                    {qddr.corrective_action ?? <span className="muted">—</span>}
+                  </div>
+                </td>
+                <td>
+                  <div className="clause-description" title={qddr.preventive_action}>
+                    {qddr.preventive_action ?? <span className="muted">—</span>}
+                  </div>
+                </td>
+                <td>
+                  <span className={`iso-status-pill ${String(qddr.status || '').toLowerCase() === 'closed' ? 'is-inactive' : 'is-active'}`} style={{ textTransform: 'capitalize' }}>
+                    {qddr.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
 
@@ -401,6 +484,10 @@ export default function DCCFolderContent({
   // CAR
   carReports,
   loadingCar,
+
+  // QDDR
+  qddrReports,
+  loadingQddr,
 
   // access
   userRole,
@@ -534,8 +621,14 @@ export default function DCCFolderContent({
               <div className="breadcrumb">Task Reports &gt; CAR &gt; Closed</div>
               <CARClosedTable carReports={carReports} loadingCar={loadingCar} />
             </div>
+          ) : selectedTaskFolder.id === 'qddr' ? (
+            /* Level 2 – QDDR: closed reports table */
+            <div className="flex-column full-height">
+              <div className="breadcrumb">Task Reports &gt; QDDR &gt; Closed</div>
+              <QDDRClosedTable qddrReports={qddrReports} loadingQddr={loadingQddr} />
+            </div>
           ) : (
-            /* Level 2 – QDDR: not yet implemented */
+            /* Level 2 – Other reports */
             <div className="empty-state">
               {selectedTaskFolder.label} reports are not yet implemented.
             </div>

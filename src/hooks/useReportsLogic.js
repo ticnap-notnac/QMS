@@ -9,8 +9,10 @@ import { useReportsForm } from './useReports/useReportsForm'
 import { useReportsModals } from './useReports/useReportsModals'
 import { useReportsUpdateForm } from './useReports/useReportsUpdateForm'
 import { useCARForm } from './useReports/useCARForm'
+import { useQDDRForm } from './useReports/useQDDRForm'
 import { updateReportInvestigationMultipart } from '@/services/ncrService'
 import { submitCarReport } from '@/services/carService'
+import { submitQddrReport } from '@/services/qddrService'
 
 // ─── Pure helpers (no side-effects, safe to unit-test independently) ──────────
 
@@ -86,6 +88,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
   })
 
   const carFormState = useCARForm()
+  const qddrFormState = useQDDRForm()
 
   // ─── Derived / memoised ────────────────────────────────────────────────────
 
@@ -318,6 +321,38 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     }
   }
 
+  const handleSubmitQDDR = async (event) => {
+    if (event) event.preventDefault()
+    
+    if (!qddrFormState.validate()) {
+      return { success: false }
+    }
+
+    qddrFormState.setIsSubmitting(true)
+    qddrFormState.setError(null)
+    setError(null)
+
+    try {
+      // If we launched QDDR from an NCR, attach its ID
+      if (modalsState.selectedQDDRReport?.id) {
+        qddrFormState.form.ncr_id = modalsState.selectedQDDRReport.id
+      }
+      
+      await submitQddrReport(qddrFormState.form, currentAuthId)
+      
+      setToast({ message: 'QDDR report submitted successfully', type: 'success' })
+      modalsState.closeQDDRModal()
+      qddrFormState.resetForm()
+      await dataState.refreshReportsList()
+      return { success: true }
+    } catch (submitError) {
+      qddrFormState.setError(submitError?.message || 'Failed to submit QDDR.')
+      return { success: false }
+    } finally {
+      qddrFormState.setIsSubmitting(false)
+    }
+  }
+
   // ─── Returned API ──────────────────────────────────────────────────────────
 
   return {
@@ -449,6 +484,21 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       onSubmit: handleSubmitCAR,
       departments: dataState.departments.map(d => ({ id: d.id, label: d.department_name })),
       departmentsLoading: dataState.departmentsLoading,
+      users: dataState.users.map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
+      usersLoading: dataState.usersLoading,
+      allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    },
+    qddrModalProps: {
+      isOpen: modalsState.isQDDRModalOpen,
+      onClose: modalsState.closeQDDRModal,
+      form: qddrFormState.form,
+      handleChange: qddrFormState.handleChange,
+      selectNcr: qddrFormState.selectNcr,
+      error: qddrFormState.error,
+      isSubmitting: qddrFormState.isSubmitting,
+      onSubmit: handleSubmitQDDR,
+      locations: dataState.locationOptions,
+      locationsLoading: dataState.locationsLoading,
       users: dataState.users.map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
       usersLoading: dataState.usersLoading,
       allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
