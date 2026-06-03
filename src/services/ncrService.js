@@ -32,24 +32,10 @@ export async function updateReport(id, payload) {
 }
 
 export async function updateReportInvestigationMultipart(id, formData) {
-  const { data: { session } } = await supabase.auth.getSession()
-  const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
-
-  const res = await fetch(`${API_BASE_URL}/ncr/${id}/investigation`, {
+  return await request(`/ncr/${id}/investigation`, {
     method: 'PUT',
-    headers,
     body: formData,
   })
-
-  const contentType = res.headers.get('content-type') || ''
-  const payload = contentType.includes('application/json') ? await res.json() : await res.text()
-  if (!res.ok) {
-    const message = typeof payload === 'string'
-      ? payload
-      : payload?.error || payload?.message || `Update failed (${res.status})`
-    throw new Error(message)
-  }
-  return payload
 }
 
 export async function assignReportToEmployee(id, payload) {
@@ -84,22 +70,8 @@ export async function deleteReport(id) {
 }
 
 export async function submitNcrMultipart(formData) {
-  const { data: { session } } = await supabase.auth.getSession()
-  const headers = session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}
-
-  const res = await fetch(`${API_BASE_URL}/ncr/submit`, {
+  return await request('/ncr/submit', {
     method: 'POST',
-    headers,
     body: formData,
   })
-
-  const contentType = res.headers.get('content-type') || ''
-  const payload = contentType.includes('application/json') ? await res.json() : await res.text()
-  if (!res.ok) {
-    const message = typeof payload === 'string'
-      ? payload
-      : payload?.error || payload?.message || `Submit failed (${res.status})`
-    throw new Error(message)
-  }
-  return payload
 }

@@ -13,7 +13,7 @@
  */
 
 import { User, SquarePen } from 'lucide-react'
-import { formatDate, getStatusStyle, getSeverityStyle, getApprovalState } from '@/hooks/useReportsLogic'
+import { formatDate, getStatusStyle, getSeverityStyle, getApprovalState } from '@/utils/themeHelpers'
 
 /**
  * @param {{

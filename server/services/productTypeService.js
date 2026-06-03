@@ -1,8 +1,5 @@
 import { supabase } from '../lib/supabase.js'
-
-function normalizeProductTypeName(value) {
-  return String(value || '').trim()
-}
+import { writeAudit } from '../lib/audit.js'
 
 export async function fetchAllProductTypes() {
   const { data, error } = await supabase
@@ -10,65 +7,81 @@ export async function fetchAllProductTypes() {
     .select('id, product_name')
     .order('product_name', { ascending: true })
 
-  if (error) throw error
-
-  return (data || []).map((item) => ({
+  if (error) return { data: null, error }
+  const mapped = (data || []).map((item) => ({
     id: item.id,
-    product_type_name: item.product_name,
+    product_type_name: item.product_name
   }))
+  return { data: mapped, error: null }
 }
 
-export async function resolveOrCreateProductType(rawName) {
-  const productTypeName = normalizeProductTypeName(rawName)
-
-  if (!productTypeName) {
-    const err = new Error('Product type name is required.')
-    err.statusCode = 400
-    throw err
+export async function createProductType({ productTypeName, actorAuthId }) {
+  if (!productTypeName?.trim()) {
+    return { data: null, error: null, validationError: 'Product type name is required.' }
   }
 
-  // Idempotency check — return existing record without creating a duplicate.
   const { data: existing, error: lookupError } = await supabase
     .from('product_types')
     .select('id, product_name')
-    .ilike('product_name', productTypeName)
+    .ilike('product_name', productTypeName.trim())
     .maybeSingle()
 
-  if (lookupError) throw lookupError
-
+  if (lookupError) return { data: null, error: lookupError }
+  
+  const mappedExisting = existing ? { id: existing.id, product_type_name: existing.product_name } : null
   if (existing) {
-    return { record: existing, created: false }
+    return { data: mappedExisting, error: null, existed: true }
   }
 
   const { data, error } = await supabase
     .from('product_types')
-    .insert([{ product_name: productTypeName }])
+    .insert([{ product_name: productTypeName.trim() }])
     .select('id, product_name')
     .maybeSingle()
 
-  if (error) throw error
+  if (error) return { data: null, error }
 
-  return { record: data, created: true }
+  const mappedNew = { id: data.id, product_type_name: data.product_name }
+
+  try {
+    await writeAudit({
+      level: 'audit',
+      source: 'product_types',
+      action: 'product_type_create',
+      userAuthId: actorAuthId,
+      details: { id: data.id, product_type_name: data.product_name }
+    })
+  } catch (auditError) {
+    console.warn('Failed to record product_type_create audit:', auditError?.message || auditError)
+  }
+
+  return { data: mappedNew, error: null }
 }
 
-export async function removeProductType(id) {
+export async function deleteProductType({ id, actorAuthId }) {
   const { data: existing, error: lookupError } = await supabase
     .from('product_types')
     .select('id, product_name')
     .eq('id', id)
     .maybeSingle()
 
-  if (lookupError) throw lookupError
-
-  if (!existing) {
-    const err = new Error('Product type not found.')
-    err.statusCode = 404
-    throw err
-  }
+  if (lookupError) return { success: false, error: lookupError }
+  if (!existing) return { success: false, notFound: true }
 
   const { error } = await supabase.from('product_types').delete().eq('id', id)
+  if (error) return { success: false, error }
 
-  if (error) throw error
+  try {
+    await writeAudit({
+      level: 'audit',
+      source: 'product_types',
+      action: 'product_type_delete',
+      userAuthId: actorAuthId,
+      details: { id: existing.id, product_type_name: existing.product_name }
+    })
+  } catch (auditError) {
+    console.warn('Failed to record product_type_delete audit:', auditError?.message || auditError)
+  }
 
-  return existing
+  return { success: true, error: null }
 }

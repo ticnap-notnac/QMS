@@ -1,6 +1,6 @@
 import { User, SquarePen } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { formatDate, getStatusStyle, getSeverityStyle, formatAssignedUser } from '@/hooks/useReportsLogic'
+import { formatDate, getStatusStyle, getSeverityStyle, formatAssignedUser } from '@/utils/themeHelpers'
 import { getReportRating, rateReport } from '@/services/ncrService'
 import StarRating from '../UI/StarRating'
 

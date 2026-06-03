@@ -8,10 +8,12 @@ async function request(path, options = {}) {
   const { data: { session } } = await supabase.auth.getSession()
   const token = session?.access_token
 
+  const isMultipart = restOptions.body instanceof FormData
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...restOptions,
     headers: {
-      'Content-Type': 'application/json',
+      ...(!isMultipart ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...(requestHeaders || {}),
     },

@@ -1,40 +1,76 @@
-import { getRequestActor } from '../lib/requestUtils.js'
-import {
-  fetchAllLocations,
-  createLocation,
-  deleteLocation,
-} from '../services/locationService.js'
+import { supabase } from '../lib/supabase.js'
+import { writeAudit } from '../lib/audit.js'
 
-// GET /locations
-export async function getLocations(_req, res) {
-  const { data, error } = await fetchAllLocations()
+export async function fetchAllLocations() {
+  const { data, error } = await supabase
+    .from('locations')
+    .select('id, location_name')
+    .order('location_name', { ascending: true })
 
-  if (error) return res.status(500).json({ error: error.message })
-  return res.json(data)
+  return { data: data ?? [], error }
 }
 
-// POST /locations
-export async function postLocation(req, res) {
-  const rawName = req.body?.locationName ?? req.body?.location_name
-  const actorAuthId = getRequestActor(req)
+export async function createLocation({ locationName, actorAuthId }) {
+  if (!locationName?.trim()) {
+    return { data: null, error: null, validationError: 'Location name is required.' }
+  }
 
-  const { data, error, existed, validationError } = await createLocation({ rawName, actorAuthId })
+  const { data: existing, error: lookupError } = await supabase
+    .from('locations')
+    .select('id, location_name')
+    .ilike('location_name', locationName.trim())
+    .maybeSingle()
 
-  if (validationError) return res.status(400).json({ error: validationError })
-  if (error)           return res.status(500).json({ error: error.message })
-  if (existed)         return res.status(200).json(data)
+  if (lookupError) return { data: null, error: lookupError }
+  if (existing) return { data: existing, error: null, existed: true }
 
-  return res.status(201).json(data)
+  const { data, error } = await supabase
+    .from('locations')
+    .insert([{ location_name: locationName.trim() }])
+    .select('id, location_name')
+    .maybeSingle()
+
+  if (error) return { data: null, error }
+
+  try {
+    await writeAudit({
+      level: 'audit',
+      source: 'locations',
+      action: 'location_create',
+      userAuthId: actorAuthId,
+      details: { id: data?.id ?? null, location_name: locationName.trim() }
+    })
+  } catch (auditError) {
+    console.warn('Failed to record location_create audit:', auditError?.message || auditError)
+  }
+
+  return { data, error: null }
 }
 
-// DELETE /locations/:id
-export async function removeLocation(req, res) {
-  const { id } = req.params
-  const actorAuthId = getRequestActor(req)
+export async function deleteLocation({ id, actorAuthId }) {
+  const { data: existing, error: lookupError } = await supabase
+    .from('locations')
+    .select('id, location_name')
+    .eq('id', id)
+    .maybeSingle()
 
-  const { success, notFound, error } = await deleteLocation({ id, actorAuthId })
+  if (lookupError) return { success: false, error: lookupError }
+  if (!existing) return { success: false, notFound: true }
 
-  if (error)    return res.status(500).json({ error: error.message })
-  if (notFound) return res.status(404).json({ error: 'Location not found.' })
-  if (success)  return res.json({ success: true })
+  const { error } = await supabase.from('locations').delete().eq('id', id)
+  if (error) return { success: false, error }
+
+  try {
+    await writeAudit({
+      level: 'audit',
+      source: 'locations',
+      action: 'location_delete',
+      userAuthId: actorAuthId,
+      details: { id: existing.id, location_name: existing.location_name || null }
+    })
+  } catch (auditError) {
+    console.warn('Failed to record location_delete audit:', auditError?.message || auditError)
+  }
+
+  return { success: true, error: null }
 }
