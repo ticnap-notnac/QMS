@@ -188,18 +188,28 @@ export async function findSimilarCases(ncrId) {
 export async function getCachedSuggestion(ncrId) {
   const { data, error } = await supabase
     .from('ai_predictions')
-    .select('ai_suggestion, confidence_score, created_at')
+    .select('ai_suggestion, confidence_score, prediction_type, created_at')
     .eq('ncr_id', ncrId)
-    .eq('prediction_type', 'corrective_action')
+    .in('prediction_type', ['corrective_action', 'preventive_action'])
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
 
   if (error) throw error
-  return data || null
+  if (!data || data.length === 0) return null
+
+  // Map to correct properties
+  const corrective = data.find(p => p.prediction_type === 'corrective_action')
+  const preventive = data.find(p => p.prediction_type === 'preventive_action')
+
+  if (!corrective) return null
+  return {
+    ai_suggestion: corrective.ai_suggestion,
+    confidence_score: corrective.confidence_score,
+    preventive_suggestion: preventive?.ai_suggestion || null,
+    created_at: corrective.created_at,
+  }
 }
 
-export async function storeSuggestion({ ncrId, suggestion, confidence }) {
+export async function storeSuggestion({ ncrId, suggestion, confidence, type = 'corrective_action' }) {
   if (!ncrId || !suggestion) throw new Error('ncr_id and suggestion are required')
 
   const { error } = await supabase
@@ -208,7 +218,7 @@ export async function storeSuggestion({ ncrId, suggestion, confidence }) {
       ncr_id:          ncrId,
       ai_suggestion:   suggestion,
       confidence_score: confidence,
-      prediction_type: 'corrective_action',
+      prediction_type: type,
       predicted_risk:  'corrective',
     })
 
@@ -226,7 +236,7 @@ export async function generateAiSuggestion({ ncrId, deptName }) {
   const { report, caseRepo, ratedNcrs, carReports, qddrReports } = context
 
   // 2. Build Prompt
-  const prompt = `You are a quality control expert. Suggest a corrective action for this NCR report using all available context.
+  const prompt = `You are a quality control expert. Suggest a corrective action and a preventive action for this NCR report using all available context.
 
 NCR Report:
 - Description: ${report.description}
@@ -237,12 +247,12 @@ NCR Report:
 
 Case Repository Matches (CBR candidates):
 ${caseRepo.length > 0
-    ? caseRepo.map((c, i) => `${i + 1}. Keywords: ${c.problem_keywords || 'N/A'} | Action: ${c.corrective_action} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
+    ? caseRepo.map((c, i) => `${i + 1}. Keywords: ${c.problem_keywords || 'N/A'} | Corrective Action: ${c.corrective_action} | Preventive Action: ${c.preventive_action || 'N/A'} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
     : 'None'}
 
 Rated NCR Reports (rating >= 3):
 ${ratedNcrs.length > 0
-    ? ratedNcrs.map((r, i) => `${i + 1}. Description: ${r.description} | Resolution: ${r.resolution_details || 'N/A'}`).join('\n')
+    ? ratedNcrs.map((r, i) => `${i + 1}. Description: ${r.description} | Corrective: ${r.corrective_action || 'N/A'} | Resolution/Preventive: ${r.resolution_details || 'N/A'}`).join('\n')
     : 'None'}
 
 CAR Reports:
@@ -252,12 +262,12 @@ ${carReports.length > 0
 
 QDDR Reports:
 ${qddrReports.length > 0
-    ? qddrReports.map((q, i) => `${i + 1}. Reason: ${q.reason_of_discrepancy || 'N/A'} | Action: ${q.corrective_action || 'N/A'}`).join('\n')
+    ? qddrReports.map((q, i) => `${i + 1}. Reason: ${q.reason_of_discrepancy || 'N/A'} | Corrective: ${q.corrective_action || 'N/A'} | Preventive: ${q.preventive_action || 'N/A'}`).join('\n')
     : 'None'}
 
-Provide a concise, actionable corrective action in 2-4 sentences and a confidence score 0.0-1.0.
+Provide a concise, actionable corrective action (for immediately addressing the current non-conformance) and a preventive action (to prevent recurrence in the future). Each action should be 2-4 sentences. Also provide a confidence score between 0.0 and 1.0 based on matches.
 Respond ONLY in this JSON format with no preamble or markdown:
-{"suggestion": "your suggestion here", "confidence": 0.85}`
+{"suggestion": "your corrective action suggestion here", "preventive_suggestion": "your preventive action suggestion here", "confidence": 0.85}`
 
   // 3. Make fetch request to Anthropic API
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -290,10 +300,14 @@ Respond ONLY in this JSON format with no preamble or markdown:
   const parsed = JSON.parse(clean)
 
   // Save suggestion to DB cache
-  await storeSuggestion({ ncrId, suggestion: parsed.suggestion, confidence: parsed.confidence })
+  await storeSuggestion({ ncrId, suggestion: parsed.suggestion, confidence: parsed.confidence, type: 'corrective_action' })
+  if (parsed.preventive_suggestion) {
+    await storeSuggestion({ ncrId, suggestion: parsed.preventive_suggestion, confidence: parsed.confidence, type: 'preventive_action' })
+  }
 
   return {
     suggestion: parsed.suggestion,
+    preventive_suggestion: parsed.preventive_suggestion,
     confidence: parsed.confidence
   }
 }

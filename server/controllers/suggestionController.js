@@ -22,8 +22,11 @@ export async function getCached(req, res) {
 
 export async function saveSuggestion(req, res) {
     try {
-        const { ncr_id, suggestion, confidence } = req.body
-        await storeSuggestion({ ncrId: ncr_id, suggestion, confidence })
+        const { ncr_id, suggestion, preventive_suggestion, confidence } = req.body
+        await storeSuggestion({ ncrId: ncr_id, suggestion, confidence, type: 'corrective_action' })
+        if (preventive_suggestion) {
+            await storeSuggestion({ ncrId: ncr_id, suggestion: preventive_suggestion, confidence, type: 'preventive_action' })
+        }
         res.json({ success: true })
     } catch (err) {
         res.status(500).json({ error: err.message || 'Failed to save suggestion' })

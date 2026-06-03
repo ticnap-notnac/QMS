@@ -9,7 +9,6 @@ import CARModal from '../components/Modals/CARModal.jsx'
 import QDDRModal from '../components/Modals/QDDRModal.jsx'
 import ReportCard from '../components/Cards/ReportCard.jsx'
 import InvestigatedReportCard from '../components/Cards/InvestigatedReportCard.jsx'
-import ReportDetailModal from '../components/Modals/ReportDetailModal.jsx'
 import RejectReportModal from '../components/Modals/RejectReportModal.jsx'
 import PreventiveActionModal from '../components/Modals/PreventiveActionModal.jsx'
 import { useReportsLogic } from '@/hooks/useReportsLogic'
@@ -112,7 +111,6 @@ function ReportsPage({
                   canUpdateReport={logic.canUpdateReport}
                   onUpdate={logic.openUpdateModal}
                   onAssign={logic.openAssignModal}
-                  onViewDetail={logic.openDetailView}
                 />
               ))
             )
@@ -130,7 +128,6 @@ function ReportsPage({
                 canUpdateReport={logic.canUpdateReport}
                 onUpdate={logic.openUpdateModal}
                 onAssign={logic.openAssignModal}
-                onViewDetail={logic.openDetailView}
               />
             ))
           )}
@@ -144,7 +141,6 @@ function ReportsPage({
       <CreateReportModal {...logic.createModalProps} />
       <CARModal {...logic.carModalProps} />
       <QDDRModal {...logic.qddrModalProps} />
-      {logic.isDetailOpen && logic.detailReport && <ReportDetailModal {...logic.detailModalProps} />}
       <RejectReportModal {...logic.rejectModalProps} />
       <PreventiveActionModal {...logic.preventiveActionModalProps} />
     </main>

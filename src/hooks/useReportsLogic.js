@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { createReport, reviewReportApproval, submitNcrMultipart } from '@/services/ncrService'
+import { createReport, reviewReportApproval, submitNcrMultipart, updateReport } from '@/services/ncrService'
 import { createLocation } from '@/services/locationService'
 import { createProductType } from '@/services/productTypeService'
 import { createIssueType } from '@/services/issueTypeService'
@@ -13,6 +13,8 @@ import { useCARForm } from './useReports/useCARForm'
 import { useQDDRForm } from './useReports/useQDDRForm'
 import useAssignReportModal from './useReports/useAssignReportModal'
 import useNCRSubmitModal from './useReports/useNCRSubmitModal'
+import { useSuggestionLogic } from './useReports/useSuggestionLogic'
+import { fetchExistingAiSuggestion } from '@/services/suggestionService'
 import { updateReportInvestigationMultipart } from '@/services/ncrService'
 import { submitCarReport } from '@/services/carService'
 import { submitQddrReport } from '@/services/qddrService'
@@ -65,6 +67,12 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
   const [toast, setToast] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
 
+  // ── Preventive Action Rating state ──────────────────────────────────────────
+  const [preventiveRating, setPreventiveRating] = useState('')
+  const [ratingReportId, setRatingReportId] = useState(null)
+  const [suggestedPreventiveAction, setSuggestedPreventiveAction] = useState('')
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false)
+
   // ── View mode ───────────────────────────────────────────────────────────────
   const [isApprovalQueueMode, setIsApprovalQueueMode] = useState(false)
   const [isClosedMode, setIsClosedMode] = useState(false)
@@ -90,8 +98,40 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     report: modalsState.selectedReport,
   })
 
+  const suggestionState = useSuggestionLogic({
+    report: modalsState.selectedReport,
+    deptName: dataState.departmentNameById.get(String(modalsState.selectedReport?.department_id || '')) || '—',
+  })
+
   const carFormState = useCARForm()
   const qddrFormState = useQDDRForm()
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const openRatingId = params.get('openRating')
+    if (openRatingId) {
+      const loadRatingModal = async () => {
+        const reportObj = (dataState.reports || []).find(r => String(r.id) === String(openRatingId)) || 
+                          (dataState.investigatedReports || []).find(r => String(r.id) === String(openRatingId)) ||
+                          (dataState.closedReports || []).find(r => String(r.id) === String(openRatingId))
+        
+        if (reportObj) {
+          try {
+            const cached = await fetchExistingAiSuggestion(openRatingId)
+            setRatingReportId(Number(openRatingId))
+            setSuggestedPreventiveAction(cached?.preventive_suggestion || 'Implement standard verification and monitoring checks.')
+            setPreventiveRating('')
+            modalsState.setIsPreventiveActionModalOpen(true)
+            window.history.replaceState({}, document.title, window.location.pathname)
+          } catch (e) {
+            console.error('Failed to load suggestion for rating:', e)
+          }
+        }
+      }
+      const t = setTimeout(loadRatingModal, 500)
+      return () => clearTimeout(t)
+    }
+  }, [dataState.reports, dataState.investigatedReports, dataState.closedReports])
 
   // ─── Derived / memoised ────────────────────────────────────────────────────
 
@@ -103,6 +143,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
   const canUpdateReport = useCallback(
     (report) => {
       if (!report) return false
+      if (String(report.status || '').trim().toUpperCase() === 'CLOSED') return false
       if (canAssignReports) return true
       return String(report.assigned_to || '') !== '' &&
         String(report.assigned_to) === String(currentAuthId)
@@ -141,7 +182,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     await dataState.refreshReportsList()
   }
 
-  const handleUpdateReport = async (event) => {
+  const handleUpdateReport = async (event, prevAction = '') => {
     if (event) event.preventDefault()
 
     if (!modalsState.selectedReport?.id) {
@@ -181,6 +222,21 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       return { success: false }
     } finally {
       updateFormState.setIsSubmitting(false)
+    }
+  }
+
+  const handlePreventiveRatingSubmit = async () => {
+    if (!ratingReportId) return
+    setIsSubmittingRating(true)
+    try {
+      await updateReport(ratingReportId, { preventive_rating: preventiveRating })
+      setToast({ message: 'Preventive action suggestion rated successfully!', type: 'success' })
+      modalsState.setIsPreventiveActionModalOpen(false)
+      await dataState.refreshReportsList()
+    } catch (err) {
+      setError(err?.message || 'Failed to submit rating.')
+    } finally {
+      setIsSubmittingRating(false)
     }
   }
 
@@ -454,8 +510,14 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       handleFile: updateFormState.handleFile,
       errors: updateFormState.errors,
       error: updateFormState.error,
-      isSubmitting: updateFormState.isSubmitting,
       handleSubmit: handleUpdateReport,
+      deptName: dataState.departmentNameById.get(String(modalsState.selectedReport?.department_id || '')) || '—',
+      issueTypeOptions: dataState.issueTypeOptions,
+      issueTypesLoading: dataState.issueTypesLoading,
+      suggestion: suggestionState.suggestion,
+      isSuggesting: suggestionState.isSuggesting,
+      suggestionError: suggestionState.suggestionError,
+      loadSuggestion: suggestionState.loadSuggestion,
     },
     assignModalProps: {
       isOpen: modalsState.isAssignModalOpen,
@@ -504,15 +566,14 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     preventiveActionModalProps: {
       isOpen: modalsState.isPreventiveActionModalOpen,
       onClose: () => modalsState.setIsPreventiveActionModalOpen(false),
-      preventiveRating: formState.createFormState.preventiveRating,
-      onPreventiveRatingChange: formState.createFormState.setPreventiveRating,
-    },
-    detailModalProps: {
-      report: modalsState.detailReport,
-      currentAuthId,
-      canUpdateReport,
-      departmentNameById: dataState.departmentNameById,
-      onClose: modalsState.closeDetailView,
+      suggestedPreventiveAction,
+      preventiveRating,
+      onPreventiveRatingChange: setPreventiveRating,
+      onSubmit: handlePreventiveRatingSubmit,
+      isSubmitting: isSubmittingRating,
+      report: ratingReportId 
+        ? [...(dataState.reports || []), ...(dataState.investigatedReports || []), ...(dataState.closedReports || [])].find(r => String(r.id) === String(ratingReportId))
+        : null
     },
     carModalProps: {
       isOpen: modalsState.isCARModalOpen,

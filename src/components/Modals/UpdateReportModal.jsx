@@ -1,16 +1,6 @@
 import { useRef } from 'react'
 import { Calendar, FileSearch, Upload as UploadIcon } from 'lucide-react'
-
-const NCR_ISSUE_TYPES = [
-  { value: 'quality_food_safety',           label: 'Quality / Food Safety Issue' },
-  { value: 'environment_health_safety',     label: 'Environment, Health & Safety Issue' },
-  { value: 'security_issue',                label: 'Security Issue' },
-  { value: 'internal_audit',               label: 'Internal Audit' },
-  { value: 'customer_complaint',           label: 'Customer Complaint' },
-  { value: 'government_agency_audit',      label: 'Government Agency Audit Non-Conformance' },
-  { value: 'customer_audit_nonconformance', label: 'Customer Audit Non-Conformance' },
-  { value: 'vendor_nonconformance',        label: 'Vendor Non-Conformance' },
-]
+import SearchableDropdown from '@/components/Forms/SearchableDropdown'
 function FieldCard({ label, value }) {
   return (
     <div>
@@ -38,12 +28,19 @@ export default function UpdateReportModal({
   report,
   form,
   previewUrl,
+  deptName,
   setField,
   handleFile,
   errors,
   error,
   isSubmitting,
-  handleSubmit
+  handleSubmit,
+  issueTypeOptions,
+  issueTypesLoading,
+  suggestion,
+  isSuggesting,
+  suggestionError,
+  loadSuggestion
 }) {
   const fileInputRef = useRef(null)
 
@@ -64,7 +61,9 @@ export default function UpdateReportModal({
         <form
           className="modal-form-content reports-form-compact"
           onSubmit={async (event) => {
-            const result = await handleSubmit(event)
+            event.preventDefault()
+            const prevAction = suggestion?.preventiveAction || ''
+            const result = await handleSubmit(event, prevAction)
             if (result?.success) {
               onClose()
             }
@@ -87,19 +86,16 @@ export default function UpdateReportModal({
           </div>
 
           {/* Issue Category — editable so old null-type reports can be fixed */}
-          <div>
-            <label className="label-field">Issue Category</label>
-            <select
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <SearchableDropdown
+              label="Issue Category:"
               value={form.issueType || ''}
-              onChange={(e) => setField('issueType', e.target.value)}
-              className="input-field"
-              style={{ width: '100%', height: '38px', background: 'rgba(8, 18, 35, 0.5)' }}
-            >
-              <option value="">Select category…</option>
-              {NCR_ISSUE_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
+              onValueChange={(val) => setField('issueType', val)}
+              options={issueTypeOptions}
+              loading={issueTypesLoading}
+              placeholder="Search category…"
+              onSelectOption={(opt) => { setField('issueType', opt.label) }}
+            />
           </div>
 
           <div>
@@ -130,6 +126,103 @@ export default function UpdateReportModal({
               className="input-field textarea-medium"
               placeholder="Describe the immediate corrective action taken..."
             />
+          </div>
+
+          {/* AI Corrective Action Suggestion */}
+          <div style={{ marginTop: '16px', background: 'rgba(15, 23, 42, 0.3)', padding: '14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+              <span className="label-field" style={{ margin: 0 }}>AI Corrective Action Suggestion</span>
+
+              {suggestion && !isSuggesting && (
+                <span style={{
+                  fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                  background: 'rgba(34,197,94,0.15)', color: '#86efac',
+                  border: '1px solid rgba(34,197,94,0.25)'
+                }}>
+                  {Math.round((suggestion.confidence || 0) * 100)}% match
+                </span>
+              )}
+
+              {suggestion?.cached && (
+                <span style={{
+                  fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                  background: 'rgba(99,102,241,0.15)', color: '#a5b4fc',
+                  border: '1px solid rgba(99,102,241,0.25)'
+                }}>
+                  cached
+                </span>
+              )}
+
+              {suggestion?.fromRepository && !suggestion?.cached && (
+                <span style={{
+                  fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                  background: 'rgba(34,197,94,0.15)', color: '#86efac',
+                  border: '1px solid rgba(34,197,94,0.25)'
+                }}>
+                  CBR match
+                </span>
+              )}
+
+              {suggestion?.matchedFeatures?.length > 0 && !suggestion?.cached && (
+                <span style={{
+                  fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                  background: 'rgba(99,102,241,0.12)', color: '#c4b5fd',
+                  border: '1px solid rgba(99,102,241,0.25)'
+                }}>
+                  ✓ {suggestion.matchedFeatures.join(' · ')}
+                </span>
+              )}
+
+              {!suggestion?.fromRepository && !suggestion?.cached && suggestion && (
+                <span style={{
+                  fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                  background: 'rgba(245,158,11,0.15)', color: '#fde68a',
+                  border: '1px solid rgba(245,158,11,0.25)'
+                }}>
+                  AI generated
+                </span>
+              )}
+            </div>
+
+            {isSuggesting && (
+              <div style={{ color: 'var(--muted)', fontSize: '13px', padding: '8px 0' }}>
+                Analyzing similar cases...
+              </div>
+            )}
+
+            {suggestionError && (
+              <div style={{ color: '#fca5a5', fontSize: '13px', padding: '8px 0' }}>
+                {suggestionError}
+              </div>
+            )}
+
+            {suggestion && !isSuggesting && (
+              <div style={{ color: '#e2e8f0', fontSize: '13.5px', padding: '8px 0', lineHeight: '1.5' }}>
+                {suggestion.text}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+              <button
+                type="button"
+                className="btn-quick-toggle"
+                onClick={loadSuggestion}
+                disabled={isSuggesting}
+                style={{ fontSize: '12px', padding: '6px 14px' }}
+              >
+                {isSuggesting ? 'Analyzing...' : 'Regenerate'}
+              </button>
+              {suggestion && !isSuggesting && (
+                <button
+                  type="button"
+                  className="btn-gradient-primary"
+                  onClick={() => setField('correctiveAction', suggestion.text)}
+                  style={{ fontSize: '12px', padding: '6px 16px', height: 'auto', boxShadow: 'none' }}
+                >
+                  Accept Suggestion
+                </button>
+              )}
+            </div>
           </div>
 
           <div>

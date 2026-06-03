@@ -242,15 +242,20 @@ export default function App() {
     onRefreshUnreadCount: refreshUnreadNotificationCount,
   }
 
-  const handleNotificationSelect = (reportId) => {
+  const handleNotificationSelect = (reportId, notification = null) => {
     setIsNotificationsOpen(false)
-    navigate('/reports')
-
-    if (reportId) {
-      window.setTimeout(() => {
-        const target = document.getElementById(`report-card-${reportId}`)
-        target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 300)
+    const isVerificationDateUp = notification?.title && String(notification.title).startsWith('Verification Date Up')
+    
+    if (isVerificationDateUp) {
+      navigate(`/reports?openRating=${reportId}`)
+    } else {
+      navigate('/reports')
+      if (reportId) {
+        window.setTimeout(() => {
+          const target = document.getElementById(`report-card-${reportId}`)
+          target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 300)
+      }
     }
   }
 

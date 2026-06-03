@@ -107,6 +107,20 @@ function InvestigatedReportCard({ report, departmentNameById, canAssignReports, 
         </div>
       </div>
 
+      {/* ── Preventive Action Rating ───────────────────────────────────── */}
+      {report.preventive_rating && (
+        <>
+          <div className="reports-details-title-wrap">
+            <h4 className="reports-details-title">Suggested Preventive Action Rating</h4>
+          </div>
+          <div className="reports-details-box">
+            <span className="reports-workspace-text" style={{ color: 'var(--teal-accent, #38bdf8)', fontWeight: 'bold' }}>
+              {report.preventive_rating}
+            </span>
+          </div>
+        </>
+      )}
+
       {/* ── Investigation evidence ──────────────────────────────────────── */}
       <div className="reports-details-title-wrap">
         <h4 className="reports-details-title">Investigation Evidence</h4>

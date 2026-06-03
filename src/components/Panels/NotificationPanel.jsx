@@ -81,7 +81,7 @@ export default function NotificationPanel({
             className="notification-card"
             onClick={() => {
               if (notification.report_id && onOpenReport) {
-                onOpenReport(notification.report_id)
+                onOpenReport(notification.report_id, notification)
               }
             }}
             role="button"
@@ -89,7 +89,7 @@ export default function NotificationPanel({
             onKeyDown={(event) => {
               if ((event.key === 'Enter' || event.key === ' ') && notification.report_id && onOpenReport) {
                 event.preventDefault()
-                onOpenReport(notification.report_id)
+                onOpenReport(notification.report_id, notification)
               }
             }}
             style={{ cursor: notification.report_id && onOpenReport ? 'pointer' : 'default' }}

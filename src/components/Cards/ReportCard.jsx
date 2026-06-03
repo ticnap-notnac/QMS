@@ -4,7 +4,7 @@ import { formatDate, getStatusStyle, getSeverityStyle, formatAssignedUser } from
 import { getReportRating, rateReport } from '@/services/ncrService'
 import StarRating from '../UI/StarRating'
 
-function ReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, onUpdate, onAssign, onViewDetail }) {
+function ReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, onUpdate, onAssign }) {
   const reporterName = report.reporter_full_name || 'Name of the User'
   const reporterRole = report.reporter_role_name || 'Position'
   const reporterDepartment =
@@ -148,15 +148,8 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
 
       {/* ── Action row ──────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
-        <button
-          type="button"
-          className="btn-edit-user"
-          onClick={() => onViewDetail?.(report)}
-          title="View report details"
-        >
-          View Details
-        </button>
-        {canAssignReports && !isAssigned && (
+
+        {canAssignReports && !isAssigned && !isClosed && (
           <button
             type="button"
             className="btn-edit-user"

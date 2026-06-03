@@ -20,6 +20,7 @@ export function useSuggestionLogic({ report, deptName }) {
             if (cached) {
                 setSuggestion({
                     text: cached.ai_suggestion,
+                    preventiveAction: cached.preventive_suggestion,
                     confidence: cached.confidence_score,
                     cached: true,
                 })
@@ -45,24 +46,29 @@ export function useSuggestionLogic({ report, deptName }) {
                     : 'general similarity'
                 const source = bestMatch.source === 'repository' ? 'case repository' : 'past NCR report'
                 const text = `Based on ${source} (matched on: ${features}): ${bestMatch.corrective_action}`
+                const preventiveText = bestMatch.preventive_action
+                    ? `Based on ${source} (matched on: ${features}): ${bestMatch.preventive_action}`
+                    : `Based on ${source} (matched on: ${features}): Implement standard verification and monitoring checks.`
                 const confidence = Math.min(bestMatch.cbr_score, 1)
 
                 setSuggestion({
                     text,
+                    preventiveAction: preventiveText,
                     confidence,
                     cached: false,
                     fromRepository: true,
                     matchedFeatures: bestMatch.matched_features || [],
                 })
-                await saveAiSuggestion(report.id, text, confidence)
+                await saveAiSuggestion(report.id, text, preventiveText, confidence)
                 return
             }
 
-            // ── Step 4: AI fallback — proxy through backend router to avoid CORS & API key exposure ──
+            // ── Step 4: AI fallback ──
             const result = await generateAiSuggestion(report.id, deptName)
 
             setSuggestion({
                 text: result.suggestion,
+                preventiveAction: result.preventive_suggestion,
                 confidence: result.confidence,
                 cached: false,
                 matchedFeatures: [],
