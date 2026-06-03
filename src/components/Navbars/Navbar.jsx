@@ -46,7 +46,9 @@ export default function Navbar({
         <nav className="app-nav-center">
           <button onClick={() => navigate('/')} className={`nav-tab-button ${location.pathname === '/' ? 'active' : ''}`}>Dashboard</button>
           <button onClick={() => navigate('/reports')} className={`nav-tab-button ${location.pathname.startsWith('/reports') ? 'active' : ''}`}>Reports</button>
-          <button onClick={() => navigate('/iso')} className={`nav-tab-button ${location.pathname.startsWith('/iso') ? 'active' : ''}`}>ISO</button>
+          {(normalizedRole === 'admin' || normalizedRole === 'auditor') && (
+            <button onClick={() => navigate('/iso')} className={`nav-tab-button ${location.pathname.startsWith('/iso') ? 'active' : ''}`}>ISO</button>
+          )}
           <button onClick={() => navigate('/dcc')} className={`nav-tab-button ${location.pathname.startsWith('/dcc') ? 'active' : ''}`}>DCC</button>
         </nav>
 

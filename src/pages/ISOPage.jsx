@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { supabase } from '@/utils/supabase'
 
 import Toast from '../components/UI/Toast.jsx' // 🍞 Import our toast notification component
 import {
@@ -13,13 +14,78 @@ import {
 } from 'lucide-react'
 import './ISOPage.css' // 🔌 Link our separated stylesheet module directly!
 
-function ISOPage() {
+function ISOPage({ userRole }) {
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
   const [isAuditTaskModalOpen, setIsAuditTaskModalOpen] = useState(false);
   const [isCapaTaskModalOpen, setIsCapaTaskModalOpen] = useState(false);
   const [isDocumentTaskModalOpen, setIsDocumentTaskModalOpen] = useState(false);
   const [isTrainingTaskModalOpen, setIsTrainingTaskModalOpen] = useState(false);
   const [toast, setToast] = useState(null); // Active state for information alerts
+
+  const [activeModules, setActiveModules] = useState([]);
+  const [loadingModules, setLoadingModules] = useState(false);
+  const [isModulesModalOpen, setIsModulesModalOpen] = useState(false);
+  const [selectedModule, setSelectedModule] = useState(null);
+  const [clauses, setClauses] = useState([]);
+  const [loadingClauses, setLoadingClauses] = useState(false);
+
+  const fetchActiveModules = async () => {
+    setLoadingModules(true);
+    setIsModulesModalOpen(true);
+    try {
+      const { data, error } = await supabase
+        .from('iso_standards')
+        .select('id, name, version, description')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setActiveModules(data || []);
+    } catch (err) {
+      console.error('Error fetching active ISO standards:', err);
+      setToast({ message: 'Failed to load active ISO modules.', type: 'error' });
+      setIsModulesModalOpen(false);
+    } finally {
+      setLoadingModules(false);
+    }
+  };
+
+  const fetchClausesForModule = async (module) => {
+    setLoadingClauses(true);
+    setSelectedModule(module);
+    try {
+      const { data: groups, error: groupError } = await supabase
+        .from('iso_clause_groups')
+        .select('id')
+        .eq('standard_id', module.id);
+
+      if (groupError) throw groupError;
+      if (!groups || groups.length === 0) {
+        setClauses([]);
+        return;
+      }
+
+      const groupIds = groups.map(g => g.id);
+
+      const { data: clausesData, error: clausesError } = await supabase
+        .from('iso_clauses')
+        .select('clause_number, title, description')
+        .in('group_id', groupIds);
+
+      if (clausesError) throw clausesError;
+
+      const sorted = (clausesData || []).sort((a, b) =>
+        a.clause_number.localeCompare(b.clause_number, undefined, { numeric: true })
+      );
+      setClauses(sorted);
+    } catch (err) {
+      console.error('Error fetching clauses for ISO standard:', err);
+      setToast({ message: 'Failed to load ISO clauses.', type: 'error' });
+      setSelectedModule(null);
+    } finally {
+      setLoadingClauses(false);
+    }
+  };
 
   const openAuditTask = () => { setIsSelectionModalOpen(false); setIsAuditTaskModalOpen(true); };
   const openCapaTask = () => { setIsSelectionModalOpen(false); setIsCapaTaskModalOpen(true); };
@@ -39,6 +105,25 @@ function ISOPage() {
       type: 'success'
     });
   };
+
+  const normalizedRole = String(userRole || '').trim().toLowerCase()
+  const isAuthorized = normalizedRole === 'admin' || normalizedRole === 'auditor'
+
+  if (!isAuthorized) {
+    return (
+      <main className="dashboard page-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh' }}>
+        <div className="metric-card" style={{ maxWidth: '480px', width: '90%', textAlign: 'center', padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', border: '1px solid rgba(239, 68, 68, 0.2)', background: 'rgba(15, 23, 42, 0.4)' }}>
+          <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', marginBottom: '8px' }}>
+            <X size={32} />
+          </div>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#f8fafc', margin: 0 }}>Access Denied</h2>
+          <p style={{ fontSize: '14px', color: '#94a3b8', lineHeight: '1.5', margin: 0 }}>
+            You do not have permission to view the ISO Compliance panel. Only quality auditors and system administrators are authorized to access this section.
+          </p>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="dashboard page-root">
@@ -69,7 +154,7 @@ function ISOPage() {
               <button
                 type="button"
                 className="btn-metric-card iso-metric-button"
-                onClick={() => setToast({ message: "Loading comprehensive ISO core compliance modules...", type: 'info' })}
+                onClick={fetchActiveModules}
               >
                 ISO Modules
               </button>
@@ -237,6 +322,119 @@ function ISOPage() {
                 Create Task
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active ISO Modules Modal */}
+      {isModulesModalOpen && (
+        <div className="iso-modal-overlay" onClick={() => { setIsModulesModalOpen(false); setSelectedModule(null); }}>
+          <div className="iso-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', width: '90%' }}>
+            <div className="iso-modal-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {selectedModule && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedModule(null)}
+                    style={{ background: 'none', border: 'none', color: 'var(--cyan-light, #22d3ee)', cursor: 'pointer', fontSize: '16px', padding: '0 4px', fontWeight: 'bold' }}
+                    title="Back to standards"
+                  >
+                    ←
+                  </button>
+                )}
+                <h3 className="iso-submodal-title" style={{ margin: 0, fontSize: '18px' }}>
+                  {selectedModule ? `${selectedModule.name} Clauses` : 'Active ISO Modules'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setIsModulesModalOpen(false); setSelectedModule(null); }}
+                className="iso-modal-icon-button"
+                title="Close"
+                style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {selectedModule ? (
+              // 📜 CLAUSES LIST
+              loadingClauses ? (
+                <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--muted)' }}>Loading clauses...</div>
+              ) : clauses.length === 0 ? (
+                <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--muted)', fontSize: '13.5px' }}>
+                  No clauses found for this standard.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '350px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {clauses.map((clause, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        padding: '12px',
+                        borderRadius: '8px',
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(255, 255, 255, 0.06)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <span style={{ fontWeight: 'bold', color: 'var(--cyan-light, #22d3ee)', fontSize: '14px', minWidth: '40px' }}>
+                          {clause.clause_number}
+                        </span>
+                        <span style={{ fontWeight: '600', color: '#f8fafc', fontSize: '14px' }}>
+                          {clause.title}
+                        </span>
+                      </div>
+                      {clause.description && (
+                        <p style={{ fontSize: '12.5px', color: '#94a3b8', margin: '4px 0 0 0', lineHeight: '1.4' }}>
+                          {clause.description}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))
+              : (
+                // 📦 STANDARDS LIST
+                loadingModules ? (
+                  <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--muted)' }}>Loading active modules...</div>
+                ) : activeModules.length === 0 ? (
+                  <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--muted)', fontSize: '13.5px' }}>
+                    No active ISO standards found. You can toggle standards under Settings &gt; ISO Standards.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '350px', overflowY: 'auto', paddingRight: '4px' }}>
+                    {activeModules.map((module, i) => (
+                      <div
+                        key={i}
+                        onClick={() => fetchClausesForModule(module)}
+                        style={{
+                          cursor: 'pointer',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          background: 'rgba(34, 211, 238, 0.05)',
+                          border: '1px solid rgba(34, 211, 238, 0.15)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px',
+                          transition: 'all 0.2s ease-in-out'
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(34, 211, 238, 0.1)'; e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.3)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(34, 211, 238, 0.05)'; e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.15)'; }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 'bold', color: '#f8fafc', fontSize: '14.5px' }}>{module.name}</span>
+                          {module.version && <span style={{ fontSize: '11px', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: '#94a3b8' }}>v{module.version}</span>}
+                        </div>
+                        {module.description && <span style={{ fontSize: '12.5px', color: '#94a3b8', lineHeight: '1.4' }}>{module.description}</span>}
+                      </div>
+                    ))}
+                  </div>
+                ))
+            }
           </div>
         </div>
       )}
