@@ -134,20 +134,13 @@ function TaskReportsFolderList({ onOpenTaskFolder }) {
 
 // ---------------------------------------------------------------------------
 // Sub-view: Task Reports › NCR – 1×1 evidence thumbnail
-//
-// Columns evidence_url and investigation_evidence_url store storage paths
-// (e.g. "evidence/abc.jpg"), NOT full URLs.
-// We resolve them via supabase.storage.from('ncr-evidence').getPublicUrl().
-// If the value is already a full https:// URL it is used as-is.
 // ---------------------------------------------------------------------------
 
 const NCR_EVIDENCE_BUCKET = 'ncr-evidence'
 
 function resolveStorageUrl(path) {
   if (!path) return null
-  // Already a full URL — use directly
   if (path.startsWith('http://') || path.startsWith('https://')) return path
-  // Storage path — resolve to public URL
   const { data } = supabase.storage.from(NCR_EVIDENCE_BUCKET).getPublicUrl(path)
   return data?.publicUrl ?? null
 }
@@ -180,7 +173,6 @@ function EvidenceThumbnail({ path, label }) {
         onMouseOver={(e) => (e.currentTarget.style.opacity = '0.75')}
         onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
         onError={(e) => {
-          // Non-image file (PDF etc.) — hide broken img, show plain "View" text
           e.currentTarget.style.display = 'none'
           e.currentTarget.parentElement.insertAdjacentHTML(
             'beforeend',
@@ -210,7 +202,6 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
 
   return (
     <div className="glass-card-dcc">
-      {/* 🚀 THE FIXED WRAPPER: Contains the table width tightly inside the card margins */}
       <div className="dcc-scrollable-table-box">
         <table className="iso-table" style={{ width: '100%' }}>
           <thead>
@@ -231,56 +222,54 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
             </tr>
           </thead>
           <tbody>
-            {ncrReports.map((ncr) => (
-              <tr key={ncr.id}>
-                <td style={{ fontWeight: 600 }}>
-                  {ncr.reference_no ?? '—'}
-                </td>
-                <td>{ncr.issue_type ?? '—'}</td>
-                <td>
-                  <div className="clause-description">
-                    {ncr.description ?? <span className="muted">No description</span>}
-                  </div>
-                </td>
-                <td>
-                  {ncr.severity ? (
-                    <span
-                      className={`iso-status-pill ${SEVERITY_COLORS[ncr.severity] ?? ''
-                        }`}
-                    >
-                      {ncr.severity}
+            {ncrReports.map((ncr) => {
+              const statusClean = String(ncr.status || '').trim().toLowerCase()
+
+              return (
+                <tr key={ncr.id}>
+                  <td style={{ fontWeight: 600 }}>{ncr.reference_no ?? '—'}</td>
+                  <td>{ncr.issue_type ?? '—'}</td>
+                  <td>
+                    <div className="clause-description">
+                      {ncr.description ?? <span className="muted">No description</span>}
+                    </div>
+                  </td>
+                  <td>
+                    {ncr.severity ? (
+                      <span className={`iso-status-pill ${SEVERITY_COLORS[ncr.severity] ?? ''}`}>
+                        {ncr.severity}
+                      </span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td>{ncr.department_id ?? '—'}</td>
+                  <td>{ncr.product_type_name ?? ncr.product_type ?? '—'}</td>
+                  <td>{ncr.batch_number ?? '—'}</td>
+                  <td>{ncr.location_name ?? ncr.complaint_location ?? '—'}</td>
+                  <td>
+                    {ncr.occurrence_date ? new Date(ncr.occurrence_date).toLocaleDateString() : '—'}
+                  </td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    {ncr.created_at ? new Date(ncr.created_at).toLocaleString() : '—'}
+                  </td>
+                  <td style={{ width: 48, textAlign: 'center' }}>
+                    <EvidenceThumbnail path={ncr.evidence_url} label="Evidence" />
+                  </td>
+                  <td style={{ width: 48, textAlign: 'center' }}>
+                    <EvidenceThumbnail path={ncr.investigation_evidence_url} label="Inv. Evidence" />
+                  </td>
+                  <td>
+                    {/* 🚀 Dynamic Gray vs Green Theme Route Switcher */}
+                    <span className={`iso-status-pill ${
+                      statusClean === 'completed' ? 'is-active' : statusClean === 'closed' ? 'is-closed' : 'is-inactive'
+                    }`}>
+                      {ncr.status}
                     </span>
-                  ) : (
-                    '—'
-                  )}
-                </td>
-                <td>{ncr.department_id ?? '—'}</td>
-                <td>{ncr.product_type_name ?? ncr.product_type ?? '—'}</td>
-                <td>{ncr.batch_number ?? '—'}</td>
-                <td>{ncr.location_name ?? ncr.complaint_location ?? '—'}</td>
-                <td>
-                  {ncr.occurrence_date
-                    ? new Date(ncr.occurrence_date).toLocaleDateString()
-                    : '—'}
-                </td>
-                <td style={{ whiteSpace: 'nowrap' }}>
-                  {ncr.created_at
-                    ? new Date(ncr.created_at).toLocaleString()
-                    : '—'}
-                </td>
-                <td style={{ width: 48, textAlign: 'center' }}>
-                  <EvidenceThumbnail path={ncr.evidence_url} label="Evidence" />
-                </td>
-                <td style={{ width: 48, textAlign: 'center' }}>
-                  <EvidenceThumbnail path={ncr.investigation_evidence_url} label="Inv. Evidence" />
-                </td>
-                <td>
-                  <span className="iso-status-pill is-inactive">
-                    {ncr.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -325,36 +314,39 @@ function CARClosedTable({ carReports, loadingCar }) {
             </tr>
           </thead>
           <tbody>
-            {carReports.map((car) => (
-              <tr key={car.id}>
-                <td style={{ fontWeight: 600 }}>
-                  {car.reference_no ?? '—'}
-                </td>
-                <td>{car.requestor ?? '—'}</td>
-                <td>{car.recipient ?? '—'}</td>
-                <td>{car.requesting_department ?? '—'}</td>
-                <td>{car.responsible_department ?? '—'}</td>
-                <td>{car.product_material_name ?? '—'}</td>
-                <td>{car.model_type ?? '—'}</td>
-                <td>{car.control_no ?? '—'}</td>
-                <td>{car.affected_quantity ?? '—'}</td>
-                <td>
-                  <div className="clause-description" title={car.details_of_nonconformance}>
-                    {car.details_of_nonconformance ?? <span className="muted">No details</span>}
-                  </div>
-                </td>
-                <td>
-                  {car.request_date
-                    ? new Date(car.request_date).toLocaleDateString()
-                    : '—'}
-                </td>
-                <td>
-                  <span className={`iso-status-pill ${String(car.status || '').toLowerCase() === 'closed' ? 'is-inactive' : 'is-active'}`} style={{ textTransform: 'capitalize' }}>
-                    {car.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
+            {carReports.map((car) => {
+              const statusClean = String(car.status || '').trim().toLowerCase()
+
+              return (
+                <tr key={car.id}>
+                  <td style={{ fontWeight: 600 }}>{car.reference_no ?? '—'}</td>
+                  <td>{car.requestor ?? '—'}</td>
+                  <td>{car.recipient ?? '—'}</td>
+                  <td>{car.requesting_department ?? '—'}</td>
+                  <td>{car.responsible_department ?? '—'}</td>
+                  <td>{car.product_material_name ?? '—'}</td>
+                  <td>{car.model_type ?? '—'}</td>
+                  <td>{car.control_no ?? '—'}</td>
+                  <td>{car.affected_quantity ?? '—'}</td>
+                  <td>
+                    <div className="clause-description" title={car.details_of_nonconformance}>
+                      {car.details_of_nonconformance ?? <span className="muted">No details</span>}
+                    </div>
+                  </td>
+                  <td>
+                    {car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}
+                  </td>
+                  <td>
+                    {/* 🚀 Dynamic Gray vs Green Theme Route Switcher */}
+                    <span className={`iso-status-pill ${
+                      statusClean === 'completed' ? 'is-active' : statusClean === 'closed' ? 'is-closed' : 'is-inactive'
+                    }`}>
+                      {car.status}
+                    </span>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -400,44 +392,49 @@ function QDDRClosedTable({ qddrReports, loadingQddr }) {
             </tr>
           </thead>
           <tbody>
-            {qddrReports.map((qddr) => (
-              <tr key={qddr.id}>
-                <td style={{ fontWeight: 600 }}>
-                  {qddr.reference_no ?? '—'}
-                </td>
-                <td>{qddr.location ?? '—'}</td>
-                <td>
-                  {qddr.date ? new Date(qddr.date).toLocaleDateString() : '—'}
-                  {qddr.time ? ` ${qddr.time.slice(0, 5)}` : ''}
-                </td>
-                <td>{qddr.trucker_broker ?? '—'}</td>
-                <td>{qddr.plate_number ?? '—'}</td>
-                <td>{qddr.po_reference ?? '—'}</td>
-                <td>{qddr.material_description ?? '—'}</td>
-                <td>{qddr.material_code ?? '—'}</td>
-                <td>{qddr.qty ?? '—'}</td>
-                <td>
-                  <div className="clause-description" title={qddr.reason_of_discrepancy}>
-                    {qddr.reason_of_discrepancy ?? <span className="muted">No reason</span>}
-                  </div>
-                </td>
-                <td>
-                  <div className="clause-description" title={qddr.corrective_action}>
-                    {qddr.corrective_action ?? <span className="muted">—</span>}
-                  </div>
-                </td>
-                <td>
-                  <div className="clause-description" title={qddr.preventive_action}>
-                    {qddr.preventive_action ?? <span className="muted">—</span>}
-                  </div>
-                </td>
-                <td>
-                  <span className={`iso-status-pill ${String(qddr.status || '').toLowerCase() === 'closed' ? 'is-inactive' : 'is-active'}`} style={{ textTransform: 'capitalize' }}>
-                    {qddr.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
+            {qddrReports.map((qddr) => {
+              const statusClean = String(qddr.status || '').trim().toLowerCase()
+
+              return (
+                <tr key={qddr.id}>
+                  <td style={{ fontWeight: 600 }}>{qddr.reference_no ?? '—'}</td>
+                  <td>{qddr.location ?? '—'}</td>
+                  <td>
+                    {qddr.date ? new Date(qddr.date).toLocaleDateString() : '—'}
+                    {qddr.time ? ` ${qddr.time.slice(0, 5)}` : ''}
+                  </td>
+                  <td>{qddr.trucker_broker ?? '—'}</td>
+                  <td>{qddr.plate_number ?? '—'}</td>
+                  <td>{qddr.po_reference ?? '—'}</td>
+                  <td>{qddr.material_description ?? '—'}</td>
+                  <td>{qddr.material_code ?? '—'}</td>
+                  <td>{qddr.qty ?? '—'}</td>
+                  <td>
+                    <div className="clause-description" title={qddr.reason_of_discrepancy}>
+                      {qddr.reason_of_discrepancy ?? <span className="muted">No reason</span>}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="clause-description" title={qddr.corrective_action}>
+                      {qddr.corrective_action ?? <span className="muted">—</span>}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="clause-description" title={qddr.preventive_action}>
+                      {qddr.preventive_action ?? <span className="muted">—</span>}
+                    </div>
+                  </td>
+                  <td>
+                    {/* 🚀 Dynamic Gray vs Green Theme Route Switcher */}
+                    <span className={`iso-status-pill ${
+                      statusClean === 'completed' ? 'is-active' : statusClean === 'closed' ? 'is-closed' : 'is-inactive'
+                    }`}>
+                      {qddr.status}
+                    </span>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -492,7 +489,8 @@ function AuditReportsTable({ auditReports, loadingAudit }) {
                   {run.completed_at ? new Date(run.completed_at).toLocaleString() : '—'}
                 </td>
                 <td>
-                  <span className="iso-status-pill is-inactive">
+                  {/* 🟢 Keeping "Completed" as vibrant active green */}
+                  <span className="iso-status-pill is-active">
                     Completed
                   </span>
                 </td>
@@ -510,54 +508,32 @@ function AuditReportsTable({ auditReports, loadingAudit }) {
 // ---------------------------------------------------------------------------
 
 export default function DCCFolderContent({
-  // folder state
   selectedFolder,
   onCloseFolder,
-
-  // search
   searchQuery,
   onSearchChange,
-
-  // recently viewed
   recentlyViewed,
   onOpenFolder,
-
-  // folder items config
   folderItems,
-
-  // ISO
   standards,
   loadingStandards,
   selectedStandard,
   clauses,
   loadingClauses,
   onSelectStandard,
-
-  // Task Reports sub-folder
   selectedTaskFolder,
   onOpenTaskFolder,
   onCloseTaskFolder,
-
-  // NCR
   ncrReports,
   loadingNcr,
-
-  // CAR
   carReports,
   loadingCar,
-
-  // QDDR
   qddrReports,
   loadingQddr,
-
-  // Audit
   auditReports,
   loadingAudit,
-
-  // access
   userRole,
 }) {
-  // ── Root view: folder browser ───────────────────────────────────────────
   if (!selectedFolder) {
     return (
       <div className="flex-column">
@@ -609,9 +585,6 @@ export default function DCCFolderContent({
     )
   }
 
-  // ── Folder view: header bar shared by all folder types ──────────────────
-
-  // Breadcrumb label for sub-folder depth (Task Reports > NCR etc.)
   const subFolderLabel = selectedTaskFolder ? ` > ${selectedTaskFolder.label}` : ''
   const backHandler =
     selectedFolder.id === 'task_reports' && selectedTaskFolder
@@ -672,34 +645,28 @@ export default function DCCFolderContent({
       {selectedFolder.id === 'task_reports' && (
         <div className="row-gap-40">
           {!selectedTaskFolder ? (
-            /* Level 1 – show CAR / QDDR / NCR sub-folders */
             <TaskReportsFolderList onOpenTaskFolder={onOpenTaskFolder} />
           ) : selectedTaskFolder.id === 'ncr' ? (
-            /* Level 2 – NCR: closed reports table */
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; NCR &gt; Closed</div>
               <NCRClosedTable ncrReports={ncrReports} loadingNcr={loadingNcr} />
             </div>
           ) : selectedTaskFolder.id === 'car' ? (
-            /* Level 2 – CAR: closed reports table */
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; CAR &gt; Closed</div>
               <CARClosedTable carReports={carReports} loadingCar={loadingCar} />
             </div>
           ) : selectedTaskFolder.id === 'qddr' ? (
-            /* Level 2 – QDDR: closed reports table */
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; QDDR &gt; Closed</div>
               <QDDRClosedTable qddrReports={qddrReports} loadingQddr={loadingQddr} />
             </div>
           ) : selectedTaskFolder.id === 'audit' ? (
-            /* Level 2 – Audit Reports: completed runs table */
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; Audit Reports &gt; Completed</div>
               <AuditReportsTable auditReports={auditReports} loadingAudit={loadingAudit} />
             </div>
           ) : (
-            /* Level 2 – Other reports */
             <div className="empty-state">
               {selectedTaskFolder.label} reports are not yet implemented.
             </div>
