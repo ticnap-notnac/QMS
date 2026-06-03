@@ -10,7 +10,7 @@
  *   RETAIN    → Handled in ncrReportsService.submitReportRating()
  *
  * If the best CBR match scores below the MIN_CBR_SCORE threshold, falls back to
- * Claude AI which uses all mined data as context.
+ * Gemini AI which uses all mined data as context.
  */
 
 import { supabase } from '../lib/supabase.js'
@@ -271,9 +271,9 @@ export async function generateAiSuggestion({ ncrId, deptName }) {
   const context = await findSimilarCases(ncrId)
   const { report, caseRepo, ratedNcrs, carReports, qddrReports } = context
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
-    console.warn('ANTHROPIC_API_KEY is not configured in process.env. Using rule-based fallback suggestion generator.')
+    console.warn('GEMINI_API_KEY is not configured in process.env. Using rule-based fallback suggestion generator.')
     const fallback = generateFallbackHeuristicSuggestion({ report, deptName })
     try {
       await storeSuggestion({ ncrId, suggestion: fallback.suggestion, confidence: fallback.confidence, type: 'corrective_action' })
@@ -321,33 +321,35 @@ Provide a concise, actionable corrective action (for immediately addressing the 
 Respond ONLY in this JSON format with no preamble or markdown:
 {"suggestion": "your corrective action suggestion here", "preventive_suggestion": "your preventive action suggestion here", "confidence": 0.85}`
 
-    // 3. Make fetch request to Anthropic API
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // 3. Make fetch request to Gemini API
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022', // updated to current model recommended naming
-        max_tokens: 1000,
-        messages: [
+        contents: [
           {
-            role: 'user',
-            content: prompt
+            parts: [
+              {
+                text: prompt
+              }
+            ]
           }
-        ]
+        ],
+        generationConfig: {
+          responseMimeType: 'application/json'
+        }
       })
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      throw new Error(`Anthropic API call failed: ${response.statusText} - ${errorText}`)
+      throw new Error(`Gemini API call failed: ${response.statusText} - ${errorText}`)
     }
 
     const data = await response.json()
-    const text = data.content?.map(i => i.text || '').join('') || ''
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
     const clean = text.replace(/```json|```/g, '').trim()
     const parsed = JSON.parse(clean)
 
@@ -363,7 +365,7 @@ Respond ONLY in this JSON format with no preamble or markdown:
       confidence: parsed.confidence
     }
   } catch (err) {
-    console.error('Anthropic API or parsing failed. Falling back to rule-based suggestion. Error:', err)
+    console.error('Gemini API or parsing failed. Falling back to rule-based suggestion. Error:', err)
     const fallback = generateFallbackHeuristicSuggestion({ report, deptName })
     try {
       await storeSuggestion({ ncrId, suggestion: fallback.suggestion, confidence: fallback.confidence, type: 'corrective_action' })
