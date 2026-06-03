@@ -27,6 +27,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
   const [activeClauses, setActiveClauses] = useState([])
   const [resultsMap, setResultsMap] = useState({})
   const [savingProgress, setSavingProgress] = useState(false)
+  const [linkedCarsMap, setLinkedCarsMap] = useState({})  // { [clause_id]: [{ id, reference_no, status }] }
 
   // Audit Logs states
   const [logs, setLogs] = useState([])
@@ -127,6 +128,28 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       })
       setActiveClauses(clausesList)
       setResultsMap(initialResults)
+
+      // Batch-fetch all CARs linked to the clauses in this audit
+      if (clausesList.length > 0) {
+        const clauseIds = clausesList.map(c => c.id)
+        try {
+          const { data: linkData } = await supabase
+            .from('car_clause_links')
+            .select('clause_id, car_reports(id, reference_no, status)')
+            .in('clause_id', clauseIds)
+
+          const carsMap = {}
+          for (const row of linkData || []) {
+            if (!row.car_reports) continue
+            if (!carsMap[row.clause_id]) carsMap[row.clause_id] = []
+            carsMap[row.clause_id].push(row.car_reports)
+          }
+          setLinkedCarsMap(carsMap)
+        } catch (linkErr) {
+          console.warn('[useAuditToolsLogic] Could not load linked CARs:', linkErr.message)
+          setLinkedCarsMap({})
+        }
+      }
     } catch (err) {
       console.error('Error starting audit run:', err)
       setError('Failed to start audit run. ' + err.message)
@@ -648,6 +671,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     resultsMap,
     setResultsMap,
     savingProgress,
+    linkedCarsMap,
     logs,
     logsLoading,
     logsError,

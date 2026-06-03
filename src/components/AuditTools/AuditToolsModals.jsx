@@ -10,7 +10,8 @@ export function AuditChecklistSection({
   savingProgress,
   handleSaveResults,
   setActiveRun,
-  fetchData
+  fetchData,
+  linkedCarsMap
 }) {
   if (!activeRun) return null
 
@@ -118,6 +119,35 @@ export function AuditChecklistSection({
                     }}
                   />
                 </div>
+
+                {/* Linked CARs row */}
+                {linkedCarsMap && linkedCarsMap[clause.id]?.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px', paddingTop: '4px' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', flexShrink: 0 }}>Linked CARs:</span>
+                    {linkedCarsMap[clause.id].map(car => {
+                      const statusConfig = {
+                        open:               { bg: 'rgba(245, 158, 11, 0.12)', text: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)', label: 'Open' },
+                        under_verification: { bg: 'rgba(34, 211, 238, 0.10)', text: '#22d3ee', border: 'rgba(34, 211, 238, 0.3)', label: 'Under Verification' },
+                        closed:             { bg: 'rgba(16, 185, 129, 0.10)', text: '#10b981', border: 'rgba(16, 185, 129, 0.3)', label: 'Closed' },
+                      }
+                      const s = statusConfig[car.status] || statusConfig.open
+                      return (
+                        <span
+                          key={car.id}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            fontSize: '11px', fontWeight: '600',
+                            background: s.bg, color: s.text,
+                            border: `1px solid ${s.border}`,
+                            borderRadius: '4px', padding: '2px 8px'
+                          }}
+                        >
+                          📋 {car.reference_no} <span style={{ opacity: 0.7, fontWeight: 'normal' }}>({s.label})</span>
+                        </span>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )
           })

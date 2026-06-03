@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/utils/supabase'
 
 export default function useISOLogic({ userName }) {
@@ -211,7 +211,7 @@ export default function useISOLogic({ userName }) {
       }
       const nextRef = `CAR-${String(nextNum).padStart(3, '0')}`
 
-      const { error: insError } = await supabase
+      const { data: insData, error: insError } = await supabase
         .from('car_reports')
         .insert({
           reference_no: nextRef,
@@ -240,8 +240,24 @@ export default function useISOLogic({ userName }) {
           request_date: carForm.request_date || null,
           status: 'open'
         })
+        .select('id')
+        .maybeSingle()
 
       if (insError) throw insError
+
+      // Auto-link CAR to the ISO clause that triggered it (ISO Page flow).
+      // The clause is always known here since CARs are generated from non-compliant findings.
+      if (insData?.id && activeFinding?.clause_id) {
+        const { error: linkError } = await supabase
+          .from('car_clause_links')
+          .upsert(
+            [{ car_report_id: insData.id, clause_id: activeFinding.clause_id }],
+            { onConflict: 'car_report_id,clause_id', ignoreDuplicates: true }
+          )
+        if (linkError) {
+          console.warn('[useISOLogic] Could not link CAR to clause:', linkError.message)
+        }
+      }
 
       setToast({
         message: `CAR ${nextRef} created successfully for Clause ${activeFinding.iso_clauses?.clause_number}!`,

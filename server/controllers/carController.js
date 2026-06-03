@@ -1,6 +1,6 @@
 import { getRequestActor } from '../lib/requestUtils.js'
 import { writeAudit } from '../lib/audit.js'
-import { createCarReport, submitCapaReport, verifyCarEffectiveness } from '../services/carService.js'
+import { createCarReport, submitCapaReport, verifyCarEffectiveness, fetchCarsForClause } from '../services/carService.js'
 
 export async function createCar(req, res, next) {
   const reportedByAuthId = getRequestActor(req)
@@ -60,3 +60,16 @@ export async function verifyCar(req, res, next) {
   }
 }
 
+export async function getCarsForClause(req, res, next) {
+  try {
+    const clauseId = req.params.clauseId
+    if (!clauseId || typeof clauseId !== 'string' || clauseId.trim().length === 0) {
+      return res.status(400).json({ error: 'Invalid clause ID.' })
+    }
+
+    const cars = await fetchCarsForClause(clauseId.trim())
+    return res.json(cars)
+  } catch (err) {
+    next(err)
+  }
+}

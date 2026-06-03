@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X as CloseIcon } from 'lucide-react'
+import { X as CloseIcon, Link, LoaderCircle, CheckCircle2, XCircle } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 
 function CARModal({
@@ -8,6 +8,11 @@ function CARModal({
   form,
   handleChange,
   toggleNcrSelection,
+  toggleClauseSelection,
+  fetchClauseSuggestions,
+  clausesLoading,
+  clausesError,
+  userAuthId,
   error,
   isSubmitting,
   onSubmit,
@@ -246,6 +251,120 @@ function CARModal({
                 required
                 style={{ width: '100%', height: '120px', padding: '10px', resize: 'none', boxSizing: 'border-box' }}
               />
+            </div>
+
+            {/* ── ISO Clause Linkage Panel ─────────────────────────────── */}
+            <div style={{
+              background: 'rgba(34, 211, 238, 0.04)',
+              border: '1px solid rgba(34, 211, 238, 0.15)',
+              borderRadius: '8px',
+              padding: '14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: '#22d3ee', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Link size={14} /> ISO Clause Linkage
+                </span>
+                <button
+                  type="button"
+                  className="btn-secondary-light"
+                  disabled={clausesLoading || !form.details_of_nonconformance?.trim()}
+                  onClick={() => fetchClauseSuggestions(userAuthId)}
+                  style={{ margin: 0, padding: '5px 12px', fontSize: '12px', height: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  {clausesLoading ? (
+                    <><LoaderCircle size={12} className="iso-spinner" /> Analyzing...</>
+                  ) : (
+                    <><Link size={12} /> Suggest Matching Clauses</>
+                  )}
+                </button>
+              </div>
+
+              {clausesError && (
+                <div style={{ fontSize: '12px', color: '#f87171', padding: '6px 10px', background: 'rgba(239,68,68,0.08)', borderRadius: '4px' }}>
+                  {clausesError}
+                </div>
+              )}
+
+              {/* Confirmed linked clauses */}
+              {form.linked_clause_ids?.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {form.suggested_clauses
+                    .filter(s => form.linked_clause_ids.includes(s.clause_id))
+                    .map(s => (
+                      <span
+                        key={s.clause_id}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '4px',
+                          background: 'rgba(34, 211, 238, 0.12)', border: '1px solid rgba(34, 211, 238, 0.3)',
+                          borderRadius: '4px', padding: '3px 8px', fontSize: '12px', color: '#22d3ee'
+                        }}
+                      >
+                        <CheckCircle2 size={11} /> Clause {s.clause_number} – {s.title}
+                        <button
+                          type="button"
+                          onClick={() => toggleClauseSelection(s.clause_id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '0 0 0 4px', lineHeight: 1 }}
+                        >
+                          <XCircle size={12} />
+                        </button>
+                      </span>
+                    ))
+                  }
+                </div>
+              )}
+
+              {/* Suggestion list */}
+              {form.suggested_clauses?.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                    Suggested Clauses — click to confirm
+                  </span>
+                  {form.suggested_clauses.map(suggestion => {
+                    const isConfirmed = form.linked_clause_ids?.includes(suggestion.clause_id)
+                    const confPct = Math.round((suggestion.confidence || 0) * 100)
+                    const confColor = confPct >= 70 ? '#10b981' : confPct >= 40 ? '#f59e0b' : '#94a3b8'
+                    return (
+                      <button
+                        key={suggestion.clause_id}
+                        type="button"
+                        onClick={() => toggleClauseSelection(suggestion.clause_id)}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          gap: '12px', padding: '9px 12px', borderRadius: '6px', cursor: 'pointer',
+                          background: isConfirmed ? 'rgba(34, 211, 238, 0.08)' : 'rgba(255,255,255,0.03)',
+                          border: isConfirmed ? '1px solid rgba(34, 211, 238, 0.35)' : '1px solid rgba(255,255,255,0.07)',
+                          textAlign: 'left', transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+                          <span style={{ fontSize: '13px', color: '#f8fafc', fontWeight: isConfirmed ? '600' : '400' }}>
+                            <span style={{ color: '#22d3ee', fontWeight: 'bold', marginRight: '6px' }}>Clause {suggestion.clause_number}</span>
+                            {suggestion.title}
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ flex: 1, height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
+                              <div style={{ width: `${confPct}%`, height: '100%', background: confColor, borderRadius: '2px', transition: 'width 0.3s ease' }} />
+                            </div>
+                            <span style={{ fontSize: '10px', color: confColor, fontWeight: 'bold', minWidth: '32px' }}>{confPct}%</span>
+                          </div>
+                        </div>
+                        <div style={{ color: isConfirmed ? '#22d3ee' : '#475569', flexShrink: 0 }}>
+                          {isConfirmed ? <CheckCircle2 size={16} /> : <span style={{ fontSize: '11px', color: '#475569' }}>+ Add</span>}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+
+              {!clausesLoading && !form.suggested_clauses?.length && !clausesError && (
+                <p style={{ fontSize: '12px', color: '#475569', margin: 0 }}>
+                  Fill in the non-conformance details above, then click "Suggest Matching Clauses" to automatically identify the relevant ISO clauses for this CAR.
+                </p>
+              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { suggestClausesForCar } from '@/services/carService'
 
 export function useCARForm() {
   const initialState = {
@@ -27,12 +28,19 @@ export function useCARForm() {
     details_of_nonconformance: '',
     request_date: '',
     ncr_ids: [],
-    linked_ncr_references: []
+    linked_ncr_references: [],
+    // ISO Clause linkage
+    linked_clause_ids: [],    // confirmed clause IDs to be saved
+    suggested_clauses: [],    // AI-returned suggestions shown to user
   }
 
   const [form, setForm] = useState(initialState)
   const [error, setError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Clause suggestion loading state (kept separate to avoid polluting form)
+  const [clausesLoading, setClausesLoading] = useState(false)
+  const [clausesError, setClausesError] = useState(null)
 
   const handleChange = (key, value) => {
     setForm(prev => ({ ...prev, [key]: value }))
@@ -58,9 +66,68 @@ export function useCARForm() {
     });
   }
 
+  /** Confirm or remove a clause from the linked set */
+  const toggleClauseSelection = (clauseId) => {
+    setForm(prev => {
+      const id = Number(clauseId)
+      const already = prev.linked_clause_ids.includes(id)
+      return {
+        ...prev,
+        linked_clause_ids: already
+          ? prev.linked_clause_ids.filter(c => c !== id)
+          : [...prev.linked_clause_ids, id]
+      }
+    })
+  }
+
+  /**
+   * Calls the AI suggestion endpoint using the current form's description and
+   * boolean flag fields. Populates suggested_clauses in state.
+   *
+   * @param {string} userAuthId  - Current user's auth ID for API auth header
+   */
+  const fetchClauseSuggestions = async (userAuthId) => {
+    if (!form.details_of_nonconformance?.trim()) {
+      setClausesError('Please fill in the Details of Non-Conformance first.')
+      return
+    }
+
+    setClausesLoading(true)
+    setClausesError(null)
+
+    const flags = {
+      quality_food_safety: form.quality_food_safety,
+      environment_health_safety: form.environment_health_safety,
+      security_issue: form.security_issue,
+      internal_audit: form.internal_audit,
+      customer_complaint: form.customer_complaint,
+      government_agency_audit: form.government_agency_audit,
+      customer_audit_nonconformance: form.customer_audit_nonconformance,
+      vendor_nonconformance: form.vendor_nonconformance,
+    }
+
+    try {
+      const result = await suggestClausesForCar(
+        { description: form.details_of_nonconformance, flags },
+        userAuthId
+      )
+      const suggestions = result?.suggestions || []
+      setForm(prev => ({ ...prev, suggested_clauses: suggestions }))
+
+      if (suggestions.length === 0) {
+        setClausesError('No matching clauses found. Try adding more detail to the description.')
+      }
+    } catch (err) {
+      setClausesError('Failed to fetch clause suggestions. ' + (err.message || ''))
+    } finally {
+      setClausesLoading(false)
+    }
+  }
+
   const resetForm = () => {
     setForm(initialState)
     setError(null)
+    setClausesError(null)
   }
 
   const validate = () => {
@@ -81,6 +148,10 @@ export function useCARForm() {
     setForm,
     handleChange,
     toggleNcrSelection,
+    toggleClauseSelection,
+    fetchClauseSuggestions,
+    clausesLoading,
+    clausesError,
     resetForm,
     error,
     setError,

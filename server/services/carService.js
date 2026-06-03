@@ -34,7 +34,8 @@ export async function createCarReport({ body, reportedByAuthId }) {
     affected_quantity,
     details_of_nonconformance,
     request_date,
-    ncr_ids
+    ncr_ids,
+    clause_ids   // array of iso_clauses.id values to link to this CAR
   } = body || {}
 
   const { data: latest, error: latestError } = await supabase
@@ -88,6 +89,25 @@ export async function createCarReport({ body, reportedByAuthId }) {
     const customErr = new Error(`Database error creating CAR: ${error.message}`)
     customErr.status = 500
     throw customErr
+  }
+
+  // Link this CAR to the provided ISO clause IDs (if any)
+  // iso_clauses.id is UUID — keep them as strings, just filter blanks
+  if (data?.id && Array.isArray(clause_ids) && clause_ids.length > 0) {
+    const linkRows = clause_ids
+      .map(cid => String(cid).trim())
+      .filter(cid => cid.length > 0)
+      .map(cid => ({ car_report_id: data.id, clause_id: cid }))
+
+    if (linkRows.length > 0) {
+      const { error: linkError } = await supabase
+        .from('car_clause_links')
+        .upsert(linkRows, { onConflict: 'car_report_id,clause_id', ignoreDuplicates: true })
+
+      if (linkError) {
+        console.warn('[carService] Failed to insert car_clause_links:', linkError.message)
+      }
+    }
   }
 
   return { data }
@@ -197,3 +217,60 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, actorAuthI
   return { data }
 }
 
+/**
+ * Returns all CARs linked to a specific ISO clause via car_clause_links.
+ * Used by the Audit Checklist to show open CARs alongside each clause row.
+ *
+ * @param {number} clauseId
+ */
+export async function fetchCarsForClause(clauseId) {
+  const { data, error } = await supabase
+    .from('car_clause_links')
+    .select(`
+      car_reports (
+        id,
+        reference_no,
+        status,
+        details_of_nonconformance,
+        created_at
+      )
+    `)
+    .eq('clause_id', clauseId)
+
+  if (error) throw error
+
+  return (data || []).map(row => row.car_reports).filter(Boolean)
+}
+
+/**
+ * Batch-fetches all CARs linked to a set of clause IDs.
+ * Used by handleStartAudit() to load all linked CARs in one query.
+ *
+ * @param {number[]} clauseIds
+ * @returns {Object} Map of { [clause_id]: [{ id, reference_no, status }] }
+ */
+export async function fetchLinkedCarsForClauses(clauseIds) {
+  if (!clauseIds?.length) return {}
+
+  const { data, error } = await supabase
+    .from('car_clause_links')
+    .select(`
+      clause_id,
+      car_reports (
+        id,
+        reference_no,
+        status
+      )
+    `)
+    .in('clause_id', clauseIds)
+
+  if (error) throw error
+
+  const map = {}
+  for (const row of data || []) {
+    if (!row.car_reports) continue
+    if (!map[row.clause_id]) map[row.clause_id] = []
+    map[row.clause_id].push(row.car_reports)
+  }
+  return map
+}

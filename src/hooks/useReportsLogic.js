@@ -344,8 +344,14 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       if (modalsState.selectedCARReport?.id) {
         carFormState.form.ncr_ids = [String(modalsState.selectedCARReport.id)]
       }
+
+      // Build payload including confirmed ISO clause links
+      const payload = {
+        ...carFormState.form,
+        clause_ids: carFormState.form.linked_clause_ids || []
+      }
       
-      await submitCarReport(carFormState.form, currentAuthId)
+      await submitCarReport(payload, currentAuthId)
       
       setToast({ message: 'CAR report submitted successfully', type: 'success' })
       modalsState.closeCARModal()
@@ -547,6 +553,11 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       form: carFormState.form,
       handleChange: carFormState.handleChange,
       toggleNcrSelection: carFormState.toggleNcrSelection,
+      toggleClauseSelection: carFormState.toggleClauseSelection,
+      fetchClauseSuggestions: carFormState.fetchClauseSuggestions,
+      clausesLoading: carFormState.clausesLoading,
+      clausesError: carFormState.clausesError,
+      userAuthId: currentAuthId,
       error: carFormState.error,
       isSubmitting: carFormState.isSubmitting,
       onSubmit: handleSubmitCAR,
