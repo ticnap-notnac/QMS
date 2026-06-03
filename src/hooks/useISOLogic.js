@@ -1,0 +1,408 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '@/utils/supabase'
+
+export default function useISOLogic({ userName }) {
+  const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false)
+  const [isAuditTaskModalOpen, setIsAuditTaskModalOpen] = useState(false)
+  const [isCapaTaskModalOpen, setIsCapaTaskModalOpen] = useState(false)
+  const [isDocumentTaskModalOpen, setIsDocumentTaskModalOpen] = useState(false)
+  const [isTrainingTaskModalOpen, setIsTrainingTaskModalOpen] = useState(false)
+  const [toast, setToast] = useState(null)
+
+  const [activeModules, setActiveModules] = useState([])
+  const [loadingModules, setLoadingModules] = useState(false)
+  const [isModulesModalOpen, setIsModulesModalOpen] = useState(false)
+  const [selectedModule, setSelectedModule] = useState(null)
+  const [clauses, setClauses] = useState([])
+  const [loadingClauses, setLoadingClauses] = useState(false)
+
+  // Dynamic compliance states
+  const [compliantCount, setCompliantCount] = useState(0)
+  const [partialCount, setPartialCount] = useState(0)
+  const [gapCount, setGapCount] = useState(0)
+  const [overallScore, setOverallScore] = useState(100)
+
+  // Gaps Action Center states
+  const [nonCompliantFindings, setNonCompliantFindings] = useState([])
+  const [createdCars, setCreatedCars] = useState({})
+
+  // CAR Modal Form integration states
+  const [isCarModalOpen, setIsCarModalOpen] = useState(false)
+  const [carForm, setCarForm] = useState({
+    requesting_department: '',
+    responsible_department: '',
+    requestor: '',
+    recipient: '',
+    date: '',
+    reason_reissue: '',
+    no_reply: false,
+    re_corrective_action: false,
+    quality_food_safety: false,
+    environment_health_safety: false,
+    security_issue: false,
+    internal_audit: true,
+    customer_complaint: false,
+    government_agency_audit: false,
+    customer_audit_nonconformance: false,
+    vendor_nonconformance: false,
+    others: '',
+    product_material_name: '',
+    model_type: '',
+    control_no: '',
+    affected_quantity: '',
+    details_of_nonconformance: '',
+    request_date: '',
+    ncr_ids: []
+  })
+  const [isSubmittingCar, setIsSubmittingCar] = useState(false)
+  const [carError, setCarError] = useState('')
+  const [activeFinding, setActiveFinding] = useState(null)
+  
+  const [departments, setDepartments] = useState([])
+  const [users, setUsers] = useState([])
+  const [loadingDropdowns, setLoadingDropdowns] = useState(false)
+
+  const loadDropdownOptions = async () => {
+    try {
+      setLoadingDropdowns(true)
+      const { data: deptData } = await supabase.from('departments').select('id, department_name')
+      const { data: userData } = await supabase.from('users').select('id, first_name, last_name, user_name')
+      
+      setDepartments((deptData || []).map(d => ({ id: d.id, label: d.department_name })))
+      setUsers((userData || []).map(u => ({ 
+        id: u.id, 
+        label: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.user_name || 'Unnamed' 
+      })))
+    } catch (err) {
+      console.error('Error loading dropdown options:', err)
+    } finally {
+      setLoadingDropdowns(false)
+    }
+  }
+
+  const fetchComplianceData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('audit_results')
+        .select('status')
+      
+      if (error) throw error
+
+      let comp = 0
+      let part = 0
+      let gp = 0
+
+      const rows = data || []
+      rows.forEach(row => {
+        if (row.status === 'compliant') comp++
+        else if (row.status === 'partial') part++
+        else if (row.status === 'non_compliant') gp++
+      })
+
+      const total = comp + part + gp
+      
+      setCompliantCount(comp)
+      setPartialCount(part)
+      setGapCount(gp)
+
+      if (total > 0) {
+        const score = Math.round((comp / total) * 100)
+        setOverallScore(score)
+      } else {
+        setOverallScore(100)
+      }
+
+      const { data: findingsData, error: findingsError } = await supabase
+        .from('audit_results')
+        .select(`
+          id,
+          evidence,
+          clause_id,
+          iso_clauses (
+            clause_number,
+            title
+          )
+        `)
+        .eq('status', 'non_compliant')
+      
+      if (findingsError) throw findingsError
+      setNonCompliantFindings(findingsData || [])
+
+    } catch (err) {
+      console.error('Error fetching compliance data:', err)
+    }
+  }
+
+  const handleCarChange = (key, value) => {
+    setCarForm(prev => ({ ...prev, [key]: value }))
+    if (carError) setCarError('')
+  }
+
+  const toggleNcrSelection = (id, reference) => {
+    setCarForm(prev => {
+      const isSelected = prev.ncr_ids.includes(String(id));
+      if (isSelected) {
+        return {
+          ...prev,
+          ncr_ids: prev.ncr_ids.filter(nid => nid !== String(id))
+        };
+      } else {
+        return {
+          ...prev,
+          ncr_ids: [...prev.ncr_ids, String(id)]
+        };
+      }
+    });
+  }
+
+  const handleOpenCarModal = (finding) => {
+    setActiveFinding(finding)
+    setCarForm({
+      requesting_department: '',
+      responsible_department: '',
+      requestor: userName || '',
+      recipient: '',
+      date: new Date().toISOString().split('T')[0],
+      reason_reissue: '',
+      no_reply: false,
+      re_corrective_action: false,
+      quality_food_safety: false,
+      environment_health_safety: false,
+      security_issue: false,
+      internal_audit: true,
+      customer_complaint: false,
+      government_agency_audit: false,
+      customer_audit_nonconformance: false,
+      vendor_nonconformance: false,
+      others: '',
+      product_material_name: '',
+      model_type: '',
+      control_no: '',
+      affected_quantity: '',
+      details_of_nonconformance: `Audit finding: Deficiency in Clause ${finding.iso_clauses?.clause_number || ''} (${finding.iso_clauses?.title || ''}). Evidence: ${finding.evidence || 'None provided.'}`,
+      request_date: new Date().toISOString().split('T')[0],
+      ncr_ids: []
+    })
+    setCarError('')
+    setIsCarModalOpen(true)
+  }
+
+  const handleSubmitCAR = async (e) => {
+    if (e) e.preventDefault()
+    setIsSubmittingCar(true)
+    setCarError('')
+    try {
+      const { data: latest, error: latError } = await supabase
+        .from('car_reports')
+        .select('reference_no')
+        .ilike('reference_no', 'CAR-%')
+        .order('reference_no', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (latError) throw latError
+
+      let nextNum = 1
+      if (latest?.reference_no) {
+        const match = latest.reference_no.match(/CAR-(\d+)/)
+        if (match) {
+          nextNum = parseInt(match[1], 10) + 1
+        }
+      }
+      const nextRef = `CAR-${String(nextNum).padStart(3, '0')}`
+
+      const { error: insError } = await supabase
+        .from('car_reports')
+        .insert({
+          reference_no: nextRef,
+          requesting_department: carForm.requesting_department,
+          responsible_department: carForm.responsible_department,
+          requestor: carForm.requestor,
+          recipient: carForm.recipient,
+          date: carForm.date || null,
+          reason_reissue: carForm.reason_reissue || null,
+          no_reply: carForm.no_reply,
+          re_corrective_action: carForm.re_corrective_action,
+          quality_food_safety: carForm.quality_food_safety,
+          environment_health_safety: carForm.environment_health_safety,
+          security_issue: carForm.security_issue,
+          internal_audit: carForm.internal_audit,
+          customer_complaint: carForm.customer_complaint,
+          government_agency_audit: carForm.government_agency_audit,
+          customer_audit_nonconformance: carForm.customer_audit_nonconformance,
+          vendor_nonconformance: carForm.vendor_nonconformance,
+          others: carForm.others || null,
+          product_material_name: carForm.product_material_name || null,
+          model_type: carForm.model_type || null,
+          control_no: carForm.control_no || null,
+          affected_quantity: carForm.affected_quantity ? parseInt(carForm.affected_quantity, 10) : null,
+          details_of_nonconformance: carForm.details_of_nonconformance,
+          request_date: carForm.request_date || null,
+          status: 'open'
+        })
+
+      if (insError) throw insError
+
+      setToast({
+        message: `CAR ${nextRef} created successfully for Clause ${activeFinding.iso_clauses?.clause_number}!`,
+        type: 'success'
+      })
+
+      setCreatedCars(prev => ({ ...prev, [activeFinding.id]: nextRef }))
+      setIsCarModalOpen(false)
+    } catch (err) {
+      console.error('Error generating CAR:', err)
+      setCarError('Failed to generate CAR. ' + err.message)
+    } finally {
+      setIsSubmittingCar(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchComplianceData()
+    loadDropdownOptions()
+  }, [])
+
+  const fetchActiveModules = async () => {
+    setLoadingModules(true);
+    setIsModulesModalOpen(true);
+    try {
+      const { data, error } = await supabase
+        .from('iso_standards')
+        .select('id, name, version, description')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setActiveModules(data || []);
+    } catch (err) {
+      console.error('Error fetching active ISO standards:', err);
+      setToast({ message: 'Failed to load active ISO modules.', type: 'error' });
+      setIsModulesModalOpen(false);
+    } finally {
+      setLoadingModules(false);
+    }
+  }
+
+  const fetchClausesForModule = async (module) => {
+    setLoadingClauses(true);
+    setSelectedModule(module);
+    try {
+      const { data: groups, error: groupError } = await supabase
+        .from('iso_clause_groups')
+        .select('id')
+        .eq('standard_id', module.id);
+
+      if (groupError) throw groupError;
+      if (!groups || groups.length === 0) {
+        setClauses([]);
+        return;
+      }
+
+      const groupIds = groups.map(g => g.id);
+
+      const { data: clausesData, error: clausesError } = await supabase
+        .from('iso_clauses')
+        .select('clause_number, title, description')
+        .in('group_id', groupIds);
+
+      if (clausesError) throw clausesError;
+
+      const sorted = (clausesData || []).sort((a, b) =>
+        a.clause_number.localeCompare(b.clause_number, undefined, { numeric: true })
+      );
+      setClauses(sorted);
+    } catch (err) {
+      console.error('Error fetching clauses for ISO standard:', err);
+      setToast({ message: 'Failed to load ISO clauses.', type: 'error' });
+      setSelectedModule(null);
+    } finally {
+      setLoadingClauses(false);
+    }
+  }
+
+  const openAuditTask = () => { setIsSelectionModalOpen(false); setIsAuditTaskModalOpen(true); }
+  const openCapaTask = () => { setIsSelectionModalOpen(false); setIsCapaTaskModalOpen(true); }
+  const openDocumentTask = () => { setIsSelectionModalOpen(false); setIsDocumentTaskModalOpen(true); }
+  const openTrainingTask = () => { setIsSelectionModalOpen(false); setIsTrainingTaskModalOpen(true); }
+
+  const handleTaskCreation = (taskName) => {
+    setIsAuditTaskModalOpen(false)
+    setIsCapaTaskModalOpen(false)
+    setIsDocumentTaskModalOpen(false)
+    setIsTrainingTaskModalOpen(false)
+
+    setToast({
+      message: `${taskName} was initialized and committed securely!`,
+      type: 'success'
+    })
+  }
+
+  const totalResults = compliantCount + partialCount + gapCount
+  const compliantPct = totalResults > 0 ? Math.round((compliantCount / totalResults) * 100) : 100
+  const partialPct = totalResults > 0 ? Math.round((partialCount / totalResults) * 100) : 0
+  const gapPct = totalResults > 0 ? Math.round((gapCount / totalResults) * 100) : 0
+
+  const modulesModalProps = {
+    isOpen: isModulesModalOpen,
+    onClose: () => { setIsModulesModalOpen(false); setSelectedModule(null); },
+    selectedModule,
+    setSelectedModule,
+    loadingClauses,
+    clauses,
+    loadingModules,
+    activeModules,
+    fetchClausesForModule
+  }
+
+  const taskSelectionModalProps = {
+    isOpen: isSelectionModalOpen,
+    onClose: () => setIsSelectionModalOpen(false),
+    openAuditTask,
+    openCapaTask,
+    openDocumentTask,
+    openTrainingTask
+  }
+
+  const carModalProps = {
+    isOpen: isCarModalOpen,
+    onClose: () => setIsCarModalOpen(false),
+    form: carForm,
+    handleChange: handleCarChange,
+    toggleNcrSelection,
+    error: carError,
+    isSubmitting: isSubmittingCar,
+    onSubmit: handleSubmitCAR,
+    departments,
+    departmentsLoading: loadingDropdowns,
+    users,
+    usersLoading: loadingDropdowns,
+    allReports: []
+  }
+
+  return {
+    toast,
+    setToast,
+    overallScore,
+    fetchActiveModules,
+    compliantPct,
+    partialPct,
+    gapPct,
+    nonCompliantFindings,
+    createdCars,
+    handleOpenCarModal,
+    setIsSelectionModalOpen,
+    modulesModalProps,
+    taskSelectionModalProps,
+    carModalProps,
+    isAuditTaskModalOpen,
+    setIsAuditTaskModalOpen,
+    isCapaTaskModalOpen,
+    setIsCapaTaskModalOpen,
+    isDocumentTaskModalOpen,
+    setIsDocumentTaskModalOpen,
+    isTrainingTaskModalOpen,
+    setIsTrainingTaskModalOpen,
+    handleTaskCreation
+  }
+}
