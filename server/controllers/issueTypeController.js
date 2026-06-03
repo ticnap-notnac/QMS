@@ -50,17 +50,13 @@ export async function createIssueType(req, res) {
     return res.status(500).json({ error: error.message })
   }
 
-  try {
-    await writeAudit({
-      level: 'audit',
-      source: 'issue_types',
-      action: 'issue_type_create',
-      userAuthId: getRequestActor(req),
-      details: { id: data?.id ?? null, issue_type_name: data?.issue_type_name || issueTypeName },
-    })
-  } catch (auditError) {
-    console.warn('Failed to record issue_type_create audit:', auditError?.message || auditError)
-  }
+  await writeAudit({
+    level: 'audit',
+    source: 'issue_types',
+    action: 'issue_type_create',
+    userAuthId: getRequestActor(req),
+    details: { id: data?.id ?? null, issue_type_name: data?.issue_type_name || issueTypeName },
+  })
 
   return res.status(201).json(data)
 }
@@ -88,17 +84,13 @@ export async function deleteIssueType(req, res) {
     return res.status(500).json({ error: error.message })
   }
 
-  try {
-    await writeAudit({
-      level: 'audit',
-      source: 'issue_types',
-      action: 'issue_type_delete',
-      userAuthId: getRequestActor(req),
-      details: { id: existing.id, issue_type_name: existing.issue_type_name || null },
-    })
-  } catch (auditError) {
-    console.warn('Failed to record issue_type_delete audit:', auditError?.message || auditError)
-  }
+  await writeAudit({
+    level: 'audit',
+    source: 'issue_types',
+    action: 'issue_type_delete',
+    userAuthId: getRequestActor(req),
+    details: { id: existing.id, issue_type_name: existing.issue_type_name || null },
+  })
 
   return res.json({ success: true })
 }

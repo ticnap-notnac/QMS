@@ -8,17 +8,13 @@ export async function createCar(req, res) {
 
   try {
     const { data } = await createCarReport({ body: req.body, reportedByAuthId })
-    try {
-      await writeAudit({
-        level: 'audit',
-        source: 'car_reports',
-        action: 'car_create',
-        userAuthId: reportedByAuthId,
-        details: { id: data?.id ?? null, reference_no: data?.reference_no }
-      })
-    } catch (err) {
-      console.warn('Failed to record CAR create audit:', err?.message || err)
-    }
+    await writeAudit({
+      level: 'audit',
+      source: 'car_reports',
+      action: 'car_create',
+      userAuthId: reportedByAuthId,
+      details: { id: data?.id ?? null, reference_no: data?.reference_no }
+    })
     return res.status(201).json(data)
   } catch (err) {
     return res.status(err.status || 500).json({ error: err.message })
