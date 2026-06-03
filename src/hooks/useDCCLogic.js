@@ -89,6 +89,10 @@ export function useDCCLogic() {
   const [auditReports, setAuditReports] = useState([])
   const [loadingAudit, setLoadingAudit] = useState(false)
 
+  // Audit schedules
+  const [auditSchedules, setAuditSchedules] = useState([])
+  const [loadingAuditSchedules, setLoadingAuditSchedules] = useState(false)
+
   // Load ISO standards whenever the iso_modules folder is opened
   useEffect(() => {
     if (selectedFolder?.id === 'iso_modules') {
@@ -131,6 +135,7 @@ export function useDCCLogic() {
     setCarReports([])
     setQddrReports([])
     setAuditReports([])
+    setAuditSchedules([])
     addRecentlyViewed(item)
   }
 
@@ -143,6 +148,7 @@ export function useDCCLogic() {
     setCarReports([])
     setQddrReports([])
     setAuditReports([])
+    setAuditSchedules([])
   }
 
   // Task Reports sub-folder navigation------------------------------------------------------------------
@@ -153,6 +159,7 @@ export function useDCCLogic() {
     setCarReports([])
     setQddrReports([])
     setAuditReports([])
+    setAuditSchedules([])
     if (item.id === 'ncr') {
       loadClosedNCRs()
     } else if (item.id === 'car') {
@@ -161,6 +168,8 @@ export function useDCCLogic() {
       loadClosedQDDRs()
     } else if (item.id === 'audit') {
       loadClosedAudits()
+    } else if (item.id === 'audit_schedules') {
+      loadAuditSchedules()
     }
   }
 
@@ -170,7 +179,9 @@ export function useDCCLogic() {
     setCarReports([])
     setQddrReports([])
     setAuditReports([])
+    setAuditSchedules([])
   }
+
 
   // ISO standards  (iso_standards -> iso_clause_groups -> iso_clauses)------------------------------------------------------------------
 
@@ -398,6 +409,47 @@ export function useDCCLogic() {
     }
   }
 
+  async function loadAuditSchedules() {
+    setLoadingAuditSchedules(true)
+    try {
+      const { data: schedulesData, error: schedError } = await supabase
+        .from('audit_schedules')
+        .select('id, title, scheduled_date, status, standard_id, auditor_id')
+        .order('scheduled_date', { ascending: false })
+
+      if (schedError) throw schedError
+
+      const { data: standardsData, error: stdError } = await supabase
+        .from('iso_standards')
+        .select('id, name, version')
+
+      if (stdError) throw stdError
+
+      const { data: auditorsData, error: audError } = await supabase
+        .from('users')
+        .select('id, first_name, last_name, auth_id')
+
+      if (audError) throw audError
+
+      const mapped = (schedulesData || []).map(schedule => {
+        const std = (standardsData || []).find(s => s.id === schedule.standard_id)
+        const aud = (auditorsData || []).find(a => a.auth_id === schedule.auditor_id)
+        return {
+          ...schedule,
+          standard_name: std ? `${std.name} (${std.version})` : 'Unknown Standard',
+          auditor_name: aud ? `${aud.first_name} ${aud.last_name}` : 'Unknown Auditor'
+        }
+      })
+
+      setAuditSchedules(mapped)
+    } catch (err) {
+      console.error('[useDCCLogic] loadAuditSchedules error:', err?.message ?? err)
+      setAuditSchedules([])
+    } finally {
+      setLoadingAuditSchedules(false)
+    }
+  }
+
   // public API------------------------------------------------------------------
 
   return {
@@ -444,5 +496,9 @@ export function useDCCLogic() {
     // Audit reports
     auditReports,
     loadingAudit,
+
+    // Audit schedules
+    auditSchedules,
+    loadingAuditSchedules,
   }
-}
+}

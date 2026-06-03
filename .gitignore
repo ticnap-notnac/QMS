@@ -36,6 +36,10 @@ server/.env
 thesis-roadmap.md
 CODE_REVIEW.md
 SYSTEM_ARCHITECTURE.md
+SYSTEM_ANALYSIS.md
+TECHNICAL_DEFENSE_DOCUMENTATION.md
+file_relationship_map.txt
+
 
 # Optional system documentation (if auto-generated locally)
 SYSTEM_WALKTHROUGH.md

@@ -36,6 +36,8 @@ export default function DCCPage({
     loadingQddr,
     auditReports,
     loadingAudit,
+    auditSchedules,
+    loadingAuditSchedules,
   } = useDCCLogic()
 
   return (
@@ -78,6 +80,8 @@ export default function DCCPage({
             // Audit
             auditReports={auditReports}
             loadingAudit={loadingAudit}
+            auditSchedules={auditSchedules}
+            loadingAuditSchedules={loadingAuditSchedules}
             // access control
             userRole={userRole}
           />
@@ -85,4 +89,5 @@ export default function DCCPage({
       </div>
     </div>
   )
+
 }

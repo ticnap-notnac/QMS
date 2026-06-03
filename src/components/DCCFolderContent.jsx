@@ -7,7 +7,9 @@ const TASK_REPORT_SUBFOLDERS = [
   { id: 'qddr', label: 'QDDR' },
   { id: 'ncr', label: 'NCR' },
   { id: 'audit', label: 'Audit Reports' },
+  { id: 'audit_schedules', label: 'Audit Schedules' },
 ]
+
 
 const SEVERITY_COLORS = {
   Critical: 'severity-critical',
@@ -504,7 +506,65 @@ function AuditReportsTable({ auditReports, loadingAudit }) {
 }
 
 // ---------------------------------------------------------------------------
+// Sub-view: Task Reports › Audit Schedules – scheduled list table
+// ---------------------------------------------------------------------------
+
+function AuditSchedulesTable({ auditSchedules, loadingAuditSchedules }) {
+  if (loadingAuditSchedules) return <div>Loading audit schedules...</div>
+
+  if (!auditSchedules.length) {
+    return (
+      <div className="empty-state">
+        <AlertCircle size={20} style={{ marginBottom: 6 }} />
+        <div>No scheduled audits found.</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="glass-card-dcc">
+      <div className="dcc-scrollable-table-box">
+        <table className="iso-table" style={{ width: '100%' }}>
+          <thead>
+            <tr>
+              <th>Schedule Title</th>
+              <th>ISO Standard</th>
+              <th>Assigned Auditor</th>
+              <th>Scheduled Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {auditSchedules.map((schedule) => {
+              const statusClean = String(schedule.status || '').trim().toLowerCase()
+              return (
+                <tr key={schedule.id}>
+                  <td style={{ fontWeight: 600 }}>{schedule.title}</td>
+                  <td>{schedule.standard_name}</td>
+                  <td>{schedule.auditor_name}</td>
+                  <td>
+                    {schedule.scheduled_date ? new Date(schedule.scheduled_date).toLocaleDateString() : '—'}
+                  </td>
+                  <td>
+                    <span className={`iso-status-pill ${
+                      statusClean === 'completed' ? 'is-active' : statusClean === 'pending' ? 'is-inactive' : 'is-closed'
+                    }`}>
+                      {schedule.status}
+                    </span>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main export
+
 // ---------------------------------------------------------------------------
 
 export default function DCCFolderContent({
@@ -532,6 +592,8 @@ export default function DCCFolderContent({
   loadingQddr,
   auditReports,
   loadingAudit,
+  auditSchedules,
+  loadingAuditSchedules,
   userRole,
 }) {
   if (!selectedFolder) {
@@ -666,6 +728,11 @@ export default function DCCFolderContent({
               <div className="breadcrumb">Task Reports &gt; Audit Reports &gt; Completed</div>
               <AuditReportsTable auditReports={auditReports} loadingAudit={loadingAudit} />
             </div>
+          ) : selectedTaskFolder.id === 'audit_schedules' ? (
+            <div className="flex-column full-height">
+              <div className="breadcrumb">Task Reports &gt; Audit Schedules &gt; Scheduled</div>
+              <AuditSchedulesTable auditSchedules={auditSchedules} loadingAuditSchedules={loadingAuditSchedules} />
+            </div>
           ) : (
             <div className="empty-state">
               {selectedTaskFolder.label} reports are not yet implemented.
@@ -675,4 +742,4 @@ export default function DCCFolderContent({
       )}
     </div>
   )
-}
+}
