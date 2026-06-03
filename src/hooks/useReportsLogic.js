@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { createReport, reviewReportApproval, submitNcrMultipart } from '@/services/ncrService'
 import { createLocation } from '@/services/locationService'
 import { createProductType } from '@/services/productTypeService'
+import { createIssueType } from '@/services/issueTypeService'
 
 import { useReportsData } from './useReports/useReportsData'
 import { useReportsForm } from './useReports/useReportsForm'
@@ -258,6 +259,14 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
         optionLabelKey: 'label',
       })
 
+      const resolvedIssueType = await resolveCatalogSelection({
+        inputValue: formState.createFormState.issueType,
+        selectedId: formState.createFormState.issueTypeId,
+        options: dataState.issueTypeOptions,
+        createFn: createIssueType,
+        optionLabelKey: 'label',
+      })
+
       if (formState.evidenceState.evidenceFileMain) {
         if (!currentAuthId) throw new Error('Missing authenticated user. Please log in again.')
         const fd = new FormData()
@@ -267,7 +276,8 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
         fd.append('severity', formState.createFormState.severity)
         fd.append('department_id', formState.createFormState.department)
         fd.append('description', formState.createFormState.description)
-        fd.append('issue_type', formState.createFormState.issueType || 'ncr')
+        fd.append('issue_type', resolvedIssueType.label)
+        fd.append('issue_type_id', resolvedIssueType.id)
         fd.append('car_filed', 'false')
         fd.append('qddr_filed', 'false')
         fd.append('evidence', formState.evidenceState.evidenceFileMain)
@@ -280,7 +290,8 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
           severity: formState.createFormState.severity,
           department_id: formState.createFormState.department,
           description: formState.createFormState.description,
-          issue_type: formState.createFormState.issueType || 'ncr',
+          issue_type: resolvedIssueType.label,
+          issue_type_id: resolvedIssueType.id,
           car_filed: false,
           qddr_filed: false,
           evidence_url: null,
@@ -467,9 +478,11 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       createFormState: formState.createFormState,
       locationOptions: dataState.locationOptions,
       productTypeOptions: dataState.productTypeOptions,
+      issueTypeOptions: dataState.issueTypeOptions,
       departments: dataState.departments,
       locationsLoading: dataState.locationsLoading,
       productTypesLoading: dataState.productTypesLoading,
+      issueTypesLoading: dataState.issueTypesLoading,
       departmentsLoading: dataState.departmentsLoading,
       fileInputRef: formState.evidenceState.fileInputRefMain,
       evidenceFile: formState.evidenceState.evidenceFileMain,

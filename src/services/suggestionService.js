@@ -14,3 +14,10 @@ export async function saveAiSuggestion(ncrId, suggestion, confidence) {
         body: JSON.stringify({ ncr_id: ncrId, suggestion, confidence }),
     })
 }
+
+export async function generateAiSuggestion(ncrId, deptName) {
+    return await request(`/suggestions/generate/${ncrId}`, {
+        method: 'POST',
+        body: JSON.stringify({ deptName }),
+    })
+}

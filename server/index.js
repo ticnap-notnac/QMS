@@ -6,6 +6,7 @@ import roleRoutes from './routes/roleRoutes.js'
 import departmentRoutes from './routes/departmentRoutes.js'
 import locationRoutes from './routes/locationRoutes.js'
 import productTypeRoutes from './routes/productTypeRoutes.js'
+import issueTypeRoutes from './routes/issueTypeRoutes.js'
 import logRoutes from './routes/logRoutes.js'
 import debugRoutes from './routes/debugRoutes.js'
 import ncrRoutes from './routes/ncrRoutes.js'
@@ -24,6 +25,7 @@ app.use('/api/roles', authMiddleware, roleRoutes)
 app.use('/api/departments', authMiddleware, departmentRoutes)
 app.use('/api', authMiddleware, locationRoutes)
 app.use('/api', authMiddleware, productTypeRoutes)
+app.use('/api', authMiddleware, issueTypeRoutes)
 app.use('/api/logs', authMiddleware, logRoutes)
 app.use('/api/debug', authMiddleware, debugRoutes)
 app.use('/api', authMiddleware, ncrRoutes)

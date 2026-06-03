@@ -214,3 +214,86 @@ export async function storeSuggestion({ ncrId, suggestion, confidence }) {
 
   if (error) throw error
 }
+
+export async function generateAiSuggestion({ ncrId, deptName }) {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY is not configured in process.env')
+  }
+
+  // 1. Fetch CBR similar cases context
+  const context = await findSimilarCases(ncrId)
+  const { report, caseRepo, ratedNcrs, carReports, qddrReports } = context
+
+  // 2. Build Prompt
+  const prompt = `You are a quality control expert. Suggest a corrective action for this NCR report using all available context.
+
+NCR Report:
+- Description: ${report.description}
+- Issue Type: ${report.issue_type || 'N/A'}
+- Severity: ${report.severity}
+- Department: ${deptName || 'N/A'}
+- Investigation: ${report.investigation_details || 'None'}
+
+Case Repository Matches (CBR candidates):
+${caseRepo.length > 0
+    ? caseRepo.map((c, i) => `${i + 1}. Keywords: ${c.problem_keywords || 'N/A'} | Action: ${c.corrective_action} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
+    : 'None'}
+
+Rated NCR Reports (rating >= 3):
+${ratedNcrs.length > 0
+    ? ratedNcrs.map((r, i) => `${i + 1}. Description: ${r.description} | Resolution: ${r.resolution_details || 'N/A'}`).join('\n')
+    : 'None'}
+
+CAR Reports:
+${carReports.length > 0
+    ? carReports.map((c, i) => `${i + 1}. Issue: ${c.details_of_nonconformance || 'N/A'} | Action: ${c.re_corrective_action || 'N/A'}`).join('\n')
+    : 'None'}
+
+QDDR Reports:
+${qddrReports.length > 0
+    ? qddrReports.map((q, i) => `${i + 1}. Reason: ${q.reason_of_discrepancy || 'N/A'} | Action: ${q.corrective_action || 'N/A'}`).join('\n')
+    : 'None'}
+
+Provide a concise, actionable corrective action in 2-4 sentences and a confidence score 0.0-1.0.
+Respond ONLY in this JSON format with no preamble or markdown:
+{"suggestion": "your suggestion here", "confidence": 0.85}`
+
+  // 3. Make fetch request to Anthropic API
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-3-5-sonnet-20241022', // updated to current model recommended naming
+      max_tokens: 1000,
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ]
+    })
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`Anthropic API call failed: ${response.statusText} - ${errorText}`)
+  }
+
+  const data = await response.json()
+  const text = data.content?.map(i => i.text || '').join('') || ''
+  const clean = text.replace(/```json|```/g, '').trim()
+  const parsed = JSON.parse(clean)
+
+  // Save suggestion to DB cache
+  await storeSuggestion({ ncrId, suggestion: parsed.suggestion, confidence: parsed.confidence })
+
+  return {
+    suggestion: parsed.suggestion,
+    confidence: parsed.confidence
+  }
+}

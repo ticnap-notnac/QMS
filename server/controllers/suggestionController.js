@@ -1,4 +1,4 @@
-import { findSimilarCases, getCachedSuggestion, storeSuggestion } from '../services/suggestionService.js'
+import { findSimilarCases, getCachedSuggestion, storeSuggestion, generateAiSuggestion } from '../services/suggestionService.js'
 
 export async function getSimilarCases(req, res) {
     try {
@@ -27,5 +27,16 @@ export async function saveSuggestion(req, res) {
         res.json({ success: true })
     } catch (err) {
         res.status(500).json({ error: err.message || 'Failed to save suggestion' })
+    }
+}
+
+export async function generateSuggestion(req, res) {
+    try {
+        const { ncrId } = req.params
+        const { deptName } = req.body
+        const data = await generateAiSuggestion({ ncrId, deptName })
+        res.json(data)
+    } catch (err) {
+        res.status(500).json({ error: err.message || 'Failed to generate suggestion' })
     }
 }

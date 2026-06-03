@@ -36,9 +36,11 @@ function CreateReportModal({
   createFormState,
   locationOptions,
   productTypeOptions,
+  issueTypeOptions,
   departments,
   locationsLoading,
   productTypesLoading,
+  issueTypesLoading,
   departmentsLoading,
   fileInputRef,
   evidenceFile,
@@ -60,6 +62,7 @@ function CreateReportModal({
     department, setDepartment,
     description, setDescription,
     issueType, setIssueType,
+    setIssueTypeId,
   } = createFormState
 
   const handleFileChange = (e) => {
@@ -255,18 +258,15 @@ function CreateReportModal({
 
               {/* Issue Category Dropdown */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Issue Category:</label>
-                <select
+                <SearchableDropdown
+                  label="Issue Category:"
                   value={issueType}
-                  onChange={(e) => setIssueType(e.target.value)}
-                  className="input-field"
-                  style={{ width: '100%', height: '38px', background: 'rgba(8, 18, 35, 0.5)' }}
-                >
-                  <option value="">Select Category…</option>
-                  {NCR_ISSUE_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
+                  onValueChange={setIssueType}
+                  options={issueTypeOptions}
+                  loading={issueTypesLoading}
+                  placeholder="Search category…"
+                  onSelectOption={(opt) => { setIssueType(opt.label); setIssueTypeId(String(opt.id)) }}
+                />
               </div>
             </div>
 

@@ -3,6 +3,7 @@ import { loadDepartments } from '@/services/departmentService'
 import { fetchAllReports } from '@/services/ncrService'
 import { fetchLocations } from '@/services/locationService'
 import { fetchProductTypes } from '@/services/productTypeService'
+import { fetchIssueTypes } from '@/services/issueTypeService'
 import { fetchUsers } from '@/services/userService'
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
@@ -61,11 +62,13 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
   const [departments, setDepartments] = useState([])
   const [locations, setLocations] = useState([])
   const [productTypes, setProductTypes] = useState([])
+  const [issueTypes, setIssueTypes] = useState([])
   const [users, setUsers] = useState([])
 
   const [departmentsLoading, setDepartmentsLoading] = useState(false)
   const [locationsLoading, setLocationsLoading] = useState(false)
   const [productTypesLoading, setProductTypesLoading] = useState(false)
+  const [issueTypesLoading, setIssueTypesLoading] = useState(false)
   const [usersLoading, setUsersLoading] = useState(false)
 
   const refreshReportsList = useCallback(
@@ -97,12 +100,20 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
     setDepartmentsLoading(true)
     setLocationsLoading(true)
     setProductTypesLoading(true)
+    setIssueTypesLoading(true)
     setUsersLoading(true)
     try {
-      const [deptData, locData, ptData, userData] = await Promise.all([loadDepartments(), fetchLocations(), fetchProductTypes(), fetchUsers()])
+      const [deptData, locData, ptData, issueData, userData] = await Promise.all([
+        loadDepartments(),
+        fetchLocations(),
+        fetchProductTypes(),
+        fetchIssueTypes(),
+        fetchUsers()
+      ])
       setDepartments(Array.isArray(deptData) ? deptData : [])
       setLocations(Array.isArray(locData) ? locData : [])
       setProductTypes(Array.isArray(ptData) ? ptData : [])
+      setIssueTypes(Array.isArray(issueData) ? issueData : [])
       setUsers(Array.isArray(userData) ? userData : [])
     } catch (err) {
       setError(err?.message || 'Failed to load NCR reference data.')
@@ -110,6 +121,7 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
       setDepartmentsLoading(false)
       setLocationsLoading(false)
       setProductTypesLoading(false)
+      setIssueTypesLoading(false)
       setUsersLoading(false)
     }
   }, [setError])
@@ -123,6 +135,7 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
 
   const locationOptions = useMemo(() => toOptionList(locations, 'location_name'), [locations])
   const productTypeOptions = useMemo(() => toOptionList(productTypes, 'product_type_name'), [productTypes])
+  const issueTypeOptions = useMemo(() => toOptionList(issueTypes, 'issue_type_name'), [issueTypes])
   const departmentNameById = useMemo(
     () => new Map((departments || []).map((d) => [String(d.id), d.department_name])),
     [departments]
@@ -136,13 +149,16 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
     departments,
     locations,
     productTypes,
+    issueTypes,
     users,
     departmentsLoading,
     locationsLoading,
     productTypesLoading,
+    issueTypesLoading,
     usersLoading,
     locationOptions,
     productTypeOptions,
+    issueTypeOptions,
     departmentNameById,
     refreshReportsList,
     loadLookupData

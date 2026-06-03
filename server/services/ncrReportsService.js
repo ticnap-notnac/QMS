@@ -342,6 +342,17 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     table: 'product_types', idColumn: 'id', nameColumn: 'product_name',
     rawId: product_type_id, rawName: product_type,
   })
+  
+  let resolvedIssueTypeId = null
+  let resolvedIssueTypeName = 'ncr'
+  if (issue_type || body.issue_type_id) {
+    const resolved = await resolveCatalogEntry({
+      table: 'issue_types', idColumn: 'id', nameColumn: 'issue_type_name',
+      rawId: body.issue_type_id, rawName: issue_type,
+    })
+    resolvedIssueTypeId = resolved.id
+    resolvedIssueTypeName = resolved.name
+  }
 
   if (!resolvedLocationId || !resolvedProductTypeId) {
     throw Object.assign(new Error('Location and product type are required.'), { status: 400 })
@@ -351,7 +362,8 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     reference_no: referenceNo,
     reported_by: reporter.id,
     status: 'OPEN',
-    issue_type: issue_type || 'ncr',
+    issue_type: resolvedIssueTypeName,
+    issue_type_id: resolvedIssueTypeId,
     occurrence_date: occurrence_date || new Date().toISOString().slice(0, 10),
     product_type: resolvedProductTypeName,
     product_type_id: resolvedProductTypeId,
@@ -416,6 +428,17 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
     rawId: product_type_id, rawName: product_type,
   })
 
+  let resolvedIssueTypeId = null
+  let resolvedIssueTypeName = 'ncr'
+  if (issue_type || body.issue_type_id) {
+    const resolved = await resolveCatalogEntry({
+      table: 'issue_types', idColumn: 'id', nameColumn: 'issue_type_name',
+      rawId: body.issue_type_id, rawName: issue_type,
+    })
+    resolvedIssueTypeId = resolved.id
+    resolvedIssueTypeName = resolved.name
+  }
+
   if (!resolvedLocationId || !resolvedProductTypeId) {
     throw Object.assign(new Error('Location and product type are required.'), { status: 400 })
   }
@@ -454,7 +477,8 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
     reference_no: referenceNo,
     reported_by: reporter.id,
     status: 'OPEN',
-    issue_type: issue_type || 'ncr',
+    issue_type: resolvedIssueTypeName,
+    issue_type_id: resolvedIssueTypeId,
     occurrence_date: occurrence_date || new Date().toISOString().slice(0, 10),
     product_type: resolvedProductTypeName,
     product_type_id: resolvedProductTypeId,
@@ -485,6 +509,7 @@ export async function updateNcrReport({ id, body }) {
   const {
     product_type, product_type_id, batch_number, complaint_location, location_id,
     severity, department_id, description, car_filed, qddr_filed, evidence_url, status,
+    issue_type, issue_type_id,
   } = body
 
   let resolvedLocation = null
@@ -503,10 +528,19 @@ export async function updateNcrReport({ id, body }) {
     })
   }
 
+  let resolvedIssueType = null
+  if (issue_type_id !== undefined || issue_type !== undefined) {
+    resolvedIssueType = await resolveCatalogEntry({
+      table: 'issue_types', idColumn: 'id', nameColumn: 'issue_type_name',
+      rawId: issue_type_id, rawName: issue_type,
+    })
+  }
+
   const updates = {}
   if (resolvedProductType) { updates.product_type = resolvedProductType.name; updates.product_type_id = resolvedProductType.id }
   if (batch_number !== undefined) updates.batch_number = batch_number
   if (resolvedLocation) { updates.complaint_location = resolvedLocation.name; updates.location_id = resolvedLocation.id }
+  if (resolvedIssueType) { updates.issue_type = resolvedIssueType.name; updates.issue_type_id = resolvedIssueType.id }
   if (severity !== undefined) updates.severity = normalizeSeverityValue(severity)
   if (department_id !== undefined) updates.department_id = normalizeId(department_id)
   if (description !== undefined) updates.description = description

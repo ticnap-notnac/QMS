@@ -12,6 +12,7 @@ export default function useNCRSubmitModal({ onSuccess }) {
     locationId: '',
     severity: '',
     issueType: '',
+    issueTypeId: '',
     description: '',
     file: null,
     previewUrl: null,
@@ -22,6 +23,7 @@ export default function useNCRSubmitModal({ onSuccess }) {
   const [departments, setDepartments] = useState([])
   const [locations, setLocations] = useState([])
   const [productTypes, setProductTypes] = useState([])
+  const [issueTypes, setIssueTypes] = useState([])
   const [loadingDropdowns, setLoadingDropdowns] = useState(false)
 
   const setField = useCallback((key, value) => {
@@ -78,16 +80,18 @@ export default function useNCRSubmitModal({ onSuccess }) {
     const fetchDropdownData = async () => {
       setLoadingDropdowns(true)
       try {
-        const [deptRes, locationRes, productRes] = await Promise.all([
+        const [deptRes, locationRes, productRes, issueRes] = await Promise.all([
           supabase.from('departments').select('id, department_name').order('department_name'),
           supabase.from('locations').select('id, location_name').order('location_name'),
           // product_types table may use product_name or product_type_name; select both where available
           supabase.from('product_types').select('id, product_name, product_type_name').order('product_name'),
+          supabase.from('issue_types').select('id, issue_type_name').order('issue_type_name'),
         ])
 
         if (deptRes.error) console.error('Departments error:', deptRes.error)
         if (locationRes.error) console.error('Locations error:', locationRes.error)
         if (productRes.error) console.error('Product types error:', productRes.error)
+        if (issueRes.error) console.error('Issue types error:', issueRes.error)
 
         if (!mounted) return
         setDepartments(deptRes.data || [])
@@ -95,6 +99,7 @@ export default function useNCRSubmitModal({ onSuccess }) {
         // normalize product type shape to { id, name }
         const pts = (productRes.data || []).map((p) => ({ id: p.id, name: p.product_name || p.product_type_name || '' }))
         setProductTypes(pts)
+        setIssueTypes((issueRes.data || []).map((i) => ({ id: i.id, label: i.issue_type_name || '' })))
       } catch (err) {
         console.error('Failed to fetch dropdowns', err)
       } finally {
@@ -119,6 +124,7 @@ export default function useNCRSubmitModal({ onSuccess }) {
       fd.append('location_id', form.locationId)
       fd.append('severity', form.severity)
       fd.append('issue_type', form.issueType || 'ncr')
+      fd.append('issue_type_id', form.issueTypeId)
       fd.append('description', form.description)
       if (form.file) {
         // add both field names to be compatible with different server expectations
@@ -137,6 +143,7 @@ export default function useNCRSubmitModal({ onSuccess }) {
           locationId: '',
           severity: '',
           issueType: '',
+          issueTypeId: '',
           description: '',
           file: null,
           previewUrl: null,
@@ -160,6 +167,7 @@ export default function useNCRSubmitModal({ onSuccess }) {
     departments,
     locations,
     productTypes,
+    issueTypes,
     loadingDropdowns,
     evidenceError,
   }
