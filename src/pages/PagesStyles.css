@@ -2989,3 +2989,31 @@ div[class*="navbar"] {
   background: #ffffff !important;     /* Ensures white backdrop canvas space handles dynamic margin spaces */
   width: 100% !important;
 }
+
+/* ==========================================================================
+   🧹 THEMATIC SYNC: ADMIN LIST PANEL BUTTON REFINEMENT
+   ========================================================================== */
+
+/* Target the action button wrapper specifically inside the admin list panel rows */
+.admin-list-panel .action-btn {
+  background: transparent !important;
+  border: none !important;              /* 🛑 Nuclear override to eliminate that persistent box outline! */
+  padding: 6px !important;
+  border-radius: 4px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Match the exact red accent weight of your Manage Users table buttons */
+.admin-list-panel .delete-btn {
+  color: #ef4444 !important;           /* Clean crimson tint vector */
+}
+
+/* Soft backdrop interaction glow context on mouse hover */
+.admin-list-panel .delete-btn:hover {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #f87171 !important;
+}

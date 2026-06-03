@@ -16,17 +16,21 @@ import Toast from '@/components/UI/Toast'
 import { logAction } from '@/services/logService'
 import { supabase as sharedSupabase } from '@/utils/supabase'
 import './ISOStandardsPage.css'
+
 const initialStandardForm = {
   name: '',
   description: '',
   version: '',
 }
+
 const initialClauseForm = {
   clauseNumber: '',
   title: '',
   description: '',
 }
+
 const stripQuotes = (value) => value.replace(/['\"]/g, '').trim()
+
 export default function ISOStandardsPage({
   userRole,
   userName,
@@ -58,6 +62,7 @@ export default function ISOStandardsPage({
   const [clauses, setClauses] = useState([])
   const [loadingClauses, setLoadingClauses] = useState(false)
   const [deletingClauseIds, setDeletingClauseIds] = useState({})
+
   const getCurrentAuthId = async () => {
     try {
       const { data } = await supabaseClient.auth.getUser()
@@ -66,6 +71,7 @@ export default function ISOStandardsPage({
       return null
     }
   }
+
   const logIsoActivity = async (action, details = {}) => {
     await logAction({
       level: 'audit',
@@ -77,6 +83,7 @@ export default function ISOStandardsPage({
       },
     })
   }
+
   useEffect(() => {
     const timer = updatedStandardId
       ? window.setTimeout(() => setUpdatedStandardId(''), 1800)
@@ -85,6 +92,7 @@ export default function ISOStandardsPage({
       if (timer) window.clearTimeout(timer)
     }
   }, [updatedStandardId])
+
   useEffect(() => {
     const loadStandards = async () => {
       setLoadingStandards(true)
@@ -105,10 +113,12 @@ export default function ISOStandardsPage({
     }
     loadStandards()
   }, [supabaseClient])
+
   useEffect(() => {
     if (selectedStandardId && standards.some((standard) => standard.id === selectedStandardId)) return
     setSelectedStandardId(standards[0]?.id || '')
   }, [selectedStandardId, standards])
+
   const refreshStandards = async () => {
     const { data, error } = await supabaseClient
       .from('iso_standards')
@@ -118,6 +128,7 @@ export default function ISOStandardsPage({
     setStandards(data || [])
     setSelectedStandardId((current) => current || data?.[0]?.id || '')
   }
+
   const loadClausesForStandard = async (standardId) => {
     setLoadingClauses(true)
     try {
@@ -149,11 +160,13 @@ export default function ISOStandardsPage({
       setLoadingClauses(false)
     }
   }
+
   useEffect(() => {
     if (activeSection === 'Manage Clauses' && selectedStandardId) {
       loadClausesForStandard(selectedStandardId)
     }
   }, [activeSection, selectedStandardId, supabaseClient])
+
   const handleDeleteClause = async (clause) => {
     const confirmed = window.confirm(`Are you sure you want to delete clause ${clause.clause_number}?`)
     if (!confirmed) return
@@ -176,6 +189,7 @@ export default function ISOStandardsPage({
       setDeletingClauseIds(prev => ({ ...prev, [clause.id]: false }))
     }
   }
+
   const ensureClauseGroup = async (standardId) => {
     const { data: existingGroup, error: groupError } = await supabaseClient
       .from('iso_clause_groups')
@@ -199,6 +213,7 @@ export default function ISOStandardsPage({
     if (createGroupError) throw new Error(createGroupError.message)
     return createdGroup.id
   }
+
   const handleStandardSubmit = async (event) => {
     event.preventDefault()
     const name = standardForm.name.trim()
@@ -238,6 +253,7 @@ export default function ISOStandardsPage({
       setSavingStandard(false)
     }
   }
+
   const handleSingleClauseSubmit = async (event) => {
     event.preventDefault()
     setClauseError('')
@@ -266,7 +282,6 @@ export default function ISOStandardsPage({
         description: clauseForm.description.trim() || null,
         is_active: true,
       }
-      // Attempt to find an existing clause for this group + clause number
       const { data: existing, error: findError } = await supabaseClient
         .from('iso_clauses')
         .select('id')
@@ -275,7 +290,6 @@ export default function ISOStandardsPage({
         .maybeSingle()
       if (findError) throw new Error(findError.message)
       if (existing?.id) {
-        // Update the existing clause
         const { error: updateError } = await supabaseClient
           .from('iso_clauses')
           .update({ title: payload.title, description: payload.description, is_active: payload.is_active })
@@ -283,7 +297,6 @@ export default function ISOStandardsPage({
           .select('id')
         if (updateError) throw new Error(updateError.message)
       } else {
-        // Insert a new clause
         const { error: insertError } = await supabaseClient
           .from('iso_clauses')
           .insert(payload)
@@ -304,6 +317,7 @@ export default function ISOStandardsPage({
       setSavingClause(false)
     }
   }
+
   const handleBulkSubmit = async (event) => {
     event.preventDefault()
     setClauseError('')
@@ -367,6 +381,7 @@ export default function ISOStandardsPage({
       setSavingClause(false)
     }
   }
+
   const handleToggleStandard = async (standard) => {
     const nextValue = !standard.is_active
     setToggleError('')
@@ -387,6 +402,7 @@ export default function ISOStandardsPage({
       setUpdatingStandardIds((current) => ({ ...current, [standard.id]: false }))
     }
   }
+
   const handleDeleteStandard = async (standard) => {
     const confirmed = window.confirm(
       `Are you sure you want to delete ${standard.name}? This will also delete all associated clauses and cannot be undone.`
@@ -424,7 +440,9 @@ export default function ISOStandardsPage({
       setDeletingStandardIds((current) => ({ ...current, [standard.id]: false }))
     }
   }
+
   const activeTab = 'ISO Standards'
+
   return (
     <div className="page-root">
       {toast && (
@@ -686,7 +704,7 @@ export default function ISOStandardsPage({
                           <tr>
                             <th style={{ width: '15%' }}>Clause No.</th>
                             <th style={{ width: '65%' }}>Title</th>
-                            <th style={{ width: '20%' }}>Actions</th>
+                            <th style={{ width: '20%' }} className="text-center">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -701,16 +719,18 @@ export default function ISOStandardsPage({
                                 <tr key={clause.id}>
                                   <td><strong>{clause.clause_number}</strong></td>
                                   <td>{clause.title}</td>
-                                  <td>
-                                    <button
-                                      type="button"
-                                      className="iso-delete-button"
-                                      onClick={() => handleDeleteClause(clause)}
-                                      disabled={deleting}
-                                    >
-                                      <Trash2 size={14} />
-                                      {deleting ? 'Deleting...' : 'Delete'}
-                                    </button>
+                                  <td className="text-center">
+                                    <div className="action-buttons-wrapper">
+                                      <button
+                                        type="button"
+                                        className="action-btn delete-btn"
+                                        onClick={() => handleDeleteClause(clause)}
+                                        disabled={deleting}
+                                        title="Delete Clause"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               )
@@ -739,7 +759,7 @@ export default function ISOStandardsPage({
                             <th>Status</th>
                             <th>Toggle</th>
                             <th>Confirmation</th>
-                            <th>Actions</th>
+                            <th className="text-center">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -796,17 +816,18 @@ export default function ISOStandardsPage({
                                       <span className="iso-updated-note iso-updated-note--muted">Idle</span>
                                     )}
                                   </td>
-                                  <td>
-                                    <button
-                                      type="button"
-                                      className="iso-delete-button"
-                                      onClick={() => handleDeleteStandard(standard)}
-                                      disabled={busy || deleting}
-                                      aria-label={`Delete ${standard.name}`}
-                                    >
-                                      <Trash2 size={14} />
-                                      {deleting ? 'Deleting...' : 'Delete'}
-                                    </button>
+                                  <td className="text-center">
+                                    <div className="action-buttons-wrapper">
+                                      <button
+                                        type="button"
+                                        className="action-btn delete-btn"
+                                        onClick={() => handleDeleteStandard(standard)}
+                                        disabled={busy || deleting}
+                                        title="Delete Standard"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               )

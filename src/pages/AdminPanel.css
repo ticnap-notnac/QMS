@@ -167,10 +167,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #fca5a5;
-  padding: 6px;
+  background: transparent !important; /* Completely strips the background block tint */
+  border: none !important;            /* 🎯 THE FIX: Erases that persistent solid red line box! */
+  color: #ef4444;                     /* Beautiful, vibrant red icon color */
+  padding: 8px;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -178,15 +178,13 @@
 }
 
 .btn-delete-user:hover {
-  background: rgba(239, 68, 68, 0.18);
-  border-color: rgba(239, 68, 68, 0.5);
-  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12) !important; /* Soft premium red backdrop glow on hover */
+  color: #f87171;                                 /* Slightly lighter red for contrast */
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
 }
 
 .btn-delete-user:active {
-  background: rgba(239, 68, 68, 0.12);
+  background: rgba(239, 68, 68, 0.18) !important;
   transform: translateY(0);
 }
 
