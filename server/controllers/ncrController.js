@@ -144,11 +144,7 @@ export async function reviewReportApproval(req, res) {
   }
 
   try {
-    const currentUser = await getCurrentUser(getRequestActor(req))
-    if (!isAdminOrAuditor(currentUser.role_name)) {
-      return res.status(403).json({ error: 'Only admin and auditor can approve or reject reports.' })
-    }
-
+    const currentUser = req.dbUser
     const { updatedReport, report, nextStatus } = await reviewNcrApproval({ id, decision: normalizedDecision, reason, currentUser })
 
     try {

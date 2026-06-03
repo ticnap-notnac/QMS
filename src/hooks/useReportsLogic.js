@@ -106,7 +106,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       const t = setTimeout(loadRatingModal, 500)
       return () => clearTimeout(t)
     }
-  }, [dataState.reports, dataState.investigatedReports, dataState.closedReports])
+  }, [dataState.reports, dataState.investigatedReports, dataState.closedReports, modalsState])
 
   // ─── Derived / memoised ────────────────────────────────────────────────────
 
@@ -121,9 +121,9 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       if (String(report.status || '').trim().toUpperCase() === 'CLOSED') return false
       if (canAssignReports) return true
       return String(report.assigned_to || '') !== '' &&
-        String(report.assigned_to) === String(currentUserId)
+        String(report.assigned_to) === String(currentAuthId)
     },
-    [canAssignReports, currentUserId],
+    [canAssignReports, currentAuthId],
   )
 
   const approvalQueueReports = useMemo(

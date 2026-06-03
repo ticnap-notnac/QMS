@@ -62,7 +62,7 @@ export default function useISOLogic({ userName }) {
   const [users, setUsers] = useState([])
   const [loadingDropdowns, setLoadingDropdowns] = useState(false)
 
-  const loadDropdownOptions = async () => {
+  const loadDropdownOptions = useCallback(async () => {
     try {
       setLoadingDropdowns(true)
       const { data: deptData } = await supabase.from('departments').select('id, department_name')
@@ -78,9 +78,9 @@ export default function useISOLogic({ userName }) {
     } finally {
       setLoadingDropdowns(false)
     }
-  }
+  }, [])
 
-  const fetchComplianceData = async () => {
+  const fetchComplianceData = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('audit_results')
@@ -131,7 +131,7 @@ export default function useISOLogic({ userName }) {
     } catch (err) {
       console.error('Error fetching compliance data:', err)
     }
-  }
+  }, [])
 
   const handleCarChange = (key, value) => {
     setCarForm(prev => ({ ...prev, [key]: value }))
@@ -261,7 +261,7 @@ export default function useISOLogic({ userName }) {
   useEffect(() => {
     fetchComplianceData()
     loadDropdownOptions()
-  }, [])
+  }, [fetchComplianceData, loadDropdownOptions])
 
   const fetchActiveModules = async () => {
     setLoadingModules(true);
