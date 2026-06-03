@@ -47,9 +47,9 @@ export default function AuditToolsPage({ userRole, userName, currentUserId, auth
   const [logs, setLogs] = useState([])
   const [logsLoading, setLogsLoading] = useState(false)
   const [logsError, setLogsError] = useState('')
-  const [logsPage, setLogsPage] = useState(0)
-  const [logsTotal, setLogsTotal] = useState(0)
-  const logsLimit = 15
+  
+  /* ⚓ Increased the threshold size to populate the custom scroll box with a continuous timeline feed */
+  const logsLimit = 150 
 
   // Audit Reports states
   const [completedRuns, setCompletedRuns] = useState([])
@@ -284,14 +284,14 @@ export default function AuditToolsPage({ userRole, userName, currentUserId, auth
     }
   }
 
-  const fetchAuditLogs = async (pageVal = logsPage) => {
+  const fetchAuditLogs = async () => {
     setLogsLoading(true)
     setLogsError('')
     try {
-      const offset = pageVal * logsLimit
+      /* ⚡ Always pull directly from baseline offset 0 for scrolling */
+      const offset = 0 
       const res = await fetchLogs({ limit: logsLimit, offset, filters: { level: 'audit' } })
       setLogs(res.data || [])
-      setLogsTotal(res.count || 0)
     } catch (err) {
       console.error('Error fetching audit logs:', err)
       setLogsError('Failed to load audit logs.')
@@ -306,8 +306,7 @@ export default function AuditToolsPage({ userRole, userName, currentUserId, auth
 
   useEffect(() => {
     if (activeTab === 'Logs') {
-      fetchAuditLogs(0)
-      setLogsPage(0)
+      fetchAuditLogs()
     }
   }, [activeTab])
 
@@ -400,6 +399,7 @@ export default function AuditToolsPage({ userRole, userName, currentUserId, auth
 
   const fetchRunDetails = async (run) => {
     setSelectedRunDetails(run)
+    text = true
     setLoadingRunDetails(true)
     setIsDetailsModalOpen(true)
     try {
@@ -729,12 +729,6 @@ export default function AuditToolsPage({ userRole, userName, currentUserId, auth
                         non_compliant: 'rgba(239, 68, 68, 0.15)',
                         na: 'rgba(100, 116, 139, 0.15)'
                       }
-                      const borderMap = {
-                        compliant: 'rgba(16, 185, 129, 0.4)',
-                        partial: 'rgba(245, 158, 11, 0.4)',
-                        non_compliant: 'rgba(239, 68, 68, 0.4)',
-                        na: 'rgba(100, 116, 139, 0.4)'
-                      }
                       const textMap = {
                         compliant: '#10b981',
                         partial: '#f59e0b',
@@ -815,7 +809,6 @@ export default function AuditToolsPage({ userRole, userName, currentUserId, auth
 
   const renderTabContent = () => {
     if (activeTab === 'Logs') {
-      const totalPages = Math.max(1, Math.ceil(logsTotal / logsLimit))
       return (
         <div className="tab-content" style={isInsideSettings ? { marginTop: '20px' } : {}}>
           <div className="settings-container--profile" style={{ minHeight: 'auto', padding: '24px', flexDirection: 'column' }}>
@@ -843,14 +836,15 @@ export default function AuditToolsPage({ userRole, userName, currentUserId, auth
 
             {!logsLoading && !logsError && (
               <>
+                {/* ── 📱 SAFE CONTAINED SCROLL OVERFLOW WINDOW ── */}
                 <div className="iso-table-wrap">
-                  <table className="iso-table">
+                  <table className="iso-table system-logs-table">
                     <thead>
                       <tr>
-                        <th style={{ width: '20%' }}>Timestamp</th>
-                        <th style={{ width: '15%' }}>Source</th>
-                        <th style={{ width: '45%' }}>Action Description / Metadata</th>
-                        <th style={{ width: '20%' }}>User</th>
+                        <th style={{ width: '18%' }}>Timestamp</th>
+                        <th style={{ width: '10%' }}>Source</th>
+                        <th style={{ width: '57%' }}>Action Description / Metadata</th>
+                        <th style={{ width: '15%' }}>User</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -871,7 +865,7 @@ export default function AuditToolsPage({ userRole, userName, currentUserId, auth
                                 {log.source || 'system'}
                               </span>
                             </td>
-                            <td style={{ maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '13px' }}>
+                            <td>
                               <div style={{ fontWeight: '500', color: '#f8fafc' }}>
                                 {typeof log.action === 'string' ? log.action : JSON.stringify(log.action)}
                               </div>
@@ -891,39 +885,7 @@ export default function AuditToolsPage({ userRole, userName, currentUserId, auth
                   </table>
                 </div>
 
-                {logsTotal > logsLimit && (
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '20px' }}>
-                    <button
-                      type="button"
-                      className="sidebar-button"
-                      style={{ padding: '6px 12px', fontSize: '12px' }}
-                      disabled={logsPage === 0}
-                      onClick={() => {
-                        const newPage = logsPage - 1
-                        setLogsPage(newPage)
-                        fetchAuditLogs(newPage)
-                      }}
-                    >
-                      Previous
-                    </button>
-                    <span style={{ fontSize: '13px', color: '#94a3b8' }}>
-                      Page {logsPage + 1} of {totalPages}
-                    </span>
-                    <button
-                      type="button"
-                      className="sidebar-button"
-                      style={{ padding: '6px 12px', fontSize: '12px' }}
-                      disabled={logsPage >= totalPages - 1}
-                      onClick={() => {
-                        const newPage = logsPage + 1
-                        setLogsPage(newPage)
-                        fetchAuditLogs(newPage)
-                      }}
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
+                {/* 🛑 PAGINATION ELEMENTS REMOVED FROM HERE FOR COMPLETELY SEAMLESS FEED SCROLLING */}
               </>
             )}
           </div>
@@ -1407,4 +1369,3 @@ export default function AuditToolsPage({ userRole, userName, currentUserId, auth
     </>
   )
 }
-

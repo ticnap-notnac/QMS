@@ -41,14 +41,16 @@ export default function SettingsPage(props) {
     <>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-
-
       <main className="page-container settings-page-container">
         <h1 className="page-heading settings-page-title">Settings</h1>
 
         <SettingsNavbar userRole={userRole} />
 
-        <div className="settings-container settings-container--profile">
+        {/* ── 🚀 DYNAMIC INLINE OVERRIDE ENGINE ── */}
+        <div 
+          className="settings-container settings-container--profile"
+          style={activeSection === 'Audit Tools' ? { maxWidth: '1220px', width: '100%' } : {}}
+        >
           <div className="settings-sidebar settings-sidebar--profile">
             <button onClick={() => setActiveSection('Profile & Account')} className={`sidebar-button ${activeSection === 'Profile & Account' ? 'active' : ''}`}>
               Profile & Account

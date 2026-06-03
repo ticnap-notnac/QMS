@@ -3017,3 +3017,133 @@ div[class*="navbar"] {
   background: rgba(239, 68, 68, 0.12) !important;
   color: #f87171 !important;
 }
+
+/* ==========================================================================
+   📊 AUDIT ACTIVITY LOGS SCROLL WINDOW CORRECTION ENGINE
+   ========================================================================== */
+
+/* 1. Ensure the deep inner container wraps tightly and allows scrolling */
+.iso-standards-content,
+.iso-standards-panel,
+.admin-inner-panel {
+  height: auto !important; /* Forces the glass container to scale naturally if needed */
+  max-height: none !important;
+}
+
+/* 2. THE MAIN FIX: Create a contained, scrollable viewport box wrapper strictly for the table object */
+.iso-table-wrap,
+div[class*="table-wrap"] {
+  width: 100% !important;
+  max-height: 520px !important;       /* 🛑 Clamps the maximum allowed height box space to fit perfectly */
+  overflow-y: auto !important;         /* ⚓ Adds a vertical scrollbar when data exceeds the height limit */
+  overflow-x: auto !important;         /* Handles any horizontal text blowout seamlessly */
+  border-radius: 8px !important;
+  background: rgba(15, 23, 42, 0.25) !important; /* Soft interior backing contrast tint */
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  box-sizing: border-box !important;
+}
+
+/* 3. Freeze the table header row at the top so it stays visible while scrolling */
+.iso-table thead th,
+table thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background: #0d1b31 !important;     /* Deep dark background matches your theme palette color */
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08) !important; /* Keeps a clean bottom divider edge */
+}
+
+/* 4. Custom premium scrollbar styling to match your high-fidelity theme design */
+div[class*="table-wrap"]::-webkit-scrollbar,
+.iso-table-wrap::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+div[class*="table-wrap"]::-webkit-scrollbar-track,
+.iso-table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+div[class*="table-wrap"]::-webkit-scrollbar-thumb,
+.iso-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(34, 211, 238, 0.2) !important; /* Soft cyan glass color scheme tint track glow */
+  border-radius: 999px;
+}
+
+div[class*="table-wrap"]::-webkit-scrollbar-thumb:hover,
+.iso-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 211, 238, 0.4) !important;
+}
+
+/* ==========================================================================
+   🧩 FIX: HORIZONTAL WIDTH LOCK ENGINE FOR SYSTEM SYSTEM LOGS TABLE
+   ========================================================================== */
+
+/* 1. Set explicit width constraints on the parent log section shell */
+.panel-narrow,
+.glass-card-content {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 2. Lock down the table grid layout calculation mechanics */
+.system-logs-table {
+  width: 100% !important;
+  table-layout: fixed !important; /* 🎯 Forces columns to strictly respect the % widths assigned in the file */
+  border-collapse: collapse !important;
+}
+
+/* 3. Surgical fix: Force metadata text lines or JSON strings to wrap naturally instead of stretching the row width */
+.system-logs-table td {
+  white-space: normal !important;  /* Overrides any rigid inline non-wrapping defaults */
+  word-wrap: break-word !important; /* ✂️ Breaks up long string paths safely without overflowing columns */
+  word-break: break-all !important;  /* Extreme safety guard rail against continuous characters blockages */
+  overflow-wrap: break-word !important;
+  vertical-align: top !important;   /* Aligns multi-line strings cleanly to the top of the grid cell */
+  padding: 10px 12px !important;
+}
+
+/* 4. Match alignment styling properties for the row heads */
+.system-logs-table th {
+  text-align: left !important;
+  padding: 12px !important;
+  white-space: nowrap !important;
+}
+
+/* ==========================================================================
+   🔒 ABSOLUTE WIDTH CONTAINMENT FOR AUDIT LOGS SUB-PANEL
+   ========================================================================== */
+
+/* 1. Force the root sub-panel components to never break past 100% width */
+.system-logs-panel {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important; /* Prevents the panel inner components from bleeding out */
+}
+
+/* 2. Constrain the internal logs table wrapper block */
+.system-logs-panel .logs-table,
+.system-logs-panel .iso-table-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important; /* ⚓ Force a local horizontal scrollbar inside the table if columns need more room, keeping the main card intact */
+  box-sizing: border-box !important;
+}
+
+/* 3. Re-enforce strict fixed table columns sizing bounds */
+.system-logs-table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important; 
+}
+
+/* 4. Force JSON text and detail descriptions to stay wrapped within their grid coordinates */
+.system-logs-table td {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+}
