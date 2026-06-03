@@ -48,8 +48,27 @@ export async function markNotificationAsRead(id) {
   return data || null
 }
 
+export async function dismissVerificationNotification(reportId, userId) {
+  if (!reportId || !userId) return null
+
+  const { data, error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('report_id', reportId)
+    .eq('user_id', userId)
+    .ilike('title', 'Verification Date Up%')
+    .select('*')
+
+  if (error) {
+    throw error
+  }
+
+  return data || []
+}
+
 export default {
   fetchUnreadNotifications,
   fetchUnreadNotificationCount,
   markNotificationAsRead,
+  dismissVerificationNotification,
 }

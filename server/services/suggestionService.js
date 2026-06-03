@@ -225,18 +225,70 @@ export async function storeSuggestion({ ncrId, suggestion, confidence, type = 'c
   if (error) throw error
 }
 
-export async function generateAiSuggestion({ ncrId, deptName }) {
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY is not configured in process.env')
+function generateFallbackHeuristicSuggestion({ report, deptName }) {
+  const issueType = (report.issue_type || '').toLowerCase();
+  const desc = (report.description || '').toLowerCase();
+
+  let suggestion = 'Perform a detailed root-cause investigation and verify that standard operating procedures are being followed. Retrain staff on the correct protocols.';
+  let preventive_suggestion = 'Establish periodic audits and visual inspections to verify ongoing compliance. Implement a checklist for end-of-shift verification.';
+  let confidence = 0.55;
+
+  if (issueType.includes('security') || desc.includes('security') || desc.includes('unsecured') || desc.includes('patrol') || desc.includes('fire exit') || desc.includes('door') || desc.includes('push bar')) {
+    suggestion = 'Immediately secure all entry points, repair the damaged push bar on the fire exit door, and request a patrol check to confirm building security.';
+    preventive_suggestion = 'Implement daily checklist inspections of all security exit doors and establish automated alerts for doors left open or unsecured.';
+    confidence = 0.75;
+  } else if (issueType.includes('safety') || issueType.includes('health') || desc.includes('hazard') || desc.includes('injury') || desc.includes('accident')) {
+    suggestion = 'Conduct a safety audit of the affected work area, isolate any malfunctioning equipment or hazards, and conduct an immediate safety briefing (toolbox talk) with all staff.';
+    preventive_suggestion = 'Update the hazard identification register and perform monthly safety inspections of the area to verify preventative controls remain effective.';
+    confidence = 0.65;
+  } else if (issueType.includes('quality') || issueType.includes('food_safety') || desc.includes('contamination') || desc.includes('temp') || desc.includes('batch') || desc.includes('quality')) {
+    suggestion = 'Isolate the affected batch, check storage temperature logs, and sanitize all contacting equipment surfaces before resuming production.';
+    preventive_suggestion = 'Review and update the preventive maintenance schedule for cooling/heating systems and increase sampling frequency for quality checks.';
+    confidence = 0.68;
+  } else if (issueType.includes('audit') || desc.includes('audit') || desc.includes('finding')) {
+    suggestion = 'Review non-conforming items identified in the audit report, update document controls, and coordinate with process owners to address the root causes.';
+    preventive_suggestion = 'Schedule bi-annual internal mock audits and train department representatives as internal auditors to ensure constant audit readiness.';
+    confidence = 0.60;
+  } else if (issueType.includes('vendor') || desc.includes('vendor') || desc.includes('supplier')) {
+    suggestion = 'Issue a formal supplier corrective action request (SCAR) to the vendor and hold/quarantine incoming materials pending inspection.';
+    preventive_suggestion = 'Establish a vendor scorecard system, increase inspection level for new shipments, and revise incoming quality control acceptance criteria.';
+    confidence = 0.62;
   }
 
+  if (deptName) {
+    suggestion += ` Coordinate response actions with the ${deptName} department.`;
+  }
+
+  return {
+    suggestion,
+    preventive_suggestion,
+    confidence
+  };
+}
+
+export async function generateAiSuggestion({ ncrId, deptName }) {
   // 1. Fetch CBR similar cases context
   const context = await findSimilarCases(ncrId)
   const { report, caseRepo, ratedNcrs, carReports, qddrReports } = context
 
-  // 2. Build Prompt
-  const prompt = `You are a quality control expert. Suggest a corrective action and a preventive action for this NCR report using all available context.
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
+    console.warn('ANTHROPIC_API_KEY is not configured in process.env. Using rule-based fallback suggestion generator.')
+    const fallback = generateFallbackHeuristicSuggestion({ report, deptName })
+    try {
+      await storeSuggestion({ ncrId, suggestion: fallback.suggestion, confidence: fallback.confidence, type: 'corrective_action' })
+      if (fallback.preventive_suggestion) {
+        await storeSuggestion({ ncrId, suggestion: fallback.preventive_suggestion, confidence: fallback.confidence, type: 'preventive_action' })
+      }
+    } catch (dbErr) {
+      console.error('Failed to store fallback suggestion in database:', dbErr)
+    }
+    return fallback
+  }
+
+  try {
+    // 2. Build Prompt
+    const prompt = `You are a quality control expert. Suggest a corrective action and a preventive action for this NCR report using all available context.
 
 NCR Report:
 - Description: ${report.description}
@@ -269,45 +321,58 @@ Provide a concise, actionable corrective action (for immediately addressing the 
 Respond ONLY in this JSON format with no preamble or markdown:
 {"suggestion": "your corrective action suggestion here", "preventive_suggestion": "your preventive action suggestion here", "confidence": 0.85}`
 
-  // 3. Make fetch request to Anthropic API
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20241022', // updated to current model recommended naming
-      max_tokens: 1000,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ]
+    // 3. Make fetch request to Anthropic API
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20241022', // updated to current model recommended naming
+        max_tokens: 1000,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      })
     })
-  })
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`Anthropic API call failed: ${response.statusText} - ${errorText}`)
-  }
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Anthropic API call failed: ${response.statusText} - ${errorText}`)
+    }
 
-  const data = await response.json()
-  const text = data.content?.map(i => i.text || '').join('') || ''
-  const clean = text.replace(/```json|```/g, '').trim()
-  const parsed = JSON.parse(clean)
+    const data = await response.json()
+    const text = data.content?.map(i => i.text || '').join('') || ''
+    const clean = text.replace(/```json|```/g, '').trim()
+    const parsed = JSON.parse(clean)
 
-  // Save suggestion to DB cache
-  await storeSuggestion({ ncrId, suggestion: parsed.suggestion, confidence: parsed.confidence, type: 'corrective_action' })
-  if (parsed.preventive_suggestion) {
-    await storeSuggestion({ ncrId, suggestion: parsed.preventive_suggestion, confidence: parsed.confidence, type: 'preventive_action' })
-  }
+    // Save suggestion to DB cache
+    await storeSuggestion({ ncrId, suggestion: parsed.suggestion, confidence: parsed.confidence, type: 'corrective_action' })
+    if (parsed.preventive_suggestion) {
+      await storeSuggestion({ ncrId, suggestion: parsed.preventive_suggestion, confidence: parsed.confidence, type: 'preventive_action' })
+    }
 
-  return {
-    suggestion: parsed.suggestion,
-    preventive_suggestion: parsed.preventive_suggestion,
-    confidence: parsed.confidence
+    return {
+      suggestion: parsed.suggestion,
+      preventive_suggestion: parsed.preventive_suggestion,
+      confidence: parsed.confidence
+    }
+  } catch (err) {
+    console.error('Anthropic API or parsing failed. Falling back to rule-based suggestion. Error:', err)
+    const fallback = generateFallbackHeuristicSuggestion({ report, deptName })
+    try {
+      await storeSuggestion({ ncrId, suggestion: fallback.suggestion, confidence: fallback.confidence, type: 'corrective_action' })
+      if (fallback.preventive_suggestion) {
+        await storeSuggestion({ ncrId, suggestion: fallback.preventive_suggestion, confidence: fallback.confidence, type: 'preventive_action' })
+      }
+    } catch (dbErr) {
+      console.error('Failed to store fallback suggestion in database:', dbErr)
+    }
+    return fallback
   }
 }
