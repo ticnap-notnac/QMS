@@ -3,7 +3,7 @@ import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import AddCategoryModal from '@/components/Modals/AddCategoryModal'
 import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
-import useDepartmentsLogic from '@/hooks/useDepartmentsLogic'
+import { useDepartmentsLogic } from '@/hooks/useAdminPanel.js'
 import './PagesStyles.css'
 
 export default function DepartmentsPage({ userRole }) {

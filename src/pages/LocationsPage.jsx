@@ -3,7 +3,7 @@ import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import AddCategoryModal from '@/components/Modals/AddCategoryModal'
 import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
-import useLocationsLogic from '@/hooks/useLocationsLogic'
+import { useLocationsLogic } from '@/hooks/useAdminPanel.js'
 import './PagesStyles.css'
 
 export default function LocationsPage({ userRole }) {

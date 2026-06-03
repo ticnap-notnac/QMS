@@ -2,7 +2,7 @@ import { PlusCircle, Save, CheckCircle2, List } from 'lucide-react'
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import Toast from '@/components/UI/Toast'
-import useISOStandardsLogic from '@/hooks/useISOStandardsLogic'
+import { useISOStandardsLogic } from '@/hooks/useAdminPanel.js'
 import {
   AddStandardSection,
   AddClausesSection,

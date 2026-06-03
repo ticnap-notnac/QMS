@@ -1,4 +1,7 @@
-/* src/pages/SettingsPage.css */
+/* ==========================================================================
+   ⚙️ CORE SETTINGS PANEL WORKSPACE CONFIGURATIONS
+   ========================================================================== */
+
 .settings-container,
 .settings-container--profile {
   width: 100%;
@@ -10,26 +13,40 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
 }
+
 .settings-container {
   display: grid;
   grid-template-columns: 200px 1fr;
   gap: 20px;
   max-width: 880px;
   margin: 0 auto;
+  transition: max-width 0.25s ease; /* Smoothly animates when expanding the viewport */
 }
+
+/* 🚀 DYNAMIC CANVAS EXPANSION: Widens the card box container so the dense logs layout fits perfectly */
+.settings-container:has(.system-logs-panel) {
+  max-width: 1200px !important; 
+}
+
 .settings-page-container {
   width: 95%;
-  max-width: 1050px;
+  max-width: 1250px; /* Increased from 1050px to provide side structural breathing room */
   margin: 40px auto;
   padding: 0 16px;
   box-sizing: border-box;
 }
+
 .settings-page-title {
   margin: 0 0 8px 0;
   font-size: 28px;
   font-weight: 600;
   color: #ffffff;
 }
+
+/* ==========================================================================
+   📱 INTERNAL WORKSPACE ELEMENT STRUCTURAL BLOCKS
+   ========================================================================== */
+
 .settings-sidebar--profile {
   width: 200px;
   flex-shrink: 0;
@@ -37,6 +54,7 @@
   flex-direction: column;
   gap: 8px;
 }
+
 .settings-main--profile {
   flex: 1;
   display: flex;
@@ -44,18 +62,21 @@
   width: 100%;
   box-sizing: border-box;
 }
+
 .settings-content--profile {
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
 }
+
 .settings-section-title {
   margin: 0 0 24px 0;
   font-size: 20px;
   font-weight: 600;
   color: #ffffff;
 }
+
 .settings-password-title {
   margin: 0 0 16px 0;
   font-size: 16px;
@@ -63,13 +84,17 @@
   color: #ffffff;
 }
 
-/* Responsive Form Row Alignment Matrices */
+/* ==========================================================================
+   🎛️ RESPONSIVE FORM ROW ALIGNMENT GRID MATRICES
+   ========================================================================== */
+
 .form-row-2, .edit-profile-grid-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin-bottom: 16px;
 }
+
 .form-row-3, .edit-profile-grid-3col {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -77,7 +102,10 @@
   margin-bottom: 16px;
 }
 
-/* Control Navigation Sidebar Elements */
+/* ==========================================================================
+   🕹️ NAVIGATION SIDEBAR BUTTON CONTROLS
+   ========================================================================== */
+
 .sidebar-button {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -90,12 +118,52 @@
   transition: all 0.2s;
   text-align: left;
 }
+
 .sidebar-button:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.2);
 }
+
 .sidebar-button.active {
   background: rgba(34, 211, 238, 0.1);
   border-color: rgba(34, 211, 238, 0.3);
   color: #22d3ee;
+}
+
+/* ==========================================================================
+   🔒 FIX: HARD SYSTEM WIDTH CONTAINMENT FOR AUDIT TOOLS PANEL
+   ========================================================================== */
+
+/* Force the system logs root wrapper to fit inside your settings card layout */
+.system-logs-panel {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important; 
+}
+
+/* Force the logs table block to contain horizontal spillover locally */
+.system-logs-panel .logs-table,
+.system-logs-panel .iso-table-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important; /* ⚓ Force horizontal scroll inside the table boundary if columns crowd */
+  overflow-y: auto !important; /* Retains your vertical scroll window bounds */
+  box-sizing: border-box !important;
+}
+
+/* Enforce strict grid layout proportions for the column sizing percentages */
+.system-logs-table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+}
+
+/* Force lengthy JSON or raw action metadata strings to break wrap inside cells */
+.system-logs-table td {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
 }

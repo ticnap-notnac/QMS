@@ -4,7 +4,7 @@ import EditUserModal from '@/components/Modals/EditUserModal'
 import SearchForm from '@/components/Forms/SearchForm'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import UsersTable from '@/components/UsersTable/UsersTable'
-import useAddUserLogic from '@/hooks/useAddUserLogic'
+import { useAddUserLogic } from '@/hooks/useAdminPanel.js'
 import './PagesStyles.css'
 
 export default function AddUserPage({ userRole }) {

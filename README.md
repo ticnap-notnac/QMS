@@ -20,16 +20,27 @@ Client usually runs at `http://localhost:5173` and server at `http://localhost:3
 
 ## Important environment variables
 
-- Frontend (Vite): set in your environment or `.env` for Vite
-  - `VITE_SUPABASE_URL`
-  - `VITE_SUPABASE_ANON_KEY`
+- **Frontend (`.env` in project root)**:
+  - `VITE_SUPABASE_URL` (Base URL for your Supabase project)
+  - `VITE_SUPABASE_PUBLISHABLE_KEY` (Publishable / Anon Key)
+  - `VITE_API_BASE_URL` (Node API endpoint, e.g., `http://localhost:3000/api`)
 
-- Server (server/.env): required for privileged operations
-  - `SUPABASE_URL` (the base URL for your Supabase project)
-  - `SUPABASE_SERVICE_ROLE_KEY` (service role key — required for admin/audit endpoints)
-  - `PORT` (optional, defaults to 3000)
+- **Server (`server/.env` in server directory)**:
+  - `SUPABASE_URL` (Base URL for your Supabase project - *DO NOT append `/rest/v1/`*)
+  - `SUPABASE_SERVICE_ROLE_KEY` (Service role key — required for privileged logs and admin operations)
+  - `PORT` (Optional, defaults to 3000)
 
-The server requires the service-role key to read/write audit logs and perform admin auth actions. Keep this file out of version control (already ignored at [server/.env](server/.env)).
+> [!IMPORTANT]
+> The `.env` files are ignored by Git. When pulling/cloning for the first time, you must manually create both `.env` files.
+> Always stop and restart your terminal dev server (Ctrl+C and `npm run dev:all`) after editing any `.env` file for changes to take effect.
+
+## Troubleshooting 401 Unauthorized Errors
+
+If you or a groupmate run into `401 (Unauthorized)` errors:
+1. **Invalid Session Caching**: Open browser DevTools (F12) -> **Application** -> **Local Storage** -> Clear all. Also clear **IndexedDB** databases related to Supabase and refresh. This forces a fresh login session.
+2. **Incorrect URL Formatting**: Make sure `SUPABASE_URL` in `server/.env` does not end with `/rest/v1/`. It should be just the base URL (e.g., `https://xxxx.supabase.co`).
+3. **Mismatched project keys**: Verify that the project ID in `VITE_SUPABASE_URL` matches the server `SUPABASE_URL` exactly.
+4. **Dev Server Restart**: Restart the terminal dev environment (`npm run dev:all`) to load the new `.env` configurations.
 
 ## What’s implemented (high-level)
 
