@@ -15,7 +15,7 @@ export function normalizeId(value) {
 }
 
 export function buildReferenceNumber(referenceNo) {
-  const match = String(referenceNo || '').match(/^NCR-(\d{4})-(\d{4})$/i)
+  const match = String(referenceNo || '').match(/^NCR-(\d{4})-(\d{3,})$/i)
   if (!match) return 0
   return Number(match[2]) || 0
 }

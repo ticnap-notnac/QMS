@@ -283,7 +283,7 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
 // Sub-view: Task Reports › CAR – closed reports table
 // ---------------------------------------------------------------------------
 
-function CARClosedTable({ carReports, loadingCar }) {
+function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
   if (loadingCar) return <div>Loading CAR reports...</div>
 
   if (!carReports.length) {
@@ -320,7 +320,12 @@ function CARClosedTable({ carReports, loadingCar }) {
               const statusClean = String(car.status || '').trim().toLowerCase()
 
               return (
-                <tr key={car.id}>
+                <tr
+                  key={car.id}
+                  onClick={() => onSelectCar && onSelectCar(car)}
+                  style={{ cursor: 'pointer' }}
+                  title="Click to view details and CAPA/VoE actions"
+                >
                   <td style={{ fontWeight: 600 }}>{car.reference_no ?? '—'}</td>
                   <td>{car.requestor ?? '—'}</td>
                   <td>{car.recipient ?? '—'}</td>
@@ -339,11 +344,10 @@ function CARClosedTable({ carReports, loadingCar }) {
                     {car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}
                   </td>
                   <td>
-                    {/* 🚀 Dynamic Gray vs Green Theme Route Switcher */}
                     <span className={`iso-status-pill ${
-                      statusClean === 'completed' ? 'is-active' : statusClean === 'closed' ? 'is-closed' : 'is-inactive'
+                      statusClean === 'closed' ? 'is-closed' : statusClean === 'under_verification' ? 'is-active' : 'is-inactive'
                     }`}>
-                      {car.status}
+                      {statusClean === 'under_verification' ? 'Under Verification' : statusClean === 'closed' ? 'Closed' : 'Open'}
                     </span>
                   </td>
                 </tr>
@@ -354,6 +358,7 @@ function CARClosedTable({ carReports, loadingCar }) {
       </div>
     </div>
   )
+
 }
 
 // ---------------------------------------------------------------------------
@@ -588,7 +593,9 @@ export default function DCCFolderContent({
   loadingNcr,
   carReports,
   loadingCar,
+  onSelectCar,
   qddrReports,
+
   loadingQddr,
   auditReports,
   loadingAudit,
@@ -715,9 +722,10 @@ export default function DCCFolderContent({
             </div>
           ) : selectedTaskFolder.id === 'car' ? (
             <div className="flex-column full-height">
-              <div className="breadcrumb">Task Reports &gt; CAR &gt; Closed</div>
-              <CARClosedTable carReports={carReports} loadingCar={loadingCar} />
+              <div className="breadcrumb">Task Reports &gt; CAR &gt; Workflow</div>
+              <CARClosedTable carReports={carReports} loadingCar={loadingCar} onSelectCar={onSelectCar} />
             </div>
+
           ) : selectedTaskFolder.id === 'qddr' ? (
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; QDDR &gt; Closed</div>

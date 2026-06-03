@@ -92,3 +92,108 @@ export async function createCarReport({ body, reportedByAuthId }) {
 
   return { data }
 }
+
+export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAction, preventiveAction, actorAuthId }) {
+  const { data: existing, error: findError } = await supabase
+    .from('car_reports')
+    .select('id, reference_no, status')
+    .eq('id', carId)
+    .maybeSingle()
+
+  if (findError) throw findError
+  if (!existing) {
+    const err = new Error('CAR report not found')
+    err.status = 404
+    throw err
+  }
+
+  const { data, error } = await supabase
+    .from('car_reports')
+    .update({
+      root_cause_analysis: rootCauseAnalysis,
+      corrective_action: correctiveAction,
+      preventive_action: preventiveAction,
+      capa_submitted_at: new Date().toISOString(),
+      status: 'under_verification'
+    })
+    .eq('id', carId)
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw error
+
+  // Create notifications for admins and auditors to verify
+  try {
+    const { createNotificationsForRoles } = await import('./ncrReportsService.js')
+    await createNotificationsForRoles({
+      roleNames: ['admin', 'auditor'],
+      title: `CAR CAPA Submitted: ${existing.reference_no}`,
+      message: `A CAPA plan has been submitted for ${existing.reference_no} and is awaiting Verification of Effectiveness (VoE).`,
+      type: 'info'
+    })
+  } catch (err) {
+    console.warn('Failed to send CAPA alerts:', err.message || err)
+  }
+
+  try {
+    const { writeAudit } = await import('../lib/audit.js')
+    await writeAudit({
+      level: 'audit',
+      source: 'car_reports',
+      action: 'car_capa_submit',
+      userAuthId: actorAuthId,
+      details: { id: carId, reference_no: existing.reference_no }
+    })
+  } catch (err) {
+    console.warn('Failed to write CAPA audit log:', err.message || err)
+  }
+
+  return { data }
+}
+
+export async function verifyCarEffectiveness({ carId, outcome, notes, actorAuthId }) {
+  const { data: existing, error: findError } = await supabase
+    .from('car_reports')
+    .select('id, reference_no, status')
+    .eq('id', carId)
+    .maybeSingle()
+
+  if (findError) throw findError
+  if (!existing) {
+    const err = new Error('CAR report not found')
+    err.status = 404
+    throw err
+  }
+
+  const status = outcome === 'effective' ? 'closed' : 'open'
+
+  const { data, error } = await supabase
+    .from('car_reports')
+    .update({
+      verification_notes: notes,
+      verification_date: new Date().toISOString(),
+      verified_by: actorAuthId,
+      status: status
+    })
+    .eq('id', carId)
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw error
+
+  try {
+    const { writeAudit } = await import('../lib/audit.js')
+    await writeAudit({
+      level: 'audit',
+      source: 'car_reports',
+      action: 'car_voe_verify',
+      userAuthId: actorAuthId,
+      details: { id: carId, reference_no: existing.reference_no, outcome, status }
+    })
+  } catch (err) {
+    console.warn('Failed to write VoE audit log:', err.message || err)
+  }
+
+  return { data }
+}
+

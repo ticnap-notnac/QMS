@@ -1,6 +1,7 @@
 
 import DCCFolderContent from '../components/DCCFolderContent.jsx'
 import { useDCCLogic } from '../hooks/useDCCLogic.js'
+import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
 import './PagesStyles.css'
 
 const FOLDER_ITEMS = [
@@ -11,6 +12,7 @@ const FOLDER_ITEMS = [
 
 export default function DCCPage({
   userRole,
+  authUserId,
 }) {
   const {
     searchQuery,
@@ -38,12 +40,16 @@ export default function DCCPage({
     loadingAudit,
     auditSchedules,
     loadingAuditSchedules,
+    selectedCar,
+    isCarDetailsModalOpen,
+    openCarDetails,
+    closeCarDetails,
+    submitCapa,
+    verifyCar,
   } = useDCCLogic()
 
   return (
     <div className="dcc-root">
-
-
       <div className="dcc-main-wrapper">
         <div className="glass-card-dcc">
           <DCCFolderContent
@@ -74,6 +80,7 @@ export default function DCCPage({
             // CAR
             carReports={carReports}
             loadingCar={loadingCar}
+            onSelectCar={openCarDetails}
             // QDDR
             qddrReports={qddrReports}
             loadingQddr={loadingQddr}
@@ -87,7 +94,18 @@ export default function DCCPage({
           />
         </div>
       </div>
+
+      <CARDetailsModal
+        isOpen={isCarDetailsModalOpen}
+        onClose={closeCarDetails}
+        car={selectedCar}
+        onSubmitCapa={submitCapa}
+        onVerify={verifyCar}
+        userRole={userRole}
+        authUserId={authUserId}
+      />
     </div>
   )
-
 }
+
+

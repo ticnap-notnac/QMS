@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../utils/supabase'
 import { fetchAllReports } from '../services/ncrService'
+import { submitCapaPlan, verifyCarPlan } from '../services/carService'
+
 
 const RECENTLY_VIEWED_KEY = 'dcc_recently_viewed'
 const RECENTLY_VIEWED_LIMIT = 10
@@ -92,6 +94,11 @@ export function useDCCLogic() {
   // Audit schedules
   const [auditSchedules, setAuditSchedules] = useState([])
   const [loadingAuditSchedules, setLoadingAuditSchedules] = useState(false)
+
+  // CAR details modal states
+  const [selectedCar, setSelectedCar] = useState(null)
+  const [isCarDetailsModalOpen, setIsCarDetailsModalOpen] = useState(false)
+
 
   // Load ISO standards whenever the iso_modules folder is opened
   useEffect(() => {
@@ -450,6 +457,41 @@ export function useDCCLogic() {
     }
   }
 
+  // CAR details actions
+  const handleOpenCarDetails = (car) => {
+    setSelectedCar(car)
+    setIsCarDetailsModalOpen(true)
+  }
+
+  const handleCloseCarDetails = () => {
+    setSelectedCar(null)
+    setIsCarDetailsModalOpen(false)
+  }
+
+  const handleCapaSubmit = async (carId, data, userAuthId) => {
+    try {
+      const res = await submitCapaPlan(carId, data, userAuthId)
+      await loadClosedCARs()
+      setSelectedCar(res)
+      return res
+    } catch (err) {
+      console.error('[useDCCLogic] handleCapaSubmit error:', err)
+      throw err
+    }
+  }
+
+  const handleCarVerify = async (carId, data, userAuthId) => {
+    try {
+      const res = await verifyCarPlan(carId, data, userAuthId)
+      await loadClosedCARs()
+      setSelectedCar(res)
+      return res
+    } catch (err) {
+      console.error('[useDCCLogic] handleCarVerify error:', err)
+      throw err
+    }
+  }
+
   // public API------------------------------------------------------------------
 
   return {
@@ -500,5 +542,14 @@ export function useDCCLogic() {
     // Audit schedules
     auditSchedules,
     loadingAuditSchedules,
+
+    // CAR details
+    selectedCar,
+    isCarDetailsModalOpen,
+    openCarDetails: handleOpenCarDetails,
+    closeCarDetails: handleCloseCarDetails,
+    submitCapa: handleCapaSubmit,
+    verifyCar: handleCarVerify,
   }
-}
+}
+
