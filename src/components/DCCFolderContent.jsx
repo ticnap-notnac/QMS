@@ -6,6 +6,7 @@ const TASK_REPORT_SUBFOLDERS = [
   { id: 'car', label: 'CAR' },
   { id: 'qddr', label: 'QDDR' },
   { id: 'ncr', label: 'NCR' },
+  { id: 'audit', label: 'Audit Reports' },
 ]
 
 const SEVERITY_COLORS = {
@@ -445,6 +446,66 @@ function QDDRClosedTable({ qddrReports, loadingQddr }) {
 }
 
 // ---------------------------------------------------------------------------
+// Sub-view: Task Reports › Audit – completed reports table
+// ---------------------------------------------------------------------------
+
+function AuditReportsTable({ auditReports, loadingAudit }) {
+  if (loadingAudit) return <div>Loading Audit reports...</div>
+
+  if (!auditReports.length) {
+    return (
+      <div className="empty-state">
+        <AlertCircle size={20} style={{ marginBottom: 6 }} />
+        <div>No completed audit reports found.</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="glass-card-dcc">
+      <div className="dcc-scrollable-table-box">
+        <table className="iso-table" style={{ width: '100%' }}>
+          <thead>
+            <tr>
+              <th>Audit Run ID</th>
+              <th>Audit Title</th>
+              <th>ISO Standard</th>
+              <th>Assigned Auditor</th>
+              <th>Start Date / Time</th>
+              <th>Completion Date / Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {auditReports.map((run) => (
+              <tr key={run.id}>
+                <td style={{ fontWeight: 600, fontSize: '12px' }}>
+                  {run.id.slice(0, 8)}...
+                </td>
+                <td>{run.title}</td>
+                <td>{run.standard_name}</td>
+                <td>{run.auditor_name}</td>
+                <td>
+                  {run.started_at ? new Date(run.started_at).toLocaleString() : '—'}
+                </td>
+                <td>
+                  {run.completed_at ? new Date(run.completed_at).toLocaleString() : '—'}
+                </td>
+                <td>
+                  <span className="iso-status-pill is-inactive">
+                    Completed
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
 
@@ -488,6 +549,10 @@ export default function DCCFolderContent({
   // QDDR
   qddrReports,
   loadingQddr,
+
+  // Audit
+  auditReports,
+  loadingAudit,
 
   // access
   userRole,
@@ -626,6 +691,12 @@ export default function DCCFolderContent({
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; QDDR &gt; Closed</div>
               <QDDRClosedTable qddrReports={qddrReports} loadingQddr={loadingQddr} />
+            </div>
+          ) : selectedTaskFolder.id === 'audit' ? (
+            /* Level 2 – Audit Reports: completed runs table */
+            <div className="flex-column full-height">
+              <div className="breadcrumb">Task Reports &gt; Audit Reports &gt; Completed</div>
+              <AuditReportsTable auditReports={auditReports} loadingAudit={loadingAudit} />
             </div>
           ) : (
             /* Level 2 – Other reports */

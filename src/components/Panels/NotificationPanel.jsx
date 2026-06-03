@@ -80,19 +80,19 @@ export default function NotificationPanel({
             key={notification.id}
             className="notification-card"
             onClick={() => {
-              if (notification.report_id && onOpenReport) {
-                onOpenReport(notification.report_id, notification)
+              if (onOpenReport) {
+                onOpenReport(notification.report_id || null, notification)
               }
             }}
             role="button"
             tabIndex={0}
             onKeyDown={(event) => {
-              if ((event.key === 'Enter' || event.key === ' ') && notification.report_id && onOpenReport) {
+              if ((event.key === 'Enter' || event.key === ' ') && onOpenReport) {
                 event.preventDefault()
-                onOpenReport(notification.report_id, notification)
+                onOpenReport(notification.report_id || null, notification)
               }
             }}
-            style={{ cursor: notification.report_id && onOpenReport ? 'pointer' : 'default' }}
+            style={{ cursor: onOpenReport ? 'pointer' : 'default' }}
           >
             <div className={`notification-pill notification-pill--${String(notification.type || 'info').trim().toLowerCase()}`}>
               {typeLabel(notification.type)}

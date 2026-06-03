@@ -5,6 +5,7 @@ import Toast from '@/components/UI/Toast'
 import useSettingsPageLogic from '@/hooks/useSettingsPageLogic'
 import SettingsProfileForm from '@/components/Forms/SettingsProfileForm'
 import PasswordSection from '@/components/Auth/PasswordSection'
+import AuditToolsPage from './AuditToolsPage'
 import './SettingsPage.css'
 
 export default function SettingsPage(props) {
@@ -55,7 +56,7 @@ export default function SettingsPage(props) {
             <button onClick={() => setActiveSection('Reporting Defaults')} className={`sidebar-button ${activeSection === 'Reporting Defaults' ? 'active' : ''}`}>
               Reporting Defaults
             </button>
-            {userRole === 'admin' && (
+            {(userRole === 'admin' || userRole === 'auditor') && (
               <button onClick={() => setActiveSection('Audit Tools')} className={`sidebar-button ${activeSection === 'Audit Tools' ? 'active' : ''}`}>
                 Audit Tools
               </button>
@@ -82,12 +83,9 @@ export default function SettingsPage(props) {
               </div>
             )}
 
-            {activeSection === 'Audit Tools' && userRole === 'admin' && (
-              <div className="settings-content settings-content--profile">
-                <h2 className="settings-section-title">Audit Tools</h2>
-                <div className="settings-placeholder">
-                  <p className="settings-placeholder-text">Audit tools and utilities will be available here.</p>
-                </div>
+            {activeSection === 'Audit Tools' && (userRole === 'admin' || userRole === 'auditor') && (
+              <div className="settings-content settings-content--profile" style={{ width: '100%' }}>
+                <AuditToolsPage {...props} />
               </div>
             )}
           </div>

@@ -245,9 +245,12 @@ export default function App() {
   const handleNotificationSelect = (reportId, notification = null) => {
     setIsNotificationsOpen(false)
     const isVerificationDateUp = notification?.title && String(notification.title).startsWith('Verification Date Up')
+    const isAuditScheduled = notification?.title && String(notification.title).startsWith('Audit Scheduled')
     
     if (isVerificationDateUp) {
       navigate(`/reports?openRating=${reportId}`)
+    } else if (isAuditScheduled) {
+      navigate('/audit-tools?tab=Schedules')
     } else {
       navigate('/reports')
       if (reportId) {

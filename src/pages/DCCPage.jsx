@@ -34,6 +34,8 @@ export default function DCCPage({
     loadingCar,
     qddrReports,
     loadingQddr,
+    auditReports,
+    loadingAudit,
   } = useDCCLogic()
 
   return (
@@ -73,6 +75,9 @@ export default function DCCPage({
             // QDDR
             qddrReports={qddrReports}
             loadingQddr={loadingQddr}
+            // Audit
+            auditReports={auditReports}
+            loadingAudit={loadingAudit}
             // access control
             userRole={userRole}
           />

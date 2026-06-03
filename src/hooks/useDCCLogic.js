@@ -85,6 +85,10 @@ export function useDCCLogic() {
   const [qddrReports, setQddrReports] = useState([])
   const [loadingQddr, setLoadingQddr] = useState(false)
 
+  // Audit reports
+  const [auditReports, setAuditReports] = useState([])
+  const [loadingAudit, setLoadingAudit] = useState(false)
+
   // Load ISO standards whenever the iso_modules folder is opened
   useEffect(() => {
     if (selectedFolder?.id === 'iso_modules') {
@@ -126,6 +130,7 @@ export function useDCCLogic() {
     setNcrReports([])
     setCarReports([])
     setQddrReports([])
+    setAuditReports([])
     addRecentlyViewed(item)
   }
 
@@ -137,6 +142,7 @@ export function useDCCLogic() {
     setNcrReports([])
     setCarReports([])
     setQddrReports([])
+    setAuditReports([])
   }
 
   // Task Reports sub-folder navigation------------------------------------------------------------------
@@ -146,12 +152,15 @@ export function useDCCLogic() {
     setNcrReports([])
     setCarReports([])
     setQddrReports([])
+    setAuditReports([])
     if (item.id === 'ncr') {
       loadClosedNCRs()
     } else if (item.id === 'car') {
       loadClosedCARs()
     } else if (item.id === 'qddr') {
       loadClosedQDDRs()
+    } else if (item.id === 'audit') {
+      loadClosedAudits()
     }
   }
 
@@ -160,6 +169,7 @@ export function useDCCLogic() {
     setNcrReports([])
     setCarReports([])
     setQddrReports([])
+    setAuditReports([])
   }
 
   // ISO standards  (iso_standards -> iso_clause_groups -> iso_clauses)------------------------------------------------------------------
@@ -324,6 +334,70 @@ export function useDCCLogic() {
     }
   }
 
+  // ------------------------------------------------------------------
+  // Completed Audit Runs (audit_runs table)
+  // ------------------------------------------------------------------
+
+  async function loadClosedAudits() {
+    setLoadingAudit(true)
+    try {
+      const { data: runs, error: runError } = await supabase
+        .from('audit_runs')
+        .select('*')
+        .not('completed_at', 'is', null)
+        .order('completed_at', { ascending: false })
+
+      if (runError) throw runError
+
+      if (!runs || runs.length === 0) {
+        setAuditReports([])
+        return
+      }
+
+      const scheduleIds = runs.map(r => r.schedule_id).filter(Boolean)
+      const { data: schedulesData, error: schedError } = await supabase
+        .from('audit_schedules')
+        .select('id, title, standard_id, scheduled_date')
+        .in('id', scheduleIds)
+
+      if (schedError) throw schedError
+
+      const { data: standardsData, error: stdError } = await supabase
+        .from('iso_standards')
+        .select('id, name, version')
+
+      if (stdError) throw stdError
+
+      const { data: auditorsData, error: audError } = await supabase
+        .from('users')
+        .select('id, first_name, last_name, auth_id')
+
+      if (audError) throw audError
+
+      const mapped = runs.map(run => {
+        const sched = (schedulesData || []).find(s => s.id === run.schedule_id)
+        const std = sched ? (standardsData || []).find(s => s.id === sched.standard_id) : null
+        const aud = (auditorsData || []).find(a => a.auth_id === run.auditor_id)
+
+        return {
+          id: run.id,
+          title: sched?.title || 'Unnamed Audit',
+          standard_name: std ? `${std.name} (${std.version})` : 'Unknown Standard',
+          auditor_name: aud ? `${aud.first_name} ${aud.last_name}` : 'Unknown Auditor',
+          started_at: run.started_at,
+          completed_at: run.completed_at
+        }
+      })
+
+      setAuditReports(mapped)
+    } catch (err) {
+      console.error('[useDCCLogic] loadClosedAudits error:', err?.message ?? err)
+      setAuditReports([])
+    } finally {
+      setLoadingAudit(false)
+    }
+  }
+
   // public API------------------------------------------------------------------
 
   return {
@@ -366,5 +440,9 @@ export function useDCCLogic() {
     // QDDR closed reports
     qddrReports,
     loadingQddr,
+
+    // Audit reports
+    auditReports,
+    loadingAudit,
   }
 }
