@@ -4,6 +4,7 @@ import { createReport, reviewReportApproval, submitNcrMultipart, updateReport } 
 import { createLocation } from '@/services/locationService'
 import { createProductType } from '@/services/productTypeService'
 import { createIssueType } from '@/services/issueTypeService'
+import { resolveCatalogSelection, filterApprovalQueueReports } from '@/utils/reportsHelpers'
 
 import { useReportsData } from './useReports/useReportsData'
 import { useReportsForm } from './useReports/useReportsForm'
@@ -127,10 +128,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
   )
 
   const approvalQueueReports = useMemo(
-    () =>
-      (dataState.investigatedReports || []).filter(
-        (r) => Boolean(r?.investigation_details) && String(r?.status || '').trim().toLowerCase() !== 'closed',
-      ),
+    () => filterApprovalQueueReports(dataState.investigatedReports),
     [dataState.investigatedReports],
   )
 
@@ -258,24 +256,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
 
   // ─── Submit report ─────────────────────────────────────────────────────────
 
-  const resolveCatalogSelection = async ({ inputValue, selectedId, options, createFn, optionLabelKey }) => {
-    const trimmed = String(inputValue || '').trim()
-    if (!trimmed) throw new Error('Location and product type are required.')
 
-    if (selectedId) {
-      const byId = options.find((o) => String(o.id) === String(selectedId))
-      if (byId) return { id: byId.id, label: byId[optionLabelKey] || byId.label || trimmed }
-    }
-
-    const exact = options.find(
-      (o) => String(o[optionLabelKey] || o.label || '').trim().toLowerCase() === trimmed.toLowerCase(),
-    )
-    if (exact) return { id: exact.id, label: exact[optionLabelKey] || exact.label || trimmed }
-
-    const created = await createFn(trimmed)
-    const item = Array.isArray(created) ? created[0] : created
-    return { id: item?.id, label: item?.[optionLabelKey] || item?.label || trimmed }
-  }
 
   const handleSubmitReport = async (event) => {
     event.preventDefault()
