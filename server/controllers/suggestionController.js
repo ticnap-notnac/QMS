@@ -1,45 +1,45 @@
 import { findSimilarCases, getCachedSuggestion, storeSuggestion, generateAiSuggestion } from '../services/suggestionService.js'
 
-export async function getSimilarCases(req, res) {
-    try {
-        const { ncrId } = req.params
-        const data = await findSimilarCases(ncrId)
-        res.json(data)
-    } catch (err) {
-        res.status(500).json({ error: err.message || 'Failed to fetch similar cases' })
-    }
+export async function getSimilarCases(req, res, next) {
+  try {
+    const { ncrId } = req.params
+    const data = await findSimilarCases(ncrId)
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
 }
 
-export async function getCached(req, res) {
-    try {
-        const { ncrId } = req.params
-        const data = await getCachedSuggestion(ncrId)
-        res.json(data)
-    } catch (err) {
-        res.status(500).json({ error: err.message || 'Failed to fetch cached suggestion' })
-    }
+export async function getCached(req, res, next) {
+  try {
+    const { ncrId } = req.params
+    const data = await getCachedSuggestion(ncrId)
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
 }
 
-export async function saveSuggestion(req, res) {
-    try {
-        const { ncr_id, suggestion, preventive_suggestion, confidence } = req.body
-        await storeSuggestion({ ncrId: ncr_id, suggestion, confidence, type: 'corrective_action' })
-        if (preventive_suggestion) {
-            await storeSuggestion({ ncrId: ncr_id, suggestion: preventive_suggestion, confidence, type: 'preventive_action' })
-        }
-        res.json({ success: true })
-    } catch (err) {
-        res.status(500).json({ error: err.message || 'Failed to save suggestion' })
+export async function saveSuggestion(req, res, next) {
+  try {
+    const { ncr_id, suggestion, preventive_suggestion, confidence } = req.body
+    await storeSuggestion({ ncrId: ncr_id, suggestion, confidence, type: 'corrective_action' })
+    if (preventive_suggestion) {
+      await storeSuggestion({ ncrId: ncr_id, suggestion: preventive_suggestion, confidence, type: 'preventive_action' })
     }
+    return res.json({ success: true })
+  } catch (err) {
+    next(err)
+  }
 }
 
-export async function generateSuggestion(req, res) {
-    try {
-        const { ncrId } = req.params
-        const { deptName } = req.body
-        const data = await generateAiSuggestion({ ncrId, deptName })
-        res.json(data)
-    } catch (err) {
-        res.status(500).json({ error: err.message || 'Failed to generate suggestion' })
-    }
+export async function generateSuggestion(req, res, next) {
+  try {
+    const { ncrId } = req.params
+    const { deptName } = req.body
+    const data = await generateAiSuggestion({ ncrId, deptName })
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
 }

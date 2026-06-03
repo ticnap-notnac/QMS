@@ -4,6 +4,7 @@
 import { supabase, hasServiceRole } from '../lib/supabase.js'
 import { extractKeywordsAsString } from '../utils/cbr.js'
 import { writeAudit } from '../lib/audit.js'
+import { getLocalDateString } from '../utils/date.js'
 
 // ─── Pure Utilities ──────────────────────────────────────────────────────────
 
@@ -282,7 +283,7 @@ export async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, 
 export async function fetchReports(scope = 'open') {
   // Dynamic cron-like check for verification dates that are reached
   try {
-    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayStr = getLocalDateString()
     // Find reports with verification_date reached and no preventive_rating
     const { data: dueReports } = await supabase
       .from('ncr_reports')
@@ -361,7 +362,7 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     description,
     issue_type,
     evidence_url = null,
-    occurrence_date = new Date().toISOString().slice(0, 10),
+    occurrence_date = getLocalDateString(),
   } = body
 
   const { data: reporter, error: reporterError } = await supabase
@@ -414,7 +415,7 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     status: 'OPEN',
     issue_type: resolvedIssueTypeName,
     issue_type_id: resolvedIssueTypeId,
-    occurrence_date: occurrence_date || new Date().toISOString().slice(0, 10),
+    occurrence_date: occurrence_date || getLocalDateString(),
     product_type: resolvedProductTypeName,
     product_type_id: resolvedProductTypeId,
     batch_number,
@@ -446,7 +447,7 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
     department_id,
     description,
     issue_type,
-    occurrence_date = new Date().toISOString().slice(0, 10),
+    occurrence_date = getLocalDateString(),
   } = body
 
   const { data: reporter, error: reporterError } = await supabase
@@ -529,7 +530,7 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
     status: 'OPEN',
     issue_type: resolvedIssueTypeName,
     issue_type_id: resolvedIssueTypeId,
-    occurrence_date: occurrence_date || new Date().toISOString().slice(0, 10),
+    occurrence_date: occurrence_date || getLocalDateString(),
     product_type: resolvedProductTypeName,
     product_type_id: resolvedProductTypeId,
     batch_number,

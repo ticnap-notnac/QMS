@@ -2,7 +2,7 @@ import { getRequestActor } from '../lib/requestUtils.js'
 import { writeAudit } from '../lib/audit.js'
 import { createCarReport } from '../services/carService.js'
 
-export async function createCar(req, res) {
+export async function createCar(req, res, next) {
   const reportedByAuthId = getRequestActor(req)
   if (!reportedByAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
 
@@ -17,6 +17,6 @@ export async function createCar(req, res) {
     })
     return res.status(201).json(data)
   } catch (err) {
-    return res.status(err.status || 500).json({ error: err.message })
+    next(err)
   }
 }

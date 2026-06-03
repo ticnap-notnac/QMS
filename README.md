@@ -28,6 +28,7 @@ Client usually runs at `http://localhost:5173` and server at `http://localhost:3
 - **Server (`server/.env` in server directory)**:
   - `SUPABASE_URL` (Base URL for your Supabase project - *DO NOT append `/rest/v1/`*)
   - `SUPABASE_SERVICE_ROLE_KEY` (Service role key — required for privileged logs and admin operations)
+  - `GEMINI_API_KEY` (Google Gemini Developer API Key — required for AI suggestion fallbacks)
   - `PORT` (Optional, defaults to 3000)
 
 > [!IMPORTANT]
