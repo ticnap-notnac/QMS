@@ -563,7 +563,7 @@ export async function updateNcrReport({ id, body }) {
   const {
     product_type, product_type_id, batch_number, complaint_location, location_id,
     severity, department_id, description, car_filed, qddr_filed, evidence_url, status,
-    issue_type, issue_type_id, preventive_rating,
+    issue_type, issue_type_id, preventive_rating, resolution_details,
   } = body
 
   let resolvedLocation = null
@@ -603,6 +603,7 @@ export async function updateNcrReport({ id, body }) {
   if (evidence_url !== undefined) updates.evidence_url = evidence_url
   if (status !== undefined) updates.status = status
   if (preventive_rating !== undefined) updates.preventive_rating = normalizeText(preventive_rating) || null
+  if (resolution_details !== undefined) updates.resolution_details = normalizeText(resolution_details) || null
 
   const { data, error } = await supabase
     .from('ncr_reports').update(updates).eq('id', id).select('*').maybeSingle()
@@ -688,6 +689,7 @@ export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
   const rejectionResetFields = decision === 'reject'
     ? {
         investigation_details: null,
+        corrective_action: null,
         resolution_details: null,
         resolution_time: null,
         verification_date: null,

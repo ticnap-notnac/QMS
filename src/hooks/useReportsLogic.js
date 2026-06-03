@@ -15,6 +15,7 @@ import useAssignReportModal from './useReports/useAssignReportModal'
 import useNCRSubmitModal from './useReports/useNCRSubmitModal'
 import { useSuggestionLogic } from './useReports/useSuggestionLogic'
 import { fetchExistingAiSuggestion } from '@/services/suggestionService'
+import { dismissVerificationNotification } from '@/services/notificationService'
 import { updateReportInvestigationMultipart } from '@/services/ncrService'
 import { submitCarReport } from '@/services/carService'
 import { submitQddrReport } from '@/services/qddrService'
@@ -69,6 +70,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
 
   // ── Preventive Action Rating state ──────────────────────────────────────────
   const [preventiveRating, setPreventiveRating] = useState('')
+  const [customResolution, setCustomResolution] = useState('')
   const [ratingReportId, setRatingReportId] = useState(null)
   const [suggestedPreventiveAction, setSuggestedPreventiveAction] = useState('')
   const [isSubmittingRating, setIsSubmittingRating] = useState(false)
@@ -121,6 +123,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
             setRatingReportId(Number(openRatingId))
             setSuggestedPreventiveAction(cached?.preventive_suggestion || 'Implement standard verification and monitoring checks.')
             setPreventiveRating('')
+            setCustomResolution(reportObj.resolution_details || '')
             modalsState.setIsPreventiveActionModalOpen(true)
             window.history.replaceState({}, document.title, window.location.pathname)
           } catch (e) {
@@ -229,12 +232,20 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     if (!ratingReportId) return
     setIsSubmittingRating(true)
     try {
-      await updateReport(ratingReportId, { preventive_rating: preventiveRating })
-      setToast({ message: 'Preventive action suggestion rated successfully!', type: 'success' })
+      await updateReport(ratingReportId, { 
+        preventive_rating: preventiveRating,
+        resolution_details: customResolution
+      })
+
+      if (currentUserId) {
+        await dismissVerificationNotification(ratingReportId, currentUserId)
+      }
+
+      setToast({ message: 'Preventive action rated and resolution updated successfully!', type: 'success' })
       modalsState.setIsPreventiveActionModalOpen(false)
       await dataState.refreshReportsList()
     } catch (err) {
-      setError(err?.message || 'Failed to submit rating.')
+      setError(err?.message || 'Failed to submit rating and resolution.')
     } finally {
       setIsSubmittingRating(false)
     }
@@ -569,6 +580,8 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       suggestedPreventiveAction,
       preventiveRating,
       onPreventiveRatingChange: setPreventiveRating,
+      customResolution,
+      onCustomResolutionChange: setCustomResolution,
       onSubmit: handlePreventiveRatingSubmit,
       isSubmitting: isSubmittingRating,
       report: ratingReportId 

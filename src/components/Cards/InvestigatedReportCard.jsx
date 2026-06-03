@@ -111,7 +111,7 @@ function InvestigatedReportCard({ report, departmentNameById, canAssignReports, 
       {report.preventive_rating && (
         <>
           <div className="reports-details-title-wrap">
-            <h4 className="reports-details-title">Suggested Preventive Action Rating</h4>
+            <h4 className="reports-details-title">Suggested Preventive Action</h4>
           </div>
           <div className="reports-details-box">
             <span className="reports-workspace-text" style={{ color: 'var(--teal-accent, #38bdf8)', fontWeight: 'bold' }}>

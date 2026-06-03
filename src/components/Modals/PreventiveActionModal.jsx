@@ -7,23 +7,48 @@ export default function PreventiveActionModal({
   suggestedPreventiveAction,
   preventiveRating,
   onPreventiveRatingChange,
+  customResolution,
+  onCustomResolutionChange,
   onSubmit,
   isSubmitting,
 }) {
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-card reports-preventive-card" style={{ maxWidth: '600px', width: '95%' }}>
-        <button type="button" onClick={onClose} className="modal-close-button">
+    <div className="modal-overlay" onClick={onClose}>
+      <div 
+        className="modal-card reports-preventive-card" 
+        onClick={(e) => e.stopPropagation()}
+        style={{ 
+          maxWidth: '600px', 
+          width: '95%',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}
+      >
+        <button type="button" onClick={onClose} className="modal-close-button" style={{ zIndex: 10 }}>
           <CloseIcon size={18} />
         </button>
-        <div className="modal-body-col" style={{ gap: '16px' }}>
-          <div className="modal-header-row" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 className="reports-update-title" style={{ fontSize: '18px', margin: 0 }}>Rate Suggested Preventive Action</h3>
-            {report?.reference_no && <span style={{ color: 'var(--cyan-light, #22d3ee)', fontSize: '14px', fontWeight: 'bold' }}>{report.reference_no}</span>}
-          </div>
 
+        {/* ── HEADER ── */}
+        <div className="modal-header-row" style={{ flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h3 className="reports-update-title" style={{ fontSize: '18px', margin: 0 }}>Rate Suggested Preventive Action</h3>
+          {report?.reference_no && <span style={{ color: 'var(--cyan-light, #22d3ee)', fontSize: '14px', fontWeight: 'bold' }}>{report.reference_no}</span>}
+        </div>
+
+        {/* 📜 SCROLLABLE CANVAS BODY ── */}
+        <div 
+          style={{ 
+            flex: 1, 
+            overflowY: 'auto', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '16px',
+            paddingRight: '4px' 
+          }}
+        >
           {report && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(15, 23, 42, 0.3)', padding: '14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
               <div>
@@ -45,6 +70,30 @@ export default function PreventiveActionModal({
               {suggestedPreventiveAction || 'No preventive action suggested.'}
             </div>
           </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label className="label-field" style={{ margin: 0 }}>Official Preventive Action (Resolution Details):</label>
+              {suggestedPreventiveAction && (
+                <button
+                  type="button"
+                  onClick={() => onCustomResolutionChange(suggestedPreventiveAction)}
+                  className="btn-secondary-light"
+                  style={{ padding: '2px 8px', fontSize: '11px', height: 'auto', margin: 0 }}
+                >
+                  Use Suggestion
+                </button>
+              )}
+            </div>
+            <textarea
+              value={customResolution}
+              onChange={(e) => onCustomResolutionChange(e.target.value)}
+              className="input-field"
+              placeholder="Enter official preventive action details..."
+              style={{ width: '100%', height: '80px', padding: '10px', resize: 'none', boxSizing: 'border-box' }}
+            />
+          </div>
+
           <div className="preventive-panel">
             <span className="label-field label-field--small">Suggested Preventive Action Rating:</span>
             <div className="preventive-options">
@@ -63,17 +112,28 @@ export default function PreventiveActionModal({
               ))}
             </div>
           </div>
-          <div className="reports-preventive-submit-row" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-            <button
-              type="button"
-              onClick={onSubmit}
-              className="btn-gradient-primary"
-              style={{ padding: '8px 24px', height: 'auto', borderRadius: '6px' }}
-              disabled={isSubmitting || !preventiveRating}
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Rating'}
-            </button>
-          </div>
+        </div>
+
+        {/* ── FOOTER ACTIONS (Fixed at bottom) ── */}
+        <div 
+          style={{ 
+            flexShrink: 0, 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            paddingTop: '16px', 
+            borderTop: '1px solid rgba(255,255,255,0.08)', 
+            marginTop: '16px' 
+          }}
+        >
+          <button
+            type="button"
+            onClick={onSubmit}
+            className="btn-gradient-primary"
+            style={{ padding: '8px 24px', height: 'auto', borderRadius: '6px', margin: 0 }}
+            disabled={isSubmitting || !preventiveRating}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Rating'}
+          </button>
         </div>
       </div>
     </div>
