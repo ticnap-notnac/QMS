@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { createReport, reviewReportApproval, submitNcrMultipart, updateReport } from '@/services/ncrService'
+import { createReport, reviewReportApproval, submitNcrMultipart, updateReport, deleteReport } from '@/services/ncrService'
 import { createLocation } from '@/services/locationService'
 import { createProductType } from '@/services/productTypeService'
 import { createIssueType } from '@/services/issueTypeService'
@@ -179,6 +179,34 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
         String(report.assigned_to) === String(currentAuthId)
     },
     [canAssignReports, currentAuthId],
+  )
+
+  const canDeleteReport = useCallback(
+    (report) => {
+      if (!report) return false
+      if (canAssignReports) return true
+      return Number(report.reported_by) === Number(currentUserId)
+    },
+    [canAssignReports, currentUserId]
+  )
+
+  const handleDeleteReport = useCallback(
+    async (report) => {
+      if (!report) return
+      const confirmed = window.confirm(`Are you sure you want to delete report ${report.reference_no || 'this report'}?`)
+      if (!confirmed) return
+      try {
+        setError(null)
+        await deleteReport(report.id)
+        setToast({ message: `Report ${report.reference_no || ''} deleted successfully.`, type: 'success' })
+        await dataState.refreshReportsList(formState.reportFilters)
+      } catch (err) {
+        console.error('Error deleting report:', err)
+        setError('Failed to delete report: ' + (err.message || 'Unknown error'))
+        setToast({ message: 'Failed to delete report.', type: 'error' })
+      }
+    },
+    [dataState, formState.reportFilters]
   )
 
   const approvalQueueReports = useMemo(
@@ -514,6 +542,8 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
 
     canAssignReports,
     canUpdateReport,
+    canDeleteReport,
+    handleDeleteReport,
 
     handleFilterApply,
     handleFilterClear,

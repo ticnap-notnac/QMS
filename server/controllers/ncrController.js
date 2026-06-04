@@ -105,7 +105,7 @@ export async function assignReport(req, res) {
 export async function deleteReport(req, res) {
   const { id } = req.params
   try {
-    const deleted = await deleteNcrReport(id)
+    const deleted = await deleteNcrReport(id, getRequestActor(req))
     await writeAudit({
       level: 'audit',
       source: 'ncr_reports',

@@ -1,10 +1,10 @@
-import { User, SquarePen } from 'lucide-react'
+import { User, SquarePen, Trash2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { formatDate, getStatusStyle, getSeverityStyle, formatAssignedUser } from '@/utils/themeHelpers'
 import { getReportRating, rateReport } from '@/services/ncrService'
 import StarRating from '../UI/StarRating'
 
-function ReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, onUpdate, onAssign }) {
+function ReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, canDeleteReport, onUpdate, onAssign, onDelete }) {
   const reporterName = report.reporter_full_name || 'Name of the User'
   const reporterRole = report.reporter_role_name || 'Position'
   const reporterDepartment =
@@ -167,6 +167,28 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
             title="Update report"
           >
             <SquarePen size={16} />
+          </button>
+        )}
+        {canDeleteReport && canDeleteReport(report) && (
+          <button
+            type="button"
+            className="btn-delete-user"
+            onClick={() => onDelete(report)}
+            title="Delete report"
+            style={{
+              padding: '6px 12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              color: '#f87171',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Trash2 size={16} />
           </button>
         )}
       </div>

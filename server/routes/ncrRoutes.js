@@ -16,6 +16,6 @@ router.put('/ncr/:id/assign', requireRoles(['admin', 'auditor']), assignReport)
 router.put('/ncr/:id/approval', requireRoles(['admin', 'auditor']), reviewReportApproval)
 router.post('/ncr/:id/rate', rateReport)
 router.get('/ncr/:id/rating', getReportRating)
-router.delete('/ncr/:id', requireRoles(['admin', 'auditor']), deleteReport)
+router.delete('/ncr/:id', deleteReport)
 
 export default router

@@ -717,12 +717,49 @@ export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
 /**
  * Deletes an NCR report by id. Returns the deleted record for audit context.
  */
-export async function deleteNcrReport(id) {
+export async function deleteNcrReport(id, currentUserAuthId) {
+  if (!currentUserAuthId) {
+    throw Object.assign(new Error('Unauthorized. Missing user authentication context.'), { status: 401 })
+  }
+
+  // 1. Fetch caller profile
+  const { data: profile, error: profileErr } = await supabase
+    .from('users')
+    .select('id, role_id')
+    .eq('auth_id', currentUserAuthId)
+    .maybeSingle()
+
+  if (profileErr || !profile) {
+    throw Object.assign(new Error('Access forbidden. User profile not found.'), { status: 403 })
+  }
+
+  // 2. Fetch role name
+  let roleName = ''
+  if (profile.role_id) {
+    const { data: roleData } = await supabase
+      .from('roles')
+      .select('role_name')
+      .eq('id', profile.role_id)
+      .maybeSingle()
+    roleName = roleData?.role_name || ''
+  }
+  const normalizedRole = String(roleName).trim().toLowerCase()
+
+  // 3. Fetch target report
   const { data: existing, error: existingError } = await supabase
     .from('ncr_reports').select('*').eq('id', id).maybeSingle()
   if (existingError) throw existingError
   if (!existing) throw Object.assign(new Error('NCR report not found.'), { status: 404 })
 
+  // 4. Assert permissions
+  const isAuthorized = ['admin', 'auditor'].includes(normalizedRole) || 
+                       Number(existing.reported_by) === Number(profile.id)
+
+  if (!isAuthorized) {
+    throw Object.assign(new Error('Access forbidden. You do not have permission to delete this report.'), { status: 403 })
+  }
+
+  // 5. Delete
   const { error } = await supabase.from('ncr_reports').delete().eq('id', id)
   if (error) throw error
 

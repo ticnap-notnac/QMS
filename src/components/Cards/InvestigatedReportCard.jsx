@@ -12,7 +12,7 @@
  *   - Approve / Reject / Update action row (role-gated)
  */
 
-import { User, SquarePen } from 'lucide-react'
+import { User, SquarePen, Trash2 } from 'lucide-react'
 import { formatDate, getStatusStyle, getSeverityStyle, getApprovalState } from '@/utils/themeHelpers'
 
 /**
@@ -26,7 +26,7 @@ import { formatDate, getStatusStyle, getSeverityStyle, getApprovalState } from '
  *   onUpdate: (report: object) => void,
  * }} props
  */
-function InvestigatedReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, onApprove, onReject, onUpdate }) {
+function InvestigatedReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, canDeleteReport, onApprove, onReject, onUpdate, onDelete }) {
   const reporterName = report.reporter_full_name || 'Name of the User'
   const reporterRole = report.reporter_role_name || 'Position'
   const reporterDepartment =
@@ -171,6 +171,28 @@ function InvestigatedReportCard({ report, departmentNameById, canAssignReports, 
             title="Update report"
           >
             <SquarePen size={16} />
+          </button>
+        )}
+        {canDeleteReport && canDeleteReport(report) && (
+          <button
+            type="button"
+            className="btn-delete-user"
+            onClick={() => onDelete(report)}
+            title="Delete report"
+            style={{
+              padding: '6px 12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              color: '#f87171',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Trash2 size={16} />
           </button>
         )}
       </div>

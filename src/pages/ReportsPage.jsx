@@ -28,10 +28,12 @@ export default function ReportsPage({
     departmentNameById: logic.departmentNameById,
     canAssignReports: logic.canAssignReports,
     canUpdateReport: logic.canUpdateReport,
+    canDeleteReport: logic.canDeleteReport,
     onApprove: (r) => logic.handleReviewReport(r, 'approve'),
     onReject: logic.openRejectModal,
     onUpdate: logic.openUpdateModal,
-    onAssign: logic.openAssignModal
+    onAssign: logic.openAssignModal,
+    onDelete: logic.handleDeleteReport
   }
 
   return (

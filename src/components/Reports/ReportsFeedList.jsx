@@ -11,10 +11,12 @@ export default function ReportsFeedList({
   departmentNameById,
   canAssignReports,
   canUpdateReport,
+  canDeleteReport,
   onApprove,
   onReject,
   onUpdate,
-  onAssign
+  onAssign,
+  onDelete
 }) {
   if (isApprovalQueueMode) {
     return (
@@ -37,9 +39,11 @@ export default function ReportsFeedList({
               departmentNameById={departmentNameById}
               canAssignReports={canAssignReports}
               canUpdateReport={canUpdateReport}
+              canDeleteReport={canDeleteReport}
               onApprove={onApprove}
               onReject={onReject}
               onUpdate={onUpdate}
+              onDelete={onDelete}
             />
           ))}
         </div>
@@ -74,8 +78,10 @@ export default function ReportsFeedList({
             departmentNameById={departmentNameById}
             canAssignReports={canAssignReports}
             canUpdateReport={canUpdateReport}
+            canDeleteReport={canDeleteReport}
             onUpdate={onUpdate}
             onAssign={onAssign}
+            onDelete={onDelete}
           />
         ))}
       </>
@@ -101,8 +107,10 @@ export default function ReportsFeedList({
           departmentNameById={departmentNameById}
           canAssignReports={canAssignReports}
           canUpdateReport={canUpdateReport}
+          canDeleteReport={canDeleteReport}
           onUpdate={onUpdate}
           onAssign={onAssign}
+          onDelete={onDelete}
         />
       ))}
     </>
