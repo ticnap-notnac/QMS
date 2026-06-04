@@ -82,6 +82,12 @@ export async function insertSystemLog(payload) {
 export async function recordSystemLogRead(payload) {
   const normalised = normaliseCamelAuthId(payload)
 
+  // Translate frontend 'count' key to database 'result_count' column name
+  if (normalised.count !== undefined) {
+    normalised.result_count = normalised.count
+    delete normalised.count
+  }
+
   const { data, error } = await supabase
     .from('system_log_reads')
     .insert([normalised])
