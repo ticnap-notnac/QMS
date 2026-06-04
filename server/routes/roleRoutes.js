@@ -4,10 +4,8 @@ import { requireRoles } from '../middlewares/roleMiddleware.js'
 
 const router = Router()
 
-router.use(requireRoles(['admin']))
-
 router.get('/', getRoles)
-router.post('/', createRole)
-router.delete('/:id', deleteRole)
+router.post('/', requireRoles(['admin']), createRole)
+router.delete('/:id', requireRoles(['admin']), deleteRole)
 
 export default router

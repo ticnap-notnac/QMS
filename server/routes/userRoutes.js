@@ -4,12 +4,10 @@ import { requireRoles } from '../middlewares/roleMiddleware.js'
 
 const router = Router()
 
-router.use(requireRoles(['admin']))
-
 router.get('/', getUsers)
-router.post('/', createUser)
-router.put('/:id', updateUser)
-router.delete('/:id', deleteUser)
-router.patch('/:id/status', updateUserStatus)
+router.post('/', requireRoles(['admin']), createUser)
+router.put('/:id', requireRoles(['admin']), updateUser)
+router.delete('/:id', requireRoles(['admin']), deleteUser)
+router.patch('/:id/status', requireRoles(['admin']), updateUserStatus)
 
 export default router

@@ -4,10 +4,8 @@ import { requireRoles } from '../middlewares/roleMiddleware.js'
 
 const router = Router()
 
-router.use(requireRoles(['admin', 'auditor']))
-
-router.get('/', getLogs)
+router.get('/', requireRoles(['admin', 'auditor']), getLogs)
 router.post('/', insertLog)
-router.post('/reads', recordLogRead)
+router.post('/reads', requireRoles(['admin', 'auditor']), recordLogRead)
 
 export default router
