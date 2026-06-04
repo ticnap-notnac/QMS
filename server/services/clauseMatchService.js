@@ -1,15 +1,5 @@
-/**
- * server/services/clauseMatchService.js
- *
- * Given a CAR's description text and nonconformance flags, uses Gemini AI
- * (or a keyword-based fallback) to suggest the most relevant active ISO
- * standard clauses from the database.
- *
- * Returns an ordered array of:
- *   { clause_id, clause_number, title, confidence }
- */
-
 import { supabase } from '../lib/supabase.js'
+import { extractKeywords, jaccardSimilarity } from '../utils/cbr.js'
 
 const MAX_SUGGESTIONS = 5
 
@@ -32,7 +22,7 @@ async function fetchActiveClauses() {
 /**
  * Keyword-based fallback scorer.
  * Splits description into tokens and counts how many appear in each clause's
- * title + description. Returns top MAX_SUGGESTIONS results.
+ * title + description. Returns scored results.
  */
 function keywordFallback(description, flags, clauses) {
   const descTokens = (description || '')
@@ -66,115 +56,155 @@ function keywordFallback(description, flags, clauses) {
   return scored
     .filter(s => s.confidence > 0)
     .sort((a, b) => b.confidence - a.confidence)
-    .slice(0, MAX_SUGGESTIONS)
+}
+
+/**
+ * Computes CBR similarity score between the current CAR prompt details
+ * and a historical closed CAR.
+ */
+function computeCarCbrScore(current, past) {
+  // 1. Keyword Jaccard Similarity of non-conformance description (weight: 0.6)
+  const currentKw = extractKeywords(current.description)
+  const pastKw = extractKeywords(past.details_of_nonconformance || '')
+  const keywordScore = jaccardSimilarity(currentKw, pastKw)
+
+  // 2. Non-conformance Type Flags match (weight: 0.4)
+  const flagsToCheck = [
+    'quality_food_safety',
+    'environment_health_safety',
+    'security_issue',
+    'internal_audit',
+    'customer_complaint',
+    'government_agency_audit',
+    'customer_audit_nonconformance',
+    'vendor_nonconformance'
+  ]
+
+  let matchCount = 0
+  let totalChecked = 0
+
+  for (const flag of flagsToCheck) {
+    const currentVal = Boolean(current.flags?.[flag])
+    const pastVal = Boolean(past[flag])
+    if (currentVal || pastVal) {
+      totalChecked++
+      if (currentVal && pastVal) {
+        matchCount++
+      }
+    }
+  }
+
+  const flagScore = totalChecked > 0 ? (matchCount / totalChecked) : 0.0
+
+  return 0.6 * keywordScore + 0.4 * flagScore
 }
 
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
 /**
  * Suggests ISO clauses that best match a CAR's non-conformance description.
+ * Uses local Case-Based Reasoning (CBR) by scoring current details against
+ * historical CARs and their linked ISO clauses, falling back to direct keyword match.
  *
  * @param {string}  description  - The "details_of_nonconformance" text
  * @param {object}  flags        - Boolean flags from the CAR form
  * @returns {Array<{ clause_id, clause_number, title, confidence }>}
  */
 export async function suggestClausesForCar({ description, flags = {} }) {
-  const clauses = await fetchActiveClauses()
-
-  if (!clauses.length) return []
-
-  const apiKey = process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY
-
-  if (!apiKey) {
-    console.warn('[clauseMatchService] Neither OPENROUTER_API_KEY nor GEMINI_API_KEY is set — using keyword fallback.')
-    return keywordFallback(description, flags, clauses)
-  }
-
-  // Build clause reference list for the prompt (cap at 80 to keep prompt manageable)
-  const clauseList = clauses.slice(0, 80).map(c =>
-    `{ "id": ${c.id}, "clause_number": "${c.clause_number}", "title": "${c.title}"${c.description ? `, "description": "${c.description.slice(0, 120)}"` : ''} }`
-  ).join(',\n')
-
-  const flagSummary = Object.entries(flags)
-    .filter(([, v]) => v === true)
-    .map(([k]) => k.replace(/_/g, ' '))
-    .join(', ') || 'none'
-
-  const prompt = `You are a quality management expert. Given the following Corrective Action Report (CAR) details, identify the top ${MAX_SUGGESTIONS} most relevant ISO standard clauses from the provided clause list.
-
-CAR Details:
-- Non-conformance description: "${description}"
-- Non-conformance type flags: ${flagSummary}
-
-Available ISO Clauses (JSON array):
-[
-${clauseList}
-]
-
-Return ONLY a JSON array of the top ${MAX_SUGGESTIONS} matching clauses, ordered from most to least relevant, with a confidence score between 0.0 and 1.0. Use this exact format with no preamble or markdown:
-[{"clause_id": 5, "clause_number": "8.5.2", "title": "Corrective Action", "confidence": 0.95}, ...]`
-
-  const isOpenRouter = !!process.env.OPENROUTER_API_KEY
-
   try {
-    let response
-    if (isOpenRouter) {
-      const model = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash'
-      response = await fetch(
-        'https://openrouter.ai/api/v1/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-            'HTTP-Referer': 'https://github.com/ticnap-notnac/QMS', // Optional Site Name for OpenRouter
-            'X-Title': 'QMS Thesis System'
-          },
-          body: JSON.stringify({
-            model: model,
-            messages: [{ role: 'user', content: prompt }]
-          })
+    const clauses = await fetchActiveClauses()
+    if (!clauses.length) return []
+
+    const clausesMap = new Map(clauses.map(c => [c.id, c]))
+
+    // 1. Fetch historical closed CARs with their linked clauses
+    const { data: pastCars, error: pastCarsError } = await supabase
+      .from('car_reports')
+      .select(`
+        id,
+        details_of_nonconformance,
+        status,
+        quality_food_safety,
+        environment_health_safety,
+        security_issue,
+        internal_audit,
+        customer_complaint,
+        government_agency_audit,
+        customer_audit_nonconformance,
+        vendor_nonconformance,
+        car_clause_links (
+          clause_id
+        )
+      `)
+      .eq('status', 'closed')
+
+    if (pastCarsError) {
+      console.warn('[clauseMatchService] Failed to fetch past CARs for CBR matching:', pastCarsError.message)
+    }
+
+    const clauseScores = {} // Map of clause_id -> { clause_id, score, count }
+
+    // 2. Score historical CARs and accumulate clause recommendations
+    if (pastCars && pastCars.length > 0) {
+      for (const past of pastCars) {
+        const similarity = computeCarCbrScore({ description, flags }, past)
+        if (similarity < 0.15) continue // Threshold to ignore irrelevant matches
+
+        const links = past.car_clause_links || []
+        for (const link of links) {
+          const cid = link.clause_id
+          if (!clauseScores[cid]) {
+            clauseScores[cid] = { clause_id: cid, score: 0, count: 0 }
+          }
+          // Aggregate score based on similarity
+          clauseScores[cid].score += similarity
+          clauseScores[cid].count += 1
         }
-      )
-    } else {
-      // Direct Gemini API fallback if they still only have GEMINI_API_KEY
-      response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: 'application/json' }
-          })
+      }
+    }
+
+    // Rank clauses from CBR matching
+    const cbrSuggestions = Object.values(clauseScores)
+      .map(item => {
+        const c = clausesMap.get(item.clause_id)
+        if (!c) return null
+        const averageSim = item.score / item.count
+        return {
+          clause_id: c.id,
+          clause_number: c.clause_number,
+          title: c.title,
+          confidence: Math.min(1.0, averageSim)
         }
-      )
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.confidence - a.confidence)
+
+    // 3. Fallback / Fill up with keyword direct-clause matching if necessary
+    const results = [...cbrSuggestions]
+
+    if (results.length < MAX_SUGGESTIONS) {
+      const keywordResults = keywordFallback(description, flags, clauses)
+      
+      // Add keyword fallback suggestions that are not already in CBR results
+      const existingIds = new Set(results.map(r => r.clause_id))
+      for (const kwRes of keywordResults) {
+        if (!existingIds.has(kwRes.clause_id)) {
+          results.push(kwRes)
+          if (results.length >= MAX_SUGGESTIONS) break
+        }
+      }
     }
 
-    if (!response.ok) {
-      throw new Error(`AI API error: ${response.status} ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    let text = '[]'
-
-    if (isOpenRouter) {
-      text = data.choices?.[0]?.message?.content || '[]'
-    } else {
-      text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
-    }
-
-    const clean = text.replace(/```json|```/g, '').trim()
-    const parsed = JSON.parse(clean)
-
-    // Validate each result references an actual clause id we provided
-    const validIds = new Set(clauses.map(c => c.id))
-    return parsed
-      .filter(s => validIds.has(s.clause_id) && typeof s.confidence === 'number')
-      .slice(0, MAX_SUGGESTIONS)
+    return results.slice(0, MAX_SUGGESTIONS)
 
   } catch (err) {
-    console.error('[clauseMatchService] AI call failed, using keyword fallback:', err.message)
-    return keywordFallback(description, flags, clauses)
+    console.error('[clauseMatchService] CBR suggestion failed, using basic keyword fallback:', err.message)
+    try {
+      const clauses = await fetchActiveClauses()
+      return keywordFallback(description, flags, clauses).slice(0, MAX_SUGGESTIONS)
+    } catch (fallbackErr) {
+      console.error('[clauseMatchService] Complete fallback failed:', fallbackErr.message)
+      return []
+    }
   }
 }
