@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { FileSignature } from 'lucide-react'
+import SearchableDropdown from '@/components/Forms/SearchableDropdown'
 
 export default function AssignReportModal({ 
   isOpen, onClose, report, onSuccess,
@@ -8,6 +9,19 @@ export default function AssignReportModal({
   isSubmitting, error, handleAssign
 }) {
   const reportLabel = useMemo(() => report?.reference_no || 'NCR Report', [report])
+  const [searchValue, setSearchValue] = useState('')
+
+  // Sync input value with the label of the selected employee
+  useEffect(() => {
+    if (!selectedUserId) {
+      setSearchValue('')
+      return
+    }
+    const found = userOptions.find(opt => String(opt.id) === String(selectedUserId))
+    if (found) {
+      setSearchValue(found.label)
+    }
+  }, [selectedUserId, userOptions, isOpen])
 
   if (!isOpen) return null
 
@@ -35,20 +49,17 @@ export default function AssignReportModal({
 
         <div className="modal-form reports-form-compact">
           <div>
-            <label className="label-field">Assign to employee</label>
-            <select
-              className="select-field"
-              value={selectedUserId}
-              onChange={(event) => setSelectedUserId(event.target.value)}
-              disabled={loadingUsers || isSubmitting}
-            >
-              <option value="">Select employee</option>
-              {userOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <SearchableDropdown
+              label="Assign to employee"
+              value={searchValue}
+              onValueChange={setSearchValue}
+              options={userOptions}
+              loading={loadingUsers}
+              placeholder="Search employee..."
+              onSelectOption={(option) => {
+                setSelectedUserId(option.id)
+              }}
+            />
           </div>
 
           <div className="reports-update-submit-row">
