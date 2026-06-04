@@ -18,7 +18,8 @@ import { useSuggestionLogic } from './useReports/useSuggestionLogic'
 import { fetchExistingAiSuggestion } from '@/services/suggestionService'
 import { dismissVerificationNotification } from '@/services/notificationService'
 import { updateReportInvestigationMultipart } from '@/services/ncrService'
-import { submitCarReport } from '@/services/carService'
+import { submitCarReport, suggestClausesForCar } from '@/services/carService'
+import { supabase } from '@/utils/supabase'
 import { submitQddrReport } from '@/services/qddrService'
 import {
   formatDate,
@@ -80,6 +81,59 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
 
   const carFormState = useCARForm()
   const qddrFormState = useQDDRForm()
+
+  // ISO Clauses options & auto-suggest states
+  const [clauses, setClauses] = useState([])
+  const [clausesLoading, setClausesLoading] = useState(false)
+  const [suggestingClause, setSuggestingClause] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    const fetchClauses = async () => {
+      setClausesLoading(true)
+      try {
+        const { data } = await supabase
+          .from('iso_clauses')
+          .select('id, clause_number, title')
+          .eq('is_active', true)
+          .order('clause_number')
+        if (active) {
+          setClauses((data || []).map(c => ({ id: c.id, label: `Clause ${c.clause_number} — ${c.title}` })))
+        }
+      } catch (err) {
+        console.error('Failed to load clauses for dropdown:', err)
+      } finally {
+        if (active) setClausesLoading(false)
+      }
+    }
+    fetchClauses()
+    return () => { active = false }
+  }, [])
+
+  const handleSuggestClause = async () => {
+    const desc = formState.createFormState.description
+    const cat = formState.createFormState.issueType
+    if (!desc || desc.trim().length < 15 || !currentAuthId) return
+    setSuggestingClause(true)
+    try {
+      const flags = {
+        quality_food_safety: cat?.toLowerCase().includes('quality') || false,
+        environment_health_safety: cat?.toLowerCase().includes('environment') || false,
+        security_issue: cat?.toLowerCase().includes('security') || false,
+        internal_audit: cat?.toLowerCase().includes('audit') || false,
+        customer_complaint: cat?.toLowerCase().includes('complaint') || false,
+        vendor_nonconformance: cat?.toLowerCase().includes('vendor') || false,
+      }
+      const suggestions = await suggestClausesForCar({ description: desc, flags }, currentAuthId)
+      if (suggestions && suggestions.length > 0) {
+        formState.createFormState.setClauseId(suggestions[0].clause_id)
+      }
+    } catch (err) {
+      console.warn('AI clause suggestion failed:', err)
+    } finally {
+      setSuggestingClause(false)
+    }
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -300,6 +354,9 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
         fd.append('issue_type_id', resolvedIssueType.id)
         fd.append('car_filed', 'false')
         fd.append('qddr_filed', 'false')
+        if (formState.createFormState.clauseId) {
+          fd.append('clause_id', formState.createFormState.clauseId)
+        }
         fd.append('evidence', formState.evidenceState.evidenceFileMain)
         await submitNcrMultipart(fd, currentAuthId)
       } else {
@@ -315,6 +372,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
           car_filed: false,
           qddr_filed: false,
           evidence_url: null,
+          clause_id: formState.createFormState.clauseId || null,
         })
       }
 
@@ -409,7 +467,8 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       setToast({ message: 'Report submitted successfully', type: 'success' })
       modalsState.closeCreateModal()
       await dataState.refreshReportsList()
-    }
+    },
+    authUserId: currentAuthId
   })
 
   // ─── Returned API ──────────────────────────────────────────────────────────
@@ -523,6 +582,10 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       setEvidencePreview: formState.evidenceState.setEvidencePreviewMain,
       evidenceError: formState.evidenceState.evidenceErrorMain,
       setEvidenceError: formState.evidenceState.setEvidenceErrorMain,
+      clauses,
+      clausesLoading,
+      suggestingClause,
+      handleSuggestClause,
     },
     rejectModalProps: {
       isOpen: modalsState.isRejectModalOpen,

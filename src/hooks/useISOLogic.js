@@ -130,7 +130,73 @@ export default function useISOLogic({ userName }) {
         .eq('status', 'non_compliant')
       
       if (findingsError) throw findingsError
-      setNonCompliantFindings(findingsData || [])
+
+      // Fetch active NCRs that are linked to ISO clauses
+      const { data: ncrData, error: ncrError } = await supabase
+        .from('ncr_reports')
+        .select(`
+          id,
+          reference_no,
+          severity,
+          clause_id,
+          description,
+          iso_clauses (
+            clause_number,
+            title
+          )
+        `)
+        .not('status', 'ilike', 'closed')
+        .not('clause_id', 'is', null)
+
+      if (ncrError) throw ncrError
+
+      // Group active NCRs by clause_id in memory
+      const ncrGroups = {}
+      if (ncrData) {
+        ncrData.forEach(ncr => {
+          const cid = ncr.clause_id
+          if (!ncrGroups[cid]) {
+            ncrGroups[cid] = {
+              clause: ncr.iso_clauses,
+              ncrs: []
+            }
+          }
+          ncrGroups[cid].ncrs.push(ncr)
+        })
+      }
+
+      // Check thresholds: Low >= 3, Medium >= 2, High/Critical >= 1
+      const escalatedFindings = []
+      Object.entries(ncrGroups).forEach(([clauseId, group]) => {
+        const lowNcrs = group.ncrs.filter(n => String(n.severity || '').trim().toLowerCase() === 'low')
+        const medNcrs = group.ncrs.filter(n => String(n.severity || '').trim().toLowerCase() === 'medium')
+        const highNcrs = group.ncrs.filter(n => ['high', 'critical'].includes(String(n.severity || '').trim().toLowerCase()))
+
+        const lowCount = lowNcrs.length
+        const medCount = medNcrs.length
+        const highCount = highNcrs.length
+
+        if (lowCount >= 3 || medCount >= 2 || highCount >= 1) {
+          const details = []
+          if (highCount > 0) details.push(`${highCount} High/Critical`)
+          if (medCount > 0) details.push(`${medCount} Medium`)
+          if (lowCount > 0) details.push(`${lowCount} Low`)
+
+          const matchedNcrs = [...highNcrs, ...medNcrs, ...lowNcrs]
+
+          escalatedFindings.push({
+            id: `ncr-gap-${clauseId}`,
+            isNcrGap: true,
+            clause_id: clauseId,
+            iso_clauses: group.clause,
+            evidence: `Escalated NCR Trend: ${matchedNcrs.length} active NCRs (${details.join(', ')}) violating this clause. Affected: ${matchedNcrs.map(n => n.reference_no).join(', ')}`,
+            ncr_ids: matchedNcrs.map(n => n.id),
+            ncr_references: matchedNcrs.map(n => n.reference_no)
+          })
+        }
+      })
+
+      setNonCompliantFindings([...(findingsData || []), ...escalatedFindings])
 
     } catch (err) {
       console.error('Error fetching compliance data:', err)
@@ -161,6 +227,15 @@ export default function useISOLogic({ userName }) {
 
   const handleOpenCarModal = (finding) => {
     setActiveFinding(finding)
+
+    let details = `Audit finding: Deficiency in Clause ${finding.iso_clauses?.clause_number || ''} (${finding.iso_clauses?.title || ''}). Evidence: ${finding.evidence || 'None provided.'}`
+    let ncrIds = []
+
+    if (finding.isNcrGap) {
+      details = `Escalated NCR Trend: Deficiency in Clause ${finding.iso_clauses?.clause_number || ''} (${finding.iso_clauses?.title || ''}). Active NCRs: ${finding.ncr_references.join(', ')}. Details: ${finding.evidence}`
+      ncrIds = finding.ncr_ids || []
+    }
+
     setCarForm({
       requesting_department: '',
       responsible_department: '',
@@ -183,9 +258,9 @@ export default function useISOLogic({ userName }) {
       model_type: '',
       control_no: '',
       affected_quantity: '',
-      details_of_nonconformance: `Audit finding: Deficiency in Clause ${finding.iso_clauses?.clause_number || ''} (${finding.iso_clauses?.title || ''}). Evidence: ${finding.evidence || 'None provided.'}`,
+      details_of_nonconformance: details,
       request_date: new Date().toISOString().split('T')[0],
-      ncr_ids: []
+      ncr_ids: ncrIds.map(String)
     })
     setCarError('')
     setIsCarModalOpen(true)
@@ -218,6 +293,10 @@ export default function useISOLogic({ userName }) {
       // Resolve the audit schedule ID from the active finding
       const auditScheduleId = activeFinding?.audit_runs?.schedule_id || null
 
+      const ncrArray = carForm.ncr_ids && carForm.ncr_ids.length > 0
+        ? carForm.ncr_ids.map(id => parseInt(id, 10))
+        : (activeFinding?.isNcrGap ? activeFinding.ncr_ids.map(id => parseInt(id, 10)) : null)
+
       const { data: insData, error: insError } = await supabase
         .from('car_reports')
         .insert({
@@ -246,6 +325,7 @@ export default function useISOLogic({ userName }) {
           details_of_nonconformance: carForm.details_of_nonconformance,
           request_date: carForm.request_date || null,
           audit_schedule_id: auditScheduleId,
+          ncr_id: ncrArray,
           status: 'open'
         })
         .select('id')

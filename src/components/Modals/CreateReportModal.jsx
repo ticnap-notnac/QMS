@@ -49,6 +49,10 @@ function CreateReportModal({
   setEvidencePreview,
   evidenceError,
   setEvidenceError,
+  clauses,
+  clausesLoading,
+  suggestingClause,
+  handleSuggestClause,
 }) {
   if (!isOpen) return null
 
@@ -63,6 +67,7 @@ function CreateReportModal({
     description, setDescription,
     issueType, setIssueType,
     setIssueTypeId,
+    clauseId, setClauseId,
   } = createFormState
 
   const handleFileChange = (e) => {
@@ -268,6 +273,42 @@ function CreateReportModal({
                   onSelectOption={(opt) => { setIssueType(opt.label); setIssueTypeId(String(opt.id)) }}
                 />
               </div>
+            </div>
+
+            {/* 📐 WIREFRAME ROW 3b: ISO Clause and Auto-Suggest */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '14px', alignItems: 'end' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <SearchableDropdown
+                  label="Associated ISO Clause (Optional):"
+                  value={clauses.find(c => String(c.id) === String(clauseId))?.label || ''}
+                  onValueChange={(val) => {
+                    if (!val) setClauseId('')
+                  }}
+                  options={clauses}
+                  loading={clausesLoading}
+                  placeholder="Search ISO Clause..."
+                  onSelectOption={(opt) => {
+                    setClauseId(String(opt.id))
+                  }}
+                />
+              </div>
+              <button
+                type="button"
+                className="btn-secondary-light"
+                onClick={handleSuggestClause}
+                disabled={suggestingClause || !description}
+                style={{
+                  height: '38px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '13px',
+                  whiteSpace: 'nowrap',
+                  margin: 0
+                }}
+              >
+                {suggestingClause ? 'Suggesting...' : '✨ Auto-Suggest Clause'}
+              </button>
             </div>
 
             {/* 📝 WIREFRAME ROW 4: Full-Width Description Entry Block */}

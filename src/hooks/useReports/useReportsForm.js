@@ -27,6 +27,7 @@ export function useReportsForm() {
   const [issueType, setIssueType] = useState(DEFAULT_CREATE_FORM.issueType)
   const [issueTypeId, setIssueTypeId] = useState('')
   const [preventiveRating, setPreventiveRating] = useState(DEFAULT_CREATE_FORM.preventiveRating)
+  const [clauseId, setClauseId] = useState('')
 
   // ── Filters ─────────────────────────────────────────────────────────────────
   const [reportFilters, setReportFilters] = useState({ departmentId: '', status: '', severities: [], date: '' })
@@ -48,6 +49,7 @@ export function useReportsForm() {
     setDescription(DEFAULT_CREATE_FORM.description)
     setIssueType(DEFAULT_CREATE_FORM.issueType)
     setIssueTypeId('')
+    setClauseId('')
   }
 
   const clearEvidenceState = () => {
@@ -74,6 +76,7 @@ export function useReportsForm() {
       issueType, setIssueType,
       issueTypeId, setIssueTypeId,
       preventiveRating, setPreventiveRating,
+      clauseId, setClauseId,
     },
     resetCreateForm,
     evidenceState: {

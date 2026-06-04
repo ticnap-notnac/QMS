@@ -363,6 +363,7 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     issue_type,
     evidence_url = null,
     occurrence_date = getLocalDateString(),
+    clause_id = null,
   } = body
 
   const { data: reporter, error: reporterError } = await supabase
@@ -425,6 +426,7 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     department_id: normalizeId(department_id),
     description,
     evidence_url,
+    clause_id: clause_id ? String(clause_id).trim() : null,
   }
 
   const { data, error } = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()
@@ -448,6 +450,7 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
     description,
     issue_type,
     occurrence_date = getLocalDateString(),
+    clause_id = null,
   } = body
 
   const { data: reporter, error: reporterError } = await supabase
@@ -540,6 +543,7 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
     department_id: normalizeId(department_id),
     description,
     evidence_url: evidenceUrl,
+    clause_id: clause_id ? String(clause_id).trim() : null,
   }
 
   const { data, error } = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()
@@ -564,7 +568,7 @@ export async function updateNcrReport({ id, body }) {
   const {
     product_type, product_type_id, batch_number, complaint_location, location_id,
     severity, department_id, description, car_filed, qddr_filed, evidence_url, status,
-    issue_type, issue_type_id, preventive_rating, resolution_details,
+    issue_type, issue_type_id, preventive_rating, resolution_details, clause_id,
   } = body
 
   let resolvedLocation = null
@@ -605,6 +609,7 @@ export async function updateNcrReport({ id, body }) {
   if (status !== undefined) updates.status = status
   if (preventive_rating !== undefined) updates.preventive_rating = normalizeText(preventive_rating) || null
   if (resolution_details !== undefined) updates.resolution_details = normalizeText(resolution_details) || null
+  if (clause_id !== undefined) updates.clause_id = clause_id ? String(clause_id).trim() : null
 
   const { data, error } = await supabase
     .from('ncr_reports').update(updates).eq('id', id).select('*').maybeSingle()
