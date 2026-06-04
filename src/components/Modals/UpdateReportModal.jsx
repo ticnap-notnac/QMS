@@ -236,42 +236,18 @@ export default function UpdateReportModal({
             {errors.resolutionDetails ? <div className="user-info-error">{errors.resolutionDetails}</div> : null}
           </div>
 
-          <div className="modal-grid-2">
-            <div>
-              <label className="label-field">Resolution Time</label>
-              <div className="resolution-time-row">
-                <input
-                  type="number"
-                  min="1"
-                  value={form.resolutionTimeValue}
-                  onChange={(event) => setField('resolutionTimeValue', event.target.value)}
-                  className="input-field"
-                  placeholder="24"
-                />
-                <select
-                  value={form.resolutionTimeUnit}
-                  onChange={(event) => setField('resolutionTimeUnit', event.target.value)}
-                  className="select-field"
-                >
-                  <option value="hours">Hours</option>
-                  <option value="days">Days</option>
-                </select>
-              </div>
-              {errors.resolutionTime ? <div className="user-info-error">{errors.resolutionTime}</div> : null}
+          <div>
+            <label className="label-field">Verification Date</label>
+            <div className="relative">
+              <input
+                type="date"
+                value={form.verificationDate}
+                onChange={(event) => setField('verificationDate', event.target.value)}
+                className="input-field"
+              />
+              <Calendar size={14} className="icon-abs" />
             </div>
-            <div>
-              <label className="label-field">Verification Date</label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={form.verificationDate}
-                  onChange={(event) => setField('verificationDate', event.target.value)}
-                  className="input-field"
-                />
-                <Calendar size={14} className="icon-abs" />
-              </div>
-              {errors.verificationDate ? <div className="user-info-error">{errors.verificationDate}</div> : null}
-            </div>
+            {errors.verificationDate ? <div className="user-info-error">{errors.verificationDate}</div> : null}
           </div>
 
           <div>

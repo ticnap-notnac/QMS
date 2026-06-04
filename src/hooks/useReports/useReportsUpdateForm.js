@@ -4,23 +4,10 @@ const DEFAULT_FORM = {
   investigationDetails: '',
   correctiveAction: '',
   resolutionDetails: '',
-  resolutionTimeValue: '24',
-  resolutionTimeUnit: 'hours',
   verificationDate: '',
   issueType: '',
   file: null,
   previewUrl: null,
-}
-
-export function parseResolutionTime(value) {
-  const text = String(value || '').trim().toLowerCase()
-  if (!text) return { resolutionTimeValue: '24', resolutionTimeUnit: 'hours' }
-  const match = text.match(/^(\d+(?:\.\d+)?)\s*(hour|hours|day|days)$/i)
-  if (!match) return { resolutionTimeValue: '24', resolutionTimeUnit: 'hours' }
-  return {
-    resolutionTimeValue: match[1],
-    resolutionTimeUnit: match[2].toLowerCase().startsWith('day') ? 'days' : 'hours',
-  }
 }
 
 export function useReportsUpdateForm({ report }) {
@@ -65,13 +52,10 @@ export function useReportsUpdateForm({ report }) {
       setError(null)
       return
     }
-    const parsedResolution = parseResolutionTime(report.resolution_time)
     setForm({
       investigationDetails: report.investigation_details || '',
       correctiveAction: report.corrective_action || '',
       resolutionDetails: report.resolution_details || '',
-      resolutionTimeValue: parsedResolution.resolutionTimeValue,
-      resolutionTimeUnit: parsedResolution.resolutionTimeUnit,
       verificationDate: report.verification_date || '',
       issueType: report.issue_type || '',
       file: null,
@@ -92,7 +76,6 @@ export function useReportsUpdateForm({ report }) {
     const nextErrors = {}
     if (!form.investigationDetails.trim()) nextErrors.investigationDetails = 'Investigation details are required.'
     if (!form.resolutionDetails.trim()) nextErrors.resolutionDetails = 'Resolution details are required.'
-    if (!form.resolutionTimeValue || Number(form.resolutionTimeValue) <= 0) nextErrors.resolutionTime = 'Resolution time must be greater than zero.'
     if (!form.verificationDate) nextErrors.verificationDate = 'Verification date is required.'
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0

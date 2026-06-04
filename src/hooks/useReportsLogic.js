@@ -257,8 +257,6 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       payload.append('investigation_details', updateFormState.form.investigationDetails)
       payload.append('corrective_action', updateFormState.form.correctiveAction)
       payload.append('resolution_details', updateFormState.form.resolutionDetails)
-      payload.append('resolution_time_value', updateFormState.form.resolutionTimeValue)
-      payload.append('resolution_time_unit', updateFormState.form.resolutionTimeUnit)
       payload.append('verification_date', updateFormState.form.verificationDate)
       if (updateFormState.form.issueType) {
         payload.append('issue_type', updateFormState.form.issueType)

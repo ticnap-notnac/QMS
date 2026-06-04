@@ -624,8 +624,7 @@ export async function updateNcrReport({ id, body }) {
 export async function updateNcrInvestigation({ id, body, file }) {
   const {
     investigation_details, resolution_details, corrective_action,
-    resolution_time_value, resolution_time_unit, verification_date,
-    issue_type, preventive_rating,
+    verification_date, issue_type, preventive_rating,
   } = body
 
   const { data: existing, error: existingError } = await supabase
@@ -660,7 +659,6 @@ export async function updateNcrInvestigation({ id, body, file }) {
     investigation_details: normalizeText(investigation_details) || null,
     corrective_action: normalizeText(corrective_action) || null,
     resolution_details: normalizeText(resolution_details) || null,
-    resolution_time: parseResolutionTime(resolution_time_value, resolution_time_unit),
     verification_date: normalizeVerificationDate(verification_date),
     investigation_evidence_url: investigationEvidenceUrl,
     preventive_rating: normalizeText(preventive_rating) || null,
@@ -685,27 +683,51 @@ export async function updateNcrInvestigation({ id, body, file }) {
 export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
   const { data: report, error: reportError } = await supabase
     .from('ncr_reports')
-    .select('id, reference_no, reported_by, status')
+    .select('id, reference_no, reported_by, status, created_at')
     .eq('id', id)
     .maybeSingle()
   if (reportError) throw reportError
   if (!report) throw Object.assign(new Error('NCR report not found.'), { status: 404 })
 
   const nextStatus = decision === 'approve' ? 'CLOSED' : 'OPEN'
-  const rejectionResetFields = decision === 'reject'
-    ? {
-        investigation_details: null,
-        corrective_action: null,
-        resolution_details: null,
-        resolution_time: null,
-        verification_date: null,
-        investigation_evidence_url: null,
-      }
-    : {}
+  
+  let approvalUpdates = {}
+  if (decision === 'approve') {
+    const createdDate = new Date(report.created_at)
+    const closedDate = new Date()
+    const diffMs = closedDate - createdDate
+    const diffHours = Math.max(1, Math.round(diffMs / (1000 * 60 * 60)))
+    
+    let resolutionTimeStr = `${diffHours} hours`
+    if (diffHours >= 24) {
+      const diffDays = Math.round(diffHours / 24)
+      resolutionTimeStr = `${diffDays} days`
+    }
+    
+    approvalUpdates = {
+      status: nextStatus,
+      resolution_time: resolutionTimeStr,
+      updated_at: closedDate.toISOString()
+    }
+  } else {
+    const rejectionResetFields = {
+      investigation_details: null,
+      corrective_action: null,
+      resolution_details: null,
+      resolution_time: null,
+      verification_date: null,
+      investigation_evidence_url: null,
+    }
+    approvalUpdates = {
+      status: nextStatus,
+      ...rejectionResetFields,
+      updated_at: new Date().toISOString()
+    }
+  }
 
   const { data: updatedReport, error: updateError } = await supabase
     .from('ncr_reports')
-    .update({ status: nextStatus, ...rejectionResetFields, updated_at: new Date().toISOString() })
+    .update(approvalUpdates)
     .eq('id', id)
     .select('*')
     .maybeSingle()
