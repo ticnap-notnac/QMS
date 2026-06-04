@@ -1,4 +1,5 @@
-import { Folder, FileText, Search, ArrowLeft, AlertCircle } from 'lucide-react'
+import React, { useState } from 'react'
+import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react'
 import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
 
@@ -284,6 +285,8 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
 // ---------------------------------------------------------------------------
 
 function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
+  const [collapsedGroups, setCollapsedGroups] = useState({})
+
   if (loadingCar) return <div>Loading CAR reports...</div>
 
   if (!carReports.length) {
@@ -295,70 +298,132 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
     )
   }
 
-  return (
-    <div className="glass-card-dcc">
-      <div className="dcc-scrollable-table-box">
-        <table className="iso-table" style={{ width: '100%' }}>
-          <thead>
-            <tr>
-              <th>Ref No.</th>
-              <th>Requestor</th>
-              <th>Recipient</th>
-              <th>Requesting Dept</th>
-              <th>Responsible Dept</th>
-              <th>Product / Material</th>
-              <th>Model / Type</th>
-              <th>Control No.</th>
-              <th>Affected Qty</th>
-              <th>Nonconformance Details</th>
-              <th>Request Date</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {carReports.map((car) => {
-              const statusClean = String(car.status || '').trim().toLowerCase()
+  // Group CARs by Audit Scheduled Title/Date or "General / Ad-hoc CARs"
+  const grouped = carReports.reduce((acc, car) => {
+    let groupKey = 'General / Ad-hoc CARs'
+    if (car.audit_schedules) {
+      const { title, scheduled_date } = car.audit_schedules
+      const dateStr = scheduled_date ? new Date(scheduled_date).toLocaleDateString() : 'No Date'
+      groupKey = `${title} (Scheduled: ${dateStr})`
+    }
+    if (!acc[groupKey]) acc[groupKey] = []
+    acc[groupKey].push(car)
+    return acc
+  }, {})
 
-              return (
-                <tr
-                  key={car.id}
-                  onClick={() => onSelectCar && onSelectCar(car)}
-                  style={{ cursor: 'pointer' }}
-                  title="Click to view details and CAPA/VoE actions"
-                >
-                  <td style={{ fontWeight: 600 }}>{car.reference_no ?? '—'}</td>
-                  <td>{car.requestor ?? '—'}</td>
-                  <td>{car.recipient ?? '—'}</td>
-                  <td>{car.requesting_department ?? '—'}</td>
-                  <td>{car.responsible_department ?? '—'}</td>
-                  <td>{car.product_material_name ?? '—'}</td>
-                  <td>{car.model_type ?? '—'}</td>
-                  <td>{car.control_no ?? '—'}</td>
-                  <td>{car.affected_quantity ?? '—'}</td>
-                  <td>
-                    <div className="clause-description" title={car.details_of_nonconformance}>
-                      {car.details_of_nonconformance ?? <span className="muted">No details</span>}
-                    </div>
-                  </td>
-                  <td>
-                    {car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}
-                  </td>
-                  <td>
-                    <span className={`iso-status-pill ${
-                      statusClean === 'closed' ? 'is-closed' : statusClean === 'under_verification' ? 'is-active' : 'is-inactive'
-                    }`}>
-                      {statusClean === 'under_verification' ? 'Under Verification' : statusClean === 'closed' ? 'Closed' : 'Open'}
-                    </span>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+  const toggleGroup = (groupKey) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [groupKey]: !prev[groupKey]
+    }))
+  }
+
+  return (
+    <div className="flex-column" style={{ gap: '20px' }}>
+      {Object.entries(grouped).map(([groupKey, cars]) => {
+        const isCollapsed = collapsedGroups[groupKey]
+        return (
+          <div key={groupKey} className="glass-card-dcc" style={{ padding: '0px', overflow: 'hidden' }}>
+            {/* Group Header */}
+            <div
+              onClick={() => toggleGroup(groupKey)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '14px 20px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderBottom: isCollapsed ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+                cursor: 'pointer',
+                userSelect: 'none',
+                fontWeight: 600,
+                fontSize: '14px',
+                color: '#e2e8f0'
+              }}
+            >
+              {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+              <span>{groupKey}</span>
+              <span
+                style={{
+                  marginLeft: 'auto',
+                  fontSize: '11px',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  color: '#94a3b8'
+                }}
+              >
+                {cars.length} {cars.length === 1 ? 'CAR' : 'CARs'}
+              </span>
+            </div>
+
+            {/* Group Content */}
+            {!isCollapsed && (
+              <div className="dcc-scrollable-table-box">
+                <table className="iso-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr>
+                      <th>Ref No.</th>
+                      <th>Requestor</th>
+                      <th>Recipient</th>
+                      <th>Requesting Dept</th>
+                      <th>Responsible Dept</th>
+                      <th>Product / Material</th>
+                      <th>Model / Type</th>
+                      <th>Control No.</th>
+                      <th>Affected Qty</th>
+                      <th>Nonconformance Details</th>
+                      <th>Request Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cars.map((car) => {
+                      const statusClean = String(car.status || '').trim().toLowerCase()
+
+                      return (
+                        <tr
+                          key={car.id}
+                          onClick={() => onSelectCar && onSelectCar(car)}
+                          style={{ cursor: 'pointer' }}
+                          title="Click to view details and CAPA/VoE actions"
+                        >
+                          <td style={{ fontWeight: 600 }}>{car.reference_no ?? '—'}</td>
+                          <td>{car.requestor ?? '—'}</td>
+                          <td>{car.recipient ?? '—'}</td>
+                          <td>{car.requesting_department ?? '—'}</td>
+                          <td>{car.responsible_department ?? '—'}</td>
+                          <td>{car.product_material_name ?? '—'}</td>
+                          <td>{car.model_type ?? '—'}</td>
+                          <td>{car.control_no ?? '—'}</td>
+                          <td>{car.affected_quantity ?? '—'}</td>
+                          <td>
+                            <div className="clause-description" title={car.details_of_nonconformance}>
+                              {car.details_of_nonconformance ?? <span className="muted">No details</span>}
+                            </div>
+                          </td>
+                          <td>
+                            {car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}
+                          </td>
+                          <td>
+                            <span className={`iso-status-pill ${
+                              statusClean === 'closed' ? 'is-closed' : statusClean === 'under_verification' ? 'is-active' : 'is-inactive'
+                            }`}>
+                              {statusClean === 'under_verification' ? 'Under Verification' : statusClean === 'closed' ? 'Closed' : 'Open'}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
-
 }
 
 // ---------------------------------------------------------------------------

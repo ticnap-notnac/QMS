@@ -35,7 +35,8 @@ export async function createCarReport({ body, reportedByAuthId }) {
     details_of_nonconformance,
     request_date,
     ncr_ids,
-    clause_ids   // array of iso_clauses.id values to link to this CAR
+    clause_ids,   // array of iso_clauses.id values to link to this CAR
+    audit_schedule_id
   } = body || {}
 
   const { data: latest, error: latestError } = await supabase
@@ -80,6 +81,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
     details_of_nonconformance,
     request_date: request_date ? request_date : null,
     ncr_id: Array.isArray(ncr_ids) && ncr_ids.length > 0 ? ncr_ids.map(id => parseInt(id, 10)) : null,
+    audit_schedule_id: audit_schedule_id || null,
     status: 'open'
   }
 

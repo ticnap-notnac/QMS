@@ -83,10 +83,10 @@ export async function suggestClausesForCar({ description, flags = {} }) {
 
   if (!clauses.length) return []
 
-  const apiKey = process.env.GEMINI_API_KEY
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY
 
   if (!apiKey) {
-    console.warn('[clauseMatchService] GEMINI_API_KEY not set — using keyword fallback.')
+    console.warn('[clauseMatchService] Neither OPENROUTER_API_KEY nor GEMINI_API_KEY is set — using keyword fallback.')
     return keywordFallback(description, flags, clauses)
   }
 
@@ -114,25 +114,56 @@ ${clauseList}
 Return ONLY a JSON array of the top ${MAX_SUGGESTIONS} matching clauses, ordered from most to least relevant, with a confidence score between 0.0 and 1.0. Use this exact format with no preamble or markdown:
 [{"clause_id": 5, "clause_number": "8.5.2", "title": "Corrective Action", "confidence": 0.95}, ...]`
 
+  const isOpenRouter = !!process.env.OPENROUTER_API_KEY
+
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' }
-        })
-      }
-    )
+    let response
+    if (isOpenRouter) {
+      const model = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash'
+      response = await fetch(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'HTTP-Referer': 'https://github.com/ticnap-notnac/QMS', // Optional Site Name for OpenRouter
+            'X-Title': 'QMS Thesis System'
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [{ role: 'user', content: prompt }]
+          })
+        }
+      )
+    } else {
+      // Direct Gemini API fallback if they still only have GEMINI_API_KEY
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json' }
+          })
+        }
+      )
+    }
 
     if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`)
+      throw new Error(`AI API error: ${response.status} ${response.statusText}`)
     }
 
     const data = await response.json()
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
+    let text = '[]'
+
+    if (isOpenRouter) {
+      text = data.choices?.[0]?.message?.content || '[]'
+    } else {
+      text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
+    }
+
     const clean = text.replace(/```json|```/g, '').trim()
     const parsed = JSON.parse(clean)
 
@@ -143,7 +174,7 @@ Return ONLY a JSON array of the top ${MAX_SUGGESTIONS} matching clauses, ordered
       .slice(0, MAX_SUGGESTIONS)
 
   } catch (err) {
-    console.error('[clauseMatchService] Gemini failed, using keyword fallback:', err.message)
+    console.error('[clauseMatchService] AI call failed, using keyword fallback:', err.message)
     return keywordFallback(description, flags, clauses)
   }
 }

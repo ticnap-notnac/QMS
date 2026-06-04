@@ -315,7 +315,7 @@ export function useDCCLogic() {
     try {
       const { data, error } = await supabase
         .from('car_reports')
-        .select('*')
+        .select('*, audit_schedules(id, title, scheduled_date)')
         .order('created_at', { ascending: false })
 
       if (error) throw error

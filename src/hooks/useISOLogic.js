@@ -118,6 +118,10 @@ export default function useISOLogic({ userName }) {
           id,
           evidence,
           clause_id,
+          run_id,
+          audit_runs (
+            schedule_id
+          ),
           iso_clauses (
             clause_number,
             title
@@ -211,6 +215,9 @@ export default function useISOLogic({ userName }) {
       }
       const nextRef = `CAR-${String(nextNum).padStart(3, '0')}`
 
+      // Resolve the audit schedule ID from the active finding
+      const auditScheduleId = activeFinding?.audit_runs?.schedule_id || null
+
       const { data: insData, error: insError } = await supabase
         .from('car_reports')
         .insert({
@@ -238,6 +245,7 @@ export default function useISOLogic({ userName }) {
           affected_quantity: carForm.affected_quantity ? parseInt(carForm.affected_quantity, 10) : null,
           details_of_nonconformance: carForm.details_of_nonconformance,
           request_date: carForm.request_date || null,
+          audit_schedule_id: auditScheduleId,
           status: 'open'
         })
         .select('id')
