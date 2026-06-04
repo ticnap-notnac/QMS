@@ -288,6 +288,7 @@ export async function fetchReports(scope = 'open') {
     const { data: dueReports } = await supabase
       .from('ncr_reports')
       .select('id, reference_no, verification_date, status, assigned_to')
+      .eq('status', 'CLOSED')
       .lte('verification_date', todayStr)
       .is('preventive_rating', null)
     

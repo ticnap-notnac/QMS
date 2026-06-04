@@ -8,11 +8,19 @@ export function getLocalDateString(date = new Date()) {
   try {
     const d = date instanceof Date ? date : new Date(date)
     if (Number.isNaN(d.getTime())) {
-      return new Date().toISOString().slice(0, 10)
+      const now = new Date()
+      const offset = now.getTimezoneOffset()
+      const local = new Date(now.getTime() - (offset * 60 * 1000))
+      return local.toISOString().slice(0, 10)
     }
-    return d.toISOString().slice(0, 10)
+    const offset = d.getTimezoneOffset()
+    const local = new Date(d.getTime() - (offset * 60 * 1000))
+    return local.toISOString().slice(0, 10)
   } catch (err) {
-    return new Date().toISOString().slice(0, 10)
+    const now = new Date()
+    const offset = now.getTimezoneOffset()
+    const local = new Date(now.getTime() - (offset * 60 * 1000))
+    return local.toISOString().slice(0, 10)
   }
 }
 

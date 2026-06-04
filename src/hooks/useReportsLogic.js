@@ -140,10 +140,23 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     const openRatingId = params.get('openRating')
     if (openRatingId) {
       const loadRatingModal = async () => {
-        const reportObj = (dataState.reports || []).find(r => String(r.id) === String(openRatingId)) || 
-                          (dataState.investigatedReports || []).find(r => String(r.id) === String(openRatingId)) ||
-                          (dataState.closedReports || []).find(r => String(r.id) === String(openRatingId))
+        let reportObj = (dataState.reports || []).find(r => String(r.id) === String(openRatingId)) || 
+                        (dataState.investigatedReports || []).find(r => String(r.id) === String(openRatingId)) ||
+                        (dataState.closedReports || []).find(r => String(r.id) === String(openRatingId))
         
+        if (!reportObj) {
+          try {
+            const { data } = await supabase
+              .from('ncr_reports')
+              .select('*')
+              .eq('id', openRatingId)
+              .maybeSingle()
+            if (data) reportObj = data
+          } catch (err) {
+            console.warn('Failed to query report by ID from DB:', err)
+          }
+        }
+
         if (reportObj) {
           try {
             const cached = await fetchExistingAiSuggestion(openRatingId)
