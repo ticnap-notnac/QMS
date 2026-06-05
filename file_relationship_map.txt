@@ -1,0 +1,173 @@
+================================================================================
+QFlow - System File and Function Relationship Map
+================================================================================
+
+This document maps the relations and dependency connections between frontend hooks,
+API services, Express routes, controllers, services, and the database schema in QFlow.
+
+--------------------------------------------------------------------------------
+1. Front-End Core to API Network Routing
+--------------------------------------------------------------------------------
+
+[UI Components / Modals]
+    │ (invokes handlers)
+    ▼
+[React Custom Logic Hooks] (src/hooks/)
+    │ (calls REST methods)
+    ▼
+[Client API Services] (src/services/)
+    │ (formats endpoints & appends Supabase JWT bearer token)
+    ▼
+[Vite API Client Wrapper] (src/lib/api.js)
+    │ (dispatches HTTP requests)
+    ▼
+[Express Server Endpoint Routing] (server/routes/)
+
+--------------------------------------------------------------------------------
+2. Front-End Hook ──► Client Service Mapping
+--------------------------------------------------------------------------------
+
+* useReportsLogic.js (src/hooks/useReportsLogic.js)
+    ├── calls submitNcrMultipart()        ──► src/services/ncrService.js
+    ├── calls createReport()              ──► src/services/ncrService.js
+    ├── calls updateReport()              ──► src/services/ncrService.js
+    ├── calls reviewReportApproval()      ──► src/services/ncrService.js
+    ├── calls submitCarReport()           ──► src/services/carService.js
+    ├── calls submitQddrReport()          ──► src/services/qddrService.js
+    └── calls fetchExistingAiSuggestion() ──► src/services/suggestionService.js
+
+* useUserManager.js (src/hooks/useUserManager.js)
+    └── calls request('/users')           ──► src/lib/api.js
+
+* useRolesPageLogic.js (src/hooks/useRolesPageLogic.js)
+    └── calls useCategoryManager()        ──► src/hooks/useCategoryManager.js
+
+* useCategoryManager.js (src/hooks/useCategoryManager.js)
+    └── invokes loadFn(), createFn(), deleteFn() passed from specific catalog handlers
+
+--------------------------------------------------------------------------------
+3. Express Backend Routing ──► Controller ──► Database Service Mapping
+--------------------------------------------------------------------------------
+
+* userRoutes.js (server/routes/userRoutes.js) 
+    (Guarded: requireRoles(['admin']))
+    └── UserController (server/controllers/userController.js)
+        ├── getUsers         ──► fetchAllUsers()         ──► server/services/userService.js
+        ├── createUser       ──► createUserWithAuth()    ──► server/services/userService.js
+        ├── deleteUser       ──► deleteUserById()        ──► server/services/userService.js
+        ├── updateUser       ──► updateUserById()        ──► server/services/userService.js
+        └── updateUserStatus ──► updateUserStatusById()  ──► server/services/userService.js
+
+* roleRoutes.js (server/routes/roleRoutes.js)
+    (Guarded: requireRoles(['admin']))
+    └── RoleController (server/controllers/roleController.js)
+        └── Uses crudController.js helper maps:
+            ├── getRoles     ──► fetchAllRoles()         ──► server/services/roleService.js
+            ├── createRole   ──► insertRole()            ──► server/services/roleService.js
+            └── deleteRole   ──► removeRole()            ──► server/services/roleService.js
+
+* ncrRoutes.js (server/routes/ncrRoutes.js)
+    └── NcrController (server/controllers/ncrController.js)
+        ├── getReports                 ──► fetchReports()                 ──► server/services/ncrReportsService.js
+        ├── createReport               ──► createNcrReport()              ──► server/services/ncrReportsService.js
+        ├── createReportSubmit         ──► createNcrReportWithUpload()    ──► server/services/ncrReportsService.js
+        ├── updateReport               ──► updateNcrReport()              ──► server/services/ncrReportsService.js
+        ├── updateReportInvestigation  ──► updateNcrInvestigation()       ──► server/services/ncrReportsService.js
+        ├── assignReport (admin/aud)   ──► assignReportToEmployee()       ──► server/services/ncrReportsService.js (RBAC Guarded)
+        ├── reviewReportApproval       ──► reviewNcrApproval()            ──► server/services/ncrReportsService.js (RBAC Guarded)
+        ├── deleteReport               ──► deleteNcrReport()              ──► server/services/ncrReportsService.js (RBAC Guarded)
+        ├── rateReport                 ──► submitReportRating()           ──► server/services/ncrReportsService.js
+        └── getReportRating            ──► getReportRatingsStats()        ──► server/services/ncrReportsService.js
+
+* carRoutes.js (server/routes/carRoutes.js)
+    └── CarController (server/controllers/carController.js)
+        ├── createCar                  ──► createCarReport()              ──► server/services/carService.js
+        ├── submitCapa                 ──► submitCapaReport()             ──► server/services/carService.js
+        └── verifyCar                  ──► verifyCarEffectiveness()       ──► server/services/carService.js
+
+
+* qddrRoutes.js (server/routes/qddrRoutes.js)
+    └── QddrController (server/controllers/qddrController.js)
+        └── createQddr                 ──► createQddrReport()             ──► server/services/qddrService.js
+
+* complianceRoutes.js (server/routes/complianceRoutes.js)
+    └── ComplianceController (server/controllers/complianceController.js)
+        ├── getComplianceStats         ──► Calculate dynamic average standard scores
+        └── getComplianceTrends        ──► Retrieve chronological run score trends
+
+
+* issueTypeRoutes.js (server/routes/issueTypeRoutes.js)
+    └── IssueTypeController (server/controllers/issueTypeController.js)
+        ├── getIssueTypes              ──► fetchIssueTypes()              ──► server/services/issueTypeService.js
+        ├── createIssueType            ──► createIssueType()              ──► server/services/issueTypeService.js
+        └── deleteIssueType            ──► deleteIssueType()              ──► server/services/issueTypeService.js
+
+* suggestionRoutes.js (server/routes/suggestionRoutes.js)
+    └── SuggestionController (server/controllers/suggestionController.js)
+        ├── getSimilarCases            ──► findSimilarCases()             ──► server/services/suggestionService.js
+        ├── getCached                  ──► getCachedSuggestion()          ──► server/services/suggestionService.js
+        ├── saveSuggestion             ──► storeSuggestion()              ──► server/services/suggestionService.js
+        └── generateSuggestion         ──► generateAiSuggestion()         ──► server/services/suggestionService.js
+
+--------------------------------------------------------------------------------
+4. Server Helpers and Utilities Context
+--------------------------------------------------------------------------------
+
+* authMiddleware.js (server/middlewares/authMiddleware.js)
+    ├── Validates JWT tokens using Supabase Auth.
+    └── Attaches decoded user credentials to `req.user`.
+
+* roleMiddleware.js (server/middlewares/roleMiddleware.js)
+    ├── Restricts backend access based on custom user roles.
+    └── Enriches requests by attaching the database user record to `req.dbUser`.
+
+* errorMiddleware.js (server/middlewares/errorMiddleware.js)
+    └── Standardizes server exception payloads and catches controller errors via `next(err)`.
+
+* date.js (server/utils/date.js)
+    └── Utility converting active DateTime inputs cleanly to YYYY-MM-DD format.
+
+* cbr.js (server/utils/cbr.js)
+    └── Mathematical engine executing Jaccard string keyword similarities for case retrieval.
+
+* constants (src/constants/index.js)
+    └── Centralized, shared static dictionary configurations (roles, statuses, severities).
+
+* reportsHelpers.js (src/utils/reportsHelpers.js)
+    └── Framework-agnostic frontend business utilities extracted from React hook layers.
+
+--------------------------------------------------------------------------------
+5. Front-End Modular Stylesheet Mapping
+--------------------------------------------------------------------------------
+
+* PagesStyles.css (src/pages/PagesStyles.css)
+    ├── Holds CSS variables, shared page-roots, grids, and utilities.
+    └── Loaded as a prerequisite base by all page components.
+
+* SettingsPage.css (src/pages/SettingsPage.css)
+    └── Applied in SettingsPage.jsx
+
+* ISOPage.css (src/pages/ISOPage.css)
+    └── Applied in ISOPage.jsx and ISOStandardsPage.jsx
+
+* UserInformationPage.css (src/pages/UserInformationPage.css)
+    └── Applied in UserInformationPage.jsx
+
+* AdminPanel.css (src/pages/AdminPanel.css)
+    └── Shared layout styling across:
+        ├── RolesPage.jsx
+        ├── DepartmentsPage.jsx
+        ├── LocationsPage.jsx
+        ├── ProductTypesPage.jsx
+        └── AddUserPage.jsx
+
+* AuditToolsPage.css (src/pages/AuditToolsPage.css)
+    └── Applied in AuditToolsPage.jsx
+
+* DCCPage.css (src/pages/DCCPage.css)
+    └── Applied in DCCPage.jsx
+
+* ReportsPage.css (src/pages/ReportsPage.css)
+    └── Applied in ReportsPage.jsx
+================================================================================
+

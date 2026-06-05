@@ -43,12 +43,14 @@ If you or a groupmate run into `401 (Unauthorized)` errors:
 3. **Mismatched project keys**: Verify that the project ID in `VITE_SUPABASE_URL` matches the server `SUPABASE_URL` exactly.
 4. **Dev Server Restart**: Restart the terminal dev environment (`npm run dev:all`) to load the new `.env` configurations.
 
-## What’s implemented (high-level)
+## What's implemented (high-level)
 
 - Centralized system logging: backend endpoints under `/api/logs` write to `system_logs` and `system_log_reads`. System logs are intended for admin viewing only.
 - Audit helpers consolidated on the server for consistent, single-source logging of create/delete operations.
 - Login/Logout audit events are recorded, but login is now recorded only once per browser session (prevents duplicates when switching tabs).
 - Inactivity auto-logout: the client implements an inactivity timer (default 30 minutes) with a pre-timeout warning. The timer and warning are implemented in the frontend; see [src/App.jsx](src/App.jsx) to adjust durations or UI behavior.
+- ISO Clause association and AI-based clause suggestions are available on **CAR reports** (via `CARModal`). The NCR submission modal (`CreateReportModal`) does **not** include clause selection or auto-suggest — those fields were intentionally removed to keep the NCR form focused.
+
 
 ## How to test the auth/session & logging fixes
 
