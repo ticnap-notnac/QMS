@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../utils/supabase'
 import { fetchLogs } from '../services/logService'
+import { useCARDetails } from './useCARDetails'
 
 export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs' }) {
   const [activeTab, setActiveTab] = useState(activeTabParam)
@@ -47,19 +48,9 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
   const [runResults, setRunResults] = useState([])
   const [loadingRunDetails, setLoadingRunDetails] = useState(false)
 
-  // CAR details modal states
-  const [selectedCar, setSelectedCar] = useState(null)
-  const [isCarDetailsModalOpen, setIsCarDetailsModalOpen] = useState(false)
+  // CAR details modal states from hook
+  const carDetails = useCARDetails()
 
-  const handleOpenCarDetails = (car) => {
-    setSelectedCar(car)
-    setIsCarDetailsModalOpen(true)
-  }
-
-  const handleCloseCarDetails = () => {
-    setSelectedCar(null)
-    setIsCarDetailsModalOpen(false)
-  }
 
   // Start/Resume Audit
 
@@ -320,6 +311,43 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       setLogsPage(0)
     }
   }, [activeTab])
+
+  // Real-time channel listener for car_clause_links table updates
+  useEffect(() => {
+    if (!activeRun || activeClauses.length === 0) return
+
+    const clauseIds = activeClauses.map(c => c.id)
+
+    const channel = supabase
+      .channel('realtime-car-links')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'car_clause_links' },
+        async (payload) => {
+          console.log('[useAuditToolsLogic] Realtime change on car_clause_links:', payload)
+          try {
+            const { data: linkData } = await supabase
+              .from('car_clause_links')
+              .select('clause_id, car_reports(*)').in('clause_id', clauseIds)
+
+            const carsMap = {}
+            for (const row of linkData || []) {
+              if (!row.car_reports) continue
+              if (!carsMap[row.clause_id]) carsMap[row.clause_id] = []
+              carsMap[row.clause_id].push(row.car_reports)
+            }
+            setLinkedCarsMap(carsMap)
+          } catch (linkErr) {
+            console.warn('[useAuditToolsLogic] Could not reload linked CARs:', linkErr.message)
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [activeRun?.id, activeClauses])
 
   const fetchAuditReports = async () => {
     setLoadingReports(true)
@@ -738,11 +766,11 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     handlePrintReport,
     handleScheduleSubmit,
     handleRemoveCarLink,
-    selectedCar,
-    isCarDetailsModalOpen,
-    openCarDetails: handleOpenCarDetails,
-    closeCarDetails: handleCloseCarDetails,
-    onSelectCar: handleOpenCarDetails
+    selectedCar: carDetails.selectedCar,
+    isCarDetailsModalOpen: carDetails.isCarDetailsModalOpen,
+    openCarDetails: carDetails.openCarDetails,
+    closeCarDetails: carDetails.closeCarDetails,
+    onSelectCar: carDetails.openCarDetails
   }
 }
 

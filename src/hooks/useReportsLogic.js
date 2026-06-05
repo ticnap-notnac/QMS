@@ -21,6 +21,7 @@ import { updateReportInvestigationMultipart } from '@/services/ncrService'
 import { submitCarReport, suggestClausesForCar, submitCapaPlan, verifyCarPlan } from '@/services/carService'
 import { supabase } from '@/utils/supabase'
 import { submitQddrReport, updateQddrReport } from '@/services/qddrService'
+import { useCARDetails } from './useCARDetails'
 import {
   formatDate,
   normalizeSeverity,
@@ -60,9 +61,10 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
   const [qddrReports, setQddrReports] = useState([])
   const [loadingQddr, setLoadingQddr] = useState(false)
 
-  // ── CAR & QDDR Detail Modals state ──────────────────────────────────────────
-  const [selectedCar, setSelectedCar] = useState(null)
-  const [isCarDetailsModalOpen, setIsCarDetailsModalOpen] = useState(false)
+  // ── CAR details modal hook state ──
+  const carDetails = useCARDetails()
+
+  // ── QDDR Detail Modals state ──────────────────────────────────────────
   const [selectedQddr, setSelectedQddr] = useState(null)
   const [isQddrDetailsModalOpen, setIsQddrDetailsModalOpen] = useState(false)
 
@@ -542,21 +544,11 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     }
   }
 
-  const handleOpenCarDetails = (car) => {
-    setSelectedCar(car)
-    setIsCarDetailsModalOpen(true)
-  }
-
-  const handleCloseCarDetails = () => {
-    setSelectedCar(null)
-    setIsCarDetailsModalOpen(false)
-  }
-
   const handleCapaSubmit = async (carId, data, userAuthId) => {
     try {
       const res = await submitCapaPlan(carId, data, userAuthId)
       await refreshCarAndQddrLists()
-      setSelectedCar(res)
+      carDetails.setSelectedCar(res)
       setToast({ message: 'CAPA plan submitted successfully', type: 'success' })
       return res
     } catch (err) {
@@ -569,7 +561,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     try {
       const res = await verifyCarPlan(carId, data, userAuthId)
       await refreshCarAndQddrLists()
-      setSelectedCar(res)
+      carDetails.setSelectedCar(res)
       setToast({ message: 'Verification recorded successfully', type: 'success' })
       return res
     } catch (err) {
@@ -631,10 +623,10 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     loadingCar,
     qddrReports,
     loadingQddr,
-    selectedCar,
-    isCarDetailsModalOpen,
-    openCarDetails: handleOpenCarDetails,
-    closeCarDetails: handleCloseCarDetails,
+    selectedCar: carDetails.selectedCar,
+    isCarDetailsModalOpen: carDetails.isCarDetailsModalOpen,
+    openCarDetails: carDetails.openCarDetails,
+    closeCarDetails: carDetails.closeCarDetails,
     submitCapa: handleCapaSubmit,
     verifyCar: handleCarVerify,
     selectedQddr,
