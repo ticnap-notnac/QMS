@@ -21,3 +21,10 @@ export async function generateAiSuggestion(ncrId, deptName) {
         body: JSON.stringify({ deptName }),
     })
 }
+
+export async function generateAiSuggestionFromText({ description, issueType, deptName }) {
+    return await request('/suggestions/generate-text', {
+        method: 'POST',
+        body: JSON.stringify({ description, issueType, deptName }),
+    })
+}

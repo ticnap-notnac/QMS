@@ -103,6 +103,7 @@ export default function DCCPage({
         onVerify={verifyCar}
         userRole={userRole}
         authUserId={authUserId}
+        readOnly={true}
       />
     </div>
   )

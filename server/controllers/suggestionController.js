@@ -1,4 +1,4 @@
-import { findSimilarCases, getCachedSuggestion, storeSuggestion, generateAiSuggestion } from '../services/suggestionService.js'
+import { findSimilarCases, getCachedSuggestion, storeSuggestion, generateAiSuggestion, generateAiSuggestionFromText } from '../services/suggestionService.js'
 
 export async function getSimilarCases(req, res, next) {
   try {
@@ -38,6 +38,16 @@ export async function generateSuggestion(req, res, next) {
     const { ncrId } = req.params
     const { deptName } = req.body
     const data = await generateAiSuggestion({ ncrId, deptName })
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function generateSuggestionFromText(req, res, next) {
+  try {
+    const { description, issueType, deptName } = req.body
+    const data = await generateAiSuggestionFromText({ description, issueType, deptName })
     return res.json(data)
   } catch (err) {
     next(err)

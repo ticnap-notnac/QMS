@@ -298,18 +298,22 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
     )
   }
 
-  // Group CARs by Audit Scheduled Title/Date or "General / Ad-hoc CARs"
+  // Group CARs by creation month and year in descending order
   const grouped = carReports.reduce((acc, car) => {
-    let groupKey = 'General / Ad-hoc CARs'
-    if (car.audit_schedules) {
-      const { title, scheduled_date } = car.audit_schedules
-      const dateStr = scheduled_date ? new Date(scheduled_date).toLocaleDateString() : 'No Date'
-      groupKey = `${title} (Scheduled: ${dateStr})`
-    }
+    const dateVal = car.created_at || car.request_date || new Date().toISOString()
+    const d = new Date(dateVal)
+    const monthName = d.toLocaleString('default', { month: 'long' })
+    const groupKey = `${monthName} ${d.getFullYear()}`
     if (!acc[groupKey]) acc[groupKey] = []
     acc[groupKey].push(car)
     return acc
   }, {})
+
+  const sortedGroups = Object.entries(grouped).sort((a, b) => {
+    const dateA = new Date(a[1][0]?.created_at || a[1][0]?.request_date || 0)
+    const dateB = new Date(b[1][0]?.created_at || b[1][0]?.request_date || 0)
+    return dateB - dateA
+  })
 
   const toggleGroup = (groupKey) => {
     setCollapsedGroups(prev => ({
@@ -320,7 +324,7 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
 
   return (
     <div className="flex-column" style={{ gap: '20px' }}>
-      {Object.entries(grouped).map(([groupKey, cars]) => {
+      {sortedGroups.map(([groupKey, cars]) => {
         const isCollapsed = collapsedGroups[groupKey]
         return (
           <div key={groupKey} className="glass-card-dcc" style={{ padding: '0px', overflow: 'hidden' }}>
@@ -579,7 +583,7 @@ function AuditReportsTable({ auditReports, loadingAudit }) {
 // Sub-view: Task Reports › Audit Schedules – scheduled list table
 // ---------------------------------------------------------------------------
 
-function AuditSchedulesTable({ auditSchedules, loadingAuditSchedules }) {
+function AuditSchedulesTable({ auditSchedules, loadingAuditSchedules, carReports = [], onSelectCar }) {
   if (loadingAuditSchedules) return <div>Loading audit schedules...</div>
 
   if (!auditSchedules.length) {
@@ -601,12 +605,14 @@ function AuditSchedulesTable({ auditSchedules, loadingAuditSchedules }) {
               <th>ISO Standard</th>
               <th>Assigned Auditor</th>
               <th>Scheduled Date</th>
+              <th>Linked CARs</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody>
             {auditSchedules.map((schedule) => {
               const statusClean = String(schedule.status || '').trim().toLowerCase()
+              const linkedCars = carReports.filter(c => c.audit_schedule_id === schedule.id)
               return (
                 <tr key={schedule.id}>
                   <td style={{ fontWeight: 600 }}>{schedule.title}</td>
@@ -614,6 +620,32 @@ function AuditSchedulesTable({ auditSchedules, loadingAuditSchedules }) {
                   <td>{schedule.auditor_name}</td>
                   <td>
                     {schedule.scheduled_date ? new Date(schedule.scheduled_date).toLocaleDateString() : '—'}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {linkedCars.length > 0 ? (
+                        linkedCars.map(car => (
+                          <span
+                            key={car.id}
+                            onClick={() => onSelectCar && onSelectCar(car)}
+                            className="iso-status-pill is-active"
+                            style={{
+                              cursor: 'pointer',
+                              background: 'rgba(34, 211, 238, 0.12)',
+                              border: '1px solid rgba(34, 211, 238, 0.3)',
+                              color: '#22d3ee',
+                              fontSize: '11px',
+                              padding: '2px 8px'
+                            }}
+                            title="Click to view CAR details"
+                          >
+                            {car.reference_no || `CAR #${car.id}`}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="muted" style={{ fontSize: '12px' }}>—</span>
+                      )}
+                    </div>
                   </td>
                   <td>
                     <span className={`iso-status-pill ${
@@ -804,7 +836,7 @@ export default function DCCFolderContent({
           ) : selectedTaskFolder.id === 'audit_schedules' ? (
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; Audit Schedules &gt; Scheduled</div>
-              <AuditSchedulesTable auditSchedules={auditSchedules} loadingAuditSchedules={loadingAuditSchedules} />
+              <AuditSchedulesTable auditSchedules={auditSchedules} loadingAuditSchedules={loadingAuditSchedules} carReports={carReports} onSelectCar={onSelectCar} />
             </div>
           ) : (
             <div className="empty-state">

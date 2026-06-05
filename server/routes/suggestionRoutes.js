@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getSimilarCases, getCached, saveSuggestion, generateSuggestion } from '../controllers/suggestionController.js'
+import { getSimilarCases, getCached, saveSuggestion, generateSuggestion, generateSuggestionFromText } from '../controllers/suggestionController.js'
 
 const router = Router()
 
@@ -7,5 +7,6 @@ router.get('/similar/:ncrId', getSimilarCases)
 router.get('/cached/:ncrId', getCached)
 router.post('/', saveSuggestion)
 router.post('/generate/:ncrId', generateSuggestion)
+router.post('/generate-text', generateSuggestionFromText)
 
 export default router

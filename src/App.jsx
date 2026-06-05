@@ -21,6 +21,7 @@ import { LookupProvider } from './context/LookupContext'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import Navbar from './components/Navbars/Navbar.jsx'
 import { logAction } from '@/services/logService'
+import { useIdleTimeout } from './hooks/useIdleTimeout'
 
 function normalizeRoleValue(value) {
   return String(value || '').trim().toLowerCase()
@@ -230,6 +231,8 @@ export default function App() {
     }
   }
 
+  // Auto-logout user after 15 minutes of inactivity
+  useIdleTimeout(user, handleLogout, 900000)
 
   const sharedProps = {
     userRole,

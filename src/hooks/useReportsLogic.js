@@ -18,9 +18,9 @@ import { useSuggestionLogic } from './useReports/useSuggestionLogic'
 import { fetchExistingAiSuggestion } from '@/services/suggestionService'
 import { dismissVerificationNotification } from '@/services/notificationService'
 import { updateReportInvestigationMultipart } from '@/services/ncrService'
-import { submitCarReport, suggestClausesForCar } from '@/services/carService'
+import { submitCarReport, suggestClausesForCar, submitCapaPlan, verifyCarPlan } from '@/services/carService'
 import { supabase } from '@/utils/supabase'
-import { submitQddrReport } from '@/services/qddrService'
+import { submitQddrReport, updateQddrReport } from '@/services/qddrService'
 import {
   formatDate,
   normalizeSeverity,
@@ -52,6 +52,19 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
   // ── View mode ───────────────────────────────────────────────────────────────
   const [isApprovalQueueMode, setIsApprovalQueueMode] = useState(false)
   const [isClosedMode, setIsClosedMode] = useState(false)
+  const [activeTab, setActiveTab] = useState('ncr')
+
+  // ── CAR & QDDR Reports lists state ───────────────────────────────────────────
+  const [carReports, setCarReports] = useState([])
+  const [loadingCar, setLoadingCar] = useState(false)
+  const [qddrReports, setQddrReports] = useState([])
+  const [loadingQddr, setLoadingQddr] = useState(false)
+
+  // ── CAR & QDDR Detail Modals state ──────────────────────────────────────────
+  const [selectedCar, setSelectedCar] = useState(null)
+  const [isCarDetailsModalOpen, setIsCarDetailsModalOpen] = useState(false)
+  const [selectedQddr, setSelectedQddr] = useState(null)
+  const [isQddrDetailsModalOpen, setIsQddrDetailsModalOpen] = useState(false)
 
   // ── Sub-hooks ───────────────────────────────────────────────────────────────
   const formState = useReportsForm()
@@ -81,6 +94,38 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
 
   const carFormState = useCARForm()
   const qddrFormState = useQDDRForm()
+
+  const refreshCarAndQddrLists = useCallback(async () => {
+    setLoadingCar(true)
+    setLoadingQddr(true)
+    try {
+      const { data: carData, error: carError } = await supabase
+        .from('car_reports')
+        .select('*, audit_schedules(id, title, scheduled_date)')
+        .order('created_at', { ascending: false })
+      if (carError) throw carError
+      setCarReports(carData || [])
+
+      const { data: qddrData, error: qddrError } = await supabase
+        .from('qddr_reports')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (qddrError) throw qddrError
+      setQddrReports(qddrData || [])
+    } catch (err) {
+      console.error('Failed to load CAR/QDDR lists:', err)
+      setError('Failed to load CAR/QDDR lists: ' + err.message)
+    } finally {
+      setLoadingCar(false)
+      setLoadingQddr(false)
+    }
+  }, [setError])
+
+  useEffect(() => {
+    if (currentAuthId) {
+      refreshCarAndQddrLists()
+    }
+  }, [currentAuthId, refreshCarAndQddrLists])
 
   // ISO Clauses options & auto-suggest states
   const [clauses, setClauses] = useState([])
@@ -454,6 +499,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       modalsState.closeCARModal()
       carFormState.resetForm()
       await dataState.refreshReportsList()
+      await refreshCarAndQddrLists()
       return { success: true }
     } catch (submitError) {
       carFormState.setError(submitError?.message || 'Failed to submit CAR.')
@@ -486,12 +532,72 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       modalsState.closeQDDRModal()
       qddrFormState.resetForm()
       await dataState.refreshReportsList()
+      await refreshCarAndQddrLists()
       return { success: true }
     } catch (submitError) {
       qddrFormState.setError(submitError?.message || 'Failed to submit QDDR.')
       return { success: false }
     } finally {
       qddrFormState.setIsSubmitting(false)
+    }
+  }
+
+  const handleOpenCarDetails = (car) => {
+    setSelectedCar(car)
+    setIsCarDetailsModalOpen(true)
+  }
+
+  const handleCloseCarDetails = () => {
+    setSelectedCar(null)
+    setIsCarDetailsModalOpen(false)
+  }
+
+  const handleCapaSubmit = async (carId, data, userAuthId) => {
+    try {
+      const res = await submitCapaPlan(carId, data, userAuthId)
+      await refreshCarAndQddrLists()
+      setSelectedCar(res)
+      setToast({ message: 'CAPA plan submitted successfully', type: 'success' })
+      return res
+    } catch (err) {
+      console.error('[useReportsLogic] handleCapaSubmit error:', err)
+      throw err
+    }
+  }
+
+  const handleCarVerify = async (carId, data, userAuthId) => {
+    try {
+      const res = await verifyCarPlan(carId, data, userAuthId)
+      await refreshCarAndQddrLists()
+      setSelectedCar(res)
+      setToast({ message: 'Verification recorded successfully', type: 'success' })
+      return res
+    } catch (err) {
+      console.error('[useReportsLogic] handleCarVerify error:', err)
+      throw err
+    }
+  }
+
+  const handleOpenQddrDetails = (qddr) => {
+    setSelectedQddr(qddr)
+    setIsQddrDetailsModalOpen(true)
+  }
+
+  const handleCloseQddrDetails = () => {
+    setSelectedQddr(null)
+    setIsQddrDetailsModalOpen(false)
+  }
+
+  const handleUpdateQddr = async (qddrId, data, userAuthId) => {
+    try {
+      const res = await updateQddrReport(qddrId, data, userAuthId)
+      await refreshCarAndQddrLists()
+      setSelectedQddr(res.data || res)
+      setToast({ message: 'QDDR report updated successfully', type: 'success' })
+      return res
+    } catch (err) {
+      console.error('[useReportsLogic] handleUpdateQddr error:', err)
+      throw err
     }
   }
 
@@ -518,6 +624,26 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     error,
     toast,
     setToast,
+
+    activeTab,
+    setActiveTab,
+    carReports,
+    loadingCar,
+    qddrReports,
+    loadingQddr,
+    selectedCar,
+    isCarDetailsModalOpen,
+    openCarDetails: handleOpenCarDetails,
+    closeCarDetails: handleCloseCarDetails,
+    submitCapa: handleCapaSubmit,
+    verifyCar: handleCarVerify,
+    selectedQddr,
+    isQddrDetailsModalOpen,
+    openQddrDetails: handleOpenQddrDetails,
+    closeQddrDetails: handleCloseQddrDetails,
+    updateQddr: handleUpdateQddr,
+    users: dataState.users.map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
+    usersLoading: dataState.usersLoading,
 
     ...modalsState,
     

@@ -152,3 +152,43 @@ export async function createQddrReport({ body, reportedByAuthId }) {
 
   return { data }
 }
+
+export async function updateQddrReport({ id, body }) {
+  const {
+    corrective_action,
+    preventive_action,
+    approved_by,
+    noted_by,
+    leader,
+    status
+  } = body || {}
+
+  const [approvedById, notedById, leaderId] = await Promise.all([
+    approved_by ? findUserIdByName(approved_by) : Promise.resolve(null),
+    noted_by ? findUserIdByName(noted_by) : Promise.resolve(null),
+    leader ? findUserIdByName(leader) : Promise.resolve(null)
+  ])
+
+  const updates = {}
+  if (corrective_action !== undefined) updates.corrective_action = corrective_action
+  if (preventive_action !== undefined) updates.preventive_action = preventive_action
+  if (approvedById !== null) updates.approved_by = approvedById
+  if (notedById !== null) updates.noted_by = notedById
+  if (leaderId !== null) updates.leader = leaderId
+  if (status !== undefined) updates.status = status
+
+  const { data, error } = await supabase
+    .from('qddr_reports')
+    .update(updates)
+    .eq('id', id)
+    .select('*')
+    .maybeSingle()
+
+  if (error) {
+    const customErr = new Error(`Database error updating QDDR: ${error.message}`)
+    customErr.status = 500
+    throw customErr
+  }
+
+  return { data }
+}

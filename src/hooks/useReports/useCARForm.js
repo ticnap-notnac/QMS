@@ -69,7 +69,7 @@ export function useCARForm() {
   /** Confirm or remove a clause from the linked set */
   const toggleClauseSelection = (clauseId) => {
     setForm(prev => {
-      const id = Number(clauseId)
+      const id = clauseId
       const already = prev.linked_clause_ids.includes(id)
       return {
         ...prev,

@@ -378,3 +378,99 @@ Respond ONLY in this JSON format with no preamble or markdown:
     return fallback
   }
 }
+
+export async function generateAiSuggestionFromText({ description, issueType, deptName }) {
+  const [caseRepoCandidates, ratedNcrCandidates, carReportsList, qddrReportsList] = await Promise.all([
+    fetchCaseRepositoryCandidates(issueType),
+    fetchRatedNcrCandidates(),
+    fetchCarReports(null),
+    fetchQddrReports(null),
+  ])
+
+  const ratedNcrAsCases = ratedNcrCandidates.map(ncr => ({
+    corrective_action: ncr.corrective_action || ncr.investigation_details,
+    preventive_action: ncr.resolution_details,
+    problem_keywords:  ncr.description,
+    issue_type:        ncr.issue_type,
+    severity:          ncr.severity,
+    department_id:     ncr.department_id,
+    product_type:      ncr.product_type,
+    effectiveness_score: null,
+    times_used: 1,
+    source: 'ncr',
+  }))
+
+  const allCandidates = [
+    ...caseRepoCandidates.map(c => ({ ...c, source: 'repository' })),
+    ...ratedNcrAsCases,
+  ]
+
+  const report = {
+    description,
+    issue_type: issueType,
+    severity: 'Medium',
+  }
+
+  const bestMatch = retrieveBestMatch(report, allCandidates)
+  const fallback = generateFallbackHeuristicSuggestion({ report, deptName })
+
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) {
+    console.warn('GEMINI_API_KEY is not configured. Using rule-based fallback.')
+    return fallback
+  }
+
+  try {
+    const prompt = `You are a quality control expert. Suggest a corrective action and a preventive action for this issue using all available context.
+
+Issue:
+- Description: ${description}
+- Category/Type: ${issueType || 'N/A'}
+- Department: ${deptName || 'N/A'}
+
+Case Repository Matches (CBR candidates):
+${caseRepoCandidates.length > 0
+    ? caseRepoCandidates.slice(0, 10).map((c, i) => `${i + 1}. Keywords: ${c.problem_keywords || 'N/A'} | Corrective Action: ${c.corrective_action} | Preventive Action: ${c.preventive_action || 'N/A'} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
+    : 'None'}
+
+Provide a concise, actionable corrective action (for immediately addressing the current issue) and a preventive action (to prevent recurrence in the future). Each action should be 2-4 sentences. Also provide a confidence score between 0.0 and 1.0.
+Respond ONLY in this JSON format with no preamble or markdown:
+{"suggestion": "your corrective action suggestion here", "preventive_suggestion": "your preventive action suggestion here", "confidence": 0.85}`
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: prompt }]
+          }
+        ],
+        generationConfig: {
+          responseMimeType: 'application/json'
+        }
+      })
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Gemini API call failed: ${response.statusText} - ${errorText}`)
+    }
+
+    const resData = await response.json()
+    const text = resData.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    const clean = text.replace(/```json|```/g, '').trim()
+    const parsed = JSON.parse(clean)
+
+    return {
+      suggestion: parsed.suggestion,
+      preventive_suggestion: parsed.preventive_suggestion,
+      confidence: parsed.confidence
+    }
+  } catch (err) {
+    console.error('Gemini API failed for text suggestion. Falling back to rules.', err)
+    return fallback
+  }
+}

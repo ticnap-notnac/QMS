@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { X as CloseIcon, Clipboard, CheckCircle, AlertTriangle, User, Calendar } from 'lucide-react'
+import { X as CloseIcon, Clipboard, CheckCircle, AlertTriangle, User, Calendar, Sparkles } from 'lucide-react'
+import { generateAiSuggestionFromText } from '../../services/suggestionService'
 
 export default function CARDetailsModal({
   isOpen,
@@ -8,13 +9,15 @@ export default function CARDetailsModal({
   onSubmitCapa,
   onVerify,
   userRole,
-  authUserId
+  authUserId,
+  readOnly = false
 }) {
   const [rootCause, setRootCause] = useState('')
   const [correctiveAction, setCorrectiveAction] = useState('')
   const [preventiveAction, setPreventiveAction] = useState('')
   const [verificationNotes, setVerificationNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [suggesting, setSuggesting] = useState(false)
   const [error, setError] = useState('')
 
   // Sync state with selected CAR details
@@ -32,6 +35,29 @@ export default function CARDetailsModal({
 
   const isUserRecipient = true // Allow processing. In production, can check if current user matches car.recipient.
   const isAuditorOrAdmin = userRole === 'admin' || userRole === 'auditor'
+  const handleSuggestActions = async () => {
+    setSuggesting(true)
+    setError('')
+    try {
+      const res = await generateAiSuggestionFromText({
+        description: car.details_of_nonconformance,
+        issueType: car.quality_food_safety ? 'quality' : car.environment_health_safety ? 'safety' : car.security_issue ? 'security' : car.internal_audit ? 'audit' : 'general',
+        deptName: car.responsible_department
+      })
+      if (res?.suggestion) {
+        setCorrectiveAction(res.suggestion)
+      }
+      if (res?.preventive_suggestion) {
+        setPreventiveAction(res.preventive_suggestion)
+      }
+      setRootCause('Based on historical matching cases, the root cause is being verified. Action plan suggested.')
+    } catch (err) {
+      console.error('Failed to get suggestions:', err)
+      setError('Failed to fetch suggestions from CBR: ' + err.message)
+    } finally {
+      setSuggesting(false)
+    }
+  }
 
   const handleCapaSubmit = async (e) => {
     e.preventDefault()
@@ -166,12 +192,34 @@ export default function CARDetailsModal({
           {/* CAPA SECTION */}
           {/* ──────────────────────────────────────────────────────── */}
           
-          {car.status === 'open' ? (
+          {car.status === 'open' && !readOnly ? (
             isUserRecipient ? (
               <form onSubmit={handleCapaSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
-                <h4 style={{ color: '#22d3ee', fontSize: '14px', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <CheckCircle size={16} /> Implement CAPA Action Plan
-                </h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 4px 0' }}>
+                  <h4 style={{ color: '#22d3ee', fontSize: '14px', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <CheckCircle size={16} /> Implement CAPA Action Plan
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={handleSuggestActions}
+                    disabled={suggesting}
+                    className="btn-quick-toggle"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '4px 10px',
+                      fontSize: '12px',
+                      background: 'rgba(34, 211, 238, 0.12)',
+                      border: '1px solid rgba(34, 211, 238, 0.3)',
+                      color: '#22d3ee',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Sparkles size={13} /> {suggesting ? 'Analyzing...' : 'Suggest Actions (CBR)'}
+                  </button>
+                </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label className="label-field">Root Cause Analysis (RCA)</label>
@@ -224,8 +272,8 @@ export default function CARDetailsModal({
               </div>
             )
           ) : (
-            // Read-Only CAPA summary if submitted
-            (car.root_cause_analysis || car.corrective_action || car.preventive_action) && (
+            // Read-Only CAPA summary if submitted or read-only mode is active
+            (car.root_cause_analysis || car.corrective_action || car.preventive_action) ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
                 <h4 style={{ color: '#10b981', fontSize: '14px', margin: 0 }}>Corrective & Preventive Actions (CAPA)</h4>
                 
@@ -252,6 +300,12 @@ export default function CARDetailsModal({
                   </div>
                 </div>
               </div>
+            ) : (
+              readOnly && (
+                <div className="empty-state" style={{ padding: '16px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+                  No CAPA plan has been submitted yet.
+                </div>
+              )
             )
           )}
 
@@ -259,7 +313,7 @@ export default function CARDetailsModal({
           {/* VERIFICATION OF EFFECTIVENESS (VoE) SECTION */}
           {/* ──────────────────────────────────────────────────────── */}
 
-          {car.status === 'under_verification' && (
+          {car.status === 'under_verification' && !readOnly ? (
             isAuditorOrAdmin ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
                 <h4 style={{ color: '#f59e0b', fontSize: '14px', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -303,6 +357,17 @@ export default function CARDetailsModal({
               <div className="empty-state" style={{ padding: '16px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
                 Under verification. Waiting for an auditor or quality admin to review the action plan.
               </div>
+            )
+          ) : (
+            // Read-Only VoE summary if closed or read-only mode is active
+            car.verification_notes ? (
+              null // Will render under-verification notes below
+            ) : (
+              readOnly && car.status === 'under_verification' && (
+                <div className="empty-state" style={{ padding: '16px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+                  Under verification. Action plan submitted, pending review.
+                </div>
+              )
             )
           )}
 
