@@ -104,13 +104,14 @@ export async function createCarReport({ body, reportedByAuthId }) {
     if (linkRows.length > 0) {
       const { error: linkError } = await supabase
         .from('car_clause_links')
-        .upsert(linkRows, { onConflict: 'car_report_id,clause_id', ignoreDuplicates: true })
+        .insert(linkRows)
 
       if (linkError) {
         console.warn('[carService] Failed to insert car_clause_links:', linkError.message)
       }
     }
   }
+
 
   return { data }
 }

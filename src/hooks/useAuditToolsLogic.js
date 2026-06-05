@@ -47,7 +47,22 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
   const [runResults, setRunResults] = useState([])
   const [loadingRunDetails, setLoadingRunDetails] = useState(false)
 
+  // CAR details modal states
+  const [selectedCar, setSelectedCar] = useState(null)
+  const [isCarDetailsModalOpen, setIsCarDetailsModalOpen] = useState(false)
+
+  const handleOpenCarDetails = (car) => {
+    setSelectedCar(car)
+    setIsCarDetailsModalOpen(true)
+  }
+
+  const handleCloseCarDetails = () => {
+    setSelectedCar(null)
+    setIsCarDetailsModalOpen(false)
+  }
+
   // Start/Resume Audit
+
   const handleStartAudit = async (schedule) => {
     setError('')
     setSuccess('')
@@ -135,8 +150,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
         try {
           const { data: linkData } = await supabase
             .from('car_clause_links')
-            .select('clause_id, car_reports(id, reference_no, status)')
-            .in('clause_id', clauseIds)
+            .select('clause_id, car_reports(*)').in('clause_id', clauseIds)
+
 
           const carsMap = {}
           for (const row of linkData || []) {
@@ -645,7 +660,32 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     }
   }
 
+  const handleRemoveCarLink = async (carId, clauseId) => {
+    try {
+      setError('')
+      const { error: deleteError } = await supabase
+        .from('car_clause_links')
+        .delete()
+        .eq('car_report_id', carId)
+        .eq('clause_id', clauseId)
+
+      if (deleteError) throw deleteError
+
+      setLinkedCarsMap(prev => {
+        const list = prev[clauseId] || []
+        return {
+          ...prev,
+          [clauseId]: list.filter(car => car.id !== carId)
+        }
+      })
+    } catch (err) {
+      console.error('Failed to remove CAR link:', err)
+      setError('Failed to remove CAR link: ' + err.message)
+    }
+  }
+
   return {
+
     activeTab,
     setActiveTab,
     schedules,
@@ -696,6 +736,14 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     fetchAuditReports,
     fetchRunDetails,
     handlePrintReport,
-    handleScheduleSubmit
+    handleScheduleSubmit,
+    handleRemoveCarLink,
+    selectedCar,
+    isCarDetailsModalOpen,
+    openCarDetails: handleOpenCarDetails,
+    closeCarDetails: handleCloseCarDetails,
+    onSelectCar: handleOpenCarDetails
   }
 }
+
+

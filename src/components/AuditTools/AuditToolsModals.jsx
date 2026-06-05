@@ -11,9 +11,13 @@ export function AuditChecklistSection({
   handleSaveResults,
   setActiveRun,
   fetchData,
-  linkedCarsMap
+  linkedCarsMap,
+  handleRemoveCarLink,
+  onSelectCar
 }) {
   if (!activeRun) return null
+
+
 
   return (
     <div className="settings-container--profile" style={{ minHeight: 'auto', padding: '24px', flexDirection: 'column' }}>
@@ -134,15 +138,48 @@ export function AuditChecklistSection({
                       return (
                         <span
                           key={car.id}
+                          onClick={() => {
+                            console.log('CAR badge clicked! car:', car);
+                            console.log('onSelectCar function:', onSelectCar);
+                            if (onSelectCar) {
+                              onSelectCar(car);
+                            } else {
+                              console.warn('onSelectCar is undefined!');
+                            }
+                          }}
                           style={{
                             display: 'inline-flex', alignItems: 'center', gap: '4px',
                             fontSize: '11px', fontWeight: '600',
                             background: s.bg, color: s.text,
                             border: `1px solid ${s.border}`,
-                            borderRadius: '4px', padding: '2px 8px'
+                            borderRadius: '4px', padding: '2px 8px',
+                            cursor: 'pointer'
                           }}
                         >
                           📋 {car.reference_no} <span style={{ opacity: 0.7, fontWeight: 'normal' }}>({s.label})</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRemoveCarLink && handleRemoveCarLink(car.id, clause.id)
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: s.text,
+                              cursor: 'pointer',
+                              padding: '0 0 0 4px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              fontSize: '10px',
+                              opacity: 0.7
+                            }}
+                            title="Remove Link"
+                            onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
+                            onMouseOut={(e) => e.currentTarget.style.opacity = '0.7'}
+                          >
+                            ✕
+                          </button>
                         </span>
                       )
                     })}

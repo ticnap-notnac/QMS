@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X as CloseIcon, Clipboard, CheckCircle, AlertTriangle, User, Calendar, Sparkles } from 'lucide-react'
 import { generateAiSuggestionFromText } from '../../services/suggestionService'
+import { supabase } from '../../utils/supabase'
 
 export default function CARDetailsModal({
   isOpen,
@@ -20,6 +22,9 @@ export default function CARDetailsModal({
   const [suggesting, setSuggesting] = useState(false)
   const [error, setError] = useState('')
 
+  const [linkedClauses, setLinkedClauses] = useState([])
+  const [loadingClauses, setLoadingClauses] = useState(false)
+
   // Sync state with selected CAR details
   useEffect(() => {
     if (car) {
@@ -30,6 +35,42 @@ export default function CARDetailsModal({
       setError('')
     }
   }, [car])
+
+  // Fetch linked clauses
+  useEffect(() => {
+    if (!car?.id) {
+      setLinkedClauses([])
+      return
+    }
+
+    const fetchLinkedClauses = async () => {
+      setLoadingClauses(true)
+      console.log('CARDetailsModal: fetching linked clauses for car.id =', car.id)
+      try {
+        const { data, error } = await supabase
+          .from('car_clause_links')
+          .select('clause_id, iso_clauses(clause_number, title)')
+          .eq('car_report_id', car.id)
+
+        console.log('CARDetailsModal: query result:', { data, error })
+
+        if (error) throw error
+
+        const clausesMapped = (data || [])
+          .map(row => row.iso_clauses)
+          .filter(Boolean)
+        setLinkedClauses(clausesMapped)
+      } catch (err) {
+        console.error('Error fetching linked clauses for CAR:', err)
+      } finally {
+        setLoadingClauses(false)
+      }
+    }
+
+
+    fetchLinkedClauses()
+  }, [car?.id])
+
 
   if (!isOpen || !car) return null
 
@@ -117,7 +158,7 @@ export default function CARDetailsModal({
     return 'Open'
   }
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div
         className="modal-card"
@@ -187,6 +228,37 @@ export default function CARDetailsModal({
               whiteSpace: 'pre-wrap'
             }}>{car.details_of_nonconformance}</div>
           </div>
+
+          {/* Linked ISO Clauses */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label className="label-field" style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase' }}>Linked ISO Clauses</label>
+            <div style={{
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.05)',
+              padding: '12px',
+              borderRadius: '6px',
+              fontSize: '13px',
+              color: '#e2e8f0',
+              lineHeight: '1.5'
+            }}>
+              {loadingClauses ? (
+                <span style={{ color: '#64748b' }}>Loading linked clauses...</span>
+              ) : linkedClauses.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {linkedClauses.map((cl, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: '#22d3ee', fontWeight: 'bold' }}>Clause {cl.clause_number}</span>
+                      <span>—</span>
+                      <span style={{ color: '#cbd5e1' }}>{cl.title}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <span style={{ color: '#64748b' }}>No linked ISO clauses.</span>
+              )}
+            </div>
+          </div>
+
 
           {/* ──────────────────────────────────────────────────────── */}
           {/* CAPA SECTION */}
@@ -431,6 +503,7 @@ export default function CARDetailsModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

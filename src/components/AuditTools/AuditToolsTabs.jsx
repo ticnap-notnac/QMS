@@ -1,4 +1,6 @@
+import { useState, useEffect, useMemo } from 'react'
 import { BookOpen, LoaderCircle, Calendar, Plus, CheckCircle, Clock } from 'lucide-react'
+import SearchableDropdown from '../Forms/SearchableDropdown'
 
 export function AuditLogsTab({
   isInsideSettings,
@@ -270,6 +272,26 @@ export function AuditSchedulesTab({
   schedules,
   handleStartAudit
 }) {
+  const auditorOptions = useMemo(() => {
+    return auditors.map(aud => ({
+      id: aud.auth_id,
+      label: `${aud.first_name} ${aud.last_name} (${aud.role_id === 1 ? 'Admin' : 'Auditor'})`
+    }))
+  }, [auditors])
+
+  const [auditorSearchValue, setAuditorSearchValue] = useState('')
+
+  useEffect(() => {
+    if (!auditorId) {
+      setAuditorSearchValue('')
+      return
+    }
+    const found = auditorOptions.find(opt => opt.id === auditorId)
+    if (found) {
+      setAuditorSearchValue(found.label)
+    }
+  }, [auditorId, auditorOptions])
+
   return (
     <div className="tab-content" style={isInsideSettings ? { marginTop: '20px' } : {}}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px' }}>
@@ -326,22 +348,19 @@ export function AuditSchedulesTab({
               </div>
 
               <div className="form-group">
-                <label htmlFor="auditor-select">Assign Auditor</label>
-                <select
-                  id="auditor-select"
-                  className="form-input"
-                  value={auditorId}
-                  onChange={(e) => setAuditorId(e.target.value)}
-                >
-                  <option value="">Select an auditor...</option>
-                  {auditors.map(aud => (
-                    <option key={aud.id} value={aud.auth_id}>
-                      {aud.first_name} {aud.last_name} ({aud.role_id === 1 ? 'Admin' : 'Auditor'})
-                    </option>
-                  ))}
-                </select>
+                <SearchableDropdown
+                  label="Assign Auditor"
+                  value={auditorSearchValue}
+                  onValueChange={setAuditorSearchValue}
+                  options={auditorOptions}
+                  placeholder="Search and select auditor..."
+                  onSelectOption={(option) => {
+                    setAuditorId(option.id)
+                  }}
+                />
               </div>
             </div>
+
 
             {error && (
               <div className="iso-inline-message iso-inline-message--error" style={{ marginBottom: '16px' }}>

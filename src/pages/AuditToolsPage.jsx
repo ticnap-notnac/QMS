@@ -3,7 +3,9 @@ import { useLocation, useSearchParams } from 'react-router-dom'
 import useAuditToolsLogic from '../hooks/useAuditToolsLogic'
 import { AuditLogsTab, AuditReportsTab, AuditSchedulesTab } from '../components/AuditTools/AuditToolsTabs'
 import { AuditChecklistSection, AuditRunDetailsModal } from '../components/AuditTools/AuditToolsModals'
+import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
 import './PagesStyles.css'
+
 
 export default function AuditToolsPage({ authUserId }) {
   const location = useLocation()
@@ -48,21 +50,30 @@ export default function AuditToolsPage({ authUserId }) {
     return null
   }
 
-  if (activeRun) {
-    return (
-      <div className={isInsideSettings ? "settings-content-inner" : "audit-main"} style={{ width: '100%' }}>
-        <AuditChecklistSection {...logic} />
-      </div>
-    )
-  }
-
   return (
     <div className={isInsideSettings ? "settings-content-inner" : "audit-main"} style={{ width: '100%' }}>
-      {!isInsideSettings && <h1>Audit Tools</h1>}
-      {isInsideSettings && <h2 className="settings-section-title">Audit Tools</h2>}
-      {renderTabs()}
-      {renderTabContent()}
-      <AuditRunDetailsModal {...logic} />
+      {activeRun ? (
+        <AuditChecklistSection {...logic} />
+      ) : (
+        <>
+          {!isInsideSettings && <h1>Audit Tools</h1>}
+          {isInsideSettings && <h2 className="settings-section-title">Audit Tools</h2>}
+          {renderTabs()}
+          {renderTabContent()}
+          <AuditRunDetailsModal {...logic} />
+        </>
+      )}
+      <CARDetailsModal
+        isOpen={logic.isCarDetailsModalOpen}
+        onClose={logic.closeCarDetails}
+        car={logic.selectedCar}
+        onSubmitCapa={null}
+        onVerify={null}
+        userRole="auditor"
+        authUserId={authUserId}
+        readOnly={true}
+      />
     </div>
   )
 }
+
