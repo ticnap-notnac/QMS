@@ -53,6 +53,22 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
     }
   }
 
+  /* 🎯 THE FIX: Shared configuration options for structural symmetry across all tag blocks */
+  const unifiedBadgeStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '95px',        /* Enforces matching widths across various word lengths */
+    height: '28px',          /* Matches row block height settings completely */
+    padding: '0 12px',       /* Balanced internal padding values */
+    borderRadius: '6px',     /* Standard structural corner rounding style */
+    fontSize: '11px',
+    fontWeight: '700',
+    letterSpacing: '0.5px',
+    textAlign: 'center',
+    boxSizing: 'border-box'
+  }
+
   return (
     <div className="reports-card" id={`report-card-${report.id}`}>
       {/* ── Header ─────────────────────────────────────────────────────── */}
@@ -69,17 +85,26 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
           </div>
         </div>
 
-        <div className="badges-row">
-          <span className="status-badge" style={statusStyle}>
+        <div className="badges-row" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {/* Status Badge */}
+          <span style={{ ...unifiedBadgeStyle, ...statusStyle }}>
             {String(report.status || 'open').toUpperCase()}
           </span>
-          <span className="day-badge" style={severityStyle}>
+
+          {/* Severity Badge */}
+          <span style={{ ...unifiedBadgeStyle, ...severityStyle }}>
             {String(report.severity || 'low').toUpperCase()}
           </span>
+
+          {/* Assigned Status Badge */}
           {isAssigned && (
             <span
-              className="status-badge"
-              style={{ background: 'rgba(245, 158, 11, 0.2)', color: '#fde68a', borderColor: 'rgba(245, 158, 11, 0.35)' }}
+              style={{ 
+                ...unifiedBadgeStyle, 
+                background: 'rgba(245, 158, 11, 0.15)', 
+                color: '#fde68a', 
+                border: '1px solid rgba(245, 158, 11, 0.35)' 
+              }}
             >
               ASSIGNED
             </span>
@@ -148,7 +173,6 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
 
       {/* ── Action row ──────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
-
         {canAssignReports && !isAssigned && !isClosed && (
           <button
             type="button"

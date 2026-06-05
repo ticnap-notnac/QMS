@@ -67,15 +67,14 @@ export default function CARDetailsModal({
       }
     }
 
-
     fetchLinkedClauses()
   }, [car?.id])
-
 
   if (!isOpen || !car) return null
 
   const isUserRecipient = true // Allow processing. In production, can check if current user matches car.recipient.
   const isAuditorOrAdmin = userRole === 'admin' || userRole === 'auditor'
+
   const handleSuggestActions = async () => {
     setSuggesting(true)
     setError('')
@@ -169,20 +168,46 @@ export default function CARDetailsModal({
           maxWidth: '95vw',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          position: 'relative' // Anchors absolute child tags securely
         }}
       >
-        {/* Header */}
-        <button type="button" onClick={onClose} className="modal-close-button" style={{ zIndex: 10 }}>
+        {/* ✕ ABSOLUTE CLOSE ICON WITH RESOLVED POSITION TARGETS */}
+        <button 
+          type="button" 
+          onClick={onClose} 
+          className="modal-close-button" 
+          style={{ 
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            zIndex: 15,
+            background: 'none',
+            border: 'none',
+            color: 'var(--muted, #64748b)',
+            cursor: 'pointer'
+          }}
+        >
           <CloseIcon size={18} />
         </button>
 
-        <div className="modal-header-row" style={{ flexShrink: 0, marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 className="reports-update-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* HEADER BLOCK — SHIFTED AWAY FROM ACTION ZONE COLLISION */}
+        <div 
+          className="modal-header-row" 
+          style={{ 
+            flexShrink: 0, 
+            marginBottom: '16px', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            paddingRight: '40px' // 🎯 THE FIX: Keeps elements left of the '✕' close handle area
+          }}
+        >
+          <h3 className="reports-update-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
             <Clipboard size={20} className="icon-cyan" />
             CAR Details - {car.reference_no}
           </h3>
-          <span className={`iso-status-pill ${getStatusBadgeClass(car.status)}`}>
+          <span className={`iso-status-pill ${getStatusBadgeClass(car.status)}`} style={{ margin: 0, whiteSpace: 'nowrap' }}>
             {getStatusLabel(car.status)}
           </span>
         </div>
@@ -259,11 +284,7 @@ export default function CARDetailsModal({
             </div>
           </div>
 
-
-          {/* ──────────────────────────────────────────────────────── */}
           {/* CAPA SECTION */}
-          {/* ──────────────────────────────────────────────────────── */}
-          
           {car.status === 'open' && !readOnly ? (
             isUserRecipient ? (
               <form onSubmit={handleCapaSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
@@ -344,7 +365,6 @@ export default function CARDetailsModal({
               </div>
             )
           ) : (
-            // Read-Only CAPA summary if submitted or read-only mode is active
             (car.root_cause_analysis || car.corrective_action || car.preventive_action) ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
                 <h4 style={{ color: '#10b981', fontSize: '14px', margin: 0 }}>Corrective & Preventive Actions (CAPA)</h4>
@@ -381,10 +401,7 @@ export default function CARDetailsModal({
             )
           )}
 
-          {/* ──────────────────────────────────────────────────────── */}
           {/* VERIFICATION OF EFFECTIVENESS (VoE) SECTION */}
-          {/* ──────────────────────────────────────────────────────── */}
-
           {car.status === 'under_verification' && !readOnly ? (
             isAuditorOrAdmin ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
@@ -431,10 +448,7 @@ export default function CARDetailsModal({
               </div>
             )
           ) : (
-            // Read-Only VoE summary if closed or read-only mode is active
-            car.verification_notes ? (
-              null // Will render under-verification notes below
-            ) : (
+            car.verification_notes ? null : (
               readOnly && car.status === 'under_verification' && (
                 <div className="empty-state" style={{ padding: '16px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
                   Under verification. Action plan submitted, pending review.

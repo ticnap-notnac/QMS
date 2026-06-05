@@ -88,11 +88,14 @@ export default function ISOPage({ userRole, userName }) {
         </div>
 
         <div className="metric-card metric-card--padded" style={{ margin: 0, padding: '32px' }}>
-          <h3 className="metric-card-title iso-review-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* 🎯 THE FIX: Bottom margin added to cleanly decouple header elements from riding up */}
+          <h3 className="metric-card-title iso-review-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 10px 0' }}>
             <AlertTriangle size={18} className="icon-amber" />
             Gaps & Deficiencies Action Center
           </h3>
-          <p style={{ color: '#94a3b8', fontSize: '13.5px', marginTop: '-12px', marginBottom: '20px', lineHeight: '1.4' }}>
+          
+          {/* 🎯 THE FIX: Enhanced line-height interval parameters to enforce visual structure safety margins */}
+          <p style={{ color: '#94a3b8', fontSize: '13.5px', margin: '0 0 20px 0', lineHeight: '1.6' }}>
             Review non-compliant clauses identified during audits and generate Corrective Action Requests (CAR) to resolve them.
           </p>
           

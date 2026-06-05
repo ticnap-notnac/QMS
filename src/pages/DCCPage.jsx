@@ -1,4 +1,3 @@
-
 import DCCFolderContent from '../components/DCCFolderContent.jsx'
 import { useDCCLogic } from '../hooks/useDCCLogic.js'
 import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
@@ -49,50 +48,51 @@ export default function DCCPage({
   } = useDCCLogic()
 
   return (
-    <div className="dcc-root">
-      <div className="dcc-main-wrapper">
-        <div className="glass-card-dcc">
-          <DCCFolderContent
-            // folder nav
-            selectedFolder={selectedFolder}
-            onCloseFolder={closeFolder}
-            onOpenFolder={openFolder}
-            folderItems={FOLDER_ITEMS}
-            // search
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            // recently viewed
-            recentlyViewed={recentlyViewed}
-            // ISO
-            standards={standards}
-            loadingStandards={loadingStandards}
-            selectedStandard={selectedStandard}
-            clauses={clauses}
-            loadingClauses={loadingClauses}
-            onSelectStandard={openStandard}
-            // Task Reports sub-folder
-            selectedTaskFolder={selectedTaskFolder}
-            onOpenTaskFolder={openTaskFolder}
-            onCloseTaskFolder={closeTaskFolder}
-            // NCR
-            ncrReports={ncrReports}
-            loadingNcr={loadingNcr}
-            // CAR
-            carReports={carReports}
-            loadingCar={loadingCar}
-            onSelectCar={openCarDetails}
-            // QDDR
-            qddrReports={qddrReports}
-            loadingQddr={loadingQddr}
-            // Audit
-            auditReports={auditReports}
-            loadingAudit={loadingAudit}
-            auditSchedules={auditSchedules}
-            loadingAuditSchedules={loadingAuditSchedules}
-            // access control
-            userRole={userRole}
-          />
-        </div>
+    /* 🎯 THE FIX: Changed from dcc-root to dcc-page-container to standardize page layout width constraints */
+    <main className="dashboard page-root dcc-page-container">
+      
+      {/* 🎯 THE FIX: Changed to dcc-glass-main-card to widen the glass card frame and match the other pages */}
+      <div className="dcc-glass-main-card">
+        <DCCFolderContent
+          // folder nav
+          selectedFolder={selectedFolder}
+          onCloseFolder={closeFolder}
+          onOpenFolder={openFolder}
+          folderItems={FOLDER_ITEMS}
+          // search
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          // recently viewed
+          recentlyViewed={recentlyViewed}
+          // ISO
+          standards={standards}
+          loadingStandards={loadingStandards}
+          selectedStandard={selectedStandard}
+          clauses={clauses}
+          loadingClauses={loadingClauses}
+          onSelectStandard={openStandard}
+          // Task Reports sub-folder
+          selectedTaskFolder={selectedTaskFolder}
+          onOpenTaskFolder={openTaskFolder}
+          onCloseTaskFolder={closeTaskFolder}
+          // NCR
+          ncrReports={ncrReports}
+          loadingNcr={loadingNcr}
+          // CAR
+          carReports={carReports}
+          loadingCar={loadingCar}
+          onSelectCar={openCarDetails}
+          // QDDR
+          qddrReports={qddrReports}
+          loadingQddr={loadingQddr}
+          // Audit
+          auditReports={auditReports}
+          loadingAudit={loadingAudit}
+          auditSchedules={auditSchedules}
+          loadingAuditSchedules={loadingAuditSchedules}
+          // access control
+          userRole={userRole}
+        />
       </div>
 
       <CARDetailsModal
@@ -105,8 +105,6 @@ export default function DCCPage({
         authUserId={authUserId}
         readOnly={true}
       />
-    </div>
+    </main>
   )
 }
-
-

@@ -25,8 +25,9 @@ export default function QDDRReportsList({
 
   return (
     <div className="glass-card-dcc" style={{ padding: '20px' }}>
-      <div className="dcc-scrollable-table-box">
-        <table className="iso-table" style={{ width: '100%' }}>
+      {/* 🚀 Fluid Full-Width Scroll Wrapper Shield */}
+      <div className="reports-table-scroll-wrap">
+        <table className="iso-table">
           <thead>
             <tr>
               <th>Ref No.</th>
@@ -55,17 +56,23 @@ export default function QDDRReportsList({
                   title="Click to view details and resolve discrepancy"
                 >
                   <td style={{ fontWeight: 600 }}>{qddr.reference_no ?? '—'}</td>
-                  <td>{qddr.location ?? '—'}</td>
+                  
+                  {/* 🎯 Content Optimization: Spacing out text fields natively with text-cell hooks */}
+                  <td><div className="table-text-cell">{qddr.location ?? '—'}</div></td>
                   <td>
-                    {qddr.date ? new Date(qddr.date).toLocaleDateString() : '—'}
-                    {qddr.time ? ` ${qddr.time.slice(0, 5)}` : ''}
+                    <div className="table-text-cell" style={{ whiteSpace: 'nowrap' }}>
+                      {qddr.date ? new Date(qddr.date).toLocaleDateString() : '—'}
+                      {qddr.time ? ` ${qddr.time.slice(0, 5)}` : ''}
+                    </div>
                   </td>
-                  <td>{qddr.trucker_broker ?? '—'}</td>
-                  <td>{qddr.plate_number ?? '—'}</td>
-                  <td>{qddr.po_reference ?? '—'}</td>
-                  <td>{qddr.material_description ?? '—'}</td>
-                  <td>{qddr.material_code ?? '—'}</td>
-                  <td>{qddr.qty ?? '—'}</td>
+                  <td><div className="table-text-cell">{qddr.trucker_broker ?? '—'}</div></td>
+                  <td><div className="table-text-cell">{qddr.plate_number ?? '—'}</div></td>
+                  <td><div className="table-text-cell">{qddr.po_reference ?? '—'}</div></td>
+                  <td><div className="table-text-cell">{qddr.material_description ?? '—'}</div></td>
+                  <td><div className="table-text-cell">{qddr.material_code ?? '—'}</div></td>
+                  <td><div className="table-text-cell" style={{ fontWeight: 600 }}>{qddr.qty ?? '—'}</div></td>
+                  
+                  {/* 📋 Description Text Columns — Protected by Width-Limiting & Line Wrapping Rules */}
                   <td>
                     <div className="clause-description" title={qddr.reason_of_discrepancy}>
                       {qddr.reason_of_discrepancy ?? <span className="muted">No reason</span>}
@@ -81,6 +88,7 @@ export default function QDDRReportsList({
                       {qddr.preventive_action ?? <span className="muted">—</span>}
                     </div>
                   </td>
+                  
                   <td>
                     <span className={`iso-status-pill ${
                       statusClean === 'closed' ? 'is-closed' : 'is-inactive'

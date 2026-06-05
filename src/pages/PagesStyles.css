@@ -3147,3 +3147,95 @@ div[class*="table-wrap"]::-webkit-scrollbar-thumb:hover,
   word-break: break-all !important;
   overflow-wrap: break-word !important;
 }
+
+/* ==========================================================================
+   🏷️ UNIFIED REPORT CARD STATUS BADGES
+   ========================================================================== */
+
+/* Target the header status tags together */
+.app-navbar-inner ~ .page-container .glass-card-dcc span, 
+.app-navbar-inner ~ main span[class*="status"],
+div:has(> .nav-user-info) ~ div span,
+.severity-critical, .severity-high, .severity-medium, .severity-low {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  
+  /* 🎯 THE FIX: Force them to share identical sizing variables */
+  min-width: 90px !important;       /* Ensures tags are the exact same width */
+  height: 28px !important;          /* Enforces identical block heights */
+  padding: 0 12px !important;       /* Uniform internal horizontal spacing */
+  box-sizing: border-box !important;
+  
+  /* Typography & Presentation Consistency */
+  border-radius: 6px !important;    /* Clean, identical corner rounding rounding */
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  text-align: center !important;
+}
+
+/* ==========================================================================
+   🖼️ REPORTS PAGE FULL-WIDTH EXPANSION MATRIX
+   ========================================================================== */
+
+/* Force the reports background wrap to take full structural width available */
+.reports-main-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+/* Widen out the container element for your data lists */
+.facebook-feed-layout-wrapper {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Make your list sub-cards take up the entire width of the parent layout */
+.glass-card-dcc {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 🎯 THE OVERRIDE FIX: Adjust the text clipping limits inside columns */
+.reports-table-scroll-wrap .iso-table td div.clause-description,
+.reports-table-scroll-wrap .iso-table .clause-description {
+  max-width: 300px !important;     /* Restricts long detail blocks to prevent infinity stretching */
+  white-space: normal !important;   /* Let descriptions break cleanly onto new text lines */
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* ==========================================================================
+   📂 DCC PAGE FULL-WIDTH GLASS CONTAINER ALIGNMENT
+   ========================================================================== */
+
+/* Forces the main DCC content frame to stretch to match the exact matrix of the ISO/Reports pages */
+.dcc-page-container {
+  width: 100% !important;
+  max-width: 1400px !important; /* Standardizes the maximum layout boundary */
+  margin: 0 auto !important;
+  padding: 24px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Standardizes the glass container dimensions on the DCC page view */
+.dcc-glass-main-card {
+  width: 100% !important;
+  min-height: 75vh !important; /* Matches the vertical height presence of your other modules */
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 12px !important;
+  padding: 32px !important; /* Gives content elegant internal breathing room */
+  box-sizing: border-box !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+}

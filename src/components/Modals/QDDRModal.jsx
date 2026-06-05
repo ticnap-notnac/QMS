@@ -55,16 +55,52 @@ function QDDRModal({
           maxWidth: '95vw',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          position: 'relative' // Maintained stability for child absolute layouts
         }}
       >
-        <button type="button" onClick={onClose} className="modal-close-button" style={{ zIndex: 10 }}>
+        {/* ── ✕ ABSOLUTE CLOSE BUTTON (Safely isolated in the upper right) ── */}
+        <button 
+          type="button" 
+          onClick={onClose} 
+          className="modal-close-button" 
+          style={{ 
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            zIndex: 10,
+            background: 'none',
+            border: 'none',
+            color: 'var(--muted, #64748b)',
+            cursor: 'pointer'
+          }}
+        >
           <CloseIcon size={18} />
         </button>
-        <div className="modal-header-row" style={{ flexShrink: 0, marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 className="reports-update-title">{isLinkingMode ? 'Select NCR to Link' : 'Quality Defects / Damaged / Discrepancy Report (QDDR)'}</h3>
+
+        {/* ── 📋 QDDR HEADER ROW — SHIFTED SAfELY AWAY FROM THE CLOSE TRIGGER ── */}
+        <div 
+          className="modal-header-row" 
+          style={{ 
+            flexShrink: 0, 
+            marginBottom: '16px', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            paddingRight: '36px' // 🎯 Shifts content leftward to give the absolute close icon its independent safe zone
+          }}
+        >
+          <h3 className="reports-update-title" style={{ margin: 0 }}>
+            {isLinkingMode ? 'Select NCR to Link' : 'Quality Defects / Damaged / Discrepancy Report (QDDR)'}
+          </h3>
+          
           {!isLinkingMode && (
-            <button type="button" className="btn-secondary-light" onClick={() => setIsLinkingMode(true)}>
+            <button 
+              type="button" 
+              className="btn-secondary-light" 
+              onClick={() => setIsLinkingMode(true)}
+              style={{ margin: 0, whiteSpace: 'nowrap' }}
+            >
               {form.ncr_id ? `Linked NCR: ${form.linked_ncr_reference || form.ncr_id} (Change)` : 'Link NCR'}
             </button>
           )}
@@ -125,256 +161,257 @@ function QDDRModal({
               </div>
             </div>
           ) : (
-          <form className="modal-form" onSubmit={onSubmit} style={{ gap: '16px', display: 'flex', flexDirection: 'column' }}>
+            <form className="modal-form" onSubmit={onSubmit} style={{ gap: '16px', display: 'flex', flexDirection: 'column' }}>
 
-            {/* Row 1: Location, Date, Time */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '14px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <SearchableDropdown
-                  label="Location:"
-                  value={form.location}
-                  onValueChange={(val) => handleChange('location', val)}
-                  options={locations}
-                  loading={locationsLoading}
-                  placeholder="Search location..."
-                  onSelectOption={(opt) => handleChange('location', opt.label)}
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Date:</label>
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => handleChange('date', e.target.value)}
-                  className="input-field"
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Time:</label>
-                <input
-                  type="time"
-                  value={form.time}
-                  onChange={(e) => handleChange('time', e.target.value)}
-                  className="input-field"
-                />
-              </div>
-            </div>
-
-            {/* Row 2: Trucker/Broker, Plate Number, Container Number */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Trucker / Broker:</label>
-                <input
-                  type="text"
-                  value={form.trucker_broker}
-                  onChange={(e) => handleChange('trucker_broker', e.target.value)}
-                  className="input-field"
-                  placeholder="e.g. YCH logistics"
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Plate Number:</label>
-                <input
-                  type="text"
-                  value={form.plate_number}
-                  onChange={(e) => handleChange('plate_number', e.target.value)}
-                  className="input-field"
-                  placeholder="e.g. ABC 123"
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Container Number:</label>
-                <input
-                  type="text"
-                  value={form.container_number}
-                  onChange={(e) => handleChange('container_number', e.target.value)}
-                  className="input-field"
-                  placeholder="e.g. CAXU6439352"
-                />
-              </div>
-            </div>
-
-            {/* Row 3: PO Reference, DR/WB Number, Brand/Supplier */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">PO Reference:</label>
-                <input
-                  type="text"
-                  value={form.po_reference}
-                  onChange={(e) => handleChange('po_reference', e.target.value)}
-                  className="input-field"
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">DR / WB Number:</label>
-                <input
-                  type="text"
-                  value={form.drwb_number}
-                  onChange={(e) => handleChange('drwb_number', e.target.value)}
-                  className="input-field"
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Brand / Supplier:</label>
-                <input
-                  type="text"
-                  value={form.brand_supplier}
-                  onChange={(e) => handleChange('brand_supplier', e.target.value)}
-                  className="input-field"
-                />
-              </div>
-            </div>
-
-            <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' }} />
-
-            {/* Row 4: Material Details */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 0.8fr', gap: '14px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Material Description:</label>
-                <input
-                  type="text"
-                  value={form.material_description}
-                  onChange={(e) => handleChange('material_description', e.target.value)}
-                  className="input-field"
-                  placeholder="Description..."
-                  required
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Material Code:</label>
-                <input
-                  type="text"
-                  value={form.material_code}
-                  onChange={(e) => handleChange('material_code', e.target.value)}
-                  className="input-field"
-                  placeholder="Code..."
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Batch Code / ISU No:</label>
-                <input
-                  type="text"
-                  value={form.batch_code_su_number}
-                  onChange={(e) => handleChange('batch_code_su_number', e.target.value)}
-                  className="input-field"
-                  placeholder="Batch..."
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Quantity:</label>
-                <input
-                  type="number"
-                  value={form.qty}
-                  onChange={(e) => handleChange('qty', e.target.value)}
-                  className="input-field"
-                  placeholder="Qty..."
-                />
-              </div>
-            </div>
-
-            <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' }} />
-
-            <h4 style={{ color: '#fff', fontSize: '13px', margin: '0 0 4px 0', textAlign: 'center', letterSpacing: '0.05em' }}>TYPE OF DISCREPANCY</h4>
-            
-            {/* Discrepancies Grid & Others */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-              {checkboxFields.map(field => (
-                <label key={field.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#cbd5e1', cursor: 'pointer' }}>
+              {/* Row 1: Location, Date, Time */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '14px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <SearchableDropdown
+                    label="Location:"
+                    value={form.location}
+                    onValueChange={(val) => handleChange('location', val)}
+                    options={locations}
+                    loading={locationsLoading}
+                    placeholder="Search location..."
+                    onSelectOption={(opt) => handleChange('location', opt.label)}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">Date:</label>
                   <input
-                    type="checkbox"
-                    checked={form[field.key]}
-                    onChange={(e) => handleChange(field.key, e.target.checked)}
-                  /> {field.label}
-                </label>
-              ))}
-            </div>
+                    type="date"
+                    value={form.date}
+                    onChange={(e) => handleChange('date', e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">Time:</label>
+                  <input
+                    type="time"
+                    value={form.time}
+                    onChange={(e) => handleChange('time', e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+              </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', marginTop: '6px' }}>
-              <label className="label-field">Others, Pls. Specify:</label>
-              <input
-                type="text"
-                value={form.others}
-                onChange={(e) => handleChange('others', e.target.value)}
-                className="input-field"
-                placeholder="Specify other discrepancy..."
-              />
-            </div>
+              {/* Row 2: Trucker/Broker, Plate Number, Container Number */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">Trucker / Broker:</label>
+                  <input
+                    type="text"
+                    value={form.trucker_broker}
+                    onChange={(e) => handleChange('trucker_broker', e.target.value)}
+                    className="input-field"
+                    placeholder="e.g. YCH logistics"
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">Plate Number:</label>
+                  <input
+                    type="text"
+                    value={form.plate_number}
+                    onChange={(e) => handleChange('plate_number', e.target.value)}
+                    className="input-field"
+                    placeholder="e.g. ABC 123"
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">Container Number:</label>
+                  <input
+                    type="text"
+                    value={form.container_number}
+                    onChange={(e) => handleChange('container_number', e.target.value)}
+                    className="input-field"
+                    placeholder="e.g. CAXU6439352"
+                  />
+                </div>
+              </div>
 
-            <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' }} />
+              {/* Row 3: PO Reference, DR/WB Number, Brand/Supplier */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">PO Reference:</label>
+                  <input
+                    type="text"
+                    value={form.po_reference}
+                    onChange={(e) => handleChange('po_reference', e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">DR / WB Number:</label>
+                  <input
+                    type="text"
+                    value={form.drwb_number}
+                    onChange={(e) => handleChange('drwb_number', e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">Brand / Supplier:</label>
+                  <input
+                    type="text"
+                    value={form.brand_supplier}
+                    onChange={(e) => handleChange('brand_supplier', e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+              </div>
 
-            {/* Details: Reason, Corrective, Preventive */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label className="label-field">Reason of Discrepancy:</label>
-                <textarea
-                  value={form.reason_of_discrepancy}
-                  onChange={(e) => handleChange('reason_of_discrepancy', e.target.value)}
+              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' }} />
+
+              {/* Row 4: Material Details */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 0.8fr', gap: '14px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">Material Description:</label>
+                  <input
+                    type="text"
+                    value={form.material_description}
+                    onChange={(e) => handleChange('material_description', e.target.value)}
+                    className="input-field"
+                    placeholder="Description..."
+                    required
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">Material Code:</label>
+                  <input
+                    type="text"
+                    value={form.material_code}
+                    onChange={(e) => handleChange('material_code', e.target.value)}
+                    className="input-field"
+                    placeholder="Code..."
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">Batch Code / ISU No:</label>
+                  <input
+                    type="text"
+                    value={form.batch_code_su_number}
+                    onChange={(e) => handleChange('batch_code_su_number', e.target.value)}
+                    className="input-field"
+                    placeholder="Batch..."
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">Quantity:</label>
+                  <input
+                    type="number"
+                    value={form.qty}
+                    onChange={(e) => handleChange('qty', e.target.value)}
+                    className="input-field"
+                    placeholder="Qty..."
+                  />
+                </div>
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' }} />
+
+              <h4 style={{ color: '#fff', fontSize: '13px', margin: '0 0 4px 0', textAlign: 'center', letterSpacing: '0.05em' }}>TYPE OF DISCREPANCY</h4>
+              
+              {/* Discrepancies Grid & Others */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                {checkboxFields.map(field => (
+                  <label key={field.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#cbd5e1', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={form[field.key]}
+                      onChange={(e) => handleChange(field.key, e.target.checked)}
+                    /> {field.label}
+                  </label>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', marginTop: '6px' }}>
+                <label className="label-field">Others, Pls. Specify:</label>
+                <input
+                  type="text"
+                  value={form.others}
+                  onChange={(e) => handleChange('others', e.target.value)}
                   className="input-field"
-                  required
-                  style={{ height: '80px', padding: '8px', resize: 'none' }}
+                  placeholder="Specify other discrepancy..."
                 />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label className="label-field">Corrective Action:</label>
-                <textarea
-                  value={form.corrective_action}
-                  onChange={(e) => handleChange('corrective_action', e.target.value)}
-                  className="input-field"
-                  style={{ height: '80px', padding: '8px', resize: 'none' }}
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label className="label-field">Preventive Action:</label>
-                <textarea
-                  value={form.preventive_action}
-                  onChange={(e) => handleChange('preventive_action', e.target.value)}
-                  className="input-field"
-                  style={{ height: '80px', padding: '8px', resize: 'none' }}
-                />
-              </div>
-            </div>
 
-            {/* Signature / Approval Roles: Leader, Approved By, Noted By */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginTop: '4px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <SearchableDropdown
-                  label="Leader / Supervisor:"
-                  value={form.leader}
-                  onValueChange={(val) => handleChange('leader', val)}
-                  options={users}
-                  loading={usersLoading}
-                  placeholder="Search leader..."
-                  onSelectOption={(opt) => handleChange('leader', opt.label)}
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <SearchableDropdown
-                  label="Approved By:"
-                  value={form.approved_by}
-                  onValueChange={(val) => handleChange('approved_by', val)}
-                  options={users}
-                  loading={usersLoading}
-                  placeholder="Search user..."
-                  onSelectOption={(opt) => handleChange('approved_by', opt.label)}
-                />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <SearchableDropdown
-                  label="Noted By:"
-                  value={form.noted_by}
-                  onValueChange={(val) => handleChange('noted_by', val)}
-                  options={users}
-                  loading={usersLoading}
-                  placeholder="Search user..."
-                  onSelectOption={(opt) => handleChange('noted_by', opt.label)}
-                />
-              </div>
-            </div>
+              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' }} />
 
-          </form>
+              {/* Details: Reason, Corrective, Preventive */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label className="label-field">Reason of Discrepancy:</label>
+                  <textarea
+                    value={form.reason_of_discrepancy}
+                    onChange={(e) => handleChange('reason_of_discrepancy', e.target.value)}
+                    className="input-field"
+                    required
+                    style={{ height: '80px', padding: '8px', resize: 'none' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label className="label-field">Corrective Action:</label>
+                  <textarea
+                    value={form.corrective_action}
+                    onChange={(e) => handleChange('corrective_action', e.target.value)}
+                    className="input-field"
+                    style={{ height: '80px', padding: '8px', resize: 'none' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label className="label-field">Preventive Action:</label>
+                  <textarea
+                    value={form.preventive_action}
+                    onChange={(e) => handleChange('preventive_action', e.target.value)}
+                    className="input-field"
+                    style={{ height: '80px', padding: '8px', resize: 'none' }}
+                  />
+                </div>
+              </div>
+
+              {/* Signature / Approval Roles: Leader, Approved By, Noted By */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginTop: '4px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <SearchableDropdown
+                    label="Leader / Supervisor:"
+                    value={form.leader}
+                    onValueChange={(val) => handleChange('leader', val)}
+                    options={users}
+                    loading={usersLoading}
+                    placeholder="Search leader..."
+                    onSelectOption={(opt) => handleChange('leader', opt.label)}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <SearchableDropdown
+                    label="Approved By:"
+                    value={form.approved_by}
+                    onValueChange={(val) => handleChange('approved_by', val)}
+                    options={users}
+                    loading={usersLoading}
+                    placeholder="Search user..."
+                    onSelectOption={(opt) => handleChange('approved_by', opt.label)}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <SearchableDropdown
+                    label="Noted By:"
+                    value={form.noted_by}
+                    onValueChange={(val) => handleChange('noted_by', val)}
+                    options={users}
+                    loading={usersLoading}
+                    placeholder="Search user..."
+                    onSelectOption={(opt) => handleChange('noted_by', opt.label)}
+                  />
+                </div>
+              </div>
+
+            </form>
           )}
         </div>
 
+        {/* ── MODAL FOOTER ACTION BAR ── */}
         <div 
           className="modal-footer-actions"
           style={{

@@ -134,20 +134,46 @@ export default function QDDRDetailsModal({
           maxWidth: '95vw',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          position: 'relative' // Holds tracking alignments stable
         }}
       >
-        {/* Header */}
-        <button type="button" onClick={onClose} className="modal-close-button" style={{ zIndex: 10 }}>
+        {/* ✕ ABSOLUTE CLOSE ICON WITH RESOLVED POSITION TARGETS */}
+        <button 
+          type="button" 
+          onClick={onClose} 
+          className="modal-close-button" 
+          style={{ 
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            zIndex: 15,
+            background: 'none',
+            border: 'none',
+            color: 'var(--muted, #64748b)',
+            cursor: 'pointer'
+          }}
+        >
           <CloseIcon size={18} />
         </button>
 
-        <div className="modal-header-row" style={{ flexShrink: 0, marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 className="reports-update-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* HEADER BLOCK — SHIFTED AWAY FROM ACTION ZONE COLLISION */}
+        <div 
+          className="modal-header-row" 
+          style={{ 
+            flexShrink: 0, 
+            marginBottom: '16px', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            paddingRight: '40px' // 🎯 THE FIX: Keeps status pill elements left of the '✕' exit trigger
+          }}
+        >
+          <h3 className="reports-update-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
             <Clipboard size={20} className="icon-cyan" />
             QDDR Details - {qddr.reference_no}
           </h3>
-          <span className={`iso-status-pill ${getStatusBadgeClass(qddr.status)}`}>
+          <span className={`iso-status-pill ${getStatusBadgeClass(qddr.status)}`} style={{ margin: 0, whiteSpace: 'nowrap' }}>
             {getStatusLabel(qddr.status)}
           </span>
         </div>
@@ -251,10 +277,7 @@ export default function QDDRDetailsModal({
             }}>{qddr.reason_of_discrepancy}</div>
           </div>
 
-          {/* ──────────────────────────────────────────────────────── */}
           {/* RESOLUTION SECTION */}
-          {/* ──────────────────────────────────────────────────────── */}
-          
           {!readOnly ? (
             <form onSubmit={handleUpdateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 4px 0' }}>
@@ -407,6 +430,24 @@ export default function QDDRDetailsModal({
             </div>
           )}
 
+        </div>
+
+        {/* Footer Actions */}
+        <div
+          className="modal-footer-actions"
+          style={{
+            flexShrink: 0,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            padding: '14px 0 0 0',
+            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            marginTop: '12px'
+          }}
+        >
+          <button type="button" className="btn-secondary-light" onClick={onClose} style={{ margin: 0, padding: '8px 24px', fontSize: '13px' }}>
+            Close Detail
+          </button>
         </div>
       </div>
     </div>
