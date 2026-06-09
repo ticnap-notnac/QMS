@@ -11,7 +11,7 @@ export async function fetchProductTypes() {
 export const loadProductTypes = fetchProductTypes
 
 export async function createProductType(productName) {
-  return await request('/product-types', { method: 'POST', body: JSON.stringify({ productName }) })
+  return await request('/product-types', { method: 'POST', body: JSON.stringify({ productTypeName: productName }) })
 }
 
 export async function deleteProductType(id) {
