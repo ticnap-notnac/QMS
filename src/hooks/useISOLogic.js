@@ -132,8 +132,24 @@ export default function useISOLogic({ userName }) {
       
       if (findingsError) throw findingsError
  
-      // Fetch active NCRs
-      const { data: ncrData, error: ncrError } = await supabase
+      // Fetch CARs to determine which NCRs are already linked to a CAR
+      const { data: carData, error: carQueryError } = await supabase
+        .from('car_reports')
+        .select('ncr_id')
+
+      if (carQueryError) throw carQueryError
+
+      const linkedNcrIds = new Set()
+      if (carData) {
+        carData.forEach(car => {
+          if (Array.isArray(car.ncr_id)) {
+            car.ncr_id.forEach(id => linkedNcrIds.add(Number(id)))
+          }
+        })
+      }
+
+      // Fetch all NCRs (open and closed) to check for gaps not yet covered by a CAR
+      const { data: rawNcrData, error: ncrError } = await supabase
         .from('ncr_reports')
         .select(`
           id,
@@ -146,9 +162,11 @@ export default function useISOLogic({ userName }) {
             title
           )
         `)
-        .not('status', 'ilike', REPORT_STATUS.CLOSED)
- 
+
       if (ncrError) throw ncrError
+
+      // Only consider NCRs that are NOT yet linked to any CAR
+      const ncrData = (rawNcrData || []).filter(ncr => !linkedNcrIds.has(Number(ncr.id)))
  
       // Group active NCRs by clause_id in memory
       const ncrGroups = {}
