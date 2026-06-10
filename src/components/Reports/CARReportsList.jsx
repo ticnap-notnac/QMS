@@ -1,4 +1,3 @@
-import React from 'react'
 
 export default function CARReportsList({
   carReports,
@@ -41,6 +40,7 @@ export default function CARReportsList({
               <th>Affected Qty</th>
               <th>Nonconformance Details</th>
               <th>Request Date</th>
+              <th>Resolution Time</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -71,6 +71,7 @@ export default function CARReportsList({
                   <td>
                     {car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}
                   </td>
+                  <td>{car.resolution_time ?? '—'}</td>
                   <td>
                     <span className={`iso-status-pill ${
                       statusClean === 'closed' ? 'is-closed' : statusClean === 'under_verification' ? 'is-active' : 'is-inactive'

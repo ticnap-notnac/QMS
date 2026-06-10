@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react'
 import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
@@ -378,6 +378,7 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
                       <th>Affected Qty</th>
                       <th>Nonconformance Details</th>
                       <th>Request Date</th>
+                      <th>Resolution Time</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -409,6 +410,7 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
                           <td>
                             {car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}
                           </td>
+                          <td>{car.resolution_time ?? '—'}</td>
                           <td>
                             <span className={`iso-status-pill ${
                               statusClean === 'closed' ? 'is-closed' : statusClean === 'under_verification' ? 'is-active' : 'is-inactive'
