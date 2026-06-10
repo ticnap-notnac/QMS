@@ -1,5 +1,3 @@
-SYSTEM_WALKTHROUGH.md
-QFlow_System_Walkthrough__Submission.txt
 
 # Logs
 logs
@@ -33,14 +31,4 @@ dist-ssr
 server/.env
 
 # Local planning / documentation drafts
-thesis-roadmap.md
-CODE_REVIEW.md
 SYSTEM_ARCHITECTURE.md
-SYSTEM_ANALYSIS.md
-TECHNICAL_DEFENSE_DOCUMENTATION.md
-file_relationship_map.
-technical_documentation.md
-
-
-# Optional system documentation (if auto-generated locally)
-SYSTEM_WALKTHROUGH.md
