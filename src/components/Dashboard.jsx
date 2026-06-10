@@ -15,15 +15,15 @@ import {
 } from 'recharts'
 import { AlertCircle, Shield, TrendingUp, BarChart2, Clock } from 'lucide-react'
 
-// Helper to parse and calculate resolution time in days
-const parseResolutionTimeToDays = (resTime, start, end) => {
+// Helper to parse and calculate resolution time in hours
+const parseResolutionTimeToHours = (resTime, start, end) => {
   if (resTime) {
     const match = String(resTime).match(/(\d+)\s*(day|hour)/i)
     if (match) {
       const value = parseInt(match[1], 10)
       const unit = match[2].toLowerCase()
-      if (unit.startsWith('hour')) {
-        return Number((value / 24).toFixed(2))
+      if (unit.startsWith('day')) {
+        return value * 24
       }
       return value
     }
@@ -31,7 +31,7 @@ const parseResolutionTimeToDays = (resTime, start, end) => {
   if (start && end) {
     const diff = new Date(end) - new Date(start)
     if (diff > 0) {
-      return Number((diff / (1000 * 60 * 60 * 24)).toFixed(2))
+      return Number((diff / (1000 * 60 * 60)).toFixed(1))
     }
   }
   return null
@@ -59,17 +59,17 @@ const groupResolutionTimesByMonth = (ncrs, cars, qddrs) => {
   }
 
   ncrs.forEach(item => {
-    const val = parseResolutionTimeToDays(item.resolution_time, item.created_at, null)
+    const val = parseResolutionTimeToHours(item.resolution_time, item.created_at, null)
     addValue(item.created_at, val, 'ncr')
   })
 
   cars.forEach(item => {
-    const val = parseResolutionTimeToDays(item.resolution_time, item.created_at || item.request_date, item.verification_date || item.updated_at)
+    const val = parseResolutionTimeToHours(item.resolution_time, item.created_at || item.request_date, item.verification_date || item.updated_at)
     addValue(item.created_at || item.request_date, val, 'car')
   })
 
   qddrs.forEach(item => {
-    const val = parseResolutionTimeToDays(null, item.created_at, item.updated_at)
+    const val = parseResolutionTimeToHours(null, item.created_at, item.updated_at)
     addValue(item.created_at, val, 'qddr')
   })
 
@@ -129,7 +129,7 @@ const CustomResolutionTooltip = ({ active, payload, label }) => {
         <p style={{ margin: 0, fontWeight: 600, color: '#f8fafc', fontSize: '13px' }}>{label}</p>
         {payload.map((entry, idx) => (
           <p key={idx} style={{ margin: '4px 0 0 0', color: entry.color, fontSize: '13px', fontWeight: 600 }}>
-            {entry.name}: {entry.value !== null && entry.value !== undefined ? `${entry.value} days` : '—'}
+            {entry.name}: {entry.value !== null && entry.value !== undefined ? `${entry.value} hours` : '—'}
           </p>
         ))}
       </div>
@@ -398,7 +398,7 @@ export default function Dashboard() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
               <Clock size={16} className="icon-cyan" />
-              <h4 style={{ margin: 0, color: '#f8fafc', fontSize: '14px', fontWeight: 600 }}>Average Resolution Time Trend (Days)</h4>
+              <h4 style={{ margin: 0, color: '#f8fafc', fontSize: '14px', fontWeight: 600 }}>Average Resolution Time Trend (Hours)</h4>
             </div>
             <div style={{ width: '100%', height: '300px' }}>
               {resolutionTrend.length > 0 ? (
