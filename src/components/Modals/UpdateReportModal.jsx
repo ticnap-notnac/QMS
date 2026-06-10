@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { Calendar, FileSearch, Upload as UploadIcon } from 'lucide-react'
 import SearchableDropdown from '@/components/Forms/SearchableDropdown'
+import { REPORT_STATUS } from '../../../shared/constants'
 function FieldCard({ label, value }) {
   return (
     <div>
@@ -46,7 +47,7 @@ export default function UpdateReportModal({
 
   if (!isOpen) return null
 
-  const isClosed = String(report?.status || '').toLowerCase() === 'closed'
+  const isClosed = String(report?.status || '').toUpperCase() === REPORT_STATUS.CLOSED.toUpperCase()
 
   return (
     <div className="modal-overlay">

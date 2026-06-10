@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js'
+import { CAR_STATUS } from '../../shared/constants.js'
 import { extractKeywords, jaccardSimilarity } from '../utils/cbr.js'
 
 const MAX_SUGGESTIONS = 5
@@ -136,7 +137,7 @@ export async function suggestClausesForCar({ description, flags = {} }) {
           clause_id
         )
       `)
-      .eq('status', 'closed')
+      .eq('status', CAR_STATUS.CLOSED)
 
     if (pastCarsError) {
       console.warn('[clauseMatchService] Failed to fetch past CARs for CBR matching:', pastCarsError.message)

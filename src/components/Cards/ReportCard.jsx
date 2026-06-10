@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { formatDate, getStatusStyle, getSeverityStyle, formatAssignedUser } from '@/utils/themeHelpers'
 import { getReportRating, rateReport } from '@/services/ncrService'
 import StarRating from '../UI/StarRating'
+import { REPORT_STATUS } from '../../../shared/constants'
 
 function ReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, canDeleteReport, onUpdate, onAssign, onDelete }) {
   const reporterName = report.reporter_full_name || 'Name of the User'
@@ -12,12 +13,11 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
     departmentNameById.get(String(report.department_id)) ||
     'Department'
   const reportLocation = report.location_name || report.complaint_location || 'Location'
-
   const statusStyle = getStatusStyle(report.status)
   const severityStyle = getSeverityStyle(report.severity)
   const assignmentLabel = formatAssignedUser(report)
   const isAssigned = Boolean(report.assigned_to)
-  const isClosed = String(report.status || '').toLowerCase() === 'closed'
+  const isClosed = String(report.status || '').toUpperCase() === REPORT_STATUS.CLOSED.toUpperCase()
 
   const [ratingStats, setRatingStats] = useState({ average: 0, count: 0, userRating: null })
   const [isRatingLoading, setIsRatingLoading] = useState(false)

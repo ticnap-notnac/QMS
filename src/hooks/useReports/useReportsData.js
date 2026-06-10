@@ -5,6 +5,7 @@ import { fetchLocations } from '@/services/locationService'
 import { fetchProductTypes } from '@/services/productTypeService'
 import { fetchIssueTypes } from '@/services/issueTypeService'
 import { fetchUsers } from '@/services/userService'
+import { REPORT_STATUS } from '../../../shared/constants'
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
@@ -79,9 +80,9 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
         const allData = await fetchAllReports()
         const allArray = Array.isArray(allData) ? allData : []
         
-        const open = allArray.filter(r => !r.investigation_details && String(r.status).trim().toLowerCase() !== 'closed')
-        const resolved = allArray.filter(r => !!r.investigation_details && String(r.status).trim().toLowerCase() !== 'closed')
-        const closed = allArray.filter(r => String(r.status).trim().toLowerCase() === 'closed')
+        const open = allArray.filter(r => !r.investigation_details && String(r.status).trim().toLowerCase() !== REPORT_STATUS.CLOSED.toLowerCase())
+        const resolved = allArray.filter(r => !!r.investigation_details && String(r.status).trim().toLowerCase() !== REPORT_STATUS.CLOSED.toLowerCase())
+        const closed = allArray.filter(r => String(r.status).trim().toLowerCase() === REPORT_STATUS.CLOSED.toLowerCase())
 
         setReports(sortReportsForCurrentUser(applyReportFilters(open, filters), currentUserId))
         setInvestigatedReports(sortReportsForCurrentUser(applyReportFilters(resolved, filters), currentUserId))

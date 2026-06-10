@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/utils/supabase'
+import { SEVERITY_LEVELS, REPORT_STATUS, CAR_STATUS, AUDIT_STATUS } from '../../shared/constants'
 
 export default function useISOLogic({ userName }) {
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false)
@@ -8,24 +9,24 @@ export default function useISOLogic({ userName }) {
   const [isDocumentTaskModalOpen, setIsDocumentTaskModalOpen] = useState(false)
   const [isTrainingTaskModalOpen, setIsTrainingTaskModalOpen] = useState(false)
   const [toast, setToast] = useState(null)
-
+ 
   const [activeModules, setActiveModules] = useState([])
   const [loadingModules, setLoadingModules] = useState(false)
   const [isModulesModalOpen, setIsModulesModalOpen] = useState(false)
   const [selectedModule, setSelectedModule] = useState(null)
   const [clauses, setClauses] = useState([])
   const [loadingClauses, setLoadingClauses] = useState(false)
-
+ 
   // Dynamic compliance states
   const [compliantCount, setCompliantCount] = useState(0)
   const [partialCount, setPartialCount] = useState(0)
   const [gapCount, setGapCount] = useState(0)
   const [overallScore, setOverallScore] = useState(100)
-
+ 
   // Gaps Action Center states
   const [nonCompliantFindings, setNonCompliantFindings] = useState([])
   const [createdCars, setCreatedCars] = useState({})
-
+ 
   // CAR Modal Form integration states
   const [isCarModalOpen, setIsCarModalOpen] = useState(false)
   const [carForm, setCarForm] = useState({
@@ -61,7 +62,7 @@ export default function useISOLogic({ userName }) {
   const [departments, setDepartments] = useState([])
   const [users, setUsers] = useState([])
   const [loadingDropdowns, setLoadingDropdowns] = useState(false)
-
+ 
   const loadDropdownOptions = useCallback(async () => {
     try {
       setLoadingDropdowns(true)
@@ -79,7 +80,7 @@ export default function useISOLogic({ userName }) {
       setLoadingDropdowns(false)
     }
   }, [])
-
+ 
   const fetchComplianceData = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -87,16 +88,16 @@ export default function useISOLogic({ userName }) {
         .select('status')
       
       if (error) throw error
-
+ 
       let comp = 0
       let part = 0
       let gp = 0
-
+ 
       const rows = data || []
       rows.forEach(row => {
-        if (row.status === 'compliant') comp++
-        else if (row.status === 'partial') part++
-        else if (row.status === 'non_compliant') gp++
+        if (row.status === AUDIT_STATUS.COMPLIANT) comp++
+        else if (row.status === AUDIT_STATUS.PARTIAL) part++
+        else if (row.status === AUDIT_STATUS.NON_COMPLIANT) gp++
       })
 
       const total = comp + part + gp
@@ -127,10 +128,10 @@ export default function useISOLogic({ userName }) {
             title
           )
         `)
-        .eq('status', 'non_compliant')
+        .eq('status', AUDIT_STATUS.NON_COMPLIANT)
       
       if (findingsError) throw findingsError
-
+ 
       // Fetch active NCRs
       const { data: ncrData, error: ncrError } = await supabase
         .from('ncr_reports')
@@ -145,14 +146,14 @@ export default function useISOLogic({ userName }) {
             title
           )
         `)
-        .not('status', 'ilike', 'closed')
-
+        .not('status', 'ilike', REPORT_STATUS.CLOSED)
+ 
       if (ncrError) throw ncrError
-
+ 
       // Group active NCRs by clause_id in memory
       const ncrGroups = {}
       const unlinkedEscalations = []
-
+ 
       if (ncrData) {
         ncrData.forEach(ncr => {
           const cid = ncr.clause_id
@@ -166,7 +167,7 @@ export default function useISOLogic({ userName }) {
             ncrGroups[cid].ncrs.push(ncr)
           } else {
             const sev = String(ncr.severity || '').trim().toLowerCase()
-            if (['high', 'critical'].includes(sev)) {
+            if ([SEVERITY_LEVELS.HIGH, SEVERITY_LEVELS.CRITICAL].includes(sev)) {
               unlinkedEscalations.push({
                 id: `ncr-unlinked-${ncr.id}`,
                 isNcrGap: true,
@@ -180,26 +181,26 @@ export default function useISOLogic({ userName }) {
           }
         })
       }
-
+ 
       // Check thresholds: Low >= 3, Medium >= 2, High/Critical >= 1
       const escalatedFindings = [...unlinkedEscalations]
       Object.entries(ncrGroups).forEach(([clauseId, group]) => {
-        const lowNcrs = group.ncrs.filter(n => String(n.severity || '').trim().toLowerCase() === 'low')
-        const medNcrs = group.ncrs.filter(n => String(n.severity || '').trim().toLowerCase() === 'medium')
-        const highNcrs = group.ncrs.filter(n => ['high', 'critical'].includes(String(n.severity || '').trim().toLowerCase()))
-
+        const lowNcrs = group.ncrs.filter(n => String(n.severity || '').trim().toLowerCase() === SEVERITY_LEVELS.LOW)
+        const medNcrs = group.ncrs.filter(n => String(n.severity || '').trim().toLowerCase() === SEVERITY_LEVELS.MEDIUM)
+        const highNcrs = group.ncrs.filter(n => [SEVERITY_LEVELS.HIGH, SEVERITY_LEVELS.CRITICAL].includes(String(n.severity || '').trim().toLowerCase()))
+ 
         const lowCount = lowNcrs.length
         const medCount = medNcrs.length
         const highCount = highNcrs.length
-
+ 
         if (lowCount >= 3 || medCount >= 2 || highCount >= 1) {
           const details = []
           if (highCount > 0) details.push(`${highCount} High/Critical`)
           if (medCount > 0) details.push(`${medCount} Medium`)
           if (lowCount > 0) details.push(`${lowCount} Low`)
-
+ 
           const matchedNcrs = [...highNcrs, ...medNcrs, ...lowNcrs]
-
+ 
           escalatedFindings.push({
             id: `ncr-gap-${clauseId}`,
             isNcrGap: true,
@@ -211,7 +212,7 @@ export default function useISOLogic({ userName }) {
           })
         }
       })
-
+ 
       setNonCompliantFindings([...(findingsData || []), ...escalatedFindings])
 
     } catch (err) {
@@ -342,7 +343,7 @@ export default function useISOLogic({ userName }) {
           request_date: carForm.request_date || null,
           audit_schedule_id: auditScheduleId,
           ncr_id: ncrArray,
-          status: 'open'
+          status: CAR_STATUS.OPEN
         })
         .select('id')
         .maybeSingle()

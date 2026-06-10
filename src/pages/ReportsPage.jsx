@@ -13,6 +13,7 @@ import QDDRDetailsModal from '../components/Modals/QDDRDetailsModal.jsx'
 import ReportsFeedList from '../components/Reports/ReportsFeedList.jsx'
 import CARReportsList from '../components/Reports/CARReportsList.jsx'
 import QDDRReportsList from '../components/Reports/QDDRReportsList.jsx'
+import { CAR_STATUS } from '../../shared/constants'
 import { useReportsLogic } from '@/hooks/useReportsLogic'
 import './PagesStyles.css'
 
@@ -42,8 +43,8 @@ export default function ReportsPage({
 
   // Filter CARs & QDDRs based on isClosedMode toggle
   const displayedCars = logic.isClosedMode
-    ? logic.carReports.filter(c => String(c.status).toLowerCase() === 'closed')
-    : logic.carReports.filter(c => String(c.status).toLowerCase() !== 'closed')
+    ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase())
+    : logic.carReports.filter(c => String(c.status).toLowerCase() !== CAR_STATUS.CLOSED.toLowerCase())
 
   const displayedQddrs = logic.isClosedMode
     ? logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed')
@@ -69,7 +70,7 @@ export default function ReportsPage({
               </button>
             )}
             <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>
-              {logic.isClosedMode ? 'Show Open' : `Closed (${logic.activeTab === 'ncr' ? logic.closedReports.length : logic.activeTab === 'car' ? logic.carReports.filter(c => c.status === 'closed').length : logic.qddrReports.filter(q => q.status === 'closed').length})`}
+              {logic.isClosedMode ? 'Show Open' : `Closed (${logic.activeTab === 'ncr' ? logic.closedReports.length : logic.activeTab === 'car' ? logic.carReports.filter(c => c.status === CAR_STATUS.CLOSED).length : logic.qddrReports.filter(q => q.status === 'closed').length})`}
             </button>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>

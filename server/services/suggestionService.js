@@ -14,6 +14,7 @@
  */
 
 import { supabase } from '../lib/supabase.js'
+import { REPORT_STATUS, CAR_STATUS } from '../../shared/constants.js'
 import { extractKeywords, retrieveBestMatch } from '../utils/cbr.js'
 
 /** Minimum CBR score to use a past case instead of falling back to AI */
@@ -93,7 +94,7 @@ async function fetchRatedNcrCandidates() {
       'investigation_details, corrective_action, resolution_details'
     )
     .in('id', qualifiedIds)
-    .eq('status', 'CLOSED')
+    .eq('status', REPORT_STATUS.CLOSED)
     .not('investigation_details', 'is', null)
     .limit(30)
 
@@ -108,7 +109,7 @@ async function fetchCarReports(departmentId) {
       'details_of_nonconformance, re_corrective_action, ' +
       'requesting_department, responsible_department, status'
     )
-    .eq('status', 'closed')
+    .eq('status', CAR_STATUS.CLOSED)
     .limit(3)
 
   if (error) throw error
@@ -119,7 +120,7 @@ async function fetchQddrReports(departmentId) {
   const { data, error } = await supabase
     .from('qddr_reports')
     .select('reason_of_discrepancy, corrective_action, preventive_action, status')
-    .eq('status', 'closed')
+    .eq('status', CAR_STATUS.CLOSED)
     .limit(3)
 
   if (error) throw error

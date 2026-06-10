@@ -2,6 +2,7 @@
 // feat(ncr): extract NCR business logic into ncrReportsService
 
 import { supabase, hasServiceRole } from '../lib/supabase.js'
+import { REPORT_STATUS } from '../../shared/constants.js'
 import { extractKeywordsAsString } from '../utils/cbr.js'
 import { writeAudit } from '../lib/audit.js'
 import { getLocalDateString } from '../utils/date.js'
@@ -288,16 +289,16 @@ export async function fetchReports(scope = 'open') {
     const { data: dueReports } = await supabase
       .from('ncr_reports')
       .select('id, reference_no, verification_date, status, assigned_to')
-      .eq('status', 'CLOSED')
+      .eq('status', REPORT_STATUS.CLOSED)
       .lte('verification_date', todayStr)
       .is('preventive_rating', null)
-    
+
     if (dueReports && dueReports.length > 0) {
       for (const report of dueReports) {
         // Create notifications for admins, auditors, and the assigned user if they don't already exist
         const notifTitle = `Verification Date Up: ${report.reference_no}`
         const notifMessage = `The verification date (${report.verification_date}) for report ${report.reference_no} has been reached. Please submit the Preventive Action rating.`
-        
+
         // Check if a notification already exists for this report with this title to avoid duplicates
         const { data: existingNotif } = await supabase
           .from('notifications')
@@ -335,9 +336,9 @@ export async function fetchReports(scope = 'open') {
   let query = supabase.from('ncr_reports').select('*')
 
   if (scope === 'investigated') {
-    query = query.not('investigation_details', 'is', null).not('status', 'ilike', 'closed')
+    query = query.not('investigation_details', 'is', null).not('status', 'ilike', REPORT_STATUS.CLOSED)
   } else if (scope === 'closed') {
-    query = query.ilike('status', 'closed')
+    query = query.ilike('status', REPORT_STATUS.CLOSED)
   } else if (scope !== 'all') {
     query = query.is('investigation_details', null)
   }
@@ -395,7 +396,7 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     table: 'product_types', idColumn: 'id', nameColumn: 'product_name',
     rawId: product_type_id, rawName: product_type,
   })
-  
+
   let resolvedIssueTypeId = null
   let resolvedIssueTypeName = 'ncr'
   if (issue_type || body.issue_type_id) {
@@ -414,7 +415,7 @@ export async function createNcrReport({ body, reportedByAuthId }) {
   const payload = {
     reference_no: referenceNo,
     reported_by: reporter.id,
-    status: 'OPEN',
+    status: REPORT_STATUS.OPEN,
     issue_type: resolvedIssueTypeName,
     issue_type_id: resolvedIssueTypeId,
     occurrence_date: occurrence_date || getLocalDateString(),
@@ -531,7 +532,7 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
   const payload = {
     reference_no: referenceNo,
     reported_by: reporter.id,
-    status: 'OPEN',
+    status: REPORT_STATUS.OPEN,
     issue_type: resolvedIssueTypeName,
     issue_type_id: resolvedIssueTypeId,
     occurrence_date: occurrence_date || getLocalDateString(),
@@ -562,7 +563,7 @@ export async function updateNcrReport({ id, body }) {
   if (existingError) throw existingError
   if (!existing) throw Object.assign(new Error('NCR report not found.'), { status: 404 })
 
-  if (String(existing.status || '').trim().toUpperCase() === 'CLOSED') {
+  if (String(existing.status || '').trim().toUpperCase() === REPORT_STATUS.CLOSED) {
     throw Object.assign(new Error('Closed reports cannot be updated.'), { status: 400 })
   }
 
@@ -636,7 +637,7 @@ export async function updateNcrInvestigation({ id, body, file }) {
   if (existingError) throw existingError
   if (!existing) throw Object.assign(new Error('NCR report not found.'), { status: 404 })
 
-  if (String(existing.status || '').trim().toUpperCase() === 'CLOSED') {
+  if (String(existing.status || '').trim().toUpperCase() === REPORT_STATUS.CLOSED) {
     throw Object.assign(new Error('Closed reports cannot be updated.'), { status: 400 })
   }
 
@@ -690,21 +691,21 @@ export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
   if (reportError) throw reportError
   if (!report) throw Object.assign(new Error('NCR report not found.'), { status: 404 })
 
-  const nextStatus = decision === 'approve' ? 'CLOSED' : 'OPEN'
-  
+  const nextStatus = decision === 'approve' ? REPORT_STATUS.CLOSED : REPORT_STATUS.OPEN
+
   let approvalUpdates = {}
   if (decision === 'approve') {
     const createdDate = new Date(report.created_at)
     const closedDate = new Date()
     const diffMs = closedDate - createdDate
     const diffHours = Math.max(1, Math.round(diffMs / (1000 * 60 * 60)))
-    
+
     let resolutionTimeStr = `${diffHours} hours`
     if (diffHours >= 24) {
       const diffDays = Math.round(diffHours / 24)
       resolutionTimeStr = `${diffDays} days`
     }
-    
+
     approvalUpdates = {
       status: nextStatus,
       resolution_time: resolutionTimeStr,
@@ -775,8 +776,8 @@ export async function deleteNcrReport(id, currentUserAuthId) {
   if (!existing) throw Object.assign(new Error('NCR report not found.'), { status: 404 })
 
   // 4. Assert permissions
-  const isAuthorized = ['admin', 'auditor'].includes(normalizedRole) || 
-                       Number(existing.reported_by) === Number(profile.id)
+  const isAuthorized = ['admin', 'auditor'].includes(normalizedRole) ||
+    Number(existing.reported_by) === Number(profile.id)
 
   if (!isAuthorized) {
     throw Object.assign(new Error('Access forbidden. You do not have permission to delete this report.'), { status: 403 })
@@ -789,16 +790,6 @@ export async function deleteNcrReport(id, currentUserAuthId) {
   return existing
 }
 
-/**
- * Assigns an NCR report to an employee. Replaces the former NCRAssignmentService.
- *
- * FIX: The original service selected only `id, reference_no` from ncr_reports but then
- * guarded on `report.assigned_to` — that field was never fetched, so the guard
- * silently always passed. Fixed by adding `assigned_to` to the select.
- *
- * FIX: The original service wrote to audit_logs directly AND called writeAudit(),
- * resulting in a double audit entry. The raw insert has been removed; writeAudit() is canonical.
- */
 export async function assignReportToEmployee({ reportId, assignedToId, currentUserAuthId }) {
   const normalizedReportId = normalizeId(reportId)
   const normalizedAssignedToId = normalizeId(assignedToId)
@@ -825,8 +816,8 @@ export async function assignReportToEmployee({ reportId, assignedToId, currentUs
     .maybeSingle()
   if (reportError) throw reportError
   if (!report) throw new Error('NCR report not found.')
-  
-  if (String(report.status || '').trim().toUpperCase() === 'CLOSED') {
+
+  if (String(report.status || '').trim().toUpperCase() === REPORT_STATUS.CLOSED) {
     throw new Error('Closed reports cannot be assigned.')
   }
   if (report.assigned_to) throw new Error('This report is already assigned and cannot be reassigned.')
@@ -888,7 +879,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
     .maybeSingle()
   if (reportError) throw reportError
   if (!report) throw new Error('NCR report not found.')
-  if (String(report.status || '').trim().toUpperCase() !== 'CLOSED') {
+  if (String(report.status || '').trim().toUpperCase() !== REPORT_STATUS.CLOSED) {
     throw Object.assign(new Error('Only closed reports can be rated.'), { status: 400 })
   }
 
@@ -908,7 +899,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
     .from('ncr_report_ratings')
     .select('rating')
     .eq('report_id', report.id)
-  
+
   if (!allRatingsError && allRatings && allRatings.length > 0) {
     const avg = allRatings.reduce((sum, r) => sum + Number(r.rating), 0) / allRatings.length
     if (avg >= 3.0) {
@@ -919,19 +910,19 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
         .eq('corrective_action', report.investigation_details)
         .eq('preventive_action', report.resolution_details)
         .maybeSingle()
-      
+
       if (!existingCase && !existingCaseError && (report.corrective_action || report.investigation_details)) {
         await supabase.from('case_repository').insert([{
-          issue_type:          report.issue_type || 'ncr',
-          corrective_action:   report.corrective_action || report.investigation_details || 'None provided',
-          preventive_action:   report.resolution_details || 'None provided',
+          issue_type: report.issue_type || 'ncr',
+          corrective_action: report.corrective_action || report.investigation_details || 'None provided',
+          preventive_action: report.resolution_details || 'None provided',
           effectiveness_score: avg,
           // CBR: store extracted keywords (not raw slice) + new feature columns
-          problem_keywords:    extractKeywordsAsString(report.description),
-          severity:            report.severity || null,
-          department_id:       report.department_id || null,
-          product_type:        report.product_type || null,
-          times_used:          1
+          problem_keywords: extractKeywordsAsString(report.description),
+          severity: report.severity || null,
+          department_id: report.department_id || null,
+          product_type: report.product_type || null,
+          times_used: 1
         }])
       } else if (existingCase) {
         // Update effectiveness score
@@ -966,15 +957,15 @@ export async function getReportRatingsStats({ reportId, userAuthId }) {
     .from('ncr_report_ratings')
     .select('rating, rated_by')
     .eq('report_id', normalizedReportId)
-  
+
   if (allRatingsError) throw allRatingsError
 
   const userRating = allRatings && currentUser
     ? allRatings.find(r => String(r.rated_by) === String(currentUser.id))?.rating || null
     : null
-  
+
   let total = 0
-  
+
   const validRatings = allRatings || []
   for (const r of validRatings) {
     total += Number(r.rating)

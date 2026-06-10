@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js'
+import { CAR_STATUS } from '../../shared/constants.js'
 
 function buildCarReferenceNumber(referenceNo) {
   const match = String(referenceNo || '').match(/^CAR-(\d{3,})$/i)
@@ -82,7 +83,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
     request_date: request_date ? request_date : null,
     ncr_id: Array.isArray(ncr_ids) && ncr_ids.length > 0 ? ncr_ids.map(id => parseInt(id, 10)) : null,
     audit_schedule_id: audit_schedule_id || null,
-    status: 'open'
+    status: CAR_STATUS.OPEN
   }
 
   const { data, error } = await supabase.from('car_reports').insert(payload).select('*').maybeSingle()
@@ -137,7 +138,7 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
       corrective_action: correctiveAction,
       preventive_action: preventiveAction,
       capa_submitted_at: new Date().toISOString(),
-      status: 'under_verification'
+      status: CAR_STATUS.UNDER_VERIFICATION
     })
     .eq('id', carId)
     .select('*')
@@ -188,7 +189,7 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, actorAuthI
     throw err
   }
 
-  const status = outcome === 'effective' ? 'closed' : 'open'
+  const status = outcome === 'effective' ? CAR_STATUS.CLOSED : CAR_STATUS.OPEN
 
   const { data, error } = await supabase
     .from('car_reports')
