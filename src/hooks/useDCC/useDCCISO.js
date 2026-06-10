@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import * as dccService from '@/services/dccService'
 
 function sortClausesNumerically(clauses) {
@@ -30,7 +30,7 @@ export function useDCCISO() {
   const [clauses, setClauses] = useState([])
   const [loadingClauses, setLoadingClauses] = useState(false)
 
-  async function loadActiveStandards() {
+  const loadActiveStandards = useCallback(async () => {
     setLoadingStandards(true)
     try {
       const standardsData = await dccService.fetchActiveStandards()
@@ -56,9 +56,9 @@ export function useDCCISO() {
     } finally {
       setLoadingStandards(false)
     }
-  }
+  }, [])
 
-  async function loadClausesForStandard(standardId) {
+  const loadClausesForStandard = useCallback(async (standardId) => {
     setLoadingClauses(true)
     try {
       const groups = await dccService.fetchClauseGroupsForStandard(standardId)
@@ -77,19 +77,19 @@ export function useDCCISO() {
     } finally {
       setLoadingClauses(false)
     }
-  }
+  }, [])
 
-  async function openStandard(standard, resetSearchQueryCallback) {
+  const openStandard = useCallback(async (standard, resetSearchQueryCallback) => {
     setSelectedStandard(standard)
     if (resetSearchQueryCallback) resetSearchQueryCallback()
     await loadClausesForStandard(standard.id)
-  }
+  }, [loadClausesForStandard])
 
-  function closeStandard(resetSearchQueryCallback) {
+  const closeStandard = useCallback((resetSearchQueryCallback) => {
     setSelectedStandard(null)
     setClauses([])
     if (resetSearchQueryCallback) resetSearchQueryCallback()
-  }
+  }, [])
 
   return {
     standards,

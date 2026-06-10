@@ -44,7 +44,7 @@ export function useDCCTaskReports({ carDetails } = {}) {
     }
   }, [carDetails])
 
-  async function loadClosedNCRs() {
+  const loadClosedNCRs = useCallback(async () => {
     setLoadingNcr(true)
     try {
       const data = await fetchAllReports()
@@ -56,9 +56,9 @@ export function useDCCTaskReports({ carDetails } = {}) {
     } finally {
       setLoadingNcr(false)
     }
-  }
+  }, [])
 
-  async function loadClosedCARs() {
+  const loadClosedCARs = useCallback(async () => {
     setLoadingCar(true)
     try {
       const data = await dccService.fetchCarReports()
@@ -69,9 +69,9 @@ export function useDCCTaskReports({ carDetails } = {}) {
     } finally {
       setLoadingCar(false)
     }
-  }
+  }, [])
 
-  async function loadClosedQDDRs() {
+  const loadClosedQDDRs = useCallback(async () => {
     setLoadingQddr(true)
     try {
       const data = await dccService.fetchQddrReports()
@@ -82,9 +82,9 @@ export function useDCCTaskReports({ carDetails } = {}) {
     } finally {
       setLoadingQddr(false)
     }
-  }
+  }, [])
 
-  async function loadClosedAudits() {
+  const loadClosedAudits = useCallback(async () => {
     setLoadingAudit(true)
     try {
       const runs = await dccService.fetchAuditRuns()
@@ -122,9 +122,9 @@ export function useDCCTaskReports({ carDetails } = {}) {
     } finally {
       setLoadingAudit(false)
     }
-  }
+  }, [])
 
-  async function loadAuditSchedules() {
+  const loadAuditSchedules = useCallback(async () => {
     setLoadingAuditSchedules(true)
     try {
       const schedulesData = await dccService.fetchAuditSchedules()
@@ -148,7 +148,7 @@ export function useDCCTaskReports({ carDetails } = {}) {
     } finally {
       setLoadingAuditSchedules(false)
     }
-  }
+  }, [])
 
   const handleCapaSubmit = useCallback(async (carId, data, userAuthId) => {
     try {
@@ -164,7 +164,7 @@ export function useDCCTaskReports({ carDetails } = {}) {
       console.error('[useDCCTaskReports] handleCapaSubmit error:', err)
       throw err
     }
-  }, [carDetails])
+  }, [carDetails, loadClosedCARs])
 
   const handleCarVerify = useCallback(async (carId, data, userAuthId) => {
     try {
@@ -180,15 +180,15 @@ export function useDCCTaskReports({ carDetails } = {}) {
       console.error('[useDCCTaskReports] handleCarVerify error:', err)
       throw err
     }
-  }, [carDetails])
+  }, [carDetails, loadClosedCARs])
 
-  const clearAllReports = () => {
+  const clearAllReports = useCallback(() => {
     setNcrReports([])
     setCarReports([])
     setQddrReports([])
     setAuditReports([])
     setAuditSchedules([])
-  }
+  }, [])
 
   return {
     ncrReports,
