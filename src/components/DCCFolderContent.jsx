@@ -113,12 +113,12 @@ function ISOClausesTable({ selectedStandard, clauses, loadingClauses }) {
 // Sub-view: Task Reports – sub-folder grid (CAR / QDDR / NCR)
 // ---------------------------------------------------------------------------
 
-function TaskReportsFolderList({ onOpenTaskFolder }) {
+function TaskReportsFolderList({ folders = TASK_REPORT_SUBFOLDERS, onOpenTaskFolder }) {
   return (
     <div>
       <h3 className="recently-viewed-heading">Task Reports</h3>
       <div className="folder-grid">
-        {TASK_REPORT_SUBFOLDERS.map((item) => (
+        {folders.map((item) => (
           <div
             key={item.id}
             className="folder-item"
@@ -692,7 +692,6 @@ export default function DCCFolderContent({
   loadingCar,
   onSelectCar,
   qddrReports,
-
   loadingQddr,
   auditReports,
   loadingAudit,
@@ -700,6 +699,86 @@ export default function DCCFolderContent({
   loadingAuditSchedules,
   userRole,
 }) {
+  const queryClean = (searchQuery || '').trim().toLowerCase()
+
+  // 1. Root level filtering
+  const filteredFolderItems = folderItems.filter((item) =>
+    !queryClean || item.label.toLowerCase().includes(queryClean)
+  )
+
+  const filteredRecentlyViewed = recentlyViewed.filter((rv) =>
+    !queryClean || rv.label.toLowerCase().includes(queryClean)
+  )
+
+  // 2. ISO Standards filtering
+  const filteredStandards = standards.filter((s) =>
+    !queryClean ||
+    s.name.toLowerCase().includes(queryClean) ||
+    (s.version && s.version.toLowerCase().includes(queryClean))
+  )
+
+  // 3. ISO Clauses filtering
+  const filteredClauses = clauses.filter((cl) =>
+    !queryClean ||
+    cl.clause_number.toLowerCase().includes(queryClean) ||
+    cl.title.toLowerCase().includes(queryClean) ||
+    (cl.description && cl.description.toLowerCase().includes(queryClean))
+  )
+
+  // 4. Task Subfolders filtering
+  const filteredTaskSubfolders = TASK_REPORT_SUBFOLDERS.filter((item) =>
+    !queryClean || item.label.toLowerCase().includes(queryClean)
+  )
+
+  // 5. Task Reports filtering
+  const filteredNcrReports = ncrReports.filter((ncr) =>
+    !queryClean ||
+    (ncr.reference_no && ncr.reference_no.toLowerCase().includes(queryClean)) ||
+    (ncr.issue_type && ncr.issue_type.toLowerCase().includes(queryClean)) ||
+    (ncr.description && ncr.description.toLowerCase().includes(queryClean)) ||
+    (ncr.severity && ncr.severity.toLowerCase().includes(queryClean)) ||
+    (ncr.product_type_name && ncr.product_type_name.toLowerCase().includes(queryClean)) ||
+    (ncr.batch_number && ncr.batch_number.toLowerCase().includes(queryClean)) ||
+    (ncr.location_name && ncr.location_name.toLowerCase().includes(queryClean))
+  )
+
+  const filteredCarReports = carReports.filter((car) =>
+    !queryClean ||
+    (car.reference_no && car.reference_no.toLowerCase().includes(queryClean)) ||
+    (car.requestor && car.requestor.toLowerCase().includes(queryClean)) ||
+    (car.recipient && car.recipient.toLowerCase().includes(queryClean)) ||
+    (car.requesting_department && car.requesting_department.toLowerCase().includes(queryClean)) ||
+    (car.responsible_department && car.responsible_department.toLowerCase().includes(queryClean)) ||
+    (car.product_material_name && car.product_material_name.toLowerCase().includes(queryClean)) ||
+    (car.model_type && car.model_type.toLowerCase().includes(queryClean)) ||
+    (car.control_no && car.control_no.toLowerCase().includes(queryClean)) ||
+    (car.details_of_nonconformance && car.details_of_nonconformance.toLowerCase().includes(queryClean))
+  )
+
+  const filteredQddrReports = qddrReports.filter((q) =>
+    !queryClean ||
+    (q.reference_no && q.reference_no.toLowerCase().includes(queryClean)) ||
+    (q.recipient_name && q.recipient_name.toLowerCase().includes(queryClean)) ||
+    (q.discovery_location && q.discovery_location.toLowerCase().includes(queryClean)) ||
+    (q.defect_description && q.defect_description.toLowerCase().includes(queryClean)) ||
+    (q.root_cause_analysis && q.root_cause_analysis.toLowerCase().includes(queryClean))
+  )
+
+  const filteredAuditReports = auditReports.filter((audit) =>
+    !queryClean ||
+    (audit.title && audit.title.toLowerCase().includes(queryClean)) ||
+    (audit.standard_name && audit.standard_name.toLowerCase().includes(queryClean)) ||
+    (audit.auditor_name && audit.auditor_name.toLowerCase().includes(queryClean))
+  )
+
+  const filteredAuditSchedules = auditSchedules.filter((sched) =>
+    !queryClean ||
+    (sched.title && sched.title.toLowerCase().includes(queryClean)) ||
+    (sched.standard_name && sched.standard_name.toLowerCase().includes(queryClean)) ||
+    (sched.auditor_name && sched.auditor_name.toLowerCase().includes(queryClean)) ||
+    (sched.status && sched.status.toLowerCase().includes(queryClean))
+  )
+
   if (!selectedFolder) {
     return (
       <div className="flex-column">
@@ -715,7 +794,7 @@ export default function DCCFolderContent({
         </div>
 
         <div className="folder-grid">
-          {folderItems.map((item) => (
+          {filteredFolderItems.map((item) => (
             <div key={item.id} onClick={() => onOpenFolder(item)} className="folder-item">
               <div className="folder-square-block">
                 <Folder size={22} className="icon-fill-soft" />
@@ -727,10 +806,10 @@ export default function DCCFolderContent({
 
         <div className="text-left">
           <h3 className="recently-viewed-heading">Recently Viewed</h3>
-          {!recentlyViewed.length ? (
+          {!filteredRecentlyViewed.length ? (
             <div className="recent-empty">No recently viewed items.</div>
           ) : (
-            recentlyViewed.map((rv) => (
+            filteredRecentlyViewed.map((rv) => (
               <div
                 key={rv.id}
                 className="recent-document-card dcc-recent-document-card"
@@ -766,6 +845,8 @@ export default function DCCFolderContent({
         <div className="search-container-centered">
           <input
             type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
             placeholder={`Search ${selectedFolder.label}${subFolderLabel}...`}
             className="search-bar-field"
           />
@@ -793,14 +874,14 @@ export default function DCCFolderContent({
         <div className="row-gap-40">
           {!selectedStandard ? (
             <ISOStandardsList
-              standards={standards}
+              standards={filteredStandards}
               loadingStandards={loadingStandards}
               onSelectStandard={onSelectStandard}
             />
           ) : (
             <ISOClausesTable
               selectedStandard={selectedStandard}
-              clauses={clauses}
+              clauses={filteredClauses}
               loadingClauses={loadingClauses}
             />
           )}
@@ -811,32 +892,32 @@ export default function DCCFolderContent({
       {selectedFolder.id === 'task_reports' && (
         <div className="row-gap-40">
           {!selectedTaskFolder ? (
-            <TaskReportsFolderList onOpenTaskFolder={onOpenTaskFolder} />
+            <TaskReportsFolderList folders={filteredTaskSubfolders} onOpenTaskFolder={onOpenTaskFolder} />
           ) : selectedTaskFolder.id === 'ncr' ? (
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; NCR &gt; Closed</div>
-              <NCRClosedTable ncrReports={ncrReports} loadingNcr={loadingNcr} />
+              <NCRClosedTable ncrReports={filteredNcrReports} loadingNcr={loadingNcr} />
             </div>
           ) : selectedTaskFolder.id === 'car' ? (
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; CAR &gt; Workflow</div>
-              <CARClosedTable carReports={carReports} loadingCar={loadingCar} onSelectCar={onSelectCar} />
+              <CARClosedTable carReports={filteredCarReports} loadingCar={loadingCar} onSelectCar={onSelectCar} />
             </div>
 
           ) : selectedTaskFolder.id === 'qddr' ? (
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; QDDR &gt; Closed</div>
-              <QDDRClosedTable qddrReports={qddrReports} loadingQddr={loadingQddr} />
+              <QDDRClosedTable qddrReports={filteredQddrReports} loadingQddr={loadingQddr} />
             </div>
           ) : selectedTaskFolder.id === 'audit' ? (
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; Audit Reports &gt; Completed</div>
-              <AuditReportsTable auditReports={auditReports} loadingAudit={loadingAudit} />
+              <AuditReportsTable auditReports={filteredAuditReports} loadingAudit={loadingAudit} />
             </div>
           ) : selectedTaskFolder.id === 'audit_schedules' ? (
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; Audit Schedules &gt; Scheduled</div>
-              <AuditSchedulesTable auditSchedules={auditSchedules} loadingAuditSchedules={loadingAuditSchedules} carReports={carReports} onSelectCar={onSelectCar} />
+              <AuditSchedulesTable auditSchedules={filteredAuditSchedules} loadingAuditSchedules={loadingAuditSchedules} carReports={carReports} onSelectCar={onSelectCar} />
             </div>
           ) : (
             <div className="empty-state">
@@ -847,4 +928,5 @@ export default function DCCFolderContent({
       )}
     </div>
   )
-}
+}
+
