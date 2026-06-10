@@ -1,147 +1,37 @@
-import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X as CloseIcon, Clipboard, CheckCircle, AlertTriangle, User, Calendar, Sparkles } from 'lucide-react'
-import { generateAiSuggestionFromText } from '../../services/suggestionService'
-import { supabase } from '../../utils/supabase'
 
 export default function CARDetailsModal({
   isOpen,
   onClose,
   car,
-  onSubmitCapa,
-  onVerify,
   userRole,
-  authUserId,
-  readOnly = false
+  readOnly = false,
+
+  // States
+  rootCause,
+  setRootCause,
+  correctiveAction,
+  setCorrectiveAction,
+  preventiveAction,
+  setPreventiveAction,
+  verificationNotes,
+  setVerificationNotes,
+  submitting,
+  suggesting,
+  error,
+  linkedClauses,
+  loadingClauses,
+
+  // Handlers
+  handleSuggestActions,
+  handleCapaSubmit,
+  handleVerificationSubmit
 }) {
-  const [rootCause, setRootCause] = useState('')
-  const [correctiveAction, setCorrectiveAction] = useState('')
-  const [preventiveAction, setPreventiveAction] = useState('')
-  const [verificationNotes, setVerificationNotes] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [suggesting, setSuggesting] = useState(false)
-  const [error, setError] = useState('')
-
-  const [linkedClauses, setLinkedClauses] = useState([])
-  const [loadingClauses, setLoadingClauses] = useState(false)
-
-  // Sync state with selected CAR details
-  useEffect(() => {
-    if (car) {
-      setRootCause(car.root_cause_analysis || '')
-      setCorrectiveAction(car.corrective_action || '')
-      setPreventiveAction(car.preventive_action || '')
-      setVerificationNotes(car.verification_notes || '')
-      setError('')
-    }
-  }, [car])
-
-  // Fetch linked clauses
-  useEffect(() => {
-    if (!car?.id) {
-      setLinkedClauses([])
-      return
-    }
-
-    const fetchLinkedClauses = async () => {
-      setLoadingClauses(true)
-      console.log('CARDetailsModal: fetching linked clauses for car.id =', car.id)
-      try {
-        const { data, error } = await supabase
-          .from('car_clause_links')
-          .select('clause_id, iso_clauses(clause_number, title)')
-          .eq('car_report_id', car.id)
-
-        console.log('CARDetailsModal: query result:', { data, error })
-
-        if (error) throw error
-
-        const clausesMapped = (data || [])
-          .map(row => row.iso_clauses)
-          .filter(Boolean)
-        setLinkedClauses(clausesMapped)
-      } catch (err) {
-        console.error('Error fetching linked clauses for CAR:', err)
-      } finally {
-        setLoadingClauses(false)
-      }
-    }
-
-    fetchLinkedClauses()
-  }, [car?.id])
-
   if (!isOpen || !car) return null
 
   const isUserRecipient = true // Allow processing. In production, can check if current user matches car.recipient.
   const isAuditorOrAdmin = userRole === 'admin' || userRole === 'auditor'
-
-  const handleSuggestActions = async () => {
-    setSuggesting(true)
-    setError('')
-    try {
-      const res = await generateAiSuggestionFromText({
-        description: car.details_of_nonconformance,
-        issueType: car.quality_food_safety ? 'quality' : car.environment_health_safety ? 'safety' : car.security_issue ? 'security' : car.internal_audit ? 'audit' : 'general',
-        deptName: car.responsible_department
-      })
-      if (res?.suggestion) {
-        setCorrectiveAction(res.suggestion)
-      }
-      if (res?.preventive_suggestion) {
-        setPreventiveAction(res.preventive_suggestion)
-      }
-      setRootCause('Based on historical matching cases, the root cause is being verified. Action plan suggested.')
-    } catch (err) {
-      console.error('Failed to get suggestions:', err)
-      setError('Failed to fetch suggestions from CBR: ' + err.message)
-    } finally {
-      setSuggesting(false)
-    }
-  }
-
-  const handleCapaSubmit = async (e) => {
-    e.preventDefault()
-    if (!rootCause.trim() || !correctiveAction.trim() || !preventiveAction.trim()) {
-      setError('All CAPA fields are required.')
-      return
-    }
-
-    setSubmitting(true)
-    setError('')
-    try {
-      await onSubmitCapa(car.id, {
-        rootCauseAnalysis: rootCause,
-        correctiveAction,
-        preventiveAction
-      }, authUserId)
-      onClose()
-    } catch (err) {
-      setError(err?.message || 'Failed to submit CAPA plan.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleVerificationSubmit = async (outcome) => {
-    if (!verificationNotes.trim()) {
-      setError('Verification notes are required to resolve this audit.')
-      return
-    }
-
-    setSubmitting(true)
-    setError('')
-    try {
-      await onVerify(car.id, {
-        outcome,
-        notes: verificationNotes
-      }, authUserId)
-      onClose()
-    } catch (err) {
-      setError(err?.message || 'Failed to submit verification.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
 
   const getStatusBadgeClass = (status) => {
     const s = String(status || '').toLowerCase()

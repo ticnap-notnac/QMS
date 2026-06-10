@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import * as dccService from '@/services/dccService'
 import { fetchAllReports } from '@/services/ncrService'
 import { submitCapaPlan, verifyCarPlan } from '@/services/carService'
 
-export function useDCCTaskReports() {
+export function useDCCTaskReports({ carDetails } = {}) {
   const [ncrReports, setNcrReports] = useState([])
   const [loadingNcr, setLoadingNcr] = useState(false)
 
@@ -19,8 +19,30 @@ export function useDCCTaskReports() {
   const [auditSchedules, setAuditSchedules] = useState([])
   const [loadingAuditSchedules, setLoadingAuditSchedules] = useState(false)
 
-  const [selectedCar, setSelectedCar] = useState(null)
-  const [isCarDetailsModalOpen, setIsCarDetailsModalOpen] = useState(false)
+  // Fallback state if carDetails is not passed (testing or isolation)
+  const [localSelectedCar, setLocalSelectedCar] = useState(null)
+  const [localIsCarDetailsModalOpen, setLocalIsCarDetailsModalOpen] = useState(false)
+
+  const selectedCar = carDetails ? carDetails.selectedCar : localSelectedCar
+  const isCarDetailsModalOpen = carDetails ? carDetails.isCarDetailsModalOpen : localIsCarDetailsModalOpen
+
+  const openCarDetails = useCallback((car) => {
+    if (carDetails) {
+      carDetails.openCarDetails(car)
+    } else {
+      setLocalSelectedCar(car)
+      setLocalIsCarDetailsModalOpen(true)
+    }
+  }, [carDetails])
+
+  const closeCarDetails = useCallback(() => {
+    if (carDetails) {
+      carDetails.closeCarDetails()
+    } else {
+      setLocalSelectedCar(null)
+      setLocalIsCarDetailsModalOpen(false)
+    }
+  }, [carDetails])
 
   async function loadClosedNCRs() {
     setLoadingNcr(true)
@@ -128,39 +150,37 @@ export function useDCCTaskReports() {
     }
   }
 
-  const handleOpenCarDetails = (car) => {
-    setSelectedCar(car)
-    setIsCarDetailsModalOpen(true)
-  }
-
-  const handleCloseCarDetails = () => {
-    setSelectedCar(null)
-    setIsCarDetailsModalOpen(false)
-  }
-
-  const handleCapaSubmit = async (carId, data, userAuthId) => {
+  const handleCapaSubmit = useCallback(async (carId, data, userAuthId) => {
     try {
       const res = await submitCapaPlan(carId, data, userAuthId)
       await loadClosedCARs()
-      setSelectedCar(res)
+      if (carDetails) {
+        carDetails.setSelectedCar(res)
+      } else {
+        setLocalSelectedCar(res)
+      }
       return res
     } catch (err) {
       console.error('[useDCCTaskReports] handleCapaSubmit error:', err)
       throw err
     }
-  }
+  }, [carDetails])
 
-  const handleCarVerify = async (carId, data, userAuthId) => {
+  const handleCarVerify = useCallback(async (carId, data, userAuthId) => {
     try {
       const res = await verifyCarPlan(carId, data, userAuthId)
       await loadClosedCARs()
-      setSelectedCar(res)
+      if (carDetails) {
+        carDetails.setSelectedCar(res)
+      } else {
+        setLocalSelectedCar(res)
+      }
       return res
     } catch (err) {
       console.error('[useDCCTaskReports] handleCarVerify error:', err)
       throw err
     }
-  }
+  }, [carDetails])
 
   const clearAllReports = () => {
     setNcrReports([])
@@ -183,8 +203,8 @@ export function useDCCTaskReports() {
     loadingAuditSchedules,
     selectedCar,
     isCarDetailsModalOpen,
-    openCarDetails: handleOpenCarDetails,
-    closeCarDetails: handleCloseCarDetails,
+    openCarDetails,
+    closeCarDetails,
     submitCapa: handleCapaSubmit,
     verifyCar: handleCarVerify,
     loadClosedNCRs,

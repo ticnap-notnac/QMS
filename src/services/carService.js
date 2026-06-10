@@ -1,4 +1,5 @@
 import { request } from '@/lib/api'
+import { supabase } from '@/utils/supabase'
 
 export async function submitCarReport(payload, userAuthId) {
   if (!userAuthId) throw new Error('Missing authentication. Please log in.')
@@ -67,4 +68,18 @@ export async function fetchCarsForClause(clauseId, userAuthId) {
   return await request(`/car/clause/${clauseId}/cars`, {
     headers: { 'x-user-auth-id': userAuthId }
   })
+}
+
+/**
+ * Fetches all linked clauses for a given CAR ID.
+ *
+ * @param {number} carId
+ */
+export async function fetchLinkedClausesForCar(carId) {
+  const { data, error } = await supabase
+    .from('car_clause_links')
+    .select('clause_id, iso_clauses(clause_number, title)')
+    .eq('car_report_id', carId)
+  if (error) throw error
+  return (data || []).map(row => row.iso_clauses).filter(Boolean)
 }

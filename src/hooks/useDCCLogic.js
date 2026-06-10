@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useDCCFolderNav } from './useDCC/useDCCFolderNav'
 import { useDCCISO } from './useDCC/useDCCISO'
 import { useDCCTaskReports } from './useDCC/useDCCTaskReports'
+import { useCARDetails } from './useCARDetails'
 
 export function useDCCLogic() {
   // 1. Folder Navigation & Search Query state
@@ -12,8 +13,11 @@ export function useDCCLogic() {
   const iso = useDCCISO()
   const { loadActiveStandards, openStandard, closeStandard, setSelectedStandard, setClauses } = iso
 
-  // 3. Completed Task Reports logic
-  const taskReports = useDCCTaskReports()
+  // 3. CAR Modal details state (clean architecture)
+  const carDetails = useCARDetails()
+
+  // 4. Completed Task Reports logic
+  const taskReports = useDCCTaskReports({ carDetails })
   const {
     clearAllReports,
     loadClosedNCRs,
@@ -102,12 +106,36 @@ export function useDCCLogic() {
     auditSchedules: taskReports.auditSchedules,
     loadingAuditSchedules: taskReports.loadingAuditSchedules,
 
-    // CAR details
-    selectedCar: taskReports.selectedCar,
-    isCarDetailsModalOpen: taskReports.isCarDetailsModalOpen,
-    openCarDetails: taskReports.openCarDetails,
-    closeCarDetails: taskReports.closeCarDetails,
+    // CAR details (clean orchestrator mapping)
+    selectedCar: carDetails.selectedCar,
+    isCarDetailsModalOpen: carDetails.isCarDetailsModalOpen,
+    openCarDetails: carDetails.openCarDetails,
+    closeCarDetails: carDetails.closeCarDetails,
     submitCapa: taskReports.submitCapa,
     verifyCar: taskReports.verifyCar,
+
+    carDetailsModalProps: {
+      isOpen: carDetails.isCarDetailsModalOpen,
+      onClose: carDetails.closeCarDetails,
+      car: carDetails.selectedCar,
+      onSubmitCapa: taskReports.submitCapa,
+      onVerify: taskReports.verifyCar,
+      rootCause: carDetails.rootCause,
+      setRootCause: carDetails.setRootCause,
+      correctiveAction: carDetails.correctiveAction,
+      setCorrectiveAction: carDetails.setCorrectiveAction,
+      preventiveAction: carDetails.preventiveAction,
+      setPreventiveAction: carDetails.setPreventiveAction,
+      verificationNotes: carDetails.verificationNotes,
+      setVerificationNotes: carDetails.setVerificationNotes,
+      submitting: carDetails.submitting,
+      suggesting: carDetails.suggesting,
+      error: carDetails.error,
+      linkedClauses: carDetails.linkedClauses,
+      loadingClauses: carDetails.loadingClauses,
+      handleSuggestActions: carDetails.handleSuggestActions,
+      handleCapaSubmit: (e) => carDetails.handleCapaSubmit(e, taskReports.submitCapa, null),
+      handleVerificationSubmit: (outcome) => carDetails.handleVerificationSubmit(outcome, taskReports.verifyCar, null)
+    }
   }
 }

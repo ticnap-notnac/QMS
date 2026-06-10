@@ -18,7 +18,7 @@ import { useReportsLogic } from '@/hooks/useReportsLogic'
 import './PagesStyles.css'
 
 export default function ReportsPage({
-  userRole, userName, userPosition,
+  userRole,
   currentUserId, authUserId,
 }) {
   const logic = useReportsLogic({ currentUserId, userRole, authUserId })
@@ -107,15 +107,7 @@ export default function ReportsPage({
       <RejectReportModal {...logic.rejectModalProps} />
       <PreventiveActionModal {...logic.preventiveActionModalProps} />
       
-      <CARDetailsModal
-        isOpen={logic.isCarDetailsModalOpen}
-        onClose={logic.closeCarDetails}
-        car={logic.selectedCar}
-        onSubmitCapa={logic.submitCapa}
-        onVerify={logic.verifyCar}
-        userRole={userRole}
-        authUserId={authUserId}
-      />
+      <CARDetailsModal {...logic.carDetailsModalProps} />
       <QDDRDetailsModal
         isOpen={logic.isQddrDetailsModalOpen}
         onClose={logic.closeQddrDetails}

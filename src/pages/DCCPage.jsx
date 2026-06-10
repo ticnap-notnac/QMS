@@ -39,12 +39,8 @@ export default function DCCPage({
     loadingAudit,
     auditSchedules,
     loadingAuditSchedules,
-    selectedCar,
-    isCarDetailsModalOpen,
     openCarDetails,
-    closeCarDetails,
-    submitCapa,
-    verifyCar,
+    carDetailsModalProps,
   } = useDCCLogic()
 
   return (
@@ -96,11 +92,7 @@ export default function DCCPage({
       </div>
 
       <CARDetailsModal
-        isOpen={isCarDetailsModalOpen}
-        onClose={closeCarDetails}
-        car={selectedCar}
-        onSubmitCapa={submitCapa}
-        onVerify={verifyCar}
+        {...carDetailsModalProps}
         userRole={userRole}
         authUserId={authUserId}
         readOnly={true}

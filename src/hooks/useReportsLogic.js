@@ -22,15 +22,6 @@ import { submitCarReport, suggestClausesForCar, submitCapaPlan, verifyCarPlan } 
 import { supabase } from '@/utils/supabase'
 import { submitQddrReport, updateQddrReport } from '@/services/qddrService'
 import { useCARDetails } from './useCARDetails'
-import {
-  formatDate,
-  normalizeSeverity,
-  getStatusStyle,
-  getSeverityStyle,
-  getApprovalState,
-  formatAssignedUser
-} from '@/utils/themeHelpers'
-
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useReportsLogic({ currentUserId, userRole, authUserId }) {
@@ -125,7 +116,10 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
 
   useEffect(() => {
     if (currentAuthId) {
-      refreshCarAndQddrLists()
+      const timer = setTimeout(() => {
+        refreshCarAndQddrLists()
+      }, 0)
+      return () => clearTimeout(timer)
     }
   }, [currentAuthId, refreshCarAndQddrLists])
 
@@ -297,7 +291,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     await dataState.refreshReportsList()
   }
 
-  const handleUpdateReport = async (event, prevAction = '') => {
+  const handleUpdateReport = async (event) => {
     if (event) event.preventDefault()
 
     if (!modalsState.selectedReport?.id) {
@@ -484,15 +478,13 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     setError(null)
 
     try {
-      // If we launched the CAR from an NCR, attach its ID
-      if (modalsState.selectedCARReport?.id) {
-        carFormState.form.ncr_ids = [String(modalsState.selectedCARReport.id)]
-      }
-
-      // Build payload including confirmed ISO clause links
+      // Build payload including confirmed ISO clause links and attached NCR ID
       const payload = {
         ...carFormState.form,
-        clause_ids: carFormState.form.linked_clause_ids || []
+        clause_ids: carFormState.form.linked_clause_ids || [],
+        ncr_ids: modalsState.selectedCARReport?.id
+          ? [String(modalsState.selectedCARReport.id)]
+          : carFormState.form.ncr_ids
       }
       
       await submitCarReport(payload, currentAuthId)
@@ -523,12 +515,15 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     setError(null)
 
     try {
-      // If we launched QDDR from an NCR, attach its ID
-      if (modalsState.selectedQDDRReport?.id) {
-        qddrFormState.form.ncr_id = modalsState.selectedQDDRReport.id
+      // Build payload including NCR ID
+      const payload = {
+        ...qddrFormState.form,
+        ncr_id: modalsState.selectedQDDRReport?.id
+          ? modalsState.selectedQDDRReport.id
+          : qddrFormState.form.ncr_id
       }
       
-      await submitQddrReport(qddrFormState.form, currentAuthId)
+      await submitQddrReport(payload, currentAuthId)
       
       setToast({ message: 'QDDR report submitted successfully', type: 'success' })
       modalsState.closeQDDRModal()
@@ -600,7 +595,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
   })
 
   const ncrSubmitModalState = useNCRSubmitModal({
-    onSuccess: async (data) => {
+    onSuccess: async () => {
       setToast({ message: 'Report submitted successfully', type: 'success' })
       modalsState.closeCreateModal()
       await dataState.refreshReportsList()
@@ -789,7 +784,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       usersLoading: dataState.usersLoading,
       allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     },
-    qddrModalProps: {
+        qddrModalProps: {
       isOpen: modalsState.isQDDRModalOpen,
       onClose: modalsState.closeQDDRModal,
       form: qddrFormState.form,
@@ -803,6 +798,31 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       users: dataState.users.map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
       usersLoading: dataState.usersLoading,
       allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    },
+    carDetailsModalProps: {
+      isOpen: carDetails.isCarDetailsModalOpen,
+      onClose: carDetails.closeCarDetails,
+      car: carDetails.selectedCar,
+      onSubmitCapa: handleCapaSubmit,
+      onVerify: handleCarVerify,
+      userRole,
+      authUserId: currentAuthId,
+      rootCause: carDetails.rootCause,
+      setRootCause: carDetails.setRootCause,
+      correctiveAction: carDetails.correctiveAction,
+      setCorrectiveAction: carDetails.setCorrectiveAction,
+      preventiveAction: carDetails.preventiveAction,
+      setPreventiveAction: carDetails.setPreventiveAction,
+      verificationNotes: carDetails.verificationNotes,
+      setVerificationNotes: carDetails.setVerificationNotes,
+      submitting: carDetails.submitting,
+      suggesting: carDetails.suggesting,
+      error: carDetails.error,
+      linkedClauses: carDetails.linkedClauses,
+      loadingClauses: carDetails.loadingClauses,
+      handleSuggestActions: carDetails.handleSuggestActions,
+      handleCapaSubmit: (e) => carDetails.handleCapaSubmit(e, handleCapaSubmit, currentAuthId),
+      handleVerificationSubmit: (outcome) => carDetails.handleVerificationSubmit(outcome, handleCarVerify, currentAuthId)
     }
   }
 }
