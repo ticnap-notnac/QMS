@@ -49,10 +49,6 @@ function CreateReportModal({
   setEvidencePreview,
   evidenceError,
   setEvidenceError,
-  clauses,
-  clausesLoading,
-  suggestingClause,
-  handleSuggestClause,
 }) {
   if (!isOpen) return null
 
@@ -67,7 +63,6 @@ function CreateReportModal({
     description, setDescription,
     issueType, setIssueType,
     setIssueTypeId,
-    clauseId, setClauseId,
   } = createFormState
 
   const handleFileChange = (e) => {
@@ -273,45 +268,6 @@ function CreateReportModal({
                   onSelectOption={(opt) => { setIssueType(opt.label); setIssueTypeId(String(opt.id)) }}
                 />
               </div>
-            </div>
-
-            {/* ISO Clause Selection */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label className="label-field" style={{ margin: 0 }}>Linked ISO Clause:</label>
-                <button
-                  type="button"
-                  onClick={handleSuggestClause}
-                  disabled={suggestingClause}
-                  className="btn-quick-toggle"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '4px 10px',
-                    fontSize: '12px',
-                    background: 'rgba(34, 211, 238, 0.12)',
-                    border: '1px solid rgba(34, 211, 238, 0.3)',
-                    color: '#22d3ee',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {suggestingClause ? 'Suggesting...' : 'AI Suggest Clause'}
-                </button>
-              </div>
-              <select
-                value={clauseId}
-                onChange={(e) => setClauseId(e.target.value)}
-                className="input-field"
-                disabled={clausesLoading}
-                style={{ width: '100%', height: '38px', background: 'rgba(8, 18, 35, 0.5)' }}
-              >
-                <option value="">Select ISO Clause (Optional)</option>
-                {clauses && clauses.map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
-                ))}
-              </select>
             </div>
 
             {/* 📝 WIREFRAME ROW 4: Full-Width Description Entry Block */}
