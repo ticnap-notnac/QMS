@@ -183,6 +183,28 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
             Assign
           </button>
         )}
+        {isClosed && (
+          <button
+            type="button"
+            className="btn-edit-user"
+            onClick={() => onUpdate(report)}
+            title="View Details"
+            style={{
+              padding: '6px 12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(34, 211, 238, 0.1)',
+              border: '1px solid rgba(34, 211, 238, 0.25)',
+              color: '#22d3ee',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            View Details
+          </button>
+        )}
         {canUpdateReport && canUpdateReport(report) && (
           <button
             type="button"
