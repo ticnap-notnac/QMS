@@ -128,10 +128,10 @@ export default function UpdateReportModal({
             />
           </div>
 
-          {/* AI Corrective Action Suggestion */}
+          {/* AI Suggestions Panel */}
           <div style={{ marginTop: '16px', background: 'rgba(15, 23, 42, 0.3)', padding: '14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-              <span className="label-field" style={{ margin: 0 }}>AI Corrective Action Suggestion</span>
+              <span className="label-field" style={{ margin: 0, fontWeight: 'bold', color: '#22d3ee' }}>AI / CBR Action Suggestions</span>
 
               {suggestion && !isSuggesting && (
                 <span style={{
@@ -197,12 +197,40 @@ export default function UpdateReportModal({
             )}
 
             {suggestion && !isSuggesting && (
-              <div style={{ color: '#e2e8f0', fontSize: '13.5px', padding: '8px 0', lineHeight: '1.5' }}>
-                {suggestion.text}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '8px 0' }}>
+                {/* Corrective Action Section */}
+                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Suggested Corrective Action</div>
+                  <div style={{ color: '#e2e8f0', fontSize: '13px', lineHeight: '1.4' }}>{suggestion.text}</div>
+                  <button
+                    type="button"
+                    className="btn-gradient-primary"
+                    onClick={() => setField('correctiveAction', suggestion.text)}
+                    style={{ fontSize: '11px', padding: '4px 10px', height: 'auto', marginTop: '6px', boxShadow: 'none' }}
+                  >
+                    Accept Corrective Action
+                  </button>
+                </div>
+
+                {/* Preventive Action Section */}
+                {suggestion.preventiveAction && (
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div style={{ fontSize: '11px', color: '#34d399', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Suggested Preventive Action</div>
+                    <div style={{ color: '#e2e8f0', fontSize: '13px', lineHeight: '1.4' }}>{suggestion.preventiveAction}</div>
+                    <button
+                      type="button"
+                      className="btn-gradient-primary"
+                      onClick={() => setField('resolutionDetails', suggestion.preventiveAction)}
+                      style={{ fontSize: '11px', padding: '4px 10px', height: 'auto', marginTop: '6px', boxShadow: 'none', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)' }}
+                    >
+                      Accept Preventive Action
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px' }}>
               <button
                 type="button"
                 className="btn-quick-toggle"
@@ -210,16 +238,19 @@ export default function UpdateReportModal({
                 disabled={isSuggesting}
                 style={{ fontSize: '12px', padding: '6px 14px' }}
               >
-                {isSuggesting ? 'Analyzing...' : 'Regenerate'}
+                {isSuggesting ? 'Analyzing...' : 'Regenerate Suggestions'}
               </button>
-              {suggestion && !isSuggesting && (
+              {suggestion && !isSuggesting && suggestion.preventiveAction && (
                 <button
                   type="button"
-                  className="btn-gradient-primary"
-                  onClick={() => setField('correctiveAction', suggestion.text)}
-                  style={{ fontSize: '12px', padding: '6px 16px', height: 'auto', boxShadow: 'none' }}
+                  className="btn-secondary-light"
+                  onClick={() => {
+                    setField('correctiveAction', suggestion.text)
+                    setField('resolutionDetails', suggestion.preventiveAction)
+                  }}
+                  style={{ fontSize: '12px', padding: '6px 14px', height: 'auto' }}
                 >
-                  Accept Suggestion
+                  Accept Both
                 </button>
               )}
             </div>
