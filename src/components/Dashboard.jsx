@@ -13,12 +13,136 @@ import {
   Line,
   Legend
 } from 'recharts'
-import { AlertCircle, Shield, TrendingUp, BarChart2 } from 'lucide-react'
+import { AlertCircle, Shield, TrendingUp, BarChart2, Clock } from 'lucide-react'
+
+// Helper to parse and calculate resolution time in days
+const parseResolutionTimeToDays = (resTime, start, end) => {
+  if (resTime) {
+    const match = String(resTime).match(/(\d+)\s*(day|hour)/i)
+    if (match) {
+      const value = parseInt(match[1], 10)
+      const unit = match[2].toLowerCase()
+      if (unit.startsWith('hour')) {
+        return Number((value / 24).toFixed(2))
+      }
+      return value
+    }
+  }
+  if (start && end) {
+    const diff = new Date(end) - new Date(start)
+    if (diff > 0) {
+      return Number((diff / (1000 * 60 * 60 * 24)).toFixed(2))
+    }
+  }
+  return null
+}
+
+// Helper to aggregate resolution times monthly
+const groupResolutionTimesByMonth = (ncrs, cars, qddrs) => {
+  const months = {}
+
+  const addValue = (dateStr, val, type) => {
+    if (val === null || isNaN(val)) return
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return
+    const monthKey = d.toLocaleString('default', { month: 'short' }) + ' ' + d.getFullYear()
+    if (!months[monthKey]) {
+      months[monthKey] = {
+        ncrSum: 0, ncrCount: 0,
+        carSum: 0, carCount: 0,
+        qddrSum: 0, qddrCount: 0,
+        rawDate: d
+      }
+    }
+    months[monthKey][`${type}Sum`] += val
+    months[monthKey][`${type}Count`] += 1
+  }
+
+  ncrs.forEach(item => {
+    const val = parseResolutionTimeToDays(item.resolution_time, item.created_at, null)
+    addValue(item.created_at, val, 'ncr')
+  })
+
+  cars.forEach(item => {
+    const val = parseResolutionTimeToDays(item.resolution_time, item.created_at || item.request_date, item.verification_date || item.updated_at)
+    addValue(item.created_at || item.request_date, val, 'car')
+  })
+
+  qddrs.forEach(item => {
+    const val = parseResolutionTimeToDays(null, item.created_at, item.updated_at)
+    addValue(item.created_at, val, 'qddr')
+  })
+
+  return Object.entries(months)
+    .map(([month, data]) => {
+      const ncrAvg = data.ncrCount > 0 ? Number((data.ncrSum / data.ncrCount).toFixed(1)) : null
+      const carAvg = data.carCount > 0 ? Number((data.carSum / data.carCount).toFixed(1)) : null
+      const qddrAvg = data.qddrCount > 0 ? Number((data.qddrSum / data.qddrCount).toFixed(1)) : null
+      return {
+        month,
+        NCR: ncrAvg,
+        CAR: carAvg,
+        QDDR: qddrAvg,
+        rawDate: data.rawDate
+      }
+    })
+    .sort((a, b) => a.rawDate - b.rawDate)
+}
+
+// Custom tooltips for nice dark-theme popup displays
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload
+    return (
+      <div className="custom-chart-tooltip" style={{
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        padding: '12px',
+        borderRadius: '8px',
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)'
+      }}>
+        <p style={{ margin: 0, fontWeight: 600, color: '#f8fafc', fontSize: '13px' }}>{label || data.title}</p>
+        <p style={{ margin: '4px 0 0 0', color: '#22d3ee', fontSize: '14px', fontWeight: 700 }}>
+          {payload[0].name}: {payload[0].value}%
+        </p>
+        {data.standard && (
+          <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '11px' }}>
+            Standard: {data.standard}
+          </p>
+        )}
+      </div>
+    )
+  }
+  return null
+}
+
+const CustomResolutionTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="custom-chart-tooltip" style={{
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        padding: '12px',
+        borderRadius: '8px',
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)'
+      }}>
+        <p style={{ margin: 0, fontWeight: 600, color: '#f8fafc', fontSize: '13px' }}>{label}</p>
+        {payload.map((entry, idx) => (
+          <p key={idx} style={{ margin: '4px 0 0 0', color: entry.color, fontSize: '13px', fontWeight: 600 }}>
+            {entry.name}: {entry.value !== null && entry.value !== undefined ? `${entry.value} days` : '—'}
+          </p>
+        ))}
+      </div>
+    )
+  }
+  return null
+}
 
 export default function Dashboard() {
   const [metrics, setMetrics] = useState(null)
   const [complianceStats, setComplianceStats] = useState([])
   const [trends, setTrends] = useState([])
+  const [resolutionTrend, setResolutionTrend] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -43,6 +167,29 @@ export default function Dashboard() {
         // 3. Fetch historical trend data from backend API
         const trendData = await request('/compliance/trends')
         setTrends(trendData || [])
+
+        // Fetch closed reports for resolution time analytics
+        const [closedNcrsRes, closedCarsRes, closedQddrsRes] = await Promise.all([
+          supabase
+            .from('ncr_reports')
+            .select('created_at, resolution_time')
+            .eq('status', 'CLOSED'),
+          supabase
+            .from('car_reports')
+            .select('created_at, request_date, resolution_time, verification_date, updated_at')
+            .eq('status', 'closed'),
+          supabase
+            .from('qddr_reports')
+            .select('created_at, updated_at')
+            .eq('status', 'closed')
+        ])
+
+        const parsedTrends = groupResolutionTimesByMonth(
+          closedNcrsRes.data || [],
+          closedCarsRes.data || [],
+          closedQddrsRes.data || []
+        )
+        setResolutionTrend(parsedTrends)
 
         // 4. Calculate average ISO compliance score
         let avgCompliance = 100
@@ -88,33 +235,6 @@ export default function Dashboard() {
     title: t.title,
     standard: t.standard_name
   }))
-
-  // Custom tooltips for nice dark-theme popup displays
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload
-      return (
-        <div className="custom-chart-tooltip" style={{
-          backgroundColor: 'rgba(15, 23, 42, 0.95)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          padding: '12px',
-          borderRadius: '8px',
-          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)'
-        }}>
-          <p style={{ margin: 0, fontWeight: 600, color: '#f8fafc', fontSize: '13px' }}>{label || data.title}</p>
-          <p style={{ margin: '4px 0 0 0', color: '#22d3ee', fontSize: '14px', fontWeight: 700 }}>
-            {payload[0].name}: {payload[0].value}%
-          </p>
-          {data.standard && (
-            <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '11px' }}>
-              Standard: {data.standard}
-            </p>
-          )}
-        </div>
-      )
-    }
-    return null
-  }
 
   return (
     <div className="dashboard-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -263,6 +383,40 @@ export default function Dashboard() {
               ) : (
                 <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', fontSize: '13px' }}>
                   No historical trend audits recorded.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Line Chart - Resolution Time Trends */}
+          <div className="chart-wrapper" style={{
+            background: 'rgba(8, 18, 34, 0.45)',
+            border: '1px solid rgba(255,255,255,0.03)',
+            borderRadius: '12px',
+            padding: '20px',
+            boxSizing: 'border-box'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+              <Clock size={16} className="icon-cyan" />
+              <h4 style={{ margin: 0, color: '#f8fafc', fontSize: '14px', fontWeight: 600 }}>Average Resolution Time Trend (Days)</h4>
+            </div>
+            <div style={{ width: '100%', height: '300px' }}>
+              {resolutionTrend.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={resolutionTrend} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                    <XAxis dataKey="month" stroke="#64748b" fontSize={11} tickLine={false} />
+                    <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
+                    <Tooltip content={<CustomResolutionTooltip />} />
+                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                    <Line type="monotone" name="NCR" dataKey="NCR" stroke="#06b6d4" strokeWidth={2} dot={{ fill: '#06b6d4', r: 4 }} activeDot={{ r: 6 }} connectNulls />
+                    <Line type="monotone" name="CAR" dataKey="CAR" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981', r: 4 }} activeDot={{ r: 6 }} connectNulls />
+                    <Line type="monotone" name="QDDR" dataKey="QDDR" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 4 }} activeDot={{ r: 6 }} connectNulls />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', fontSize: '13px' }}>
+                  No closed reports data available.
                 </div>
               )}
             </div>
