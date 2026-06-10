@@ -131,7 +131,7 @@ export default function useISOLogic({ userName }) {
       
       if (findingsError) throw findingsError
 
-      // Fetch active NCRs that are linked to ISO clauses
+      // Fetch active NCRs
       const { data: ncrData, error: ncrError } = await supabase
         .from('ncr_reports')
         .select(`
@@ -146,27 +146,43 @@ export default function useISOLogic({ userName }) {
           )
         `)
         .not('status', 'ilike', 'closed')
-        .not('clause_id', 'is', null)
 
       if (ncrError) throw ncrError
 
       // Group active NCRs by clause_id in memory
       const ncrGroups = {}
+      const unlinkedEscalations = []
+
       if (ncrData) {
         ncrData.forEach(ncr => {
           const cid = ncr.clause_id
-          if (!ncrGroups[cid]) {
-            ncrGroups[cid] = {
-              clause: ncr.iso_clauses,
-              ncrs: []
+          if (cid) {
+            if (!ncrGroups[cid]) {
+              ncrGroups[cid] = {
+                clause: ncr.iso_clauses,
+                ncrs: []
+              }
+            }
+            ncrGroups[cid].ncrs.push(ncr)
+          } else {
+            const sev = String(ncr.severity || '').trim().toLowerCase()
+            if (['high', 'critical'].includes(sev)) {
+              unlinkedEscalations.push({
+                id: `ncr-unlinked-${ncr.id}`,
+                isNcrGap: true,
+                clause_id: null,
+                iso_clauses: { clause_number: 'N/A', title: 'High Severity Issue (Unlinked)' },
+                evidence: `Escalated Alert: High/Critical severity report [${ncr.reference_no}] has been submitted. Description: ${ncr.description}`,
+                ncr_ids: [ncr.id],
+                ncr_references: [ncr.reference_no]
+              })
             }
           }
-          ncrGroups[cid].ncrs.push(ncr)
         })
       }
 
       // Check thresholds: Low >= 3, Medium >= 2, High/Critical >= 1
-      const escalatedFindings = []
+      const escalatedFindings = [...unlinkedEscalations]
       Object.entries(ncrGroups).forEach(([clauseId, group]) => {
         const lowNcrs = group.ncrs.filter(n => String(n.severity || '').trim().toLowerCase() === 'low')
         const medNcrs = group.ncrs.filter(n => String(n.severity || '').trim().toLowerCase() === 'medium')
