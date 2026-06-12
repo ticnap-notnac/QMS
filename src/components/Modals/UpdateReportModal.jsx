@@ -146,14 +146,14 @@ export default function UpdateReportModal({
 
           {/* AI Suggestions Panel - Hide if closed */}
           {!isClosed && (
-            <div style={{ marginTop: '16px', background: 'rgba(15, 23, 42, 0.3)', padding: '14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+            <div style={{ marginTop: '16px', background: 'rgba(8, 145, 178, 0.04)', padding: '14px', borderRadius: '8px', border: '1px solid rgba(8, 145, 178, 0.15)' }}>
               <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-                <span className="label-field" style={{ margin: 0, fontWeight: 'bold', color: '#22d3ee' }}>AI / CBR Action Suggestions</span>
+                <span className="label-field" style={{ margin: 0, fontWeight: 'bold', color: '#0891b2' }}>AI / CBR Action Suggestions</span>
 
                 {suggestion && !isSuggesting && (
                   <span style={{
                     fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
-                    background: 'rgba(34,197,94,0.15)', color: '#86efac',
+                    background: 'rgba(34,197,94,0.15)', color: '#059669',
                     border: '1px solid rgba(34,197,94,0.25)'
                   }}>
                     {Math.round((suggestion.confidence || 0) * 100)}% match
@@ -163,7 +163,7 @@ export default function UpdateReportModal({
                 {suggestion?.cached && (
                   <span style={{
                     fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
-                    background: 'rgba(99,102,241,0.15)', color: '#a5b4fc',
+                    background: 'rgba(99,102,241,0.15)', color: '#4f46e5',
                     border: '1px solid rgba(99,102,241,0.25)'
                   }}>
                     cached
@@ -173,7 +173,7 @@ export default function UpdateReportModal({
                 {suggestion?.fromRepository && !suggestion?.cached && (
                   <span style={{
                     fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
-                    background: 'rgba(34,197,94,0.15)', color: '#86efac',
+                    background: 'rgba(34,197,94,0.15)', color: '#059669',
                     border: '1px solid rgba(34,197,94,0.25)'
                   }}>
                     CBR match
@@ -183,7 +183,7 @@ export default function UpdateReportModal({
                 {suggestion?.matchedFeatures?.length > 0 && !suggestion?.cached && (
                   <span style={{
                     fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
-                    background: 'rgba(99,102,241,0.12)', color: '#c4b5fd',
+                    background: 'rgba(99,102,241,0.12)', color: '#6d28d9',
                     border: '1px solid rgba(99,102,241,0.25)'
                   }}>
                     ✓ {suggestion.matchedFeatures.join(' · ')}
@@ -193,7 +193,7 @@ export default function UpdateReportModal({
                 {!suggestion?.fromRepository && !suggestion?.cached && suggestion && (
                   <span style={{
                     fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
-                    background: 'rgba(245,158,11,0.15)', color: '#fde68a',
+                    background: 'rgba(245,158,11,0.15)', color: '#d97706',
                     border: '1px solid rgba(245,158,11,0.25)'
                   }}>
                     AI generated
@@ -216,9 +216,9 @@ export default function UpdateReportModal({
               {suggestion && !isSuggesting && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '8px 0' }}>
                   {/* Corrective Action Section */}
-                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Suggested Corrective Action</div>
-                    <div style={{ color: '#e2e8f0', fontSize: '13px', lineHeight: '1.4' }}>{suggestion.text}</div>
+                  <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: '11px', color: '#0284c7', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Suggested Corrective Action</div>
+                    <div style={{ color: '#0f172a', fontSize: '13px', lineHeight: '1.4' }}>{suggestion.text}</div>
                     <button
                       type="button"
                       className="btn-gradient-primary"
@@ -231,9 +231,9 @@ export default function UpdateReportModal({
 
                   {/* Preventive Action Section */}
                   {suggestion.preventiveAction && (
-                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                      <div style={{ fontSize: '11px', color: '#34d399', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Suggested Preventive Action</div>
-                      <div style={{ color: '#e2e8f0', fontSize: '13px', lineHeight: '1.4' }}>{suggestion.preventiveAction}</div>
+                    <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <div style={{ fontSize: '11px', color: '#059669', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Suggested Preventive Action</div>
+                      <div style={{ color: '#0f172a', fontSize: '13px', lineHeight: '1.4' }}>{suggestion.preventiveAction}</div>
                       <button
                         type="button"
                         className="btn-gradient-primary"
@@ -247,7 +247,7 @@ export default function UpdateReportModal({
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: '10px', marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '8px', borderTop: '1px solid #cbd5e1', paddingTop: '8px' }}>
                 <button
                   type="button"
                   className="btn-quick-toggle"

@@ -41,8 +41,8 @@ function InvestigatedReportCard({ report, departmentNameById, canAssignReports, 
   const isApproved = approvalState === 'approved'
 
   const approvalBadgeStyle = isApproved
-    ? { background: 'rgba(34, 197, 94, 0.2)', color: '#bbf7d0', borderColor: 'rgba(34, 197, 94, 0.35)' }
-    : { background: 'rgba(245, 158, 11, 0.2)', color: '#fde68a', borderColor: 'rgba(245, 158, 11, 0.35)' }
+    ? { background: '#e2fbe8', color: '#15803d', borderColor: 'rgba(34, 197, 94, 0.25)' }
+    : { background: '#fffbeb', color: '#b45309', borderColor: 'rgba(245, 158, 11, 0.25)' }
 
   const resolutionTimeLabel = report.resolution_time_value
     ? `${report.resolution_time_value} ${report.resolution_time_unit || ''}`.trim()
@@ -54,7 +54,7 @@ function InvestigatedReportCard({ report, departmentNameById, canAssignReports, 
       <div className="reports-card-header">
         <div className="reports-user-block">
           <div className="reports-avatar">
-            <User size={20} className="icon-cyan" />
+            <User size={20} color="#0f172a" />
           </div>
           <div className="reports-user-text">
             <span className="reports-user-name">{reporterName}</span>
@@ -184,9 +184,9 @@ function InvestigatedReportCard({ report, departmentNameById, canAssignReports, 
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.25)',
-              color: '#f87171',
+              backgroundColor: '#fef2f2',
+              border: '1px solid rgba(220, 38, 38, 0.25)',
+              color: '#dc2626',
               borderRadius: '6px',
               cursor: 'pointer',
               transition: 'all 0.15s ease'

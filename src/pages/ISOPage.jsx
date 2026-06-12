@@ -46,9 +46,9 @@ export default function ISOPage({ userRole, userName }) {
   if (!isAuthorized) {
     return (
       <main className="dashboard page-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh' }}>
-        <div className="metric-card" style={{ maxWidth: '480px', width: '90%', textAlign: 'center', padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', border: '1px solid rgba(239, 68, 68, 0.2)', background: 'rgba(15, 23, 42, 0.4)' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#f8fafc', margin: 0 }}>Access Denied</h2>
-          <p style={{ fontSize: '14px', color: '#94a3b8', lineHeight: '1.5', margin: 0 }}>
+        <div className="metric-card" style={{ maxWidth: '480px', width: '90%', textAlign: 'center', padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', border: '1px solid #e4e4e7', background: '#ffffff' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Access Denied</h2>
+          <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.5', margin: 0 }}>
             You do not have permission to view the ISO Compliance panel. Only quality auditors and system administrators are authorized to access this section.
           </p>
         </div>
@@ -88,18 +88,18 @@ export default function ISOPage({ userRole, userName }) {
 
         <div className="metric-card metric-card--padded" style={{ margin: 0, padding: '32px' }}>
           {/* 🎯 THE FIX: Bottom margin added to cleanly decouple header elements from riding up */}
-          <h3 className="metric-card-title iso-review-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 10px 0' }}>
+          <h3 className="metric-card-title iso-review-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 10px 0', color: '#0f172a' }}>
             <AlertTriangle size={18} className="icon-amber" />
             Gaps & Deficiencies Action Center
           </h3>
           
           {/* 🎯 THE FIX: Enhanced line-height interval parameters to enforce visual structure safety margins */}
-          <p style={{ color: '#94a3b8', fontSize: '13.5px', margin: '0 0 20px 0', lineHeight: '1.6' }}>
+          <p style={{ color: '#475569', fontSize: '13.5px', margin: '0 0 20px 0', lineHeight: '1.6' }}>
             Review non-compliant clauses identified during audits and generate Corrective Action Requests (CAR) to resolve them.
           </p>
           
           {nonCompliantFindings.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: '#64748b', fontSize: '14px', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '8px', background: 'rgba(255,255,255,0.01)' }}>
+            <div style={{ textAlign: 'center', padding: '24px 0', color: '#64748b', fontSize: '14px', border: '1px dashed #cbd5e1', borderRadius: '8px', background: '#f8fafc' }}>
               No active non-compliance gaps found. Great job!
             </div>
           ) : (
@@ -108,10 +108,10 @@ export default function ISOPage({ userRole, userName }) {
                 <div key={finding.id} style={{ padding: '16px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: '240px' }}>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '11px', background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>Clause {finding.iso_clauses?.clause_number || 'N/A'}</span>
-                      <strong style={{ fontSize: '14px', color: '#f8fafc' }}>{finding.iso_clauses?.title || 'Unknown Clause'}</strong>
+                      <span style={{ fontSize: '11px', background: '#fee2e2', color: '#b91c1c', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>Clause {finding.iso_clauses?.clause_number || 'N/A'}</span>
+                      <strong style={{ fontSize: '14px', color: '#0f172a' }}>{finding.iso_clauses?.title || 'Unknown Clause'}</strong>
                     </div>
-                    {finding.evidence && <p style={{ fontSize: '13px', color: '#94a3b8', margin: '4px 0 0 0', lineHeight: '1.4' }}><span style={{ color: '#64748b', fontWeight: '500' }}>Evidence: </span>{finding.evidence}</p>}
+                    {finding.evidence && <p style={{ fontSize: '13px', color: '#475569', margin: '4px 0 0 0', lineHeight: '1.4' }}><span style={{ color: '#64748b', fontWeight: '500' }}>Evidence: </span>{finding.evidence}</p>}
                   </div>
                   <div>
                     {createdCars[finding.id] ? (
@@ -144,11 +144,11 @@ const ProgressRow = ({ label, tone, percent, icon }) => (
   <div className="progress-row iso-progress-row" style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '16px' }}>
     <div className="progress-label-container iso-progress-label-container" style={{ width: '130px', flexShrink: 0 }}>
       <span className={`progress-icon progress-icon-${tone} iso-progress-icon`}>{icon}</span>
-      <span className="progress-label-text iso-progress-label-text">{label}:</span>
+      <span className="progress-label-text iso-progress-label-text" style={{ color: '#0f172a' }}>{label}:</span>
     </div>
     <div className="progress-bar-container iso-progress-bar-container" style={{ flex: 1 }}>
       <div className={`progress-bar-fill progress-fill-${tone} iso-progress-bar-fill`} style={{ width: `${percent}%`, height: '100%' }} />
     </div>
-    <span style={{ fontSize: '13px', color: '#94a3b8', minWidth: '40px', textAlign: 'right' }}>{percent}%</span>
+    <span style={{ fontSize: '13px', color: '#475569', minWidth: '40px', textAlign: 'right' }}>{percent}%</span>
   </div>
 )

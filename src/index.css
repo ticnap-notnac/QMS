@@ -2,7 +2,7 @@
 
 :root {
   /* Core Brand Typography and Color Tokens */
-  --ink: #e7efff;
+  --ink: #0f172a; /* Slate 900 (Dark Charcoal) */
   --body: 'Gill Sans', 'Trebuchet MS', Verdana, sans-serif;
   --display: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
 
@@ -10,7 +10,7 @@
   line-height: 1.5;
   font-weight: 400;
   color: var(--ink);
-  background-color: #08142c;
+  background-color: #f8fafc; /* Slate 50 (Off-white) */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -23,7 +23,7 @@
 body {
   margin: 0;
   min-height: 100svh;
-  background-color: #08142c;
+  background-color: #f8fafc;
 }
 
 #root {
@@ -82,21 +82,21 @@ input {
 /* Reusable Constrained Content Bounds */
 .page-padding { padding: 24px; }
 .page-container { padding: 24px; max-width: 1000px; margin: 0 auto; }
-.page-heading { margin-bottom: 24px; color: #e2e8f0; }
+.page-heading { margin-bottom: 24px; color: #334155; }
 
 .page-title {
   margin-bottom: 24px;
   text-align: left;
-  color: #e2e8f0;
+  color: #0f172a;
   font-size: 28px;
   font-weight: 600;
 }
 
 /* Global Shared Control Buttons Framework */
 .btn-primary {
-  background: rgba(34, 211, 238, 0.1);
-  border: 1px solid rgba(34, 211, 238, 0.3);
-  color: #22d3ee;
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  color: #ffffff;
   padding: 10px 20px;
   border-radius: 6px;
   cursor: pointer;
@@ -104,31 +104,32 @@ input {
   font-size: 14px;
   transition: all 0.2s;
 }
-.btn-primary:hover { background: rgba(34, 211, 238, 0.2); }
-.btn-primary:active { background: rgba(34, 211, 238, 0.15); }
+.btn-primary:hover { background: #1e293b; border-color: #1e293b; }
+.btn-primary:active { background: #0f172a; }
 
 .btn-gradient-primary {
-  background: linear-gradient(120deg, #2dd5dc 0%, #3b7bff 100%);
-  color: #04152d;
+  background: #0f172a;
+  color: #ffffff;
   padding: 10px 16px;
   border-radius: 10px;
   border: none;
   cursor: pointer;
-  font-weight: 700;
-  box-shadow: 0 8px 20px rgba(59, 123, 255, 0.12);
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
-.btn-gradient-primary:hover { transform: translateY(-1px); }
+.btn-gradient-primary:hover { transform: translateY(-1px); background: #1e293b; }
 
 .btn-secondary-light {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  color: #e2e8f0;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
   padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
+  transition: all 0.2s ease;
 }
-.btn-secondary-light:hover { background: rgba(255,255,255,0.05); }
+.btn-secondary-light:hover { background: #f8fafc; border-color: #94a3b8; color: #0f172a; }
 
 /* Universal Shared Form Layout Contexts */
 .form-group {
@@ -138,7 +139,7 @@ input {
 .form-group label {
   display: block;
   font-size: 12px;
-  color: #94a3b8;
+  color: #64748b;
   margin-bottom: 8px;
   text-transform: uppercase;
 }
@@ -146,35 +147,36 @@ input {
 .form-input {
   width: 100%;
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
   border-radius: 6px;
-  color: #e2e8f0;
+  color: #0f172a;
   font-size: 14px;
   box-sizing: border-box;
 }
 .form-input:focus {
   outline: none;
-  border-color: rgba(34, 211, 238, 0.5);
-  background: rgba(34, 211, 238, 0.05);
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06);
 }
 .form-input:disabled {
-  background: rgba(255, 255, 255, 0.02);
-  color: #64748b;
+  background: #f1f5f9;
+  color: #94a3b8;
   cursor: not-allowed;
 }
 
 /* Micro Action Messages & Badges */
 .success-message {
-  color: green;
+  color: #16a34a;
   margin-bottom: 12px;
   padding: 10px;
-  border: 1px solid green;
+  border: 1px solid rgba(22, 163, 74, 0.2);
   border-radius: 6px;
+  background: rgba(22, 163, 74, 0.05);
 }
 
 .error-message {
-  color: #fca5a5;
+  color: #dc2626;
   font-size: 12px;
   margin-top: 4px;
 }
@@ -184,12 +186,12 @@ input {
   display: flex;
   gap: 8px;
 }
-.icon-cyan { color: #22d3ee; }
-.icon-teal { color: #06b6d4; }
-.icon-amber { color: #f59e0b; }
-.icon-blue { color: #3b82f6; }
-.icon-green { color: #10b981; }
-.icon-abs { position: absolute; right: 12px; top: 12px; color: #64748b; }
+.icon-cyan { color: #0f172a; }
+.icon-teal { color: #475569; }
+.icon-amber { color: #64748b; }
+.icon-blue { color: #334155; }
+.icon-green { color: #1e293b; }
+.icon-abs { position: absolute; right: 12px; top: 12px; color: #94a3b8; }
 
 /* ==========================================================================
    DYNAMIC INTERACTIVE TOAST NOTIFICATION SYSTEM
@@ -198,12 +200,12 @@ input {
   position: fixed;
   bottom: 28px;
   right: 28px;
-  background: rgba(13, 26, 45, 0.92);
+  background: #ffffff;
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #cbd5e1;
   padding: 14px 22px;
   border-radius: 10px;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
   gap: 18px;
@@ -212,21 +214,21 @@ input {
 }
 
 /* Color codes mapped to theme accents */
-.toast-status--info { border-left: 4px solid #22d3ee; }
-.toast-status--success { border-left: 4px solid #10b981; }
-.toast-status--error { border-left: 4px solid #ef4444; }
+.toast-status--info { border-left: 4px solid #0f172a; }
+.toast-status--success { border-left: 4px solid #16a34a; }
+.toast-status--error { border-left: 4px solid #dc2626; }
 
 .toast-inner-cluster { display: flex; align-items: center; gap: 12px; }
-.toast-body-text { margin: 0; color: #f1f5f9; font-size: 13.5px; font-weight: 500; }
+.toast-body-text { margin: 0; color: #0f172a; font-size: 13.5px; font-weight: 500; }
 .toast-dismiss-button { 
   background: none; 
   border: none; 
-  color: #64748b; 
+  color: #94a3b8; 
   cursor: pointer; 
   font-size: 18px; 
   transition: color 0.2s; 
 }
-.toast-dismiss-button:hover { color: #f8fafc; }
+.toast-dismiss-button:hover { color: #0f172a; }
 
 @keyframes slideNotificationIn {
   from { transform: translateX(120%); opacity: 0; }

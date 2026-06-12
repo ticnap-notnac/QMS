@@ -5,13 +5,12 @@
 .settings-container,
 .settings-container--profile {
   width: 100%;
-  background: rgba(13, 26, 45, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
   border-radius: 12px;
   padding: 32px;
   box-sizing: border-box;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
 .settings-container {
@@ -40,7 +39,7 @@
   margin: 0 0 8px 0;
   font-size: 28px;
   font-weight: 600;
-  color: #ffffff;
+  color: #0f172a;
 }
 
 /* ==========================================================================
@@ -74,14 +73,14 @@
   margin: 0 0 24px 0;
   font-size: 20px;
   font-weight: 600;
-  color: #ffffff;
+  color: #0f172a;
 }
 
 .settings-password-title {
   margin: 0 0 16px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #ffffff;
+  color: #0f172a;
 }
 
 /* ==========================================================================
@@ -108,8 +107,8 @@
 
 .sidebar-button {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
+  border: 1px solid #cbd5e1;
+  color: #475569;
   padding: 10px 16px;
   border-radius: 6px;
   cursor: pointer;
@@ -120,14 +119,14 @@
 }
 
 .sidebar-button:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: #f1f5f9;
+  border-color: #94a3b8;
 }
 
 .sidebar-button.active {
-  background: rgba(34, 211, 238, 0.1);
-  border-color: rgba(34, 211, 238, 0.3);
-  color: #22d3ee;
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
 }
 
 /* ==========================================================================

@@ -1,12 +1,12 @@
 /* src/pages/AdminPanel.css */
 .admin-panel-main { padding: 24px; max-width: 1200px; margin: 0 auto; }
-.admin-panel-title { margin-bottom: 24px; color: #e2e8f0; font-size: 28px; font-weight: 600; }
+.admin-panel-title { margin-bottom: 24px; color: #0f172a; font-size: 28px; font-weight: 600; }
 
-.admin-tab-navigation { display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; }
+.admin-tab-navigation { display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid #cbd5e1; padding-bottom: 12px; }
 .admin-tab-button {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #94a3b8;
+  border: 1px solid #cbd5e1;
+  color: #475569;
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 14px;
@@ -14,8 +14,8 @@
   cursor: pointer;
   transition: all 0.2s;
 }
-.admin-tab-button:hover { border-color: rgba(255, 255, 255, 0.3); color: #cbd5e1; }
-.admin-tab-button.active { background: #1e293b; border-color: #22d3ee; color: #22d3ee; }
+.admin-tab-button:hover { border-color: #94a3b8; color: #0f172a; }
+.admin-tab-button.active { background: #0f172a; border-color: #0f172a; color: #ffffff; }
 
 /* Control Search Utility Rows */
 .admin-search-row { display: flex; gap: 16px; align-items: center; margin-bottom: 24px; }
@@ -23,20 +23,20 @@
 .admin-search-input {
   width: 100%;
   padding: 10px 16px 10px 40px;
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
   border-radius: 6px;
-  color: #e2e8f0;
+  color: #0f172a;
   font-size: 14px;
   box-sizing: border-box;
 }
-.admin-search-input:focus { outline: none; border-color: rgba(34, 211, 238, 0.5); background: rgba(34, 211, 238, 0.05); }
+.admin-search-input:focus { outline: none; border-color: #0f172a; background: #ffffff; }
 .admin-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; }
 
 .admin-add-button {
   padding: 10px 20px;
-  background: #c084fc;
-  color: #0f172a;
+  background: #0f172a;
+  color: #ffffff;
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -44,7 +44,7 @@
   cursor: pointer;
   transition: background 0.2s;
 }
-.admin-add-button:hover { background: #a855f7; }
+.admin-add-button:hover { background: #1e293b; }
 
 /* ==========================================================================
    MANAGEMENT INFORMATION TABLE LAYOUTS (FIXED NO-SCROLL ENGINE)
@@ -52,9 +52,9 @@
 .admin-users-table-wrap {
   width: 100%;
   overflow-x: hidden; 
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid #cbd5e1;
   border-radius: 10px;
-  background: rgba(8, 16, 36, 0.55);
+  background: #ffffff;
 }
 
 .admin-users-table { 
@@ -68,7 +68,7 @@
 .admin-users-table td { 
   padding: 10px 8px; /* Compact internal cell cushioning */
   text-align: left; 
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+  border-bottom: 1px solid #cbd5e1; 
   font-size: 13px; 
   white-space: nowrap;
   overflow: hidden;
@@ -76,19 +76,19 @@
 }
 
 .admin-users-table th { 
-  color: #94a3b8; 
+  color: #475569; 
   font-weight: 600; 
   text-transform: uppercase; 
   letter-spacing: 0.04em; 
-  background: rgba(255, 255, 255, 0.02); 
+  background: #f8fafc; 
 }
 
 .admin-users-table td { 
-  color: #e2e8f0; 
+  color: #0f172a; 
 }
 
 .admin-users-table tbody tr:hover { 
-  background: rgba(34, 211, 238, 0.05); 
+  background: #f1f5f9; 
 }
 
 /* 📐 Strict Column Width Percentage Distributions */
@@ -134,9 +134,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(34, 211, 238, 0.08);
-  border: 1px solid rgba(34, 211, 238, 0.25);
-  color: #22d3ee;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
   padding: 6px; /* Squarish layout optimized for standard icons */
   border-radius: 6px;
   cursor: pointer;
@@ -145,14 +145,15 @@
 }
 
 .btn-edit-user:hover {
-  background: rgba(34, 211, 238, 0.18);
-  border-color: rgba(34, 211, 238, 0.5);
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
 .btn-edit-user:active {
-  background: rgba(34, 211, 238, 0.12);
+  background: #e2e8f0;
   transform: translateY(0);
 }
 
@@ -169,7 +170,7 @@
   justify-content: center;
   background: transparent !important; /* Completely strips the background block tint */
   border: none !important;            /* 🎯 THE FIX: Erases that persistent solid red line box! */
-  color: #ef4444;                     /* Beautiful, vibrant red icon color */
+  color: #dc2626;                     /* Beautiful, vibrant red icon color */
   padding: 8px;
   border-radius: 6px;
   cursor: pointer;
@@ -178,13 +179,13 @@
 }
 
 .btn-delete-user:hover {
-  background: rgba(239, 68, 68, 0.12) !important; /* Soft premium red backdrop glow on hover */
-  color: #f87171;                                 /* Slightly lighter red for contrast */
+  background: #fef2f2 !important; /* Soft premium red backdrop glow on hover */
+  color: #b91c1c;                                 /* Slightly lighter red for contrast */
   transform: translateY(-1px);
 }
 
 .btn-delete-user:active {
-  background: rgba(239, 68, 68, 0.18) !important;
+  background: #fee2e2 !important;
   transform: translateY(0);
 }
 
@@ -197,10 +198,10 @@
 /* Core Authorization Access Guard Notifications */
 .admin-access-denied-message {
   padding: 16px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
   border-radius: 6px;
-  color: #fca5a5;
+  color: #dc2626;
   font-size: 14px;
 }
 
@@ -217,8 +218,8 @@
   border-radius: 50%;
 }
 
-.status-dot.active { background-color: #22c55e; box-shadow: 0 0 10px rgba(34,197,94,0.5); }
-.status-dot.inactive { background-color: #ef4444; box-shadow: 0 0 10px rgba(239,68,68,0.5); }
+.status-dot.active { background-color: #16a34a; box-shadow: 0 0 10px rgba(22, 163, 74, 0.4); }
+.status-dot.inactive { background-color: #dc2626; box-shadow: 0 0 10px rgba(220, 38, 38, 0.4); }
 
 /* ==========================================================================
    ADMIN PANEL TABLE ACTION ALIGNMENT FIX
@@ -300,27 +301,27 @@
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 🧼 Clean Edit Icon Style: Sleek sky-blue accent on dark theme */
+/* 🧼 Clean Edit Icon Style: Sleek active accent */
 .edit-btn {
-  color: #38bdf8 !important; /* Soft Tailwind Cyan/Sky-400 */
+  color: #0f172a !important;
 }
 
 /* Subtle hover background tint for the Edit button */
 .edit-btn:hover {
-  background: rgba(56, 189, 248, 0.15) !important;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.1);
+  background: #f1f5f9 !important;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
   transform: translateY(-1px);
 }
 
 /* 🛑 Clean Delete Icon Style: Sleek deep coral-red accent on dark theme */
 .delete-btn {
-  color: #f87171 !important; /* Soft Tailwind Red-400 */
+  color: #dc2626 !important;
 }
 
 /* Subtle hover background tint for the Delete button */
 .delete-btn:hover {
-  background: rgba(248, 113, 113, 0.15) !important;
-  box-shadow: 0 0 12px rgba(248, 113, 113, 0.1);
+  background: #fef2f2 !important;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.05);
   transform: translateY(-1px);
 }
 
@@ -371,15 +372,15 @@
   display: block !important;
 }
 .folder-content-container ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02) !important;
+  background: #f1f5f9 !important;
   border-radius: 10px !important;
 }
 .folder-content-container ::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.3) !important; /* Matches your cyan/blue scheme accent color */
+  background: #cbd5e1 !important;
   border-radius: 10px !important;
 }
 .folder-content-container ::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.5) !important;
+  background: #94a3b8 !important;
 }
 /* ==========================================================================
    DCC PANEL RESPONSIVE SCROLL CONSTRAINTS
@@ -428,13 +429,13 @@
   display: block !important;
 }
 .folder-content-container ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02) !important;
+  background: #f1f5f9 !important;
   border-radius: 10px !important;
 }
 .folder-content-container ::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.25) !important; /* Sleek transparent cyan accent line matching your app theme */
+  background: #cbd5e1 !important;
   border-radius: 10px !important;
 }
 .folder-content-container ::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.45) !important;
+  background: #94a3b8 !important;
 }

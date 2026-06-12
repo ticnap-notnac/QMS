@@ -45,14 +45,14 @@ function SearchableDropdown({ label, value, onValueChange, options, loading = fa
               marginTop: '6px',
               maxHeight: '180px',
               overflowY: 'auto',
-              border: '1px solid rgba(148, 163, 184, 0.28)',
+              border: '1px solid #cbd5e1',
               borderRadius: '12px',
-              background: 'rgba(11, 24, 53, 0.98)',
-              boxShadow: '0 18px 40px rgba(0, 0, 0, 0.28)',
+              background: '#ffffff',
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
             }}
           >
             {loading ? (
-              <div style={{ padding: '12px 14px', color: '#cbd5e1' }}>Loading...</div>
+              <div style={{ padding: '12px 14px', color: '#64748b' }}>Loading...</div>
             ) : filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
                 <button
@@ -64,22 +64,13 @@ function SearchableDropdown({ label, value, onValueChange, options, loading = fa
                     onSelectOption(option)
                     setIsOpen(false)
                   }}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: '10px 14px',
-                    background: 'transparent',
-                    color: '#e2e8f0',
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
+                  className="dropdown-option-btn"
                 >
                   {option.label}
                 </button>
               ))
             ) : (
-              <div style={{ padding: '12px 14px', color: '#cbd5e1' }}>
+              <div style={{ padding: '12px 14px', color: '#64748b' }}>
                 No matches found. You can keep typing a custom value.
               </div>
             )}

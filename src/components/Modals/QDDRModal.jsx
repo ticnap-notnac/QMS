@@ -129,8 +129,8 @@ function QDDRModal({
                         key={report.id}
                         style={{
                           padding: '12px',
-                          background: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0.04)',
-                          border: isSelected ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: isSelected ? 'rgba(59, 130, 246, 0.1)' : '#f8fafc',
+                          border: isSelected ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid #e2e8f0',
                           borderRadius: '6px',
                           cursor: 'pointer',
                           display: 'flex',
@@ -146,7 +146,7 @@ function QDDRModal({
                         />
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '6px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: '#e2e8f0', fontWeight: '500' }}>{report.reference_no || `NCR #${report.id}`}</span>
+                            <span style={{ color: '#0f172a', fontWeight: '500' }}>{report.reference_no || `NCR #${report.id}`}</span>
                             <span style={{ color: 'var(--muted)', fontSize: '13px' }}>{new Date(report.created_at).toLocaleDateString()}</span>
                           </div>
                           {report.description && (
@@ -261,7 +261,7 @@ function QDDRModal({
                 </div>
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' }} />
+              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
 
               {/* Row 4: Material Details */}
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 0.8fr', gap: '14px' }}>
@@ -308,14 +308,14 @@ function QDDRModal({
                 </div>
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' }} />
+              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
 
-              <h4 style={{ color: '#fff', fontSize: '13px', margin: '0 0 4px 0', textAlign: 'center', letterSpacing: '0.05em' }}>TYPE OF DISCREPANCY</h4>
+              <h4 style={{ color: '#0f172a', fontSize: '13px', margin: '0 0 4px 0', textAlign: 'center', letterSpacing: '0.05em' }}>TYPE OF DISCREPANCY</h4>
               
               {/* Discrepancies Grid & Others */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                 {checkboxFields.map(field => (
-                  <label key={field.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#cbd5e1', cursor: 'pointer' }}>
+                  <label key={field.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#334155', cursor: 'pointer' }}>
                     <input
                       type="checkbox"
                       checked={form[field.key]}
@@ -336,7 +336,7 @@ function QDDRModal({
                 />
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' }} />
+              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
 
               {/* Details: Reason, Corrective, Preventive */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
@@ -422,7 +422,7 @@ function QDDRModal({
             gap: '12px',
             padding: '14px 0 0 0',
             background: 'transparent',
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            borderTop: '1px solid #cbd5e1',
             marginTop: '12px'
           }}
         >

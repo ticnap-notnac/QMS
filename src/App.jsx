@@ -296,6 +296,7 @@ export default function App() {
               userRole={userRole}
               userName={userName}
               userPosition={userPosition}
+              userEmail={user?.email}
               currentUserId={currentUserId}
               unreadNotificationCount={unreadNotificationCount}
               canViewNotifications={canViewNotifications}

@@ -75,7 +75,7 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
       <div className="reports-card-header">
         <div className="reports-user-block">
           <div className="reports-avatar">
-            <User size={20} className="icon-cyan" />
+            <User size={20} color="#0f172a" />
           </div>
           <div className="reports-user-text">
             <span className="reports-user-name">{reporterName}</span>
@@ -101,9 +101,9 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
             <span
               style={{ 
                 ...unifiedBadgeStyle, 
-                background: 'rgba(245, 158, 11, 0.15)', 
-                color: '#fde68a', 
-                border: '1px solid rgba(245, 158, 11, 0.35)' 
+                background: '#fffbeb', 
+                color: '#b45309', 
+                border: '1px solid rgba(245, 158, 11, 0.25)' 
               }}
             >
               ASSIGNED
@@ -194,9 +194,9 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: 'rgba(34, 211, 238, 0.1)',
-              border: '1px solid rgba(34, 211, 238, 0.25)',
-              color: '#22d3ee',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              color: '#0f172a',
               borderRadius: '6px',
               cursor: 'pointer',
               transition: 'all 0.15s ease'
@@ -226,9 +226,9 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.25)',
-              color: '#f87171',
+              backgroundColor: '#fef2f2',
+              border: '1px solid rgba(220, 38, 38, 0.25)',
+              color: '#dc2626',
               borderRadius: '6px',
               cursor: 'pointer',
               transition: 'all 0.15s ease'

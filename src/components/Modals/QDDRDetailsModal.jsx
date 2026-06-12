@@ -185,8 +185,8 @@ export default function QDDRDetailsModal({
           
           {/* Metadata Grid */}
           <div style={{
-            background: 'rgba(255,255,255,0.02)',
-            border: '1px solid rgba(255,255,255,0.05)',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
             borderRadius: '8px',
             padding: '16px',
             display: 'grid',
@@ -194,26 +194,26 @@ export default function QDDRDetailsModal({
             gap: '12px',
             fontSize: '13px'
           }}>
-            <div><span style={{ color: 'var(--muted)' }}>Location:</span> <strong style={{ color: '#f8fafc' }}>{qddr.location || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Date:</span> <strong style={{ color: '#f8fafc' }}>{qddr.date ? new Date(qddr.date).toLocaleDateString() : '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Time:</span> <strong style={{ color: '#f8fafc' }}>{qddr.time || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Location:</span> <strong style={{ color: '#0f172a' }}>{qddr.location || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Date:</span> <strong style={{ color: '#0f172a' }}>{qddr.date ? new Date(qddr.date).toLocaleDateString() : '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Time:</span> <strong style={{ color: '#0f172a' }}>{qddr.time || '—'}</strong></div>
             
-            <div><span style={{ color: 'var(--muted)' }}>Trucker / Broker:</span> <strong style={{ color: '#f8fafc' }}>{qddr.trucker_broker || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Plate Number:</span> <strong style={{ color: '#f8fafc' }}>{qddr.plate_number || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Container Number:</span> <strong style={{ color: '#f8fafc' }}>{qddr.container_number || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Trucker / Broker:</span> <strong style={{ color: '#0f172a' }}>{qddr.trucker_broker || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Plate Number:</span> <strong style={{ color: '#0f172a' }}>{qddr.plate_number || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Container Number:</span> <strong style={{ color: '#0f172a' }}>{qddr.container_number || '—'}</strong></div>
             
-            <div><span style={{ color: 'var(--muted)' }}>PO Reference:</span> <strong style={{ color: '#f8fafc' }}>{qddr.po_reference || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>DR / WB Number:</span> <strong style={{ color: '#f8fafc' }}>{qddr.drwb_number || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Brand / Supplier:</span> <strong style={{ color: '#f8fafc' }}>{qddr.brand_supplier || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>PO Reference:</span> <strong style={{ color: '#0f172a' }}>{qddr.po_reference || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>DR / WB Number:</span> <strong style={{ color: '#0f172a' }}>{qddr.drwb_number || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Brand / Supplier:</span> <strong style={{ color: '#0f172a' }}>{qddr.brand_supplier || '—'}</strong></div>
             
-            <div><span style={{ color: 'var(--muted)' }}>Material:</span> <strong style={{ color: '#f8fafc' }}>{qddr.material_description || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Material Code:</span> <strong style={{ color: '#f8fafc' }}>{qddr.material_code || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Batch / ISU No:</span> <strong style={{ color: '#f8fafc' }}>{qddr.batch_code_su_number || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Material:</span> <strong style={{ color: '#0f172a' }}>{qddr.material_description || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Material Code:</span> <strong style={{ color: '#0f172a' }}>{qddr.material_code || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Batch / ISU No:</span> <strong style={{ color: '#0f172a' }}>{qddr.batch_code_su_number || '—'}</strong></div>
             
-            <div><span style={{ color: 'var(--muted)' }}>Quantity:</span> <strong style={{ color: '#f8fafc' }}>{qddr.qty || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Quantity:</span> <strong style={{ color: '#0f172a' }}>{qddr.qty || '—'}</strong></div>
             {qddr.ncr_id && (
               <div style={{ gridColumn: 'span 2' }}>
-                <span style={{ color: 'var(--muted)' }}>Linked NCR:</span> <strong style={{ color: '#f8fafc' }}>{qddr.ncr_id}</strong>
+                <span style={{ color: 'var(--muted)' }}>Linked NCR:</span> <strong style={{ color: '#0f172a' }}>{qddr.ncr_id}</strong>
               </div>
             )}
           </div>
@@ -222,8 +222,8 @@ export default function QDDRDetailsModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label className="label-field" style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase' }}>Types of Discrepancy Checked</label>
             <div style={{
-              background: 'rgba(255,255,255,0.01)',
-              border: '1px solid rgba(255,255,255,0.04)',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
               padding: '12px',
               borderRadius: '6px',
               display: 'flex',
@@ -235,7 +235,7 @@ export default function QDDRDetailsModal({
                   <span key={f.key} style={{
                     background: 'rgba(239, 68, 68, 0.1)',
                     border: '1px solid rgba(239, 68, 68, 0.3)',
-                    color: '#fca5a5',
+                    color: '#dc2626',
                     padding: '4px 10px',
                     borderRadius: '100px',
                     fontSize: '11px',
@@ -249,9 +249,9 @@ export default function QDDRDetailsModal({
               )}
               {qddr.others && (
                 <span style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  color: '#e2e8f0',
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  color: '#334155',
                   padding: '4px 10px',
                   borderRadius: '100px',
                   fontSize: '11px'
@@ -266,12 +266,12 @@ export default function QDDRDetailsModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label className="label-field" style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase' }}>Reason of Discrepancy</label>
             <div style={{
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(255,255,255,0.05)',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
               padding: '12px',
               borderRadius: '6px',
               fontSize: '13px',
-              color: '#e2e8f0',
+              color: '#0f172a',
               lineHeight: '1.5',
               whiteSpace: 'pre-wrap'
             }}>{qddr.reason_of_discrepancy}</div>
@@ -279,9 +279,9 @@ export default function QDDRDetailsModal({
 
           {/* RESOLUTION SECTION */}
           {!readOnly ? (
-            <form onSubmit={handleUpdateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+            <form onSubmit={handleUpdateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid #cbd5e1', paddingTop: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 4px 0' }}>
-                <h4 style={{ color: '#22d3ee', fontSize: '14px', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <h4 style={{ color: '#0891b2', fontSize: '14px', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <CheckCircle size={16} /> Resolve / Close Discrepancy Report
                 </h4>
                 <button
@@ -295,9 +295,9 @@ export default function QDDRDetailsModal({
                     gap: '6px',
                     padding: '4px 10px',
                     fontSize: '12px',
-                    background: 'rgba(34, 211, 238, 0.12)',
-                    border: '1px solid rgba(34, 211, 238, 0.3)',
-                    color: '#22d3ee',
+                    background: 'rgba(8, 145, 178, 0.12)',
+                    border: '1px solid rgba(8, 145, 178, 0.3)',
+                    color: '#0891b2',
                     borderRadius: '4px',
                     cursor: 'pointer'
                   }}
@@ -392,40 +392,40 @@ export default function QDDRDetailsModal({
               </div>
             </form>
           ) : (
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h4 style={{ color: '#f8fafc', fontSize: '14px', margin: '0' }}>Resolution Details</h4>
+            <div style={{ borderTop: '1px solid #cbd5e1', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <h4 style={{ color: '#0f172a', fontSize: '14px', margin: '0' }}>Resolution Details</h4>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
                   <span style={{ color: 'var(--muted)', fontSize: '12px' }}>Corrective Action:</span>
                   <div style={{
-                    background: 'rgba(255,255,255,0.01)',
-                    border: '1px solid rgba(255,255,255,0.03)',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
                     padding: '10px',
                     borderRadius: '6px',
                     fontSize: '13px',
-                    color: '#e2e8f0',
+                    color: '#0f172a',
                     marginTop: '4px'
                   }}>{qddr.corrective_action || '—'}</div>
                 </div>
                 <div>
                   <span style={{ color: 'var(--muted)', fontSize: '12px' }}>Preventive Action:</span>
                   <div style={{
-                    background: 'rgba(255,255,255,0.01)',
-                    border: '1px solid rgba(255,255,255,0.03)',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
                     padding: '10px',
                     borderRadius: '6px',
                     fontSize: '13px',
-                    color: '#e2e8f0',
+                    color: '#0f172a',
                     marginTop: '4px'
                   }}>{qddr.preventive_action || '—'}</div>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', fontSize: '13px', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '12px' }}>
-                <div><span style={{ color: 'var(--muted)' }}>Leader / Supervisor:</span> <strong style={{ color: '#f8fafc' }}>{users?.find(u => String(u.id) === String(qddr.leader))?.label || '—'}</strong></div>
-                <div><span style={{ color: 'var(--muted)' }}>Approved By:</span> <strong style={{ color: '#f8fafc' }}>{users?.find(u => String(u.id) === String(qddr.approved_by))?.label || '—'}</strong></div>
-                <div><span style={{ color: 'var(--muted)' }}>Noted By:</span> <strong style={{ color: '#f8fafc' }}>{users?.find(u => String(u.id) === String(qddr.noted_by))?.label || '—'}</strong></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', fontSize: '13px', borderTop: '1px solid #cbd5e1', paddingTop: '12px' }}>
+                <div><span style={{ color: 'var(--muted)' }}>Leader / Supervisor:</span> <strong style={{ color: '#0f172a' }}>{users?.find(u => String(u.id) === String(qddr.leader))?.label || '—'}</strong></div>
+                <div><span style={{ color: 'var(--muted)' }}>Approved By:</span> <strong style={{ color: '#0f172a' }}>{users?.find(u => String(u.id) === String(qddr.approved_by))?.label || '—'}</strong></div>
+                <div><span style={{ color: 'var(--muted)' }}>Noted By:</span> <strong style={{ color: '#0f172a' }}>{users?.find(u => String(u.id) === String(qddr.noted_by))?.label || '—'}</strong></div>
               </div>
             </div>
           )}
@@ -441,7 +441,7 @@ export default function QDDRDetailsModal({
             justifyContent: 'flex-end',
             alignItems: 'center',
             padding: '14px 0 0 0',
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            borderTop: '1px solid #cbd5e1',
             marginTop: '12px'
           }}
         >

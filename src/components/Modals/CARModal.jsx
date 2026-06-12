@@ -123,8 +123,8 @@ function CARModal({
                         key={report.id}
                         style={{
                           padding: '12px',
-                          background: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0.04)',
-                          border: isSelected ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                          background: isSelected ? 'rgba(59, 130, 246, 0.1)' : '#f8fafc',
+                          border: isSelected ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid #e2e8f0',
                           borderRadius: '6px',
                           cursor: 'pointer',
                           display: 'flex',
@@ -140,7 +140,7 @@ function CARModal({
                         />
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '6px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: '#e2e8f0', fontWeight: '500' }}>{report.reference_no || `NCR #${report.id}`}</span>
+                            <span style={{ color: '#0f172a', fontWeight: '500' }}>{report.reference_no || `NCR #${report.id}`}</span>
                             <span style={{ color: 'var(--muted)', fontSize: '13px' }}>{new Date(report.created_at).toLocaleDateString()}</span>
                           </div>
                           {report.description && (
@@ -218,14 +218,14 @@ function CARModal({
 
               <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '8px' }}>
                 <label className="label-field" style={{ margin: 0 }}>Reason for Re-issue:</label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#e2e8f0', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#334155', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
                     checked={form.no_reply}
                     onChange={(e) => handleChange('no_reply', e.target.checked)}
                   /> No Reply
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#e2e8f0', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#334155', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
                     checked={form.re_corrective_action}
@@ -234,14 +234,14 @@ function CARModal({
                 </label>
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '8px 0' }} />
+              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
 
-              <h4 style={{ color: '#fff', fontSize: '14px', margin: '0 0 8px 0', textAlign: 'center' }}>TYPE OF NON-CONFORMANCE</h4>
+              <h4 style={{ color: '#0f172a', fontSize: '14px', margin: '0 0 8px 0', textAlign: 'center' }}>TYPE OF NON-CONFORMANCE</h4>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {checkboxFields.map(field => (
-                    <label key={field.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#e2e8f0', cursor: 'pointer' }}>
+                    <label key={field.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#334155', cursor: 'pointer' }}>
                       <input
                         type="checkbox"
                         checked={form[field.key]}
@@ -275,7 +275,7 @@ function CARModal({
                 </div>
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '8px 0' }} />
+              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label className="label-field" style={{ margin: 0, textAlign: 'center' }}>DETAILS OF NON-CONFORMANCE</label>
@@ -291,8 +291,8 @@ function CARModal({
 
               {/* ── ISO Clause Linkage Panel ─────────────────────────────── */}
               <div style={{
-                background: 'rgba(34, 211, 238, 0.04)',
-                border: '1px solid rgba(34, 211, 238, 0.15)',
+                background: 'rgba(8, 145, 178, 0.04)',
+                border: '1px solid rgba(8, 145, 178, 0.15)',
                 borderRadius: '8px',
                 padding: '14px',
                 display: 'flex',
@@ -300,7 +300,7 @@ function CARModal({
                 gap: '10px'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#22d3ee', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#0891b2', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Link size={14} /> ISO Clause Linkage
                   </span>
                   <button
@@ -333,8 +333,8 @@ function CARModal({
                           key={s.clause_id}
                           style={{
                             display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            background: 'rgba(34, 211, 238, 0.12)', border: '1px solid rgba(34, 211, 238, 0.3)',
-                            borderRadius: '4px', padding: '3px 8px', fontSize: '12px', color: '#22d3ee'
+                            background: 'rgba(8, 145, 178, 0.12)', border: '1px solid rgba(8, 145, 178, 0.3)',
+                            borderRadius: '4px', padding: '3px 8px', fontSize: '12px', color: '#0891b2'
                           }}
                         >
                           <CheckCircle2 size={11} /> Clause {s.clause_number} – {s.title}
@@ -368,24 +368,24 @@ function CARModal({
                           style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                             gap: '12px', padding: '9px 12px', borderRadius: '6px', cursor: 'pointer',
-                            background: isConfirmed ? 'rgba(34, 211, 238, 0.08)' : 'rgba(255,255,255,0.03)',
-                            border: isConfirmed ? '1px solid rgba(34, 211, 238, 0.35)' : '1px solid rgba(255,255,255,0.07)',
+                            background: isConfirmed ? 'rgba(8, 145, 178, 0.08)' : '#f8fafc',
+                            border: isConfirmed ? '1px solid rgba(8, 145, 178, 0.35)' : '1px solid #e2e8f0',
                             textAlign: 'left', transition: 'all 0.15s ease'
                           }}
                         >
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
-                            <span style={{ fontSize: '13px', color: '#f8fafc', fontWeight: isConfirmed ? '600' : '400' }}>
-                              <span style={{ color: '#22d3ee', fontWeight: 'bold', marginRight: '6px' }}>Clause {suggestion.clause_number}</span>
+                            <span style={{ fontSize: '13px', color: '#0f172a', fontWeight: isConfirmed ? '600' : '400' }}>
+                              <span style={{ color: '#0891b2', fontWeight: 'bold', marginRight: '6px' }}>Clause {suggestion.clause_number}</span>
                               {suggestion.title}
                             </span>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <div style={{ flex: 1, height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
+                              <div style={{ flex: 1, height: '3px', background: '#e2e8f0', borderRadius: '2px' }}>
                                 <div style={{ width: `${confPct}%`, height: '100%', background: confColor, borderRadius: '2px', transition: 'width 0.3s ease' }} />
                               </div>
                               <span style={{ fontSize: '10px', color: confColor, fontWeight: 'bold', minWidth: '32px' }}>{confPct}%</span>
                             </div>
                           </div>
-                          <div style={{ color: isConfirmed ? '#22d3ee' : '#475569', flexShrink: 0 }}>
+                          <div style={{ color: isConfirmed ? '#0891b2' : '#475569', flexShrink: 0 }}>
                             {isConfirmed ? <CheckCircle2 size={16} /> : <span style={{ fontSize: '11px', color: '#475569' }}>+ Add</span>}
                           </div>
                         </button>
@@ -428,7 +428,7 @@ function CARModal({
             gap: '12px',
             padding: '14px 0 0 0',
             background: 'transparent',
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            borderTop: '1px solid #cbd5e1',
             marginTop: '12px'
           }}
         >

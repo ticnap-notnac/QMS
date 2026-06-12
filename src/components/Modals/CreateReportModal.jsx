@@ -168,7 +168,7 @@ function CreateReportModal({
                 </div>
               )}
               {evidenceError && (
-                <p style={{ color: '#fca5a5', fontSize: '12px', margin: '4px 0 0 0' }}>{evidenceError}</p>
+                <p style={{ color: '#dc2626', fontSize: '12px', margin: '4px 0 0 0' }}>{evidenceError}</p>
               )}
               <input
                 ref={fileInputRef}
@@ -230,7 +230,7 @@ function CreateReportModal({
                   value={severity}
                   onChange={(e) => setSeverity(e.target.value)}
                   className="input-field"
-                  style={{ width: '100%', height: '38px', background: 'rgba(8, 18, 35, 0.5)' }}
+                  style={{ width: '100%', height: '38px' }}
                 >
                   <option value="">Select Severity…</option>
                   {SEVERITY_OPTIONS.map((s) => (
@@ -247,7 +247,7 @@ function CreateReportModal({
                   onChange={(e) => setDepartment(e.target.value)}
                   className="input-field"
                   disabled={departmentsLoading}
-                  style={{ width: '100%', height: '38px', background: 'rgba(8, 18, 35, 0.5)' }}
+                  style={{ width: '100%', height: '38px' }}
                 >
                   <option value="">{departmentsLoading ? 'Loading…' : 'Select Department…'}</option>
                   {departments.map((d) => (
@@ -299,7 +299,7 @@ function CreateReportModal({
             gap: '12px',
             padding: '14px 0 0 0',
             background: 'transparent',
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            borderTop: '1px solid #cbd5e1',
             marginTop: '12px'
           }}
         >
