@@ -283,9 +283,9 @@ export default function Dashboard() {
           cursor: 'default'
         }}
 
-        // Fix standard container typo
-        onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-        onMouseOut={e => e.currentTarget.style.transform = 'none'}
+          // Fix standard container typo
+          onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseOut={e => e.currentTarget.style.transform = 'none'}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#94a3b8' }}>
             <p style={{ margin: 0, fontSize: '14px', fontWeight: 500 }}>ISO Compliance Rate</p>
@@ -311,7 +311,7 @@ export default function Dashboard() {
           cursor: 'default'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#94a3b8' }}>
-            <p style={{ margin: 0, fontSize: '14px', fontWeight: 500 }}>QDR Defect Rate</p>
+            <p style={{ margin: 0, fontSize: '14px', fontWeight: 500 }}>QDDR Defect Rate</p>
             <TrendingUp size={20} className="icon-amber" />
           </div>
           <h3 style={{ margin: '16px 0 8px 0', fontSize: '36px', fontWeight: 700, color: '#f59e0b' }}>

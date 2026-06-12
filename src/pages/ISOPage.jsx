@@ -26,7 +26,6 @@ export default function ISOPage({ userRole, userName }) {
     nonCompliantFindings,
     createdCars,
     handleOpenCarModal,
-    setIsSelectionModalOpen,
     modulesModalProps,
     taskSelectionModalProps,
     carModalProps,
@@ -127,9 +126,7 @@ export default function ISOPage({ userRole, userName }) {
           )}
         </div>
 
-        <div className="iso-cta-row">
-          <button type="button" onClick={() => setIsSelectionModalOpen(true)} className="btn-gradient-primary iso-cta-button">Create ISO Tasks</button>
-        </div>
+
       </div>
 
       <ISOModulesModal {...modulesModalProps} />
