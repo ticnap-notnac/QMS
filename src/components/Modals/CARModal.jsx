@@ -135,7 +135,7 @@ function CARModal({
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleNcrSelection(report.id, report.reference_no || String(report.id))}
+                          onChange={() => toggleNcrSelection(report.id, report.reference_no || String(report.id), report)}
                           style={{ marginTop: '4px' }}
                         />
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '6px' }}>
@@ -284,7 +284,6 @@ function CARModal({
                   onChange={(e) => handleChange('details_of_nonconformance', e.target.value)}
                   className="input-field"
                   placeholder="Detailed description..."
-                  required
                   style={{ width: '100%', height: '120px', padding: '10px', resize: 'none', boxSizing: 'border-box' }}
                 />
               </div>

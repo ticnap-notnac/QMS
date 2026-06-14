@@ -85,7 +85,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     deptName: dataState.departmentNameById.get(String(modalsState.selectedReport?.department_id || '')) || '—',
   })
 
-  const carFormState = useCARForm()
+  const carFormState = useCARForm(dataState.departments)
   const qddrFormState = useQDDRForm()
 
   const refreshCarAndQddrLists = useCallback(async () => {

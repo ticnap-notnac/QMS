@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { suggestClausesForCar } from '@/services/carService'
 
-export function useCARForm() {
+export function useCARForm(departments = []) {
   const initialState = {
     reference_no: '',
     requesting_department: '',
@@ -47,20 +47,89 @@ export function useCARForm() {
     if (error) setError('')
   }
 
-  const toggleNcrSelection = (id, reference) => {
+  const toggleNcrSelection = (id, reference, report = null) => {
     setForm(prev => {
       const isSelected = prev.ncr_ids.includes(String(id));
       if (isSelected) {
+        // Unlinking
+        const updatedNcrIds = prev.ncr_ids.filter(nid => nid !== String(id));
+        const updatedReferences = prev.linked_ncr_references.filter(ref => ref !== reference);
+        
+        let details = prev.details_of_nonconformance;
+        if (report && details === report.description) {
+          details = '';
+        }
+        let prodName = prev.product_material_name;
+        if (report && prodName === (report.product_type_name || report.product_type)) {
+          prodName = '';
+        }
+
         return {
           ...prev,
-          ncr_ids: prev.ncr_ids.filter(nid => nid !== String(id)),
-          linked_ncr_references: prev.linked_ncr_references.filter(ref => ref !== reference)
+          ncr_ids: updatedNcrIds,
+          linked_ncr_references: updatedReferences,
+          details_of_nonconformance: details,
+          product_material_name: prodName
         };
       } else {
+        // Linking (Auto-fill)
+        const updatedNcrIds = [...prev.ncr_ids, String(id)];
+        const updatedReferences = [...prev.linked_ncr_references, reference];
+
+        // 1. Resolve department name from departments list
+        let reqDept = prev.requesting_department;
+        if (!reqDept && report && report.department_id) {
+          const dept = departments.find(d => String(d.id) === String(report.department_id));
+          if (dept) {
+            reqDept = dept.department_name;
+          }
+        }
+
+        // 2. Resolve occurrence date
+        let occDate = prev.date;
+        if (!occDate && report && report.occurrence_date) {
+          occDate = report.occurrence_date.split('T')[0];
+        }
+
+        // 3. Resolve product name
+        let prodName = prev.product_material_name;
+        if (!prodName && report) {
+          prodName = report.product_type_name || report.product_type || '';
+        }
+
+        // 4. Resolve details description
+        let details = prev.details_of_nonconformance;
+        if (!details && report && report.description) {
+          details = report.description;
+        }
+
+        // 5. Checkbox Issue Type mapping
+        const issueTypeLower = String(report?.issue_type || '').toLowerCase();
+        const qualitySafety = prev.quality_food_safety || issueTypeLower.includes('quality') || issueTypeLower.includes('food');
+        const envSafety = prev.environment_health_safety || issueTypeLower.includes('env') || issueTypeLower.includes('health') || issueTypeLower.includes('safety');
+        const security = prev.security_issue || issueTypeLower.includes('security');
+        const internalAudit = prev.internal_audit || issueTypeLower.includes('internal') || issueTypeLower.includes('audit');
+        const customerComplaint = prev.customer_complaint || issueTypeLower.includes('complaint') || issueTypeLower.includes('customer');
+        const govAudit = prev.government_agency_audit || issueTypeLower.includes('government') || issueTypeLower.includes('agency');
+        const custAudit = prev.customer_audit_nonconformance || (issueTypeLower.includes('customer') && issueTypeLower.includes('audit'));
+        const vendorNoncon = prev.vendor_nonconformance || issueTypeLower.includes('vendor');
+
         return {
           ...prev,
-          ncr_ids: [...prev.ncr_ids, String(id)],
-          linked_ncr_references: [...prev.linked_ncr_references, reference]
+          ncr_ids: updatedNcrIds,
+          linked_ncr_references: updatedReferences,
+          requesting_department: reqDept,
+          date: occDate,
+          product_material_name: prodName,
+          details_of_nonconformance: details,
+          quality_food_safety: qualitySafety,
+          environment_health_safety: envSafety,
+          security_issue: security,
+          internal_audit: internalAudit,
+          customer_complaint: customerComplaint,
+          government_agency_audit: govAudit,
+          customer_audit_nonconformance: custAudit,
+          vendor_nonconformance: vendorNoncon
         };
       }
     });
@@ -131,14 +200,7 @@ export function useCARForm() {
   }
 
   const validate = () => {
-    if (!form.requesting_department) {
-      setError('Requesting Department is required.')
-      return false
-    }
-    if (!form.details_of_nonconformance) {
-      setError('Details of Non-Conformance is required.')
-      return false
-    }
+    // Relaxed validation: always return true
     setError(null)
     return true
   }
