@@ -2,9 +2,11 @@ import { useState, useCallback } from 'react'
 import * as isoService from '@/services/isoService'
 import { suggestClausesForCar } from '@/services/carService'
 import { CAR_STATUS } from '../../../shared/constants'
+import { useLookup } from '@/context/LookupContext'
 
 export function useISOCARForm({ userName, setToast, setCreatedCars, fetchComplianceData }) {
   const [isCarModalOpen, setIsCarModalOpen] = useState(false)
+  const { userSiteId } = useLookup()
   
   const initialFormState = {
     requesting_department: '',
@@ -209,7 +211,8 @@ export function useISOCARForm({ userName, setToast, setCreatedCars, fetchComplia
         request_date: carForm.request_date || null,
         audit_schedule_id: auditScheduleId,
         ncr_id: ncrArray,
-        status: CAR_STATUS.OPEN
+        status: CAR_STATUS.OPEN,
+        site_id: userSiteId
       })
 
       // Link CAR to selected clauses + original triggering clause

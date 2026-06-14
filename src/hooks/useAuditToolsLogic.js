@@ -640,6 +640,12 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
     setSaving(true)
     try {
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('site_id')
+        .eq('auth_id', authUserId)
+        .maybeSingle()
+
       const { data, error: insertError } = await supabase
         .from('audit_schedules')
         .insert({
@@ -647,7 +653,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
           standard_id: standardId,
           scheduled_date: scheduledDate,
           auditor_id: auditorId,
-          status: 'pending'
+          status: 'pending',
+          site_id: userProfile?.site_id || null
         })
         .select()
 

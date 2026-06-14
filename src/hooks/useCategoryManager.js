@@ -5,6 +5,7 @@ export default function useCategoryManager({ loadFn, createFn, deleteFn }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [creating, setCreating] = useState(false)
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -26,12 +27,15 @@ export default function useCategoryManager({ loadFn, createFn, deleteFn }) {
 
   const createItem = useCallback(async (name) => {
     setError('')
+    setCreating(true)
     try {
       await createFn(name)
       await reload()
     } catch (err) {
       setError(err?.message || String(err))
       throw err
+    } finally {
+      setCreating(false)
     }
   }, [createFn, reload])
 
@@ -54,6 +58,7 @@ export default function useCategoryManager({ loadFn, createFn, deleteFn }) {
     loading,
     error,
     deletingId,
+    creating,
     reload,
     createItem,
     deleteItem,

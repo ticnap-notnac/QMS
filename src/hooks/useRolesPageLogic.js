@@ -9,7 +9,7 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
   const [formError, setFormError] = useState('')
   const [formMessage, setFormMessage] = useState('')
 
-  const { items, loading, deletingId, reload, createItem, deleteItem, error } = useCategoryManager({
+  const { items, loading, deletingId, creating, reload, createItem, deleteItem, error } = useCategoryManager({
     loadFn,
     createFn,
     deleteFn,
@@ -71,6 +71,7 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
     filtered,
     loading,
     deletingId,
+    creating,
     reload,
     searchQuery,
     setSearchQuery,

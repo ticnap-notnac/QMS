@@ -32,6 +32,7 @@ export default function RolesPage({
     formMessage,
     handleSubmitCategory,
     handleDeleteRole,
+    creating,
     error,
   } = useRolesPageLogic({ loadFn: loadRolesController, createFn: createRoleController, deleteFn: deleteRoleController })
 
@@ -74,7 +75,7 @@ export default function RolesPage({
             </div>
           </div>
 
-          <AddCategoryModal isOpen={isCategoryModalOpen} onClose={closeCategoryModal} onSubmit={handleSubmitCategory} title="Create New Role" label="Role Name" value={categoryInput} onChange={(event) => setCategoryInput(event.target.value)} placeholder="Enter role name" loading={false} error={formError} message={formMessage} submitLabel="Create Role" helperText="Create a role entry that will be available in the user modal." />
+          <AddCategoryModal isOpen={isCategoryModalOpen} onClose={closeCategoryModal} onSubmit={handleSubmitCategory} title="Create New Role" label="Role Name" value={categoryInput} onChange={(event) => setCategoryInput(event.target.value)} placeholder="Enter role name" loading={creating} error={formError} message={formMessage} submitLabel="Create Role" helperText="Create a role entry that will be available in the user modal." />
         </main>
       ) : (
         <main className="page-main-centered">

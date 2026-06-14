@@ -40,6 +40,12 @@ export async function createCarReport({ body, reportedByAuthId }) {
     audit_schedule_id
   } = body || {}
 
+  const { data: creatorObj } = await supabase
+    .from('users')
+    .select('site_id')
+    .eq('auth_id', reportedByAuthId)
+    .maybeSingle()
+
   const { data: records, error: latestError } = await supabase
     .from('car_reports')
     .select('reference_no')
@@ -83,7 +89,8 @@ export async function createCarReport({ body, reportedByAuthId }) {
     request_date: request_date ? request_date : null,
     ncr_id: Array.isArray(ncr_ids) && ncr_ids.length > 0 ? ncr_ids.map(id => parseInt(id, 10)) : null,
     audit_schedule_id: audit_schedule_id || null,
-    status: CAR_STATUS.OPEN
+    status: CAR_STATUS.OPEN,
+    site_id: creatorObj?.site_id || null
   }
 
   const { data, error } = await supabase.from('car_reports').insert(payload).select('*').maybeSingle()

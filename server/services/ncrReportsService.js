@@ -281,7 +281,7 @@ export async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, 
  * Fetches NCR reports filtered by scope and enriches them with related data.
  * @param {'open'|'investigated'|'all'} scope
  */
-export async function fetchReports(scope = 'open') {
+export async function fetchReports(scope = 'open', actorAuthId = null) {
   // Dynamic cron-like check for verification dates that are reached
   try {
     const todayStr = getLocalDateString()
@@ -335,6 +335,17 @@ export async function fetchReports(scope = 'open') {
 
   let query = supabase.from('ncr_reports').select('*')
 
+  if (actorAuthId) {
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('site_id')
+      .eq('auth_id', actorAuthId)
+      .maybeSingle()
+    if (userProfile?.site_id) {
+      query = query.or(`site_id.is.null,site_id.eq.${userProfile.site_id}`)
+    }
+  }
+
   if (scope === 'investigated') {
     query = query.not('investigation_details', 'is', null).not('status', 'ilike', REPORT_STATUS.CLOSED)
   } else if (scope === 'closed') {
@@ -370,7 +381,7 @@ export async function createNcrReport({ body, reportedByAuthId }) {
 
   const { data: reporter, error: reporterError } = await supabase
     .from('users')
-    .select('id')
+    .select('id, site_id')
     .eq('auth_id', reportedByAuthId)
     .maybeSingle()
   if (reporterError) throw reporterError
@@ -429,6 +440,7 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     description,
     evidence_url,
     clause_id: clause_id ? String(clause_id).trim() : null,
+    site_id: reporter.site_id || null,
   }
 
   const { data, error } = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()
@@ -457,7 +469,7 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
 
   const { data: reporter, error: reporterError } = await supabase
     .from('users')
-    .select('id, user_name, first_name, last_name')
+    .select('id, user_name, first_name, last_name, site_id')
     .eq('auth_id', reportedByAuthId)
     .maybeSingle()
   if (reporterError) throw reporterError
@@ -546,6 +558,7 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
     description,
     evidence_url: evidenceUrl,
     clause_id: clause_id ? String(clause_id).trim() : null,
+    site_id: reporter.site_id || null,
   }
 
   const { data, error } = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()

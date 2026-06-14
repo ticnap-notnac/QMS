@@ -19,8 +19,9 @@ import {
 
 export async function getReports(req, res) {
   const scope = String(req.query?.scope || 'open').trim().toLowerCase()
+  const actorAuthId = getRequestActor(req)
   try {
-    return res.json(await fetchReports(scope))
+    return res.json(await fetchReports(scope, actorAuthId))
   } catch (err) {
     return res.status(500).json({ error: err?.message || String(err) })
   }

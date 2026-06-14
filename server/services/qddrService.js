@@ -29,7 +29,7 @@ export async function createQddrReport({ body, reportedByAuthId }) {
   // Resolve reporter from auth actor
   const { data: reporter, error: reporterError } = await supabase
     .from('users')
-    .select('id')
+    .select('id, site_id')
     .eq('auth_id', reportedByAuthId)
     .maybeSingle()
 
@@ -139,7 +139,8 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     noted_by: notedById,
     leader: leaderId,
     ncr_id: ncr_id ? parseInt(ncr_id, 10) : null,
-    status: 'open'
+    status: 'open',
+    site_id: reporter.site_id || null
   }
 
   const { data, error } = await supabase.from('qddr_reports').insert(payload).select('*').maybeSingle()

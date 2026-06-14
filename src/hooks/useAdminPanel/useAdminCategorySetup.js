@@ -17,7 +17,7 @@ export default function useAdminCategorySetup({
   const [formError, setFormError] = useState('')
   const [formMessage, setFormMessage] = useState('')
 
-  const { items, loading, deletingId, reload, createItem, deleteItem, error } = useCategoryManager({
+  const { items, loading, deletingId, creating, reload, createItem, deleteItem, error } = useCategoryManager({
     loadFn,
     createFn,
     deleteFn
@@ -93,7 +93,7 @@ export default function useAdminCategorySetup({
     value: categoryInput,
     onChange: (event) => setCategoryInput(event.target.value),
     placeholder: placeholderText,
-    loading: false,
+    loading: creating,
     error: formError,
     message: formMessage,
     submitLabel: `Create ${entityName}`,
