@@ -84,13 +84,12 @@ export async function createQddrReport({ body, reportedByAuthId }) {
   ])
 
   // Get next sequential reference number
-  const { data: latest, error: latestError } = await supabase
+  const { data: records, error: latestError } = await supabase
     .from('qddr_reports')
     .select('reference_no')
     .ilike('reference_no', 'QDDR-%')
     .order('reference_no', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    .limit(50)
 
   if (latestError) {
     const customErr = new Error(`Database error getting latest QDDR ref: ${latestError.message}`)
@@ -98,7 +97,8 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     throw customErr
   }
 
-  const generatedReferenceNo = `QDDR-${String(buildQddrReferenceNumber(latest?.reference_no) + 1).padStart(3, '0')}`
+  const latestNumeric = (records || []).find(r => /^QDDR-\d+$/i.test(r.reference_no))
+  const generatedReferenceNo = `QDDR-${String(buildQddrReferenceNumber(latestNumeric?.reference_no) + 1).padStart(3, '0')}`
 
   const payload = {
     reference_no: generatedReferenceNo,

@@ -377,16 +377,16 @@ export async function createNcrReport({ body, reportedByAuthId }) {
   if (!reporter) throw Object.assign(new Error('Reporter profile not found.'), { status: 404 })
 
   const year = new Date().getFullYear()
-  const { data: latest, error: latestError } = await supabase
+  const { data: records, error: latestError } = await supabase
     .from('ncr_reports')
     .select('reference_no')
     .ilike('reference_no', `NCR-${year}-%`)
     .order('reference_no', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    .limit(50)
   if (latestError) throw latestError
 
-  const referenceNo = `NCR-${year}-${String(buildReferenceNumber(latest?.reference_no) + 1).padStart(4, '0')}`
+  const latestNumeric = (records || []).find(r => /^NCR-\d{4}-\d{3,}$/i.test(r.reference_no))
+  const referenceNo = `NCR-${year}-${String(buildReferenceNumber(latestNumeric?.reference_no) + 1).padStart(4, '0')}`
 
   const { id: resolvedLocationId, name: resolvedLocationName } = await resolveCatalogEntry({
     table: 'locations', idColumn: 'id', nameColumn: 'location_name',
@@ -464,16 +464,16 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
   if (!reporter) throw Object.assign(new Error('Reporter profile not found.'), { status: 404 })
 
   const year = new Date().getFullYear()
-  const { data: latest, error: latestError } = await supabase
+  const { data: records, error: latestError } = await supabase
     .from('ncr_reports')
     .select('reference_no')
     .ilike('reference_no', `NCR-${year}-%`)
     .order('reference_no', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    .limit(50)
   if (latestError) throw latestError
 
-  const referenceNo = `NCR-${year}-${String(buildReferenceNumber(latest?.reference_no) + 1).padStart(4, '0')}`
+  const latestNumeric = (records || []).find(r => /^NCR-\d{4}-\d{3,}$/i.test(r.reference_no))
+  const referenceNo = `NCR-${year}-${String(buildReferenceNumber(latestNumeric?.reference_no) + 1).padStart(4, '0')}`
 
   const { id: resolvedLocationId, name: resolvedLocationName } = await resolveCatalogEntry({
     table: 'locations', idColumn: 'id', nameColumn: 'location_name',

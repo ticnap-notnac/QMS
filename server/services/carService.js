@@ -40,13 +40,12 @@ export async function createCarReport({ body, reportedByAuthId }) {
     audit_schedule_id
   } = body || {}
 
-  const { data: latest, error: latestError } = await supabase
+  const { data: records, error: latestError } = await supabase
     .from('car_reports')
     .select('reference_no')
     .ilike('reference_no', 'CAR-%')
     .order('reference_no', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    .limit(50)
 
   if (latestError) {
     const customErr = new Error(`Database error getting latest CAR ref: ${latestError.message}`)
@@ -54,7 +53,8 @@ export async function createCarReport({ body, reportedByAuthId }) {
     throw customErr
   }
 
-  const generatedReferenceNo = `CAR-${String(buildCarReferenceNumber(latest?.reference_no) + 1).padStart(3, '0')}`
+  const latestNumeric = (records || []).find(r => /^CAR-\d+$/i.test(r.reference_no))
+  const generatedReferenceNo = `CAR-${String(buildCarReferenceNumber(latestNumeric?.reference_no) + 1).padStart(3, '0')}`
 
   const payload = {
     reference_no: generatedReferenceNo,
