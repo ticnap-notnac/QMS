@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+.env
+README.md
+SYSTEM_ARCHITECTURE.md
+file_relationship_map.txt
+server/node_modules

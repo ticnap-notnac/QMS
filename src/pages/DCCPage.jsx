@@ -9,38 +9,13 @@ const FOLDER_ITEMS = [
   { id: 'task_reports', label: 'Task Reports' },
 ]
 
-export default function DCCPage({
-  userRole,
-  authUserId,
-}) {
+export default function DCCPage({ userRole, authUserId }) {
   const {
-    searchQuery,
-    setSearchQuery,
-    selectedFolder,
-    openFolder,
-    closeFolder,
-    recentlyViewed,
-    standards,
-    loadingStandards,
-    selectedStandard,
-    clauses,
-    loadingClauses,
-    openStandard,
-    selectedTaskFolder,
-    openTaskFolder,
-    closeTaskFolder,
-    ncrReports,
-    loadingNcr,
-    carReports,
-    loadingCar,
-    qddrReports,
-    loadingQddr,
-    auditReports,
-    loadingAudit,
-    auditSchedules,
-    loadingAuditSchedules,
-    openCarDetails,
-    carDetailsModalProps,
+    searchQuery, setSearchQuery, selectedFolder, openFolder, closeFolder, recentlyViewed, standards,
+    loadingStandards, selectedStandard, clauses, loadingClauses, openStandard, selectedTaskFolder,
+    openTaskFolder, closeTaskFolder, ncrReports, loadingNcr, carReports, loadingCar, qddrReports,
+    loadingQddr, auditReports, loadingAudit, auditSchedules, loadingAuditSchedules, openCarDetails,
+    carDetailsModalProps
   } = useDCCLogic()
 
   return (
@@ -48,54 +23,18 @@ export default function DCCPage({
       <div className="dcc-main-wrapper">
         <div className="dcc-glass-main-card">
           <DCCFolderContent
-            // folder nav
-            selectedFolder={selectedFolder}
-            onCloseFolder={closeFolder}
-            onOpenFolder={openFolder}
-            folderItems={FOLDER_ITEMS}
-            // search
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            // recently viewed
-            recentlyViewed={recentlyViewed}
-            // ISO
-            standards={standards}
-            loadingStandards={loadingStandards}
-            selectedStandard={selectedStandard}
-            clauses={clauses}
-            loadingClauses={loadingClauses}
-            onSelectStandard={openStandard}
-            // Task Reports sub-folder
-            selectedTaskFolder={selectedTaskFolder}
-            onOpenTaskFolder={openTaskFolder}
-            onCloseTaskFolder={closeTaskFolder}
-            // NCR
-            ncrReports={ncrReports}
-            loadingNcr={loadingNcr}
-            // CAR
-            carReports={carReports}
-            loadingCar={loadingCar}
-            onSelectCar={openCarDetails}
-            // QDDR
-            qddrReports={qddrReports}
-            loadingQddr={loadingQddr}
-            // Audit
-            auditReports={auditReports}
-            loadingAudit={loadingAudit}
-            auditSchedules={auditSchedules}
-            loadingAuditSchedules={loadingAuditSchedules}
-            // access control
-            userRole={userRole}
+            selectedFolder={selectedFolder} onCloseFolder={closeFolder} onOpenFolder={openFolder} folderItems={FOLDER_ITEMS}
+            searchQuery={searchQuery} onSearchChange={setSearchQuery} recentlyViewed={recentlyViewed} standards={standards}
+            loadingStandards={loadingStandards} selectedStandard={selectedStandard} clauses={clauses} loadingClauses={loadingClauses}
+            onSelectStandard={openStandard} selectedTaskFolder={selectedTaskFolder} onOpenTaskFolder={openTaskFolder}
+            onCloseTaskFolder={closeTaskFolder} ncrReports={ncrReports} loadingNcr={loadingNcr} carReports={carReports}
+            loadingCar={loadingCar} onSelectCar={openCarDetails} qddrReports={qddrReports} loadingQddr={loadingQddr}
+            auditReports={auditReports} loadingAudit={loadingAudit} auditSchedules={auditSchedules}
+            loadingAuditSchedules={loadingAuditSchedules} userRole={userRole}
           />
         </div>
       </div>
-
-      <CARDetailsModal
-        {...carDetailsModalProps}
-        userRole={userRole}
-        authUserId={authUserId}
-        readOnly={true}
-      />
+      <CARDetailsModal {...carDetailsModalProps} userRole={userRole} authUserId={authUserId} readOnly={true} />
     </main>
   )
 }

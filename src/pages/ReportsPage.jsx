@@ -17,31 +17,9 @@ import { CAR_STATUS } from '../../shared/constants'
 import { useReportsLogic } from '@/hooks/useReportsLogic'
 import './PagesStyles.css'
 
-export default function ReportsPage({
-  userRole,
-  currentUserId, authUserId,
-}) {
+export default function ReportsPage({ userRole, currentUserId, authUserId }) {
   const logic = useReportsLogic({ currentUserId, userRole, authUserId })
 
-  const feedProps = {
-    isApprovalQueueMode: logic.isApprovalQueueMode,
-    isClosedMode: logic.isClosedMode,
-    isLoading: logic.isLoading,
-    displayedInvestigatedReports: logic.displayedInvestigatedReports,
-    closedReports: logic.closedReports,
-    reports: logic.reports,
-    departmentNameById: logic.departmentNameById,
-    canAssignReports: logic.canAssignReports,
-    canUpdateReport: logic.canUpdateReport,
-    canDeleteReport: logic.canDeleteReport,
-    onApprove: (r) => logic.handleReviewReport(r, 'approve'),
-    onReject: logic.openRejectModal,
-    onUpdate: logic.openUpdateModal,
-    onAssign: logic.openAssignModal,
-    onDelete: logic.handleDeleteReport
-  }
-
-  // Filter CARs & QDDRs based on isClosedMode toggle
   const displayedCars = logic.isClosedMode
     ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase())
     : logic.carReports.filter(c => String(c.status).toLowerCase() !== CAR_STATUS.CLOSED.toLowerCase())
@@ -57,21 +35,14 @@ export default function ReportsPage({
           <Toast message={logic.toast.message} type={logic.toast.type} onClose={() => logic.setToast(null)} />
         </div>
       )}
-
       <div className="reports-main-wrap">
         <div className="reports-action-header-row">
           <div className="reports-header-controls-left">
-            <button type="button" onClick={() => logic.setIsFilterModalOpen(true)} className="btn-glass-action" title="Open Filters">
-              <SlidersHorizontal size={18} />
-            </button>
+            <button type="button" onClick={() => logic.setIsFilterModalOpen(true)} className="btn-glass-action" title="Open Filters"><SlidersHorizontal size={18} /></button>
             {logic.activeTab === 'ncr' && logic.canAssignReports && (
-              <button type="button" className="btn-quick-toggle" onClick={() => logic.setIsApprovalQueueMode((c) => !c)}>
-                {logic.isApprovalQueueMode ? 'Show All Updated' : `Needs Approval (${logic.approvalQueueReports.length})`}
-              </button>
+              <button type="button" className="btn-quick-toggle" onClick={() => logic.setIsApprovalQueueMode((c) => !c)}>{logic.isApprovalQueueMode ? 'Show All' : `Needs Approval (${logic.approvalQueueReports.length})`}</button>
             )}
-            <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>
-              {logic.isClosedMode ? 'Show Open' : `Closed (${logic.activeTab === 'ncr' ? logic.closedReports.length : logic.activeTab === 'car' ? logic.carReports.filter(c => c.status === CAR_STATUS.CLOSED).length : logic.qddrReports.filter(q => q.status === 'closed').length})`}
-            </button>
+            <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>{logic.isClosedMode ? 'Show Open' : `Closed (${logic.activeTab === 'ncr' ? logic.closedReports.length : logic.carReports.filter(c => c.status === CAR_STATUS.CLOSED).length})`}</button>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
             <button type="button" onClick={() => logic.openCARModal()} className="btn-gradient-primary reports-submit-primary">Submit CAR</button>
@@ -80,19 +51,23 @@ export default function ReportsPage({
           </div>
         </div>
 
-        {/* Monotone Tab switcher */}
         <div className="reports-tab-nav" style={{ display: 'flex', gap: '8px', background: '#f1f5f9', border: '1px solid #e2e8f0', padding: '6px', borderRadius: '8px', marginBottom: '20px', alignSelf: 'flex-start' }}>
           {['ncr', 'car', 'qddr'].map(t => (
-            <button key={t} type="button" className={`btn-quick-toggle ${logic.activeTab === t ? 'active' : ''}`} onClick={() => logic.setActiveTab(t)} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: logic.activeTab === t ? '#0f172a' : 'transparent', color: logic.activeTab === t ? '#ffffff' : '#64748b', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', fontSize: '12px' }}>
-              {t} Reports
-            </button>
+            <button key={t} type="button" className={`btn-quick-toggle ${logic.activeTab === t ? 'active' : ''}`} onClick={() => logic.setActiveTab(t)} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: logic.activeTab === t ? '#0f172a' : 'transparent', color: logic.activeTab === t ? '#ffffff' : '#64748b', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', fontSize: '12px' }}>{t} Reports</button>
           ))}
         </div>
 
         {logic.error && <div className="user-info-error">{logic.error}</div>}
-
         <div className="facebook-feed-layout-wrapper">
-          {logic.activeTab === 'ncr' && <ReportsFeedList {...feedProps} />}
+          {logic.activeTab === 'ncr' && (
+            <ReportsFeedList
+              isApprovalQueueMode={logic.isApprovalQueueMode} isClosedMode={logic.isClosedMode} isLoading={logic.isLoading}
+              displayedInvestigatedReports={logic.displayedInvestigatedReports} closedReports={logic.closedReports} reports={logic.reports}
+              departmentNameById={logic.departmentNameById} canAssignReports={logic.canAssignReports} canUpdateReport={logic.canUpdateReport}
+              canDeleteReport={logic.canDeleteReport} onApprove={(r) => logic.handleReviewReport(r, 'approve')} onReject={logic.openRejectModal}
+              onUpdate={logic.openUpdateModal} onAssign={logic.openAssignModal} onDelete={logic.handleDeleteReport}
+            />
+          )}
           {logic.activeTab === 'car' && <CARReportsList carReports={displayedCars} isLoading={logic.loadingCar} onSelectCar={logic.openCarDetails} />}
           {logic.activeTab === 'qddr' && <QDDRReportsList qddrReports={displayedQddrs} isLoading={logic.loadingQddr} onSelectQddr={logic.openQddrDetails} />}
         </div>
@@ -106,17 +81,10 @@ export default function ReportsPage({
       <QDDRModal {...logic.qddrModalProps} />
       <RejectReportModal {...logic.rejectModalProps} />
       <PreventiveActionModal {...logic.preventiveActionModalProps} />
-      
       <CARDetailsModal {...logic.carDetailsModalProps} />
       <QDDRDetailsModal
-        isOpen={logic.isQddrDetailsModalOpen}
-        onClose={logic.closeQddrDetails}
-        qddr={logic.selectedQddr}
-        onUpdateQddr={logic.updateQddr}
-        users={logic.users}
-        usersLoading={logic.usersLoading}
-        userRole={userRole}
-        authUserId={authUserId}
+        isOpen={logic.isQddrDetailsModalOpen} onClose={logic.closeQddrDetails} qddr={logic.selectedQddr}
+        onUpdateQddr={logic.updateQddr} users={logic.users} usersLoading={logic.usersLoading} userRole={userRole} authUserId={authUserId}
       />
     </main>
   )
