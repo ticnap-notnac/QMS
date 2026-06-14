@@ -22,7 +22,7 @@ export default function IntroModal({ isOpen, onClose }) {
     .filter(Boolean)
 
   const icons = [ShieldCheck, Sparkles, Target]
-  const colors = ['#3b82f6', '#22d3ee', '#6366f1']
+  const colors = ['#0f172a', '#475569', '#64748b']
 
   return (
     <div style={overlayStyle}>
@@ -38,7 +38,7 @@ export default function IntroModal({ isOpen, onClose }) {
             const Icon = icons[i % icons.length]
             const color = colors[i % colors.length]
             return (
-              <div key={i} style={accentBoxStyle(color, `${color}22`)}>
+              <div key={i} style={accentBoxStyle(color, '#f8fafc')}>
                 <div style={iconHeaderStyle}>
                   <Icon size={16} color={color} />
                 </div>
@@ -59,9 +59,9 @@ const overlayStyle = {
   left: 0,
   width: '100vw',
   height: '100vh',
-  background: 'rgba(2, 6, 12, 0.70)',
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
+  background: 'rgba(15, 23, 42, 0.3)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -74,9 +74,9 @@ const modalStyle = {
   position: 'relative',
   width: '100%',
   maxWidth: '620px',
-  background: 'rgba(13, 26, 45, 0.65)',
-  border: '1px solid rgba(255, 255, 255, 0.12)',
-  boxShadow: '0 24px 60px rgba(0, 0, 0, 0.6)',
+  background: '#ffffff',
+  border: '1px solid #cbd5e1',
+  boxShadow: '0 24px 60px rgba(0, 0, 0, 0.1)',
   borderRadius: '16px',
   padding: '40px 32px 32px 32px',
   boxSizing: 'border-box'
@@ -86,9 +86,9 @@ const closeButtonStyle = {
   position: 'absolute',
   top: '20px',
   right: '20px',
-  background: 'rgba(255, 255, 255, 0.05)',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
-  color: '#94a3b8',
+  background: 'rgba(0, 0, 0, 0.05)',
+  border: '1px solid #cbd5e1',
+  color: '#64748b',
   borderRadius: '50%',
   width: '32px',
   height: '32px',
@@ -103,12 +103,10 @@ const titleStyle = {
   margin: '0 0 24px 0',
   fontSize: '18px',
   fontWeight: '700',
-  letterSpacing: '1px',
+  letterSpacing: '0.5px',
   textAlign: 'left',
-  background: 'linear-gradient(135deg, #22d3ee, #3b82f6)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+  color: '#0f172a',
+  borderBottom: '1px solid #e2e8f0',
   paddingBottom: '16px'
 };
 
@@ -124,6 +122,9 @@ const contentContainerStyle = {
 const accentBoxStyle = (borderColor, bgColor) => ({
   borderLeft: `3px solid ${borderColor}`,
   background: bgColor,
+  borderTop: '1px solid #e2e8f0',
+  borderRight: '1px solid #e2e8f0',
+  borderBottom: '1px solid #e2e8f0',
   padding: '14px 16px',
   borderRadius: '0 10px 10px 0',
   textAlign: 'left'
@@ -141,6 +142,6 @@ const paragraphStyle = {
   margin: 0,
   fontSize: '13.5px',
   lineHeight: '1.6',
-  color: '#94a3b8',
+  color: '#334155',
   textAlign: 'justify'
 };

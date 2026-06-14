@@ -80,10 +80,10 @@ export default function ReportsPage({
           </div>
         </div>
 
-        {/* Glassmorphic Tab switcher */}
-        <div className="reports-tab-nav" style={{ display: 'flex', gap: '8px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.06)', padding: '6px', borderRadius: '8px', marginBottom: '20px', alignSelf: 'flex-start' }}>
+        {/* Monotone Tab switcher */}
+        <div className="reports-tab-nav" style={{ display: 'flex', gap: '8px', background: '#f1f5f9', border: '1px solid #e2e8f0', padding: '6px', borderRadius: '8px', marginBottom: '20px', alignSelf: 'flex-start' }}>
           {['ncr', 'car', 'qddr'].map(t => (
-            <button key={t} type="button" className={`btn-quick-toggle ${logic.activeTab === t ? 'active' : ''}`} onClick={() => logic.setActiveTab(t)} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: logic.activeTab === t ? 'rgba(34, 211, 238, 0.12)' : 'transparent', color: logic.activeTab === t ? '#22d3ee' : '#94a3b8', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', fontSize: '12px' }}>
+            <button key={t} type="button" className={`btn-quick-toggle ${logic.activeTab === t ? 'active' : ''}`} onClick={() => logic.setActiveTab(t)} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: logic.activeTab === t ? '#0f172a' : 'transparent', color: logic.activeTab === t ? '#ffffff' : '#64748b', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', fontSize: '12px' }}>
               {t} Reports
             </button>
           ))}
