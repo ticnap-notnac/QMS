@@ -8,6 +8,8 @@ function AddUserModal({
   rolesLoading,
   availableDepartments,
   departmentsLoading,
+  availableSites,
+  sitesLoading,
   loading,
   error,
   message,
@@ -169,6 +171,28 @@ function AddUserModal({
                 className="form-input-reports"
                 placeholder="Enter contact number"
               />
+            </label>
+          </div>
+
+          <div className="modal-grid-2">
+            <label className="panel-column">
+              <span className="small-label">Site</span>
+              <select
+                name="siteId"
+                value={formData.siteId || ''}
+                onChange={onChange}
+                className="form-input-reports"
+                disabled={sitesLoading || !availableSites?.length}
+              >
+                <option value="">
+                  {sitesLoading ? 'Loading sites...' : 'Select a site'}
+                </option>
+                {(availableSites || []).map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.site_name}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
 

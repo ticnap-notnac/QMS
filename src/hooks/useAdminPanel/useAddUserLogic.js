@@ -6,7 +6,7 @@ import { supabase } from '@/utils/supabase'
 
 export default function useAddUserLogic() {
   const [searchQuery, setSearchQuery] = useState('')
-  const { roles, departments, loading: lookupsLoading } = useLookup()
+  const { roles, departments, sites, loading: lookupsLoading } = useLookup()
   
   const [formMessage, setFormMessage] = useState('')
   const [formError, setFormError] = useState('')
@@ -28,6 +28,7 @@ export default function useAddUserLogic() {
     contactNumber: '',
     roleId: '',
     departmentId: '',
+    siteId: '',
   })
 
   // useUserManager orchestrates the DB interface
@@ -80,6 +81,7 @@ export default function useAddUserLogic() {
         contactNumber: newUser.contactNumber,
         roleId: newUser.roleId || null,
         departmentId: newUser.departmentId || null,
+        siteId: newUser.siteId || null,
       })
 
       setFormMessage(`Created ${result.authUser.email} successfully.`)
@@ -92,6 +94,7 @@ export default function useAddUserLogic() {
         contactNumber: '',
         roleId: roles[0]?.id?.toString() || '',
         departmentId: departments[0]?.id?.toString() || '',
+        siteId: '',
       })
       await reloadUsers()
       setIsAddUserModalOpen(false)
@@ -132,6 +135,7 @@ export default function useAddUserLogic() {
       contactNumber: user.contact_number || '',
       roleId: user.role_id ? String(user.role_id) : '',
       departmentId: user.department_id ? String(user.department_id) : '',
+      siteId: user.site_id ? String(user.site_id) : '',
       status: user.status || 'ACTIVE',
     })
     setIsEditUserModalOpen(true)
@@ -163,6 +167,7 @@ export default function useAddUserLogic() {
       if (editingUser.contactNumber !== undefined) payload.contactNumber = editingUser.contactNumber
       if (editingUser.roleId !== undefined) payload.roleId = editingUser.roleId || null
       if (editingUser.departmentId !== undefined) payload.departmentId = editingUser.departmentId || null
+      if (editingUser.siteId !== undefined) payload.siteId = editingUser.siteId || null
       if (editingUser.status !== undefined) payload.status = editingUser.status
 
       await updateUser(editingUser.id, payload)
@@ -191,6 +196,7 @@ export default function useAddUserLogic() {
 
   const roleNameById = useMemo(() => new Map((roles || []).map((role) => [String(role.id), role.role_name])), [roles])
   const departmentNameById = useMemo(() => new Map((departments || []).map((department) => [String(department.id), department.department_name])), [departments])
+  const siteNameById = useMemo(() => new Map((sites || []).map((site) => [String(site.id), site.site_name])), [sites])
 
   const filteredUsers = useMemo(() => {
     return adminUsers.filter((user) => {
@@ -217,6 +223,7 @@ export default function useAddUserLogic() {
     deletingUserId,
     roleNameById,
     departmentNameById,
+    siteNameById,
     onEdit: openEditUserModal,
     onDelete: handleDeleteUser,
   }
@@ -231,6 +238,8 @@ export default function useAddUserLogic() {
     rolesLoading: lookupsLoading,
     availableDepartments: departments,
     departmentsLoading: lookupsLoading,
+    availableSites: sites,
+    sitesLoading: lookupsLoading,
     loading: submitting,
     error: formError,
     message: formMessage,
@@ -246,6 +255,8 @@ export default function useAddUserLogic() {
     rolesLoading: lookupsLoading,
     availableDepartments: departments,
     departmentsLoading: lookupsLoading,
+    availableSites: sites,
+    sitesLoading: lookupsLoading,
     loading: editSubmitting,
     error: editFormError,
     message: editFormMessage,

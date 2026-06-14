@@ -14,14 +14,14 @@ export async function getUsers(_req, res) {
 }
 
 export async function createUser(req, res) {
-  const { firstName, lastName, email, password, userName, contactNumber, roleId, departmentId } = req.body || {}
+  const { firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId } = req.body || {}
 
   if (!firstName || !lastName || !email || !password || !userName || !departmentId) {
     return res.status(400).json({ error: 'First name, last name, email, password, username, and department are required.' })
   }
 
   const { authUser, profile, error, status } = await createUserWithAuth({
-    firstName, lastName, email, password, userName, contactNumber, roleId, departmentId,
+    firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId,
   })
 
   if (error) return res.status(status).json({ error })

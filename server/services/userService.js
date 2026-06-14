@@ -10,7 +10,7 @@ export async function fetchAllUsers() {
   const [usersResult, rolesResult, departmentsResult] = await Promise.all([
     supabase
       .from('users')
-      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, created_at, status')
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, created_at, status, site_id')
       .order('created_at', { ascending: false }),
     supabase.from('roles').select('id, role_name'),
     supabase.from('departments').select('id, department_name'),
@@ -27,10 +27,18 @@ export async function fetchAllUsers() {
     (departmentsResult.data || []).map((d) => [String(d.id), d.department_name])
   )
 
+  // Fetch sites to enrich the response with site_name
+  const { data: sitesData } = await supabase.from('sites').select('id, site_name, site_code')
+  const siteMap = new Map(
+    (sitesData || []).map((s) => [String(s.id), { site_name: s.site_name, site_code: s.site_code }])
+  )
+
   const data = (usersResult.data || []).map((user) => ({
     ...user,
     role_name: roleMap.get(String(user.role_id)) || null,
     department_name: departmentMap.get(String(user.department_id)) || null,
+    site_name: siteMap.get(String(user.site_id))?.site_name || null,
+    site_code: siteMap.get(String(user.site_id))?.site_code || null,
   }))
 
   return { data, error: null }
@@ -41,7 +49,7 @@ export async function fetchAllUsers() {
  * @param {object} fields
  * @returns {{ authUser: object|null, profile: object|null, error: string|null, status: number }}
  */
-export async function createUserWithAuth({ firstName, lastName, email, password, userName, contactNumber, roleId, departmentId }) {
+export async function createUserWithAuth({ firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId }) {
   if (!hasServiceRole) {
     return {
       authUser: null,
@@ -62,6 +70,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
       contact_number: contactNumber || null,
       role_id: roleId || null,
       department_id: departmentId || null,
+      site_id: siteId || null,
     },
   })
 
@@ -71,7 +80,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
 
   const { data: profileData, error: profileError } = await supabase
     .from('users')
-    .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, employee_no')
+    .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, employee_no, site_id')
     .eq('email', email)
     .maybeSingle()
 
@@ -149,10 +158,10 @@ export async function deleteUserById(id, actorAuthId) {
  * @param {string} actorAuthId - Auth ID of the requesting admin
  * @returns {{ profile: object|null, error: string|null, status: number }}
  */
-export async function updateUserById(id, { firstName, lastName, email, userName, contactNumber, roleId, departmentId, password, status }, actorAuthId) {
+export async function updateUserById(id, { firstName, lastName, email, userName, contactNumber, roleId, departmentId, siteId, password, status }, actorAuthId) {
   const { data: existing, error: fetchError } = await supabase
     .from('users')
-    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status')
+    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id')
     .eq('id', id)
     .maybeSingle()
 
@@ -166,6 +175,7 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
   if (contactNumber !== undefined && contactNumber !== (existing.contact_number || '')) updates.contact_number = contactNumber
   if (roleId !== undefined && String(roleId) !== String(existing.role_id)) updates.role_id = roleId || null
   if (departmentId !== undefined && String(departmentId) !== String(existing.department_id)) updates.department_id = departmentId || null
+  if (siteId !== undefined && String(siteId) !== String(existing.site_id ?? '')) updates.site_id = siteId || null
   if (email !== undefined && email !== (existing.email || '')) updates.email = email
   if (status !== undefined && status !== (existing.status || '')) {
     const VALID_STATUSES = ['ACTIVE', 'INACTIVE', 'DEACTIVATED', 'Active', 'Inactive', 'Deactivated']
@@ -181,7 +191,7 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
       .from('users')
       .update(updates)
       .eq('id', id)
-      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, status')
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, status, site_id')
       .maybeSingle()
 
     if (profileError) return { profile: null, error: profileError.message, status: 500 }

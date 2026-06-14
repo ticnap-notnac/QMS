@@ -17,7 +17,7 @@ import ProductTypesPage from './pages/ProductTypesPage.jsx'
 import ISOStandardsPage from './pages/ISOStandardsPage.jsx'
 import SettingsPage from './pages/SettingsPage.jsx'
 import AuditToolsPage from './pages/AuditToolsPage.jsx'
-import { LookupProvider } from './context/LookupContext'
+import { LookupProvider, useLookup } from './context/LookupContext'
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import Navbar from './components/Navbars/Navbar.jsx'
 import { logAction } from '@/services/logService'
@@ -27,7 +27,10 @@ function normalizeRoleValue(value) {
   return String(value || '').trim().toLowerCase()
 }
 
-export default function App() {
+// ─── AppInner ─────────────────────────────────────────────────────────────────
+// Separated from AppRoot so that useLookup() is called *inside* LookupProvider.
+
+function AppInner() {
   const [showIntro, setShowIntro] = useState(false)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -44,6 +47,9 @@ export default function App() {
   const canViewNotifications = Boolean(user)
   const navigate = useNavigate()
   const isLoggingOutRef = useRef(false)
+
+  // Pull site context from LookupContext (loaded on auth state change)
+  const { userSiteId, userSiteName } = useLookup()
 
   useEffect(() => {
     console.log('current user:', user)
@@ -243,6 +249,8 @@ export default function App() {
     profileTargetTab,
     setProfileTargetTab,
     onRefreshUnreadCount: refreshUnreadNotificationCount,
+    userSiteId,
+    userSiteName,
   }
 
   const handleNotificationSelect = (reportId, notification = null) => {
@@ -270,66 +278,76 @@ export default function App() {
   }
 
   return (
-    <LookupProvider>
-      <div className="page">
-        <div className="bg-orb bg-orb--one" aria-hidden="true"></div>
-        <div className="bg-orb bg-orb--two" aria-hidden="true"></div>
+    <div className="page">
+      <div className="bg-orb bg-orb--one" aria-hidden="true"></div>
+      <div className="bg-orb bg-orb--two" aria-hidden="true"></div>
 
-        {!user ? (
-          <header className="brand">
-            <div className="logo">
-              <span className="logo-mark">Q</span>
-              <span className="logo-text">Flow</span>
-            </div>
-            <p className="brand-subtitle">QUALITY MANAGEMENT SYSTEM</p>
-          </header>
-        ) : null}
+      {!user ? (
+        <header className="brand">
+          <div className="logo">
+            <span className="logo-mark">Q</span>
+            <span className="logo-text">Flow</span>
+          </div>
+          <p className="brand-subtitle">QUALITY MANAGEMENT SYSTEM</p>
+        </header>
+      ) : null}
 
-        {user ? (
-          <>
-            <Navbar
-              isUserMenuOpen={isUserMenuOpen}
-              onToggleMenu={() => setIsUserMenuOpen((open) => !open)}
-              onLogout={handleLogout}
-              isNotificationsOpen={isNotificationsOpen}
-              onToggleNotifications={() => setIsNotificationsOpen((open) => !open)}
-              userRole={userRole}
-              userName={userName}
-              userPosition={userPosition}
-              userEmail={user?.email}
-              currentUserId={currentUserId}
-              unreadNotificationCount={unreadNotificationCount}
-              canViewNotifications={canViewNotifications}
-              onUnreadCountChange={setUnreadNotificationCount}
-              onRefreshUnreadCount={refreshUnreadNotificationCount}
-              onOpenReport={handleNotificationSelect}
-              setProfileTargetTab={setProfileTargetTab}
-            />
-            <Routes>
-              <Route path="/" element={<DashboardPage {...sharedProps} />} />
-              <Route path="/reports" element={<ReportsPage {...sharedProps} />} />
-              <Route path="/iso" element={<ISOPage {...sharedProps} />} />
-              <Route path="/dcc" element={<DCCPage {...sharedProps} />} />
-              <Route path="/settings" element={<SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />} />
-              <Route path="/settings/profile" element={<UserInformationPage {...sharedProps} />} />
-              <Route path="/settings/roles" element={<RolesPage {...sharedProps} />} />
-              <Route path="/settings/departments" element={<DepartmentsPage {...sharedProps} />} />
-              <Route path="/settings/locations" element={<LocationsPage {...sharedProps} />} />
-              <Route path="/settings/product-types" element={<ProductTypesPage {...sharedProps} />} />
-              <Route path="/settings/iso-standards" element={<ISOStandardsPage {...sharedProps} />} />
-              <Route path="/admin" element={<AddUserPage {...sharedProps} />} />
-              <Route path="/audit-tools" element={<AuditToolsPage {...sharedProps} />} />
-            </Routes>
-          </>
-        ) : (
-          <Login
-            onSubmit={handleSubmit}
-            onLearnMore={() => setShowIntro(true)}
+      {user ? (
+        <>
+          <Navbar
+            isUserMenuOpen={isUserMenuOpen}
+            onToggleMenu={() => setIsUserMenuOpen((open) => !open)}
+            onLogout={handleLogout}
+            isNotificationsOpen={isNotificationsOpen}
+            onToggleNotifications={() => setIsNotificationsOpen((open) => !open)}
+            userRole={userRole}
+            userName={userName}
+            userPosition={userPosition}
+            userEmail={user?.email}
+            currentUserId={currentUserId}
+            unreadNotificationCount={unreadNotificationCount}
+            canViewNotifications={canViewNotifications}
+            onUnreadCountChange={setUnreadNotificationCount}
+            onRefreshUnreadCount={refreshUnreadNotificationCount}
+            onOpenReport={handleNotificationSelect}
+            setProfileTargetTab={setProfileTargetTab}
+            userSiteName={userSiteName}
           />
-        )}
+          <Routes>
+            <Route path="/" element={<DashboardPage {...sharedProps} />} />
+            <Route path="/reports" element={<ReportsPage {...sharedProps} />} />
+            <Route path="/iso" element={<ISOPage {...sharedProps} />} />
+            <Route path="/dcc" element={<DCCPage {...sharedProps} />} />
+            <Route path="/settings" element={<SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />} />
+            <Route path="/settings/profile" element={<UserInformationPage {...sharedProps} />} />
+            <Route path="/settings/roles" element={<RolesPage {...sharedProps} />} />
+            <Route path="/settings/departments" element={<DepartmentsPage {...sharedProps} />} />
+            <Route path="/settings/locations" element={<LocationsPage {...sharedProps} />} />
+            <Route path="/settings/product-types" element={<ProductTypesPage {...sharedProps} />} />
+            <Route path="/settings/iso-standards" element={<ISOStandardsPage {...sharedProps} />} />
+            <Route path="/admin" element={<AddUserPage {...sharedProps} />} />
+            <Route path="/audit-tools" element={<AuditToolsPage {...sharedProps} />} />
+          </Routes>
+        </>
+      ) : (
+        <Login
+          onSubmit={handleSubmit}
+          onLearnMore={() => setShowIntro(true)}
+        />
+      )}
 
-        <IntroModal isOpen={showIntro} onClose={() => setShowIntro(false)} />
-      </div>
+      <IntroModal isOpen={showIntro} onClose={() => setShowIntro(false)} />
+    </div>
+  )
+}
+
+// ─── AppRoot ─────────────────────────────────────────────────────────────────
+// Wraps AppInner in LookupProvider so context is available to all children.
+
+export default function App() {
+  return (
+    <LookupProvider>
+      <AppInner />
     </LookupProvider>
   )
 }

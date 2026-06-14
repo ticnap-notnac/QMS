@@ -28,7 +28,8 @@ export default function Navbar({
   onUnreadCountChange,
   onRefreshUnreadCount,
   onOpenReport,
-  setProfileTargetTab
+  setProfileTargetTab,
+  userSiteName
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -66,6 +67,13 @@ export default function Navbar({
             <span className="brand-text">QFlow</span>
           </div>
         </div>
+
+        {/* Site Badge — shows which site this user belongs to */}
+        {userSiteName && (
+          <div className="app-navbar-site-badge" title={`Active Site: ${userSiteName}`}>
+            🏢 {userSiteName}
+          </div>
+        )}
 
         {/* Main Vertical Navigation Tabs */}
         <nav className="app-nav-center">
