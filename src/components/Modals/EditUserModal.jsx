@@ -18,7 +18,7 @@ function EditUserModal({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="edit-user-title" onClick={(e) => e.stopPropagation()}>
+      <div className="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="edit-user-title" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 id="edit-user-title" className="modal-title">Edit User</h2>
           <button className="modal-close" type="button" onClick={onClose} aria-label="Close edit user dialog">×</button>
@@ -28,26 +28,19 @@ function EditUserModal({
           {error && <div className="user-info-error">{error}</div>}
           {message && <div className="user-info-success">{message}</div>}
 
-          <div className="modal-grid-2">
+          <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">First Name</span>
+              <span className="small-label">First Name:</span>
               <input type="text" name="firstName" value={formData.firstName} onChange={onChange} className="form-input-reports" placeholder="Enter first name" />
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Last Name</span>
+              <span className="small-label">Last Name:</span>
               <input type="text" name="lastName" value={formData.lastName} onChange={onChange} className="form-input-reports" placeholder="Enter last name" />
             </label>
-          </div>
-
-          <div className="modal-grid-2">
-            <label className="panel-column">
-              <span className="small-label">Email Address</span>
-              <input type="email" name="email" value={formData.email} onChange={onChange} className="form-input-reports" placeholder="Enter email address" />
-            </label>
 
             <label className="panel-column">
-              <span className="small-label">Status</span>
+              <span className="small-label">Status:</span>
               <select name="status" value={formData.status ?? 'ACTIVE'} onChange={onChange} className="form-input-reports">
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
@@ -56,14 +49,26 @@ function EditUserModal({
             </label>
           </div>
 
-          <div className="modal-grid-2">
+          <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">Username</span>
+              <span className="small-label">Email Address:</span>
+              <input type="email" name="email" value={formData.email} onChange={onChange} className="form-input-reports" placeholder="Enter email address" />
+            </label>
+
+            <label className="panel-column">
+              <span className="small-label">Username:</span>
               <input type="text" name="userName" value={formData.userName} onChange={onChange} className="form-input-reports" placeholder="Enter username" />
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Role</span>
+              <span className="small-label">Contact Number:</span>
+              <input type="text" name="contactNumber" value={formData.contactNumber} onChange={onChange} className="form-input-reports" placeholder="Enter contact number" />
+            </label>
+          </div>
+
+          <div className="modal-grid-3">
+            <label className="panel-column">
+              <span className="small-label">Role:</span>
               <select name="roleId" value={formData.roleId} onChange={onChange} className="form-input-reports" disabled={rolesLoading || availableRoles.length === 0}>
                 <option value="">{rolesLoading ? 'Loading roles...' : 'Select a role'}</option>
                 {availableRoles.map((role) => (
@@ -71,11 +76,9 @@ function EditUserModal({
                 ))}
               </select>
             </label>
-          </div>
 
-          <div className="modal-grid-2">
             <label className="panel-column">
-              <span className="small-label">Department</span>
+              <span className="small-label">Department:</span>
               <select name="departmentId" value={formData.departmentId} onChange={onChange} className="form-input-reports" disabled={departmentsLoading || availableDepartments.length === 0}>
                 <option value="">{departmentsLoading ? 'Loading departments...' : 'Select a department'}</option>
                 {availableDepartments.map((d) => (
@@ -85,14 +88,7 @@ function EditUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Contact Number</span>
-              <input type="text" name="contactNumber" value={formData.contactNumber} onChange={onChange} className="form-input-reports" placeholder="Enter contact number" />
-            </label>
-          </div>
-
-          <div className="modal-grid-2">
-            <label className="panel-column">
-              <span className="small-label">Site</span>
+              <span className="small-label">Site:</span>
               <select
                 name="siteId"
                 value={formData.siteId || ''}

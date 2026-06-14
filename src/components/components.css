@@ -60,9 +60,9 @@
   gap: 6px;
   padding: 5px 10px;
   border-radius: 6px;
-  background: rgba(34, 211, 238, 0.1);
-  border: 1px solid rgba(34, 211, 238, 0.2);
-  color: #22d3ee;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #cbd5e1;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.03em;
@@ -71,6 +71,13 @@
   text-overflow: ellipsis;
   max-width: 140px;
   margin-top: 2px;
+  transition: all 0.2s ease;
+}
+
+.app-navbar-site-badge:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 
@@ -392,7 +399,26 @@
 .system-logs-panel .btn { background: #ffffff; border: 1px solid #cbd5e1; color: #475569; padding:6px 8px; border-radius:6px; cursor:pointer; }
 .system-logs-panel .btn--ghost { background: transparent; border: none; color: #64748b; }
 .system-logs-panel .btn--muted { background: #f8fafc; border: 1px solid #e4e4e7; }
-.system-logs-panel .logs-table { margin-top:12px; overflow:auto; }
+.system-logs-panel .logs-table {
+  margin-top: 12px;
+  overflow-y: auto;
+  max-height: 450px;
+}
+
+.system-logs-panel .logs-table::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.system-logs-panel .logs-table::-webkit-scrollbar-track {
+  background: transparent;
+}
+.system-logs-panel .logs-table::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+.system-logs-panel .logs-table::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
 .system-logs-panel table { width:100%; border-collapse: collapse; color: #0f172a; }
 .system-logs-panel th, .system-logs-panel td { padding: 8px 10px; text-align: left; font-size: 13px; }
 .system-logs-panel thead th { color: #475569; font-weight: 700; border-bottom: 1px solid #cbd5e1; }

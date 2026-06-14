@@ -237,47 +237,47 @@ export default function Dashboard() {
   }))
 
   return (
-    <div className="dashboard-content" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="dashboard-content" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {error && (
-        <div className="iso-banner iso-banner--error" style={{ marginBottom: '16px' }}>
+        <div className="iso-banner iso-banner--error" style={{ marginBottom: '12px' }}>
           <span>{error}</span>
         </div>
       )}
 
       {/* Top Metrics Cards Row */}
-      <section className="metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+      <section className="metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
         <div className="metric-card" style={{
           background: '#ffffff',
           border: '1px solid #e4e4e7',
           borderRadius: '12px',
-          padding: '24px',
+          padding: '16px 20px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          minHeight: '130px',
+          minHeight: '100px',
           transition: 'transform 0.2s',
           cursor: 'default',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#475569' }}>
-            <p style={{ margin: 0, fontSize: '14px', fontWeight: 500 }}>Open Complaints</p>
-            <AlertCircle size={20} color="#0f172a" />
+            <p style={{ margin: 0, fontSize: '13px', fontWeight: 500 }}>Open Complaints</p>
+            <AlertCircle size={18} color="#0f172a" />
           </div>
-          <h3 style={{ margin: '16px 0 8px 0', fontSize: '36px', fontWeight: 700, color: '#0f172a' }}>
+          <h3 style={{ margin: '8px 0 4px 0', fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
             {metrics?.openComplaints || 0}
           </h3>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Active NCR and CAR processes</span>
+          <span style={{ fontSize: '11px', color: '#64748b' }}>Active NCR and CAR processes</span>
         </div>
 
         <div className="metric-card" style={{
           background: '#ffffff',
           border: '1px solid #e4e4e7',
           borderRadius: '12px',
-          padding: '24px',
+          padding: '16px 20px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          minHeight: '130px',
+          minHeight: '100px',
           transition: 'transform 0.2s',
           cursor: 'default',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
@@ -287,58 +287,58 @@ export default function Dashboard() {
           onMouseOut={e => e.currentTarget.style.transform = 'none'}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#475569' }}>
-            <p style={{ margin: 0, fontSize: '14px', fontWeight: 500 }}>ISO Compliance Rate</p>
-            <Shield size={20} color="#0f172a" />
+            <p style={{ margin: 0, fontSize: '13px', fontWeight: 500 }}>ISO Compliance Rate</p>
+            <Shield size={18} color="#0f172a" />
           </div>
-          <h3 style={{ margin: '16px 0 8px 0', fontSize: '36px', fontWeight: 700, color: '#0f172a' }}>
+          <h3 style={{ margin: '8px 0 4px 0', fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
             {metrics?.isoCompliance || 100}%
           </h3>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Average across all standards</span>
+          <span style={{ fontSize: '11px', color: '#64748b' }}>Average across all standards</span>
         </div>
 
         <div className="metric-card" style={{
           background: '#ffffff',
           border: '1px solid #e4e4e7',
           borderRadius: '12px',
-          padding: '24px',
+          padding: '16px 20px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          minHeight: '130px',
+          minHeight: '100px',
           transition: 'transform 0.2s',
           cursor: 'default',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#475569' }}>
-            <p style={{ margin: 0, fontSize: '14px', fontWeight: 500 }}>QDDR Defect Rate</p>
-            <TrendingUp size={20} color="#0f172a" />
+            <p style={{ margin: 0, fontSize: '13px', fontWeight: 500 }}>QDDR Defect Rate</p>
+            <TrendingUp size={18} color="#0f172a" />
           </div>
-          <h3 style={{ margin: '16px 0 8px 0', fontSize: '36px', fontWeight: 700, color: '#0f172a' }}>
+          <h3 style={{ margin: '8px 0 4px 0', fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
             {metrics?.defectRate || 0.4}%
           </h3>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Well within compliance margins</span>
+          <span style={{ fontSize: '11px', color: '#64748b' }}>Well within compliance margins</span>
         </div>
       </section>
 
       {/* Visual Analytics Section */}
-      <section className="charts" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#0f172a', margin: '12px 0 0 0' }}>Quality Analytics & Compliance</h2>
+      <section className="charts" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a', margin: '4px 0 0 0' }}>Quality Analytics & Compliance</h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
           {/* Bar Chart - Compliance by ISO Standard */}
           <div className="chart-wrapper" style={{
             background: '#ffffff',
             border: '1px solid #e4e4e7',
             borderRadius: '12px',
-            padding: '20px',
+            padding: '16px',
             boxSizing: 'border-box',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-              <BarChart2 size={16} color="#0f172a" />
-              <h4 style={{ margin: 0, color: '#0f172a', fontSize: '14px', fontWeight: 600 }}>Standard Compliance Breakdown</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <BarChart2 size={15} color="#0f172a" />
+              <h4 style={{ margin: 0, color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>Standard Compliance Breakdown</h4>
             </div>
-            <div style={{ width: '100%', height: '300px' }}>
+            <div style={{ width: '100%', height: '220px' }}>
               {barChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -362,15 +362,15 @@ export default function Dashboard() {
             background: '#ffffff',
             border: '1px solid #e4e4e7',
             borderRadius: '12px',
-            padding: '20px',
+            padding: '16px',
             boxSizing: 'border-box',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-              <TrendingUp size={16} color="#0f172a" />
-              <h4 style={{ margin: 0, color: '#0f172a', fontSize: '14px', fontWeight: 600 }}>Audit Compliance Trend</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <TrendingUp size={15} color="#0f172a" />
+              <h4 style={{ margin: 0, color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>Audit Compliance Trend</h4>
             </div>
-            <div style={{ width: '100%', height: '300px' }}>
+            <div style={{ width: '100%', height: '220px' }}>
               {lineChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={lineChartData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
@@ -394,15 +394,15 @@ export default function Dashboard() {
             background: '#ffffff',
             border: '1px solid #e4e4e7',
             borderRadius: '12px',
-            padding: '20px',
+            padding: '16px',
             boxSizing: 'border-box',
             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-              <Clock size={16} color="#0f172a" />
-              <h4 style={{ margin: 0, color: '#0f172a', fontSize: '14px', fontWeight: 600 }}>Average Resolution Time Trend (Hours)</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Clock size={15} color="#0f172a" />
+              <h4 style={{ margin: 0, color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>Average Resolution Time Trend (Hours)</h4>
             </div>
-            <div style={{ width: '100%', height: '300px' }}>
+            <div style={{ width: '100%', height: '220px' }}>
               {resolutionTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={resolutionTrend} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>

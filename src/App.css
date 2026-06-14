@@ -2,7 +2,9 @@
 
 /* 1. Global Page Layout (Supports Sidebar offset dynamically) */
 .page {
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
   background-color: #f8fafc;
   color: #0f172a;
   position: relative;
@@ -22,8 +24,24 @@
   margin-top: 64px !important;
   width: calc(100% - 240px) !important;
   max-width: none !important;
-  padding: 32px !important;
+  padding: 24px !important;
   box-sizing: border-box !important;
+  height: calc(100vh - 64px) !important;
+  overflow-y: auto !important;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+}
+
+/* Hide scrollbars for Chrome, Safari, Opera */
+.page-main::-webkit-scrollbar,
+.page-main-wide::-webkit-scrollbar,
+.settings-page-container::-webkit-scrollbar,
+.user-info-page-container::-webkit-scrollbar,
+.admin-page-container-narrow::-webkit-scrollbar,
+.reports-main-wrap::-webkit-scrollbar,
+.dcc-main-wrapper::-webkit-scrollbar,
+.iso-page-main::-webkit-scrollbar {
+  display: none !important;
 }
 
 /* Hide colorful background orbs */
@@ -724,4 +742,35 @@
     padding: 24px;
   }
 
+}
+
+/* Ensure System Logs table stays contained and scrollable globally */
+.system-logs-panel .logs-table,
+.system-logs-panel .iso-table-wrap {
+  max-height: 380px !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+.system-logs-panel .logs-table::-webkit-scrollbar,
+.system-logs-panel .iso-table-wrap::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+  display: block !important;
+}
+
+.system-logs-panel .logs-table::-webkit-scrollbar-track,
+.system-logs-panel .iso-table-wrap::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.system-logs-panel .logs-table::-webkit-scrollbar-thumb,
+.system-logs-panel .iso-table-wrap::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 999px !important;
+}
+
+.system-logs-panel .logs-table::-webkit-scrollbar-thumb:hover,
+.system-logs-panel .iso-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important;
 }

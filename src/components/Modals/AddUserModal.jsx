@@ -21,7 +21,7 @@ function AddUserModal({
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
-        className="modal"
+        className="modal modal-wide"
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-user-title"
@@ -44,9 +44,9 @@ function AddUserModal({
           {error && <div className="user-info-error">{error}</div>}
           {message && <div className="user-info-success">{message}</div>}
 
-          <div className="modal-grid-2">
+          <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">First Name</span>
+              <span className="small-label">First Name:</span>
               <input
                 type="text"
                 name="firstName"
@@ -58,7 +58,7 @@ function AddUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Last Name</span>
+              <span className="small-label">Last Name:</span>
               <input
                 type="text"
                 name="lastName"
@@ -68,23 +68,9 @@ function AddUserModal({
                 placeholder="Enter last name"
               />
             </label>
-          </div>
-
-          <div className="modal-grid-2">
-            <label className="panel-column">
-              <span className="small-label">Email Address</span>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={onChange}
-                className="form-input-reports"
-                placeholder="Enter email address"
-              />
-            </label>
 
             <label className="panel-column">
-              <span className="small-label">Password</span>
+              <span className="small-label">Password:</span>
               <input
                 type="password"
                 name="password"
@@ -96,9 +82,21 @@ function AddUserModal({
             </label>
           </div>
 
-          <div className="modal-grid-2">
+          <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">Username</span>
+              <span className="small-label">Email Address:</span>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={onChange}
+                className="form-input-reports"
+                placeholder="Enter email address"
+              />
+            </label>
+
+            <label className="panel-column">
+              <span className="small-label">Username:</span>
               <input
                 type="text"
                 name="userName"
@@ -110,7 +108,21 @@ function AddUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Role</span>
+              <span className="small-label">Contact Number:</span>
+              <input
+                type="text"
+                name="contactNumber"
+                value={formData.contactNumber}
+                onChange={onChange}
+                className="form-input-reports"
+                placeholder="Enter contact number"
+              />
+            </label>
+          </div>
+
+          <div className="modal-grid-3">
+            <label className="panel-column">
+              <span className="small-label">Role:</span>
               <select
                 name="roleId"
                 value={formData.roleId}
@@ -133,11 +145,9 @@ function AddUserModal({
                 ))}
               </select>
             </label>
-          </div>
 
-          <div className="modal-grid-2">
             <label className="panel-column">
-              <span className="small-label">Department</span>
+              <span className="small-label">Department:</span>
               <select
                 name="departmentId"
                 value={formData.departmentId}
@@ -162,21 +172,7 @@ function AddUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Contact Number</span>
-              <input
-                type="text"
-                name="contactNumber"
-                value={formData.contactNumber}
-                onChange={onChange}
-                className="form-input-reports"
-                placeholder="Enter contact number"
-              />
-            </label>
-          </div>
-
-          <div className="modal-grid-2">
-            <label className="panel-column">
-              <span className="small-label">Site</span>
+              <span className="small-label">Site:</span>
               <select
                 name="siteId"
                 value={formData.siteId || ''}

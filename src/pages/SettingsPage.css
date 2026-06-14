@@ -141,13 +141,14 @@
   overflow: hidden !important; 
 }
 
-/* Force the logs table block to contain horizontal spillover locally */
+/* Force the logs table block to contain horizontal and vertical spillover locally */
 .system-logs-panel .logs-table,
 .system-logs-panel .iso-table-wrap {
   width: 100% !important;
   max-width: 100% !important;
-  overflow-x: auto !important; /* ⚓ Force horizontal scroll inside the table boundary if columns crowd */
-  overflow-y: auto !important; /* Retains your vertical scroll window bounds */
+  max-height: 450px !important; /* 🚀 LOCK table height to fit card and screen container */
+  overflow-x: auto !important; 
+  overflow-y: auto !important; 
   box-sizing: border-box !important;
 }
 

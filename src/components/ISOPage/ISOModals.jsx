@@ -15,19 +15,19 @@ export function ISOModulesModal({
   return (
     <div className="iso-modal-overlay" onClick={onClose}>
       <div className="iso-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', width: '90%' }}>
-        <div className="iso-modal-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div className="iso-modal-header" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {selectedModule && (
               <button
                 type="button"
                 onClick={() => setSelectedModule(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--cyan-light, #22d3ee)', cursor: 'pointer', fontSize: '16px', padding: '0 4px', fontWeight: 'bold' }}
+                style={{ background: 'none', border: 'none', color: '#0891b2', cursor: 'pointer', fontSize: '16px', padding: '0 4px', fontWeight: 'bold' }}
                 title="Back to standards"
               >
                 ←
               </button>
             )}
-            <h3 className="iso-submodal-title" style={{ margin: 0, fontSize: '18px' }}>
+            <h3 className="iso-submodal-title" style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>
               {selectedModule ? `${selectedModule.name} Clauses` : 'Active ISO Modules'}
             </h3>
           </div>
@@ -36,7 +36,7 @@ export function ISOModulesModal({
             onClick={onClose}
             className="iso-modal-icon-button"
             title="Close"
-            style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}
+            style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}
           >
             <X size={18} />
           </button>
@@ -44,9 +44,9 @@ export function ISOModulesModal({
 
         {selectedModule ? (
           loadingClauses ? (
-            <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--muted)' }}>Loading clauses...</div>
+            <div style={{ padding: '24px 0', textAlign: 'center', color: '#64748b' }}>Loading clauses...</div>
           ) : clauses.length === 0 ? (
-            <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--muted)', fontSize: '13.5px' }}>
+            <div style={{ padding: '24px 0', textAlign: 'center', color: '#64748b', fontSize: '13.5px' }}>
               No clauses found for this standard.
             </div>
           ) : (
@@ -57,23 +57,23 @@ export function ISOModulesModal({
                   style={{
                     padding: '12px',
                     borderRadius: '8px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '6px'
                   }}
                 >
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <span style={{ fontWeight: 'bold', color: 'var(--cyan-light, #22d3ee)', fontSize: '14px', minWidth: '40px' }}>
+                    <span style={{ fontWeight: 'bold', color: '#0891b2', fontSize: '14px', minWidth: '40px' }}>
                       {clause.clause_number}
                     </span>
-                    <span style={{ fontWeight: '600', color: '#f8fafc', fontSize: '14px' }}>
+                    <span style={{ fontWeight: '600', color: '#0f172a', fontSize: '14px' }}>
                       {clause.title}
                     </span>
                   </div>
                   {clause.description && (
-                    <p style={{ fontSize: '12.5px', color: '#94a3b8', margin: '4px 0 0 0', lineHeight: '1.4' }}>
+                    <p style={{ fontSize: '12.5px', color: '#475569', margin: '4px 0 0 0', lineHeight: '1.4' }}>
                       {clause.description}
                     </p>
                   )}
@@ -83,9 +83,9 @@ export function ISOModulesModal({
           )
         ) : (
           loadingModules ? (
-            <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--muted)' }}>Loading active modules...</div>
+            <div style={{ padding: '24px 0', textAlign: 'center', color: '#64748b' }}>Loading active modules...</div>
           ) : activeModules.length === 0 ? (
-            <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--muted)', fontSize: '13.5px' }}>
+            <div style={{ padding: '24px 0', textAlign: 'center', color: '#64748b', fontSize: '13.5px' }}>
               No active ISO standards found. You can toggle standards under Settings &gt; ISO Standards.
             </div>
           ) : (
@@ -98,21 +98,21 @@ export function ISOModulesModal({
                     cursor: 'pointer',
                     padding: '12px',
                     borderRadius: '8px',
-                    background: 'rgba(34, 211, 238, 0.05)',
-                    border: '1px solid rgba(34, 211, 238, 0.15)',
+                    background: 'rgba(8, 145, 178, 0.05)',
+                    border: '1px solid rgba(8, 145, 178, 0.15)',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '4px',
                     transition: 'all 0.2s ease-in-out'
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(34, 211, 238, 0.1)'; e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.3)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(34, 211, 238, 0.05)'; e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.15)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(8, 145, 178, 0.1)'; e.currentTarget.style.borderColor = 'rgba(8, 145, 178, 0.3)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(8, 145, 178, 0.05)'; e.currentTarget.style.borderColor = 'rgba(8, 145, 178, 0.15)'; }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 'bold', color: '#f8fafc', fontSize: '14.5px' }}>{module.name}</span>
-                    {module.version && <span style={{ fontSize: '11px', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: '#94a3b8' }}>v{module.version}</span>}
+                    <span style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '14.5px' }}>{module.name}</span>
+                    {module.version && <span style={{ fontSize: '11px', background: 'rgba(15, 23, 42, 0.06)', padding: '2px 6px', borderRadius: '4px', color: '#475569' }}>v{module.version}</span>}
                   </div>
-                  {module.description && <span style={{ fontSize: '12.5px', color: '#94a3b8', lineHeight: '1.4' }}>{module.description}</span>}
+                  {module.description && <span style={{ fontSize: '12.5px', color: '#475569', lineHeight: '1.4' }}>{module.description}</span>}
                 </div>
               ))}
             </div>

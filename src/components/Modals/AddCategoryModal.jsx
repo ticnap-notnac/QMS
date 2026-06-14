@@ -44,7 +44,7 @@ function AddCategoryModal({
           {message && <div className="user-info-success">{message}</div>}
 
           <label className="panel-column">
-            <span className="small-label">{label}</span>
+            <span className="small-label">{label ? (label.endsWith(':') ? label : `${label}:`) : ''}</span>
             <input
               type="text"
               value={value}
