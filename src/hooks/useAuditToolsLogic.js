@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../utils/supabase'
 import { fetchLogs } from '../services/logService'
 import { useCARDetails } from './useCARDetails'
+import * as checklistService from '../services/auditChecklistService'
 
 export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs' }) {
   const [activeTab, setActiveTab] = useState(activeTabParam)
@@ -10,6 +11,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
   const [schedules, setSchedules] = useState([])
   const [standards, setStandards] = useState([])
   const [auditors, setAuditors] = useState([])
+  const [templates, setTemplates] = useState([])
+  const [templatesLoading, setTemplatesLoading] = useState(false)
   
   // Loading & Action states
   const [loading, setLoading] = useState(false)
@@ -22,6 +25,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
   const [standardId, setStandardId] = useState('')
   const [scheduledDate, setScheduledDate] = useState('')
   const [auditorId, setAuditorId] = useState('')
+  const [templateId, setTemplateId] = useState('')
 
   // Checklist / Audit Run states
   const [activeRun, setActiveRun] = useState(null)
@@ -109,20 +113,79 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
         )
       }
 
-      const { data: existingResults, error: resultsError } = await supabase
+      let { data: existingResults, error: resultsError } = await supabase
         .from('audit_results')
         .select('*')
         .eq('run_id', activeRunData.id)
 
       if (resultsError) throw resultsError
 
+      if ((!existingResults || existingResults.length === 0) && schedule.template_id) {
+        const { data: tempItems, error: tempItemsError } = await supabase
+          .from('audit_checklist_items')
+          .select('clause_id, requirement, what_to_look_for')
+          .eq('template_id', schedule.template_id)
+
+        if (tempItemsError) throw tempItemsError
+
+        if (tempItems && tempItems.length > 0) {
+          const insertPayloads = tempItems.map(item => ({
+            run_id: activeRunData.id,
+            clause_id: item.clause_id,
+            requirement: item.requirement,
+            what_to_look_for: item.what_to_look_for,
+            status: 'compliant',
+            evidence: '',
+            notes: ''
+          }))
+          const { data: insertedResults, error: insertErr } = await supabase
+            .from('audit_results')
+            .insert(insertPayloads)
+            .select('*')
+          if (insertErr) throw insertErr
+          existingResults = insertedResults || []
+        }
+      }
+
+      // Fallback: if still no results, use all active ISO clauses from standard
+      if ((!existingResults || existingResults.length === 0) && clausesList.length > 0) {
+        const insertPayloads = clausesList.map(clause => ({
+          run_id: activeRunData.id,
+          clause_id: clause.id,
+          requirement: clause.description || '',
+          what_to_look_for: 'Check standard compliance details',
+          status: 'compliant',
+          evidence: '',
+          notes: ''
+        }))
+        const { data: insertedResults, error: insertErr } = await supabase
+          .from('audit_results')
+          .insert(insertPayloads)
+          .select('*')
+        if (insertErr) throw insertErr
+        existingResults = insertedResults || []
+      }
+
+      const itemsList = (existingResults || []).map(res => {
+        const clauseDetails = clausesList.find(c => c.id === res.clause_id)
+        return {
+          id: res.clause_id,
+          clause_number: clauseDetails?.clause_number || 'N/A',
+          title: clauseDetails?.title || 'Custom Requirement',
+          requirement: res.requirement || '',
+          what_to_look_for: res.what_to_look_for || '',
+          result_id: res.id
+        }
+      })
+
       const initialResults = {}
-      clausesList.forEach(clause => {
-        const existing = (existingResults || []).find(r => r.clause_id === clause.id)
-        initialResults[clause.id] = {
-          id: existing?.id || null,
-          status: existing?.status || 'compliant',
-          evidence: existing?.evidence || ''
+      itemsList.forEach(item => {
+        const resObj = existingResults.find(r => r.clause_id === item.id)
+        initialResults[item.id] = {
+          id: resObj?.id || null,
+          status: resObj?.status || 'compliant',
+          evidence: resObj?.evidence || '',
+          notes: resObj?.notes || ''
         }
       })
 
@@ -132,7 +195,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
         title: schedule.title,
         standard_name: schedule.standard_name
       })
-      setActiveClauses(clausesList)
+      setActiveClauses(itemsList)
       setResultsMap(initialResults)
 
       // Batch-fetch all CARs linked to the clauses in this audit
@@ -175,7 +238,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
           run_id: activeRun.id,
           clause_id: clauseId,
           status: resultsMap[clauseId].status,
-          evidence: resultsMap[clauseId].evidence || null
+          evidence: resultsMap[clauseId].evidence || null,
+          notes: resultsMap[clauseId].notes || null
         }
         if (resultsMap[clauseId].id) {
           payload.id = resultsMap[clauseId].id
@@ -186,7 +250,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       const { data: savedData, error: upsertError } = await supabase
         .from('audit_results')
         .upsert(upsertData)
-        .select('id, clause_id, status, evidence')
+        .select('id, clause_id, status, evidence, notes')
 
       if (upsertError) throw upsertError
 
@@ -195,7 +259,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
         updatedResultsMap[row.clause_id] = {
           id: row.id,
           status: row.status,
-          evidence: row.evidence || ''
+          evidence: row.evidence || '',
+          notes: row.notes || ''
         }
       })
       setResultsMap(updatedResultsMap)
@@ -252,6 +317,14 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       if (audError) throw audError
       setAuditors(auditorsData || [])
 
+      setTemplatesLoading(true)
+      const templatesData = await checklistService.fetchTemplates().catch(err => {
+        console.warn('Failed to fetch templates:', err)
+        return []
+      })
+      setTemplates(templatesData || [])
+      setTemplatesLoading(false)
+
       const { data: schedulesData, error: schedError } = await supabase
         .from('audit_schedules')
         .select(`
@@ -260,7 +333,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
           scheduled_date,
           status,
           standard_id,
-          auditor_id
+          auditor_id,
+          template_id
         `)
         .order('scheduled_date', { ascending: true })
 
@@ -269,10 +343,12 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       const mappedSchedules = (schedulesData || []).map(schedule => {
         const std = (standardsData || []).find(s => s.id === schedule.standard_id)
         const aud = (auditorsData || []).find(a => a.auth_id === schedule.auditor_id)
+        const temp = (templatesData || []).find(t => String(t.id) === String(schedule.template_id))
         return {
           ...schedule,
           standard_name: std ? `${std.name} (${std.version})` : 'Unknown Standard',
-          auditor_name: aud ? `${aud.first_name} ${aud.last_name}` : 'Unknown Auditor'
+          auditor_name: aud ? `${aud.first_name} ${aud.last_name}` : 'Unknown Auditor',
+          template_name: temp ? temp.title : null
         }
       })
 
@@ -651,6 +727,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
         .insert({
           title: title.trim(),
           standard_id: standardId,
+          template_id: templateId || null,
           scheduled_date: scheduledDate,
           auditor_id: auditorId,
           status: 'pending',
@@ -683,6 +760,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       
       setTitle('')
       setStandardId('')
+      setTemplateId('')
       setScheduledDate('')
       setAuditorId('')
 
@@ -690,6 +768,91 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     } catch (err) {
       console.error('Error saving schedule:', err)
       setError(err.message || 'Failed to create audit schedule.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const fetchClausesForStandard = async (stdId) => {
+    if (!stdId) return []
+    try {
+      const { data: groups, error: groupErr } = await supabase
+        .from('iso_clause_groups')
+        .select('id')
+        .eq('standard_id', stdId)
+
+      if (groupErr) throw groupErr
+
+      if (groups && groups.length > 0) {
+        const groupIds = groups.map(g => g.id)
+        const { data: clausesData, error: clauseErr } = await supabase
+          .from('iso_clauses')
+          .select('id, clause_number, title, description')
+          .in('group_id', groupIds)
+          .eq('is_active', true)
+        
+        if (clauseErr) throw clauseErr
+        return (clausesData || []).sort((a, b) =>
+          a.clause_number.localeCompare(b.clause_number, undefined, { numeric: true })
+        )
+      }
+      return []
+    } catch (err) {
+      console.error('Error fetching clauses for standard:', err)
+      setError('Failed to fetch standard clauses. ' + err.message)
+      return []
+    }
+  }
+
+  const handleCreateTemplate = async (payload) => {
+    setError('')
+    setSuccess('')
+    setSaving(true)
+    try {
+      const result = await checklistService.createTemplate(payload)
+      setSuccess('Checklist template created successfully!')
+      await fetchData()
+      return result
+    } catch (err) {
+      console.error('Error creating template:', err)
+      setError(err.message || 'Failed to create checklist template.')
+      throw err
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleUpdateTemplate = async (id, payload) => {
+    setError('')
+    setSuccess('')
+    setSaving(true)
+    try {
+      const result = await checklistService.updateTemplate(id, payload)
+      setSuccess('Checklist template updated successfully!')
+      await fetchData()
+      return result
+    } catch (err) {
+      console.error('Error updating template:', err)
+      setError(err.message || 'Failed to update checklist template.')
+      throw err
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteTemplate = async (id) => {
+    setError('')
+    setSuccess('')
+    setSaving(true)
+    try {
+      const result = await checklistService.deleteTemplate(id)
+      setSuccess('Checklist template deleted successfully!')
+      await fetchData()
+      return result
+    } catch (err) {
+      console.error('Error deleting template:', err)
+      setError(err.message || 'Failed to delete checklist template.')
+      throw err
     } finally {
       setSaving(false)
     }
@@ -740,6 +903,10 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     setScheduledDate,
     auditorId,
     setAuditorId,
+    templateId,
+    setTemplateId,
+    templates,
+    templatesLoading,
     activeRun,
     setActiveRun,
     activeClauses,
@@ -773,6 +940,10 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     handlePrintReport,
     handleScheduleSubmit,
     handleRemoveCarLink,
+    fetchClausesForStandard,
+    handleCreateTemplate,
+    handleUpdateTemplate,
+    handleDeleteTemplate,
     selectedCar: carDetails.selectedCar,
     isCarDetailsModalOpen: carDetails.isCarDetailsModalOpen,
     openCarDetails: carDetails.openCarDetails,

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import useAuditToolsLogic from '../hooks/useAuditToolsLogic'
-import { AuditLogsTab, AuditReportsTab, AuditSchedulesTab } from '../components/AuditTools/AuditToolsTabs'
+import { AuditLogsTab, AuditReportsTab, AuditSchedulesTab, AuditTemplatesTab } from '../components/AuditTools/AuditToolsTabs'
 import { AuditChecklistSection, AuditRunDetailsModal } from '../components/AuditTools/AuditToolsModals'
 import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
 import './PagesStyles.css'
@@ -25,13 +25,18 @@ export default function AuditToolsPage({ authUserId }) {
 
   const renderTabs = () => (
     <div className="tab-navigation">
-      {['Logs', 'Reports', 'Schedules'].map(tab => (
+      {['Logs', 'Reports', 'Schedules', 'Templates'].map(tab => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab)}
           className={`tab-button ${activeTab === tab ? 'active' : ''}`}
         >
-          {tab === 'Logs' ? 'Audit Logs' : tab === 'Reports' ? 'Audit Reports' : 'Audit Schedules'}
+          {{
+            Logs: 'Audit Logs',
+            Reports: 'Audit Reports',
+            Schedules: 'Audit Schedules',
+            Templates: 'Checklist Templates'
+          }[tab]}
         </button>
       ))}
     </div>
@@ -46,6 +51,9 @@ export default function AuditToolsPage({ authUserId }) {
     }
     if (activeTab === 'Schedules') {
       return <AuditSchedulesTab isInsideSettings={isInsideSettings} {...logic} />
+    }
+    if (activeTab === 'Templates') {
+      return <AuditTemplatesTab isInsideSettings={isInsideSettings} {...logic} />
     }
     return null
   }

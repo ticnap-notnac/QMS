@@ -47,14 +47,27 @@ export function AuditChecklistSection({
           <p style={{ color: '#94a3b8', textAlign: 'center' }}>No clauses found for this ISO standard. Please add clauses first.</p>
         ) : (
           activeClauses.map(clause => {
-            const answer = resultsMap[clause.id] || { status: 'compliant', evidence: '' }
+            const answer = resultsMap[clause.id] || { status: 'compliant', evidence: '', notes: '' }
             return (
               <div key={clause.id} className="settings-container--profile" style={{ minHeight: 'auto', padding: '16px', background: 'rgba(15, 23, 42, 0.25)', border: '1px solid rgba(255,255,255,0.05)', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
                   <div style={{ flex: 1, minWidth: '250px' }}>
                     <span style={{ fontSize: '14px', fontWeight: '700', color: '#22d3ee', marginRight: '8px' }}>Clause {clause.clause_number}</span>
                     <h4 style={{ margin: 0, display: 'inline', fontSize: '14px', color: '#f8fafc' }}>{clause.title}</h4>
-                    {clause.description && <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#64748b' }}>{clause.description}</p>}
+                    {clause.requirement ? (
+                      <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderLeft: '3px solid #22d3ee', borderRadius: '0 4px 4px 0' }}>
+                        <p style={{ margin: 0, fontSize: '13px', color: '#e2e8f0', lineHeight: '1.4' }}>
+                          <strong style={{ color: '#22d3ee' }}>Requirement: </strong>{clause.requirement}
+                        </p>
+                        {clause.what_to_look_for && (
+                          <p style={{ margin: '6px 0 0 0', fontSize: '12.5px', color: '#94a3b8', lineHeight: '1.4' }}>
+                            <strong style={{ color: '#94a3b8' }}>What to look for: </strong>{clause.what_to_look_for}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      clause.description && <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#64748b' }}>{clause.description}</p>
+                    )}
                   </div>
                   
                   {/* Status selectors */}
@@ -108,20 +121,39 @@ export function AuditChecklistSection({
                   </div>
                 </div>
 
-                <div className="form-group" style={{ margin: 0 }}>
-                  <input
-                    type="text"
-                    placeholder="Evidence / Audit Notes..."
-                    className="form-input"
-                    style={{ padding: '8px 12px', fontSize: '13px' }}
-                    value={answer.evidence}
-                    onChange={(e) => {
-                      setResultsMap({
-                        ...resultsMap,
-                        [clause.id]: { ...answer, evidence: e.target.value }
-                      })
-                    }}
-                  />
+                <div className="form-row-2" style={{ margin: 0, gap: '12px' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Evidence / Observations</label>
+                    <input
+                      type="text"
+                      placeholder="Enter evidence or observations found..."
+                      className="form-input"
+                      style={{ padding: '8px 12px', fontSize: '13px' }}
+                      value={answer.evidence}
+                      onChange={(e) => {
+                        setResultsMap({
+                          ...resultsMap,
+                          [clause.id]: { ...answer, evidence: e.target.value }
+                        })
+                      }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Findings / CAR Notes</label>
+                    <input
+                      type="text"
+                      placeholder="Add findings notes or links to Corrective Actions..."
+                      className="form-input"
+                      style={{ padding: '8px 12px', fontSize: '13px' }}
+                      value={answer.notes || ''}
+                      onChange={(e) => {
+                        setResultsMap({
+                          ...resultsMap,
+                          [clause.id]: { ...answer, notes: e.target.value }
+                        })
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Linked CARs row */}
@@ -289,7 +321,7 @@ export function AuditRunDetailsModal({
             <div style={{ textAlign: 'center', color: '#64748b', fontSize: '13.5px' }}>No evaluated clauses found.</div>
           ) : (
             runClauses.map((clause) => {
-              const result = runResults.find(r => r.clause_id === clause.id) || { status: 'na', evidence: '' }
+              const result = runResults.find(r => r.clause_id === clause.id) || { status: 'na', evidence: '', notes: '', requirement: '', what_to_look_for: '' }
               
               const statusColors = {
                 compliant: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981', label: 'Compliant' },
@@ -325,12 +357,28 @@ export function AuditRunDetailsModal({
                       {badge.label}
                     </span>
                   </div>
-                  {result.evidence && (
-                    <p style={{ margin: 0, fontSize: '12.5px', color: '#94a3b8', background: 'rgba(0,0,0,0.15)', padding: '6px 10px', borderRadius: '4px', fontStyle: 'italic' }}>
-                      <span style={{ color: '#64748b', fontWeight: 'bold', fontStyle: 'normal' }}>Notes: </span>
-                      {result.evidence}
-                    </p>
+
+                  {result.requirement && (
+                    <div style={{ fontSize: '12.5px', color: '#cbd5e1', padding: '6px 10px', background: 'rgba(255,255,255,0.01)', borderLeft: '2px solid #22d3ee', borderRadius: '0 4px 4px 0' }}>
+                      <p style={{ margin: 0 }}><strong>Requirement:</strong> {result.requirement}</p>
+                      {result.what_to_look_for && <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#94a3b8' }}><strong>What to look for:</strong> {result.what_to_look_for}</p>}
+                    </div>
                   )}
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {result.evidence && (
+                      <p style={{ margin: 0, fontSize: '12.5px', color: '#94a3b8', background: 'rgba(0,0,0,0.15)', padding: '6px 10px', borderRadius: '4px' }}>
+                        <span style={{ color: '#64748b', fontWeight: 'bold' }}>Evidence: </span>
+                        {result.evidence}
+                      </p>
+                    )}
+                    {result.notes && (
+                      <p style={{ margin: 0, fontSize: '12.5px', color: '#94a3b8', background: 'rgba(0,0,0,0.15)', padding: '6px 10px', borderRadius: '4px' }}>
+                        <span style={{ color: '#64748b', fontWeight: 'bold' }}>Findings Notes: </span>
+                        {result.notes}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )
             })
