@@ -7,8 +7,8 @@ CREATE TABLE IF NOT EXISTS public.audit_checklist_templates (
   id          bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   title       text NOT NULL,
   description text,
-  standard_id bigint REFERENCES public.iso_standards(id) ON DELETE SET NULL,
-  created_by  uuid REFERENCES public.users(auth_id) ON DELETE SET NULL,
+  standard_id uuid REFERENCES public.iso_standards(id) ON DELETE SET NULL,
+  created_by  uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   site_id     bigint REFERENCES public.sites(id) ON DELETE SET NULL,
   created_at  timestamptz NOT NULL DEFAULT now()
 );
