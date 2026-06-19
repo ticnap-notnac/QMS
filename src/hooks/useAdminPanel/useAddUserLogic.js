@@ -54,11 +54,17 @@ export default function useAddUserLogic() {
   const openAddUserModal = () => {
     setFormError('')
     setFormMessage('')
-    setNewUser((current) => ({
-      ...current,
-      roleId: current.roleId || roles[0]?.id?.toString() || '',
-      departmentId: current.departmentId || departments[0]?.id?.toString() || '',
-    }))
+    setNewUser({
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      userName: '',
+      contactNumber: '',
+      roleId: '',
+      departmentId: '',
+      siteId: '',
+    })
     setIsAddUserModalOpen(true)
   }
 
@@ -92,8 +98,8 @@ export default function useAddUserLogic() {
         password: '',
         userName: '',
         contactNumber: '',
-        roleId: roles[0]?.id?.toString() || '',
-        departmentId: departments[0]?.id?.toString() || '',
+        roleId: '',
+        departmentId: '',
         siteId: '',
       })
       await reloadUsers()

@@ -324,7 +324,7 @@ export default function Dashboard() {
       <section className="charts" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a', margin: '4px 0 0 0' }}>Quality Analytics & Compliance</h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
           {/* Bar Chart - Compliance by ISO Standard */}
           <div className="chart-wrapper" style={{
             background: '#ffffff',
@@ -338,7 +338,7 @@ export default function Dashboard() {
               <BarChart2 size={15} color="#0f172a" />
               <h4 style={{ margin: 0, color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>Standard Compliance Breakdown</h4>
             </div>
-            <div style={{ width: '100%', height: '220px' }}>
+            <div style={{ width: '100%', height: '400px' }}>
               {barChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -370,7 +370,7 @@ export default function Dashboard() {
               <TrendingUp size={15} color="#0f172a" />
               <h4 style={{ margin: 0, color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>Audit Compliance Trend</h4>
             </div>
-            <div style={{ width: '100%', height: '220px' }}>
+            <div style={{ width: '100%', height: '400px' }}>
               {lineChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={lineChartData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
@@ -402,7 +402,7 @@ export default function Dashboard() {
               <Clock size={15} color="#0f172a" />
               <h4 style={{ margin: 0, color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>Average Resolution Time Trend (Hours)</h4>
             </div>
-            <div style={{ width: '100%', height: '220px' }}>
+            <div style={{ width: '100%', height: '400px' }}>
               {resolutionTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={resolutionTrend} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>

@@ -36,7 +36,7 @@ function AddUserModal({
           </button>
         </div>
 
-        <form className="modal-form" onSubmit={onSubmit}>
+        <form className="modal-form" onSubmit={onSubmit} autoComplete="off">
           <p className="glass-card-subtext">
             Create the auth account and matching profile record for a new user.
           </p>
@@ -78,6 +78,7 @@ function AddUserModal({
                 onChange={onChange}
                 className="form-input-reports"
                 placeholder="Create a password"
+                autoComplete="new-password"
               />
             </label>
           </div>
@@ -92,6 +93,7 @@ function AddUserModal({
                 onChange={onChange}
                 className="form-input-reports"
                 placeholder="Enter email address"
+                autoComplete="new-password"
               />
             </label>
 
@@ -104,6 +106,7 @@ function AddUserModal({
                 onChange={onChange}
                 className="form-input-reports"
                 placeholder="Enter username"
+                autoComplete="new-password"
               />
             </label>
 
@@ -116,6 +119,7 @@ function AddUserModal({
                 onChange={onChange}
                 className="form-input-reports"
                 placeholder="Enter contact number"
+                autoComplete="off"
               />
             </label>
           </div>

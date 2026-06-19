@@ -258,7 +258,7 @@
   overflow: visible !important;
   text-overflow: clip !important;
   word-break: break-word !important;
-  max-width: 320px !important;
+  max-width: 100% !important;
   line-height: 1.5 !important;
 }
 
@@ -294,7 +294,8 @@
 /* ──────────────────────────────────────────────────────────────────────────
    🔒 PERFECT VIEWPORT FIT AND SCROLL CONTAINMENT FOR DCC PAGE
    ────────────────────────────────────────────────────────────────────────── */
-.dcc-main-wrapper {
+/* Increase specificity to override any global App.css settings, ensuring flex layout stretches perfectly */
+main.page-root .dcc-main-wrapper {
   height: 100vh !important;
   max-height: 100vh !important;
   overflow: hidden !important;
@@ -303,7 +304,7 @@
   box-sizing: border-box !important;
 }
 
-.dcc-main-wrapper .dcc-glass-main-card {
+main.page-root .dcc-main-wrapper .dcc-glass-main-card {
   flex: 1 !important;
   min-height: 0 !important;
   height: 100% !important;
@@ -314,7 +315,11 @@
   padding: 24px !important;
 }
 
-.dcc-glass-main-card .flex-column.full-height {
+/* Ensure intermediate flex containers stretch correctly inside DCC main card */
+main.page-root .dcc-glass-main-card .flex-column.full-height,
+main.page-root .dcc-glass-main-card .row-gap-40,
+main.page-root .dcc-glass-main-card .row-gap-20,
+main.page-root .dcc-glass-main-card .glass-card-dcc {
   flex: 1 !important;
   min-height: 0 !important;
   height: 100% !important;
@@ -323,38 +328,19 @@
   overflow: hidden !important;
 }
 
-.dcc-glass-main-card .row-gap-40 {
-  flex: 1 !important;
-  min-height: 0 !important;
-  height: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
+main.page-root .dcc-glass-main-card .row-gap-40 {
   gap: 16px !important;
 }
 
-.dcc-glass-main-card .row-gap-20 {
-  flex: 1 !important;
-  min-height: 0 !important;
-  height: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
+main.page-root .dcc-glass-main-card .row-gap-20 {
   gap: 20px !important;
 }
 
-.dcc-glass-main-card .glass-card-dcc {
-  flex: 1 !important;
-  min-height: 0 !important;
-  height: 100% !important;
-  max-height: 100% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
+main.page-root .dcc-glass-main-card .glass-card-dcc {
   padding: 20px !important;
 }
 
-.dcc-glass-main-card .system-logs-panel {
+main.page-root .dcc-glass-main-card .system-logs-panel {
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
@@ -362,8 +348,8 @@
   padding: 0 !important;
 }
 
-.dcc-glass-main-card .system-logs-panel .logs-table,
-.dcc-glass-main-card .system-logs-panel .iso-table-wrap {
+main.page-root .dcc-glass-main-card .system-logs-panel .logs-table,
+main.page-root .dcc-glass-main-card .system-logs-panel .iso-table-wrap {
   flex: 1 !important;
   min-height: 0 !important;
   max-height: none !important;
@@ -374,7 +360,7 @@
   border-radius: 8px !important;
 }
 
-.dcc-glass-main-card .dcc-scrollable-table-box {
+main.page-root .dcc-glass-main-card .dcc-scrollable-table-box {
   flex: 1 !important;
   min-height: 0 !important;
   overflow-y: auto !important;

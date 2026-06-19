@@ -200,6 +200,27 @@ export function useCARForm(departments = []) {
   }
 
   const validate = () => {
+    if (!form.requesting_department?.trim()) {
+      setError('Requesting Department is required.')
+      return false
+    }
+    if (!form.requestor?.trim()) {
+      setError('Requestor is required.')
+      return false
+    }
+    if (!form.date) {
+      setError('Date is required.')
+      return false
+    }
+    if (!form.responsible_department?.trim()) {
+      setError('Responsible Department is required.')
+      return false
+    }
+    if (!form.recipient?.trim()) {
+      setError('Recipient is required.')
+      return false
+    }
+
     const hasCheckboxChecked = 
       form.quality_food_safety ||
       form.environment_health_safety ||
@@ -212,6 +233,31 @@ export function useCARForm(departments = []) {
 
     if (!hasCheckboxChecked) {
       setError('Please select at least one Type of Non-Conformance checkbox.')
+      return false
+    }
+
+    if (!form.product_material_name?.trim()) {
+      setError('Product / Material Name is required.')
+      return false
+    }
+    if (!form.model_type?.trim()) {
+      setError('Model / Type is required.')
+      return false
+    }
+    if (!form.control_no?.trim()) {
+      setError('Control No. is required.')
+      return false
+    }
+    if (form.affected_quantity === undefined || form.affected_quantity === null || String(form.affected_quantity).trim() === '') {
+      setError('Affected Quantity is required.')
+      return false
+    }
+    if (!form.details_of_nonconformance?.trim()) {
+      setError('Details of Non-Conformance is required.')
+      return false
+    }
+    if (!form.request_date) {
+      setError('Request Date is required.')
       return false
     }
 
