@@ -14,7 +14,8 @@ export default function FilterModal({
   setFilters,
   departments = [],
   onClear,
-  onApply
+  onApply,
+  userRole
 }) {
   if (!isOpen) return null
 
@@ -98,33 +99,40 @@ export default function FilterModal({
           </p>
 
           {/* 📐 ROW 1: Department & Date Input Fields Side-by-Side */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label className="label-field" style={{ margin: 0 }}>Department</label>
-              <select
-                value={currentDepartmentId}
-                onChange={(e) => setFilters && setFilters(prev => ({ ...prev, departmentId: e.target.value }))}
-                className="input-field"
-                style={{ width: '100%', height: '38px' }}
-              >
-                <option value="">Select department…</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={String(d.id)}>{d.department_name}</option>
-                ))}
-              </select>
-            </div>
+          {(() => {
+            const isSuperUser = ['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: isSuperUser ? '1fr 1fr' : '1fr', gap: '16px' }}>
+                {isSuperUser && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label className="label-field" style={{ margin: 0 }}>Department</label>
+                    <select
+                      value={currentDepartmentId}
+                      onChange={(e) => setFilters && setFilters(prev => ({ ...prev, departmentId: e.target.value }))}
+                      className="input-field"
+                      style={{ width: '100%', height: '38px' }}
+                    >
+                      <option value="">Select department…</option>
+                      {departments.map((d) => (
+                        <option key={d.id} value={String(d.id)}>{d.department_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label className="label-field" style={{ margin: 0 }}>Date</label>
-              <input
-                type="date"
-                value={currentDate}
-                onChange={(e) => setFilters && setFilters(prev => ({ ...prev, date: e.target.value }))}
-                className="input-field"
-                style={{ width: '100%', height: '38px', padding: '0 12px' }}
-              />
-            </div>
-          </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label className="label-field" style={{ margin: 0 }}>Date</label>
+                  <input
+                    type="date"
+                    value={currentDate}
+                    onChange={(e) => setFilters && setFilters(prev => ({ ...prev, date: e.target.value }))}
+                    className="input-field"
+                    style={{ width: '100%', height: '38px', padding: '0 12px' }}
+                  />
+                </div>
+              </div>
+            )
+          })()}
 
           {/* 📐 ROW 2: Status Selection Array */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -219,7 +227,7 @@ export default function FilterModal({
           <button 
             type="button" 
             className="btn-gradient-primary" 
-            onClick={onApply}
+            onClick={() => onApply && onApply(filters)}
             style={{ margin: 0, padding: '8px 24px', fontSize: '13px', height: '36px', display: 'flex', alignItems: 'center', boxShadow: 'none' }}
           >
             Filter Report

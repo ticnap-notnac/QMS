@@ -150,7 +150,7 @@ export default function Navbar({
           <div className={`user-avatar ${normalizedRole === 'admin' ? 'admin' : 'default'}`} />
           <div className="nav-user-info">
             <span className="nav-user-name">{userName || 'Name of the User'}</span>
-            <span className="nav-user-position">{userEmail || 'Position'}</span>
+            <span className="nav-user-position">{userPosition || 'Position'}</span>
           </div>
         </div>
 

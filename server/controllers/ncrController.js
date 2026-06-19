@@ -47,6 +47,7 @@ export async function createReport(req, res) {
     })
     return res.status(201).json(data)
   } catch (err) {
+    console.error('[createReport] Error creating NCR report:', err)
     return res.status(err.status || 500).json({ error: err?.message || String(err) })
   }
 }
@@ -148,6 +149,7 @@ export async function createReportSubmit(req, res) {
     })
     return res.status(201).json({ success: true, data })
   } catch (err) {
+    console.error('[createReportSubmit] Error creating multipart NCR report:', err)
     return res.status(err.status || 500).json({ error: err?.message || String(err) })
   }
 }

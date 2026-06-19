@@ -9,8 +9,8 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
   const reporterName = report.reporter_full_name || 'Name of the User'
   const reporterRole = report.reporter_role_name || 'Position'
   const reporterDepartment =
-    report.reporter_department_name ||
     departmentNameById.get(String(report.department_id)) ||
+    report.reporter_department_name ||
     'Department'
   const reportLocation = report.location_name || report.complaint_location || 'Location'
   const statusStyle = getStatusStyle(report.status)

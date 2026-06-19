@@ -26,10 +26,8 @@ export default function ReportsFeedList({
         </div>
         <div className="reports-list-stack">
           {displayedInvestigatedReports.length === 0 && (
-            <div className="reports-card">
-              <div className="reports-workspace">
-                <span className="reports-workspace-text">No updated reports are currently waiting for approval.</span>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '80px 20px', width: '100%' }}>
+              <span style={{ fontSize: '15px', color: '#64748b', fontWeight: 500 }}>No updated NCR reports currently waiting for approval.</span>
             </div>
           )}
           {displayedInvestigatedReports.map((report) => (
@@ -62,10 +60,8 @@ export default function ReportsFeedList({
   if (isClosedMode) {
     if (closedReports.length === 0) {
       return (
-        <div className="reports-card">
-          <div className="reports-workspace">
-            <span className="reports-workspace-text">No closed reports found</span>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '80px 20px', width: '100%' }}>
+          <span style={{ fontSize: '15px', color: '#64748b', fontWeight: 500 }}>No closed NCR reports found.</span>
         </div>
       )
     }
@@ -90,10 +86,8 @@ export default function ReportsFeedList({
 
   if (reports.length === 0) {
     return (
-      <div className="reports-card">
-        <div className="reports-workspace">
-          <span className="reports-workspace-text">No open reports</span>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '80px 20px', width: '100%' }}>
+        <span style={{ fontSize: '15px', color: '#64748b', fontWeight: 500 }}>No open NCR reports found.</span>
       </div>
     )
   }

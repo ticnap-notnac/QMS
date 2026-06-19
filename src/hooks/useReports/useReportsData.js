@@ -36,17 +36,28 @@ function sortReportsForCurrentUser(reportList, currentUserId) {
 }
 
 function applyReportFilters(reportList, filters) {
+  console.log('[applyReportFilters] filters:', filters)
   const selectedSeverities = (filters?.severities || [])
     .map((s) => String(s || '').trim().toLowerCase())
     .filter(Boolean)
+  const singleSeverity = String(filters?.severity || '').trim().toLowerCase()
 
-  return (reportList || []).filter((report) => {
-    if (filters?.departmentId && String(report.department_id || '') !== String(filters.departmentId)) return false
+  const result = (reportList || []).filter((report) => {
+    if (filters?.departmentId && String(report.department_id || '') !== String(filters.departmentId)) {
+      console.log(`[applyReportFilters] Filtering out report ${report.reference_no} because department_id ${report.department_id} !== filter ${filters.departmentId}`)
+      return false
+    }
     if (filters?.status && String(report.status || '').trim().toLowerCase() !== String(filters.status).trim().toLowerCase()) return false
-    if (selectedSeverities.length > 0 && !selectedSeverities.includes(normalizeSeverity(report.severity))) return false
+    
+    const reportSev = normalizeSeverity(report.severity)
+    if (selectedSeverities.length > 0 && !selectedSeverities.includes(reportSev)) return false
+    if (singleSeverity && reportSev !== singleSeverity) return false
+
     if (filters?.date && String(report.occurrence_date || '') !== String(filters.date)) return false
     return true
   })
+  console.log('[applyReportFilters] result list size:', result.length)
+  return result
 }
 
 export function toOptionList(items, labelKey) {
@@ -55,7 +66,7 @@ export function toOptionList(items, labelKey) {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export function useReportsData({ currentUserId, currentAuthId, reportFilters, setError }) {
+export function useReportsData({ currentUserId, currentAuthId, reportFilters, setError, userRole, userDepartmentId }) {
   const [isLoading, setIsLoading] = useState(false)
   const [reports, setReports] = useState([])
   const [investigatedReports, setInvestigatedReports] = useState([])
@@ -74,27 +85,37 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
 
   const refreshReportsList = useCallback(
     async (filters = reportFilters) => {
+      console.log('[refreshReportsList] Called with filters:', filters, 'current reportFilters:', reportFilters)
       setIsLoading(true)
       setError(null)
       try {
         const allData = await fetchAllReports()
         const allArray = Array.isArray(allData) ? allData : []
         
-        const open = allArray.filter(r => !r.investigation_details && String(r.status).trim().toLowerCase() !== REPORT_STATUS.CLOSED.toLowerCase())
-        const resolved = allArray.filter(r => !!r.investigation_details && String(r.status).trim().toLowerCase() !== REPORT_STATUS.CLOSED.toLowerCase())
-        const closed = allArray.filter(r => String(r.status).trim().toLowerCase() === REPORT_STATUS.CLOSED.toLowerCase())
+        const isStandardUser = !['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
+        const scopedArray = isStandardUser
+          ? allArray.filter(r => String(r.department_id) === String(userDepartmentId))
+          : allArray
+
+        const open = scopedArray.filter(r => !r.investigation_details && String(r.status).trim().toLowerCase() !== REPORT_STATUS.CLOSED.toLowerCase())
+        const resolved = scopedArray.filter(r => !!r.investigation_details && String(r.status).trim().toLowerCase() !== REPORT_STATUS.CLOSED.toLowerCase())
+        const closed = scopedArray.filter(r => String(r.status).trim().toLowerCase() === REPORT_STATUS.CLOSED.toLowerCase())
 
         setReports(sortReportsForCurrentUser(applyReportFilters(open, filters), currentUserId))
         setInvestigatedReports(sortReportsForCurrentUser(applyReportFilters(resolved, filters), currentUserId))
-        // Bypass applyReportFilters for closed reports to guarantee they show up regardless of active filters
-        setClosedReports(sortReportsForCurrentUser(closed, currentUserId))
+        
+        let filteredClosed = closed
+        if (filters?.departmentId) {
+          filteredClosed = closed.filter(r => String(r.department_id) === String(filters.departmentId))
+        }
+        setClosedReports(sortReportsForCurrentUser(filteredClosed, currentUserId))
       } catch (err) {
         setError(err?.message || 'Failed to load NCR reports.')
       } finally {
         setIsLoading(false)
       }
     },
-    [reportFilters, currentUserId, setError]
+    [reportFilters, currentUserId, setError, userRole, userDepartmentId]
   )
 
   const loadLookupData = useCallback(async () => {

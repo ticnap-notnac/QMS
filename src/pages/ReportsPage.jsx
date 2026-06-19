@@ -17,8 +17,8 @@ import { CAR_STATUS } from '../../shared/constants'
 import { useReportsLogic } from '@/hooks/useReportsLogic'
 import './PagesStyles.css'
 
-export default function ReportsPage({ userRole, currentUserId, authUserId }) {
-  const logic = useReportsLogic({ currentUserId, userRole, authUserId })
+export default function ReportsPage({ userRole, currentUserId, authUserId, userDepartmentId }) {
+  const logic = useReportsLogic({ currentUserId, userRole, authUserId, userDepartmentId })
 
   const displayedCars = logic.isClosedMode
     ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase())
@@ -43,6 +43,35 @@ export default function ReportsPage({ userRole, currentUserId, authUserId }) {
               <button type="button" className="btn-quick-toggle" onClick={() => logic.setIsApprovalQueueMode((c) => !c)}>{logic.isApprovalQueueMode ? 'Show All' : `Needs Approval (${logic.approvalQueueReports.length})`}</button>
             )}
             <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>{logic.isClosedMode ? 'Show Open' : `Closed (${logic.activeTab === 'ncr' ? logic.closedReports.length : logic.carReports.filter(c => c.status === CAR_STATUS.CLOSED).length})`}</button>
+            {['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase()) && (
+              <select
+                className="form-input"
+                style={{ 
+                  width: '180px', 
+                  padding: '6px 12px', 
+                  fontSize: '13px', 
+                  background: 'rgba(255,255,255,0.03)', 
+                  color: '#fff', 
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+                value={logic.reportFilters.departmentId || ''}
+                onChange={(e) => {
+                  logic.setReportFilters(prev => ({
+                    ...prev,
+                    departmentId: e.target.value
+                  }))
+                }}
+              >
+                <option value="" style={{ background: '#0f172a' }}>All Departments</option>
+                {logic.departments.map(dept => (
+                  <option key={dept.id} value={dept.id} style={{ background: '#0f172a' }}>
+                    {dept.department_name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
             <button type="button" onClick={() => logic.openCARModal()} className="btn-gradient-primary reports-submit-primary">Submit CAR</button>

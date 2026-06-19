@@ -85,7 +85,7 @@ export default function UpdateReportModal({
           </div>
 
           <div className="modal-grid-2">
-            <FieldCard label="Department" value={report?.reporter_department_name || report?.department_name || report?.department_id} />
+            <FieldCard label="Department" value={deptName || report?.reporter_department_name || report?.department_id} />
             <FieldCard label="Description" value={report?.description} />
           </div>
 

@@ -24,7 +24,7 @@ import { submitQddrReport, updateQddrReport } from '@/services/qddrService'
 import { useCARDetails } from './useCARDetails'
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export function useReportsLogic({ currentUserId, userRole, authUserId }) {
+export function useReportsLogic({ currentUserId, userRole, authUserId, userDepartmentId }) {
   const { user: authUser } = useAuth()
   const currentAuthId = authUser?.id || authUserId || ''
 
@@ -66,7 +66,9 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     currentUserId,
     currentAuthId,
     reportFilters: formState.reportFilters,
-    setError
+    setError,
+    userRole,
+    userDepartmentId
   })
 
   const modalsState = useReportsModals({
@@ -97,14 +99,79 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
         .select('*, audit_schedules(id, title, scheduled_date)')
         .order('created_at', { ascending: false })
       if (carError) throw carError
-      setCarReports(carData || [])
 
       const { data: qddrData, error: qddrError } = await supabase
         .from('qddr_reports')
         .select('*')
         .order('created_at', { ascending: false })
       if (qddrError) throw qddrError
-      setQddrReports(qddrData || [])
+
+      // Fetch NCRs to resolve their department ID
+      const { data: ncrs } = await supabase
+        .from('ncr_reports')
+        .select('id, department_id')
+
+      const ncrDeptMap = new Map((ncrs || []).map(n => [n.id, n.department_id]))
+      const isStandardUser = !['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
+      const activeDeptFilterId = formState.reportFilters.departmentId
+
+      // 1. CAR department scoping/filtering
+      let filteredCars = carData || []
+      if (isStandardUser) {
+        const userDeptName = dataState.departmentNameById.get(String(userDepartmentId))?.toLowerCase()
+        filteredCars = (carData || []).filter(car => {
+          if (Array.isArray(car.ncr_id) && car.ncr_id.length > 0) {
+            return car.ncr_id.some(ncrId => String(ncrDeptMap.get(Number(ncrId))) === String(userDepartmentId))
+          }
+          if (car.ncr_id) {
+            return String(ncrDeptMap.get(Number(car.ncr_id))) === String(userDepartmentId)
+          }
+          if (userDeptName) {
+            return (
+              car.requesting_department?.toLowerCase() === userDeptName ||
+              car.responsible_department?.toLowerCase() === userDeptName
+            )
+          }
+          return false
+        })
+      } else if (activeDeptFilterId) {
+        const filterDeptName = dataState.departmentNameById.get(String(activeDeptFilterId))?.toLowerCase()
+        filteredCars = (carData || []).filter(car => {
+          if (Array.isArray(car.ncr_id) && car.ncr_id.length > 0) {
+            return car.ncr_id.some(ncrId => String(ncrDeptMap.get(Number(ncrId))) === String(activeDeptFilterId))
+          }
+          if (car.ncr_id) {
+            return String(ncrDeptMap.get(Number(car.ncr_id))) === String(activeDeptFilterId)
+          }
+          if (filterDeptName) {
+            return (
+              car.requesting_department?.toLowerCase() === filterDeptName ||
+              car.responsible_department?.toLowerCase() === filterDeptName
+            )
+          }
+          return false
+        })
+      }
+      setCarReports(filteredCars)
+
+      // 2. QDDR department scoping/filtering
+      let filteredQddrs = qddrData || []
+      if (isStandardUser) {
+        filteredQddrs = (qddrData || []).filter(q => {
+          if (q.ncr_id) {
+            return String(ncrDeptMap.get(Number(q.ncr_id))) === String(userDepartmentId)
+          }
+          return false
+        })
+      } else if (activeDeptFilterId) {
+        filteredQddrs = (qddrData || []).filter(q => {
+          if (q.ncr_id) {
+            return String(ncrDeptMap.get(Number(q.ncr_id))) === String(activeDeptFilterId)
+          }
+          return false
+        })
+      }
+      setQddrReports(filteredQddrs)
     } catch (err) {
       console.error('Failed to load CAR/QDDR lists:', err)
       setError('Failed to load CAR/QDDR lists: ' + err.message)
@@ -112,7 +179,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
       setLoadingCar(false)
       setLoadingQddr(false)
     }
-  }, [setError])
+  }, [setError, userRole, userDepartmentId, formState.reportFilters.departmentId, dataState.departmentNameById])
 
   useEffect(() => {
     if (currentAuthId) {
@@ -275,12 +342,14 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
   const handleFilterApply = async (filters) => { 
     formState.setReportFilters(filters); 
     await dataState.refreshReportsList(filters) 
+    modalsState.setIsFilterModalOpen(false)
   }
 
   const handleFilterClear = async () => {
     const cleared = { departmentId: '', status: '', severities: [], date: '' }
     formState.setReportFilters(cleared)
     await dataState.refreshReportsList(cleared)
+    modalsState.setIsFilterModalOpen(false)
   }
 
   // ─── Report actions ────────────────────────────────────────────────────────
@@ -655,6 +724,8 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     isClosedMode, setIsClosedMode,
 
     createFormState: formState.createFormState,
+    reportFilters: formState.reportFilters,
+    setReportFilters: formState.setReportFilters,
 
     fileInputRefMain: formState.evidenceState.fileInputRefMain,
     evidenceFileMain: formState.evidenceState.evidenceFileMain,
@@ -680,8 +751,12 @@ export function useReportsLogic({ currentUserId, userRole, authUserId }) {
     filterModalProps: {
       isOpen: modalsState.isFilterModalOpen,
       onClose: () => modalsState.setIsFilterModalOpen(false),
-      onApplyFilters: handleFilterApply,
-      onClearFilters: handleFilterClear,
+      filters: formState.reportFilters,
+      setFilters: formState.setReportFilters,
+      departments: dataState.departments,
+      onClear: handleFilterClear,
+      onApply: handleFilterApply,
+      userRole,
     },
     updateModalProps: {
       isOpen: modalsState.isUpdateModalOpen,

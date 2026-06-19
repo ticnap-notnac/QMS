@@ -14,10 +14,8 @@ export default function CARReportsList({
 
   if (!carReports || carReports.length === 0) {
     return (
-      <div className="reports-card">
-        <div className="reports-workspace">
-          <span className="reports-workspace-text">No CAR reports found.</span>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '80px 20px', width: '100%' }}>
+        <span style={{ fontSize: '15px', color: '#64748b', fontWeight: 500 }}>No CAR reports found.</span>
       </div>
     )
   }

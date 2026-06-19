@@ -38,6 +38,7 @@ function AppInner() {
 
   const [userRole, setUserRole] = useState('user')
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [userDepartmentId, setUserDepartmentId] = useState(null)
   const [userName, setUserName] = useState('Name of the User')
   const [userPosition, setUserPosition] = useState('Position')
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -76,6 +77,7 @@ function AppInner() {
     // Prefer full name for display (first + last). Fall back to username, then email.
     const displayName = fullName || profile.user_name || profile.email || 'Name of the User'
     setUserName(displayName)
+    setUserDepartmentId(profile.department_id || null)
 
     let resolvedRoleName = null
 
@@ -127,7 +129,7 @@ function AppInner() {
         if (user) {
           const { data } = await supabase
             .from('users')
-            .select('id, first_name, last_name, user_name, role_id')
+            .select('id, first_name, last_name, user_name, role_id, department_id')
             .eq('auth_id', user.id)
             .maybeSingle()
 
@@ -168,7 +170,7 @@ function AppInner() {
 
         const { data, error } = await supabase
           .from('users')
-          .select('id, first_name, last_name, user_name, role_id')
+          .select('id, first_name, last_name, user_name, role_id, department_id')
           .eq('auth_id', authData.user.id)
           .maybeSingle()
 
@@ -189,7 +191,7 @@ function AppInner() {
     if (user) {
       const { data } = await supabase
         .from('users')
-        .select('id, first_name, last_name, user_name, role_id')
+        .select('id, first_name, last_name, user_name, role_id, department_id')
         .eq('auth_id', user.id)
         .maybeSingle()
 
@@ -208,6 +210,7 @@ function AppInner() {
 
       // Optimistically clear UI state for instant feedback
       setUser(null)
+      setUserDepartmentId(null)
       setUnreadNotificationCount(0)
       setIsNotificationsOpen(false)
 
@@ -245,6 +248,7 @@ function AppInner() {
     userName,
     userPosition,
     currentUserId,
+    userDepartmentId,
     authUserId: user?.id || '',
     profileTargetTab,
     setProfileTargetTab,
