@@ -21,6 +21,7 @@ import { errorHandler } from './middlewares/errorMiddleware.js'
 
 const app = express()
 
+app.disable('x-powered-by')
 app.use(cors())
 app.use(express.json())
 

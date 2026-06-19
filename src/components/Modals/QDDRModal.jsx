@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X as CloseIcon } from 'lucide-react'
+import { X as CloseIcon, Sparkles } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 
 function QDDRModal({
@@ -15,7 +15,9 @@ function QDDRModal({
   locationsLoading,
   users,
   usersLoading,
-  allReports
+  allReports,
+  suggesting,
+  suggestActions
 }) {
   const [isLinkingMode, setIsLinkingMode] = useState(false)
   const [ncrSearchQuery, setNcrSearchQuery] = useState('')
@@ -339,6 +341,30 @@ function QDDRModal({
               </div>
 
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
+
+              {/* Actions & Analysis Header with CBR Suggest Actions Button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ color: '#0f172a', fontSize: '13px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions & Analysis</span>
+                <button
+                  type="button"
+                  onClick={suggestActions}
+                  disabled={suggesting}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 10px',
+                    fontSize: '12px',
+                    background: 'rgba(8, 145, 178, 0.12)',
+                    border: '1px solid rgba(8, 145, 178, 0.3)',
+                    color: '#0891b2',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Sparkles size={13} /> {suggesting ? 'Analyzing...' : 'Suggest Actions (CBR)'}
+                </button>
+              </div>
 
               {/* Details: Reason, Corrective, Preventive */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>

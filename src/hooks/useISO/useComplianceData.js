@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import * as isoService from '@/services/isoService'
+import { supabase } from '@/utils/supabase'
 import { SEVERITY_LEVELS, AUDIT_STATUS } from '../../../shared/constants'
 
 export function useComplianceData() {
@@ -39,10 +40,22 @@ export function useComplianceData() {
       // Fetch non-compliant findings
       const findingsData = await isoService.fetchNonCompliantFindings()
 
-      // Fetch CAR reports to filter out linked NCRs
-      const carData = await isoService.fetchLinkedCarNcrIds()
+      // Fetch CAR reports with clause links to filter out linked NCRs and populate createdCars
+      const { data: carsList, error: carsError } = await supabase
+        .from('car_reports')
+        .select(`
+          id,
+          reference_no,
+          audit_schedule_id,
+          ncr_id,
+          car_clause_links (
+            clause_id
+          )
+        `)
+      if (carsError) throw carsError
+
       const linkedNcrIds = new Set()
-      carData.forEach(car => {
+      ;(carsList || []).forEach(car => {
         if (Array.isArray(car.ncr_id)) {
           car.ncr_id.forEach(id => linkedNcrIds.add(Number(id)))
         }
@@ -113,7 +126,37 @@ export function useComplianceData() {
         }
       })
 
-      setNonCompliantFindings([...findingsData, ...escalatedFindings])
+      const allFindings = [...findingsData, ...escalatedFindings]
+      setNonCompliantFindings(allFindings)
+
+      // Dynamically populate createdCars map
+      const carsMap = {}
+      if (carsList && carsList.length > 0) {
+        allFindings.forEach(finding => {
+          const matchingCar = carsList.find(car => {
+            // Match unlinked escalations by checking if NCR ID matches
+            if (finding.isNcrGap && !finding.clause_id) {
+              const carNcrIds = Array.isArray(car.ncr_id) ? car.ncr_id.map(Number) : []
+              return finding.ncr_ids.some(nid => carNcrIds.includes(Number(nid)))
+            }
+            
+            // Match audit result gaps or trend gaps by clause_id via links
+            const linkedClauseIds = (car.car_clause_links || []).map(l => l.clause_id)
+            if (finding.clause_id && linkedClauseIds.includes(finding.clause_id)) {
+              if (!finding.isNcrGap && finding.audit_runs?.schedule_id) {
+                return String(car.audit_schedule_id || '').toLowerCase() === String(finding.audit_runs.schedule_id || '').toLowerCase()
+              }
+              return true
+            }
+            return false
+          })
+
+          if (matchingCar) {
+            carsMap[finding.id] = matchingCar.reference_no
+          }
+        })
+      }
+      setCreatedCars(carsMap)
     } catch (err) {
       console.error('[useComplianceData] Error fetching compliance data:', err)
     }

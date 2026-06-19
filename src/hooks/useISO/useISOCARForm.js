@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react'
 import * as isoService from '@/services/isoService'
-import { suggestClausesForCar } from '@/services/carService'
+import { suggestClausesForCar, submitCarReport } from '@/services/carService'
 import { CAR_STATUS } from '../../../shared/constants'
 import { useLookup } from '@/context/LookupContext'
 
-export function useISOCARForm({ userName, setToast, setCreatedCars, fetchComplianceData }) {
+export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, fetchComplianceData }) {
   const [isCarModalOpen, setIsCarModalOpen] = useState(false)
   const { userSiteId } = useLookup()
   
@@ -167,25 +167,19 @@ export function useISOCARForm({ userName, setToast, setCreatedCars, fetchComplia
     setIsSubmittingCar(true)
     setCarError('')
     try {
-      const latest = await isoService.fetchLatestCarReferenceNo()
-
-      let nextNum = 1
-      if (latest?.reference_no) {
-        const match = latest.reference_no.match(/CAR-(\d+)/)
-        if (match) {
-          nextNum = parseInt(match[1], 10) + 1
-        }
-      }
-      const nextRef = `CAR-${String(nextNum).padStart(3, '0')}`
-
       const auditScheduleId = activeFinding?.audit_runs?.schedule_id || null
 
       const ncrArray = carForm.ncr_ids && carForm.ncr_ids.length > 0
-        ? carForm.ncr_ids.map(id => parseInt(id, 10))
-        : (activeFinding?.isNcrGap ? activeFinding.ncr_ids.map(id => parseInt(id, 10)) : null)
+        ? carForm.ncr_ids.map(id => String(id))
+        : (activeFinding?.isNcrGap ? activeFinding.ncr_ids.map(id => String(id)) : null)
 
-      const insData = await isoService.createCarReport({
-        reference_no: nextRef,
+      // Link CAR to selected clauses + original triggering clause
+      const allClauseIds = new Set(carForm.linked_clause_ids || [])
+      if (activeFinding?.clause_id) {
+        allClauseIds.add(activeFinding.clause_id)
+      }
+
+      const payload = {
         requesting_department: carForm.requesting_department,
         responsible_department: carForm.responsible_department,
         requestor: carForm.requestor,
@@ -210,22 +204,14 @@ export function useISOCARForm({ userName, setToast, setCreatedCars, fetchComplia
         details_of_nonconformance: carForm.details_of_nonconformance,
         request_date: carForm.request_date || null,
         audit_schedule_id: auditScheduleId,
-        ncr_id: ncrArray,
+        ncr_ids: ncrArray,
+        clause_ids: Array.from(allClauseIds),
         status: CAR_STATUS.OPEN,
         site_id: userSiteId
-      })
-
-      // Link CAR to selected clauses + original triggering clause
-      const allClauseIds = new Set(carForm.linked_clause_ids || [])
-      if (activeFinding?.clause_id) {
-        allClauseIds.add(activeFinding.clause_id)
       }
 
-      if (insData?.id && allClauseIds.size > 0) {
-        for (const clauseId of allClauseIds) {
-          await isoService.linkCarToClause(insData.id, clauseId)
-        }
-      }
+      const insData = await submitCarReport(payload, userAuthId)
+      const nextRef = insData?.reference_no || 'Created'
 
       setToast({
         message: `CAR ${nextRef} created successfully!`,

@@ -73,6 +73,7 @@ export default function useISOLogic({ userName }) {
     handleSubmitCAR
   } = useISOCARForm({
     userName,
+    userAuthId: currentAuthId,
     setToast,
     setCreatedCars,
     fetchComplianceData

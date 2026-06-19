@@ -865,7 +865,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       usersLoading: dataState.usersLoading,
       allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     },
-        qddrModalProps: {
+    qddrModalProps: {
       isOpen: modalsState.isQDDRModalOpen,
       onClose: modalsState.closeQDDRModal,
       form: qddrFormState.form,
@@ -878,7 +878,9 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       locationsLoading: dataState.locationsLoading,
       users: dataState.users.map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
       usersLoading: dataState.usersLoading,
-      allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
+      suggesting: qddrFormState.suggesting,
+      suggestActions: qddrFormState.suggestActions,
     },
     carDetailsModalProps: {
       isOpen: carDetails.isCarDetailsModalOpen,
