@@ -108,18 +108,19 @@ function CreateReportModal({
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          position: 'relative'
         }}
       >
         {/* ── HEADER (Fixed at top) ── */}
-        <button type="button" onClick={onClose} className="modal-close-button" style={{ zIndex: 10 }}>
+        <button type="button" onClick={onClose} className="modal-close-button">
           <CloseIcon size={18} />
         </button>
-        <div className="modal-header-row" style={{ flexShrink: 0, marginBottom: '16px' }}>
-          <h3 className="reports-update-title">Submit NCR Report</h3>
+        <div className="modal-header-row" style={{ flexShrink: 0, marginBottom: '16px', paddingLeft: '28px', paddingRight: '48px', paddingTop: '24px' }}>
+          <h3 className="reports-update-title" style={{ margin: 0 }}>Submit NCR Report</h3>
         </div>
 
-        {error && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0 }}>{error}</div>}
+        {error && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: '28px', marginRight: '28px' }}>{error}</div>}
 
         {/* 📜 SCROLLABLE CANVAS BODY TRACK ── */}
         <div 
@@ -127,7 +128,9 @@ function CreateReportModal({
           style={{ 
             flex: 1, 
             overflowY: 'auto', 
-            paddingRight: '4px' 
+            paddingLeft: '28px',
+            paddingRight: '28px',
+            paddingBottom: '24px'
           }}
         >
           <form className="modal-form reports-form-compact" onSubmit={onSubmit} style={{ gap: '16px' }}>
@@ -297,7 +300,7 @@ function CreateReportModal({
             justifyContent: 'flex-end',
             alignItems: 'center',
             gap: '12px',
-            padding: '14px 0 0 0',
+            padding: '18px 28px 24px 28px',
             background: 'transparent',
             borderTop: '1px solid #cbd5e1',
             marginTop: '12px'

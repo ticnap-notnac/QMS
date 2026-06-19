@@ -70,7 +70,7 @@ export function AuditLogsTab({
                           </span>
                         </td>
                         <td style={{ maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '13px' }}>
-                          <div style={{ fontWeight: '500', color: '#f8fafc' }}>
+                          <div style={{ fontWeight: '500', color: '#0f172a' }}>
                             {typeof log.action === 'string' ? log.action : JSON.stringify(log.action)}
                           </div>
                           {log.details && Object.keys(log.details).length > 0 && (
@@ -79,7 +79,7 @@ export function AuditLogsTab({
                             </div>
                           )}
                         </td>
-                        <td style={{ fontSize: '13px', color: '#94a3b8' }}>
+                        <td style={{ fontSize: '13px', color: '#64748b' }}>
                           {log.user_display || log.user_auth_id || 'System'}
                         </td>
                       </tr>
@@ -104,7 +104,7 @@ export function AuditLogsTab({
                 >
                   Previous
                 </button>
-                <span style={{ fontSize: '13px', color: '#94a3b8' }}>
+                <span style={{ fontSize: '13px', color: '#64748b' }}>
                   Page {logsPage + 1} of {totalPages}
                 </span>
                 <button
@@ -150,22 +150,22 @@ export function AuditReportsTab({
             <BookOpen size={20} className="icon-cyan" />
             Completed Audit Reports
           </h3>
-          <p style={{ color: '#94a3b8', fontSize: '13.5px', marginTop: '-8px', marginBottom: '20px', lineHeight: '1.4' }}>
+          <p style={{ color: '#64748b', fontSize: '13.5px', marginTop: '-8px', marginBottom: '20px', lineHeight: '1.4' }}>
             View dynamic compliance score cards, read specific clause evaluations, and download print-ready records of completed quality audits.
           </p>
         </div>
 
         {/* Stats Summary Cards Row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', width: '100%', marginBottom: '12px' }}>
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold' }}>Total Audits</span>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#f8fafc' }}>{completedRuns.length}</span>
+            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#0f172a' }}>{completedRuns.length}</span>
           </div>
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold' }}>Average Score</span>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#22d3ee' }}>{avgScore}%</span>
+            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#0891b2' }}>{avgScore}%</span>
           </div>
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold' }}>Total Gaps Found</span>
             <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444' }}>{totalDeficiencies}</span>
           </div>
@@ -181,7 +181,7 @@ export function AuditReportsTab({
             {reportsError}
           </div>
         ) : completedRuns.length === 0 ? (
-          <div style={{ width: '100%', padding: '32px 0', textAlign: 'center', color: '#64748b', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '8px' }}>
+          <div style={{ width: '100%', padding: '32px 0', textAlign: 'center', color: '#64748b', border: '1px dashed #cbd5e1', borderRadius: '8px' }}>
             No completed audits found. Complete an active schedule to generate reports here!
           </div>
         ) : (
@@ -632,11 +632,11 @@ export function AuditTemplatesTab({
     return (
       <div className="tab-content" style={isInsideSettings ? { marginTop: '20px' } : {}}>
         <div className="settings-container--profile" style={{ minHeight: 'auto', padding: '24px', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
             <h3 className="settings-section-title" style={{ margin: 0 }}>
               {editingTemplate ? 'Edit Checklist Template' : 'Create Checklist Template'}
             </h3>
-            <button className="sidebar-button" onClick={() => setShowForm(false)} style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+            <button className="sidebar-button" onClick={() => setShowForm(false)} style={{ borderColor: '#cbd5e1' }}>
               Back to List
             </button>
           </div>
@@ -685,7 +685,7 @@ export function AuditTemplatesTab({
             </div>
 
             <div style={{ marginTop: '24px', marginBottom: '24px' }}>
-              <h4 style={{ color: '#fff', marginBottom: '12px', fontSize: '15px' }}>Checklist Requirements & Instructions</h4>
+              <h4 style={{ color: '#0f172a', marginBottom: '12px', fontSize: '15px' }}>Checklist Requirements & Instructions</h4>
               
               {loadingClauses ? (
                 <div style={{ textAlign: 'center', padding: '24px 0', color: '#64748b' }}>
@@ -693,7 +693,7 @@ export function AuditTemplatesTab({
                   Loading standard clauses...
                 </div>
               ) : formItems.length === 0 ? (
-                <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '8px' }}>
+                <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', border: '1px dashed #cbd5e1', borderRadius: '8px' }}>
                   Select an ISO standard above to populate the checklist clauses.
                 </div>
               ) : (
@@ -779,7 +779,7 @@ export function AuditTemplatesTab({
               <BookOpen size={20} className="icon-cyan" />
               Checklist Templates
             </h3>
-            <p style={{ color: '#94a3b8', fontSize: '13.5px', margin: 0, lineHeight: '1.4' }}>
+            <p style={{ color: '#64748b', fontSize: '13.5px', margin: 0, lineHeight: '1.4' }}>
               Create reusable clause-based checklists. Auto-populate from ISO standards and customize audit guidelines.
             </p>
           </div>
@@ -806,7 +806,7 @@ export function AuditTemplatesTab({
             Loading templates...
           </div>
         ) : templates.length === 0 ? (
-          <div style={{ width: '100%', padding: '32px 0', textAlign: 'center', color: '#64748b', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '8px' }}>
+          <div style={{ width: '100%', padding: '32px 0', textAlign: 'center', color: '#64748b', border: '1px dashed #cbd5e1', borderRadius: '8px' }}>
             No checklist templates found. Create your first template to get started!
           </div>
         ) : (
@@ -825,10 +825,10 @@ export function AuditTemplatesTab({
                 {templates.map(temp => (
                   <tr key={temp.id}>
                     <td><strong>{temp.title}</strong></td>
-                    <td style={{ fontSize: '13px', color: '#94a3b8' }}>{temp.description || 'No description'}</td>
+                    <td style={{ fontSize: '13px', color: '#64748b' }}>{temp.description || 'No description'}</td>
                     <td>{temp.iso_standards ? `${temp.iso_standards.name} (${temp.iso_standards.version})` : 'None'}</td>
                     <td className="text-center">
-                      <span style={{ fontSize: '12px', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>
+                      <span style={{ fontSize: '12px', background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '4px' }}>
                         {temp.audit_checklist_items?.length || 0}
                       </span>
                     </td>

@@ -87,7 +87,9 @@ function QDDRModal({
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            paddingRight: '36px' // 🎯 Shifts content leftward to give the absolute close icon its independent safe zone
+            paddingLeft: '28px',
+            paddingRight: '48px',
+            paddingTop: '24px'
           }}
         >
           <h3 className="reports-update-title" style={{ margin: 0 }}>
@@ -106,9 +108,9 @@ function QDDRModal({
           )}
         </div>
 
-        {error && !isLinkingMode && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0 }}>{error}</div>}
+        {error && !isLinkingMode && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: '28px', marginRight: '28px' }}>{error}</div>}
 
-        <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
+        <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', paddingLeft: '28px', paddingRight: '28px', paddingBottom: '24px' }}>
           {isLinkingMode ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input
@@ -420,7 +422,7 @@ function QDDRModal({
             justifyContent: 'flex-end',
             alignItems: 'center',
             gap: '12px',
-            padding: '14px 0 0 0',
+            padding: '18px 28px 24px 28px',
             background: 'transparent',
             borderTop: '1px solid #cbd5e1',
             marginTop: '12px'

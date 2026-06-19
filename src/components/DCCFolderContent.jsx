@@ -73,35 +73,37 @@ function ISOClausesTable({ selectedStandard, clauses, loadingClauses }) {
           <div className="empty-state">No clauses found for this standard.</div>
         ) : (
           <div className="glass-card-dcc">
-            <table className="iso-table" style={{ width: '100%' }}>
-              <thead>
-                <tr>
-                  <th>Clause</th>
-                  <th>Title</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {clauses.map((cl) => (
-                  <tr key={cl.id} className={cl.is_active ? '' : 'muted-row'}>
-                    <td style={{ width: '120px' }}>{cl.clause_number}</td>
-                    <td>
-                      <div>{cl.title}</div>
-                      <div className="clause-description">
-                        {cl.description ?? (
-                          <span className="muted">No description added</span>
-                        )}
-                      </div>
-                    </td>
-                    <td style={{ width: '120px' }}>
-                      {!cl.is_active && (
-                        <span className="iso-status-pill is-inactive">Inactive</span>
-                      )}
-                    </td>
+            <div className="dcc-scrollable-table-box">
+              <table className="iso-table iso-clauses-table" style={{ width: '100%' }}>
+                <thead>
+                  <tr>
+                    <th>Clause</th>
+                    <th>Title</th>
+                    <th />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {clauses.map((cl) => (
+                    <tr key={cl.id} className={cl.is_active ? '' : 'muted-row'}>
+                      <td style={{ width: '120px' }}>{cl.clause_number}</td>
+                      <td>
+                        <div>{cl.title}</div>
+                        <div className="clause-description">
+                          {cl.description ?? (
+                            <span className="muted">No description added</span>
+                          )}
+                        </div>
+                      </td>
+                      <td style={{ width: '120px' }}>
+                        {!cl.is_active && (
+                          <span className="iso-status-pill is-inactive">Inactive</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
@@ -206,7 +208,7 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
   return (
     <div className="glass-card-dcc">
       <div className="dcc-scrollable-table-box">
-        <table className="iso-table" style={{ width: '100%' }}>
+        <table className="iso-table">
           <thead>
             <tr>
               <th>Ref No.</th>
@@ -323,11 +325,11 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
   }
 
   return (
-    <div className="flex-column" style={{ gap: '20px' }}>
+    <div className="flex-column car-workflow-container" style={{ gap: '20px' }}>
       {sortedGroups.map(([groupKey, cars]) => {
         const isCollapsed = collapsedGroups[groupKey]
         return (
-          <div key={groupKey} className="glass-card-dcc" style={{ padding: '0px', overflow: 'hidden' }}>
+          <div key={groupKey} className="glass-card-dcc car-group-card">
             {/* Group Header */}
             <div
               onClick={() => toggleGroup(groupKey)}
@@ -336,25 +338,25 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
                 alignItems: 'center',
                 gap: '10px',
                 padding: '14px 20px',
-                background: 'rgba(255, 255, 255, 0.03)',
-                borderBottom: isCollapsed ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+                background: 'rgba(15, 23, 42, 0.02)',
+                borderBottom: isCollapsed ? 'none' : '1px solid rgba(15, 23, 42, 0.06)',
                 cursor: 'pointer',
                 userSelect: 'none',
                 fontWeight: 600,
                 fontSize: '14px',
-                color: '#e2e8f0'
+                color: '#334155'
               }}
             >
-              {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+              {isCollapsed ? <ChevronRight size={18} color="#475569" /> : <ChevronDown size={18} color="#475569" />}
               <span>{groupKey}</span>
               <span
                 style={{
                   marginLeft: 'auto',
                   fontSize: '11px',
-                  background: 'rgba(255, 255, 255, 0.1)',
+                  background: '#f1f5f9',
                   padding: '2px 8px',
                   borderRadius: '12px',
-                  color: '#94a3b8'
+                  color: '#475569'
                 }}
               >
                 {cars.length} {cars.length === 1 ? 'CAR' : 'CARs'}
@@ -364,7 +366,7 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
             {/* Group Content */}
             {!isCollapsed && (
               <div className="dcc-scrollable-table-box">
-                <table className="iso-table" style={{ width: '100%' }}>
+                <table className="iso-table">
                   <thead>
                     <tr>
                       <th>Ref No.</th>
@@ -451,7 +453,7 @@ function QDDRClosedTable({ qddrReports, loadingQddr }) {
   return (
     <div className="glass-card-dcc">
       <div className="dcc-scrollable-table-box">
-        <table className="iso-table" style={{ width: '100%' }}>
+        <table className="iso-table">
           <thead>
             <tr>
               <th>Ref No.</th>

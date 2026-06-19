@@ -55,9 +55,6 @@ export default function SettingsPage(props) {
             <button onClick={() => setActiveSection('Profile & Account')} className={`sidebar-button ${activeSection === 'Profile & Account' ? 'active' : ''}`}>
               Profile & Account
             </button>
-            <button onClick={() => setActiveSection('Reporting Defaults')} className={`sidebar-button ${activeSection === 'Reporting Defaults' ? 'active' : ''}`}>
-              Reporting Defaults
-            </button>
             {(userRole === 'admin' || userRole === 'auditor') && (
               <button onClick={() => setActiveSection('Audit Tools')} className={`sidebar-button ${activeSection === 'Audit Tools' ? 'active' : ''}`}>
                 Audit Tools
@@ -76,14 +73,6 @@ export default function SettingsPage(props) {
               </div>
             )}
 
-            {activeSection === 'Reporting Defaults' && (
-              <div className="settings-content settings-content--profile">
-                <h2 className="settings-section-title">Reporting Defaults</h2>
-                <div className="settings-placeholder">
-                  <p className="settings-placeholder-text">Reporting preferences will be configured here.</p>
-                </div>
-              </div>
-            )}
 
             {activeSection === 'Audit Tools' && (userRole === 'admin' || userRole === 'auditor') && (
               <div className="settings-content settings-content--profile" style={{ width: '100%' }}>

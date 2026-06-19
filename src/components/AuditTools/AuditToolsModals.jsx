@@ -21,12 +21,12 @@ export function AuditChecklistSection({
 
   return (
     <div className="settings-container--profile" style={{ minHeight: 'auto', padding: '24px', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #cbd5e1', paddingBottom: '12px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>Audit Checklist: {activeRun.title}</h2>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#94a3b8' }}>Standard: {activeRun.standard_name}</p>
+          <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a' }}>Audit Checklist: {activeRun.title}</h2>
+          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>Standard: {activeRun.standard_name}</p>
         </div>
-        <button className="sidebar-button" onClick={() => { setActiveRun(null); fetchData(); }} style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+        <button className="sidebar-button" onClick={() => { setActiveRun(null); fetchData(); }} style={{ borderColor: '#cbd5e1' }}>
           Go Back
         </button>
       </div>
@@ -44,24 +44,24 @@ export function AuditChecklistSection({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px', width: '100%' }}>
         {activeClauses.length === 0 ? (
-          <p style={{ color: '#94a3b8', textAlign: 'center' }}>No clauses found for this ISO standard. Please add clauses first.</p>
+          <p style={{ color: '#64748b', textAlign: 'center' }}>No clauses found for this ISO standard. Please add clauses first.</p>
         ) : (
           activeClauses.map(clause => {
             const answer = resultsMap[clause.id] || { status: 'compliant', evidence: '', notes: '' }
             return (
-              <div key={clause.id} className="settings-container--profile" style={{ minHeight: 'auto', padding: '16px', background: 'rgba(15, 23, 42, 0.25)', border: '1px solid rgba(255,255,255,0.05)', flexDirection: 'column', gap: '12px' }}>
+              <div key={clause.id} className="settings-container--profile" style={{ minHeight: 'auto', padding: '16px', background: '#f8fafc', border: '1px solid #cbd5e1', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
                   <div style={{ flex: 1, minWidth: '250px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: '700', color: '#22d3ee', marginRight: '8px' }}>Clause {clause.clause_number}</span>
-                    <h4 style={{ margin: 0, display: 'inline', fontSize: '14px', color: '#f8fafc' }}>{clause.title}</h4>
+                    <span style={{ fontSize: '14px', fontWeight: '700', color: '#0891b2', marginRight: '8px' }}>Clause {clause.clause_number}</span>
+                    <h4 style={{ margin: 0, display: 'inline', fontSize: '14px', color: '#0f172a' }}>{clause.title}</h4>
                     {clause.requirement ? (
-                      <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderLeft: '3px solid #22d3ee', borderRadius: '0 4px 4px 0' }}>
-                        <p style={{ margin: 0, fontSize: '13px', color: '#e2e8f0', lineHeight: '1.4' }}>
-                          <strong style={{ color: '#22d3ee' }}>Requirement: </strong>{clause.requirement}
+                      <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(8, 145, 178, 0.05)', borderLeft: '3px solid #0891b2', borderRadius: '0 4px 4px 0' }}>
+                        <p style={{ margin: 0, fontSize: '13px', color: '#334155', lineHeight: '1.4' }}>
+                          <strong style={{ color: '#0891b2' }}>Requirement: </strong>{clause.requirement}
                         </p>
                         {clause.what_to_look_for && (
-                          <p style={{ margin: '6px 0 0 0', fontSize: '12.5px', color: '#94a3b8', lineHeight: '1.4' }}>
-                            <strong style={{ color: '#94a3b8' }}>What to look for: </strong>{clause.what_to_look_for}
+                          <p style={{ margin: '6px 0 0 0', fontSize: '12.5px', color: '#64748b', lineHeight: '1.4' }}>
+                            <strong style={{ color: '#475569' }}>What to look for: </strong>{clause.what_to_look_for}
                           </p>
                         )}
                       </div>
@@ -107,7 +107,7 @@ export function AuditChecklistSection({
                             padding: '6px 12px',
                             fontSize: '12px',
                             borderRadius: '4px',
-                            border: isActive ? `1px solid ${textMap[statusVal]}` : '1px solid rgba(255,255,255,0.06)',
+                            border: isActive ? `1px solid ${textMap[statusVal]}` : '1px solid #cbd5e1',
                             background: isActive ? colorMap[statusVal] : 'transparent',
                             color: isActive ? textMap[statusVal] : '#64748b',
                             cursor: 'pointer',
@@ -223,7 +223,7 @@ export function AuditChecklistSection({
         )}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px', width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid #cbd5e1', paddingTop: '16px', width: '100%' }}>
         <button
           type="button"
           className="sidebar-button"
@@ -264,9 +264,9 @@ export function AuditRunDetailsModal({
         left: 0,
         width: '100vw',
         height: '100vh',
-        background: 'rgba(2, 6, 12, 0.75)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        background: 'rgba(15, 23, 42, 0.4)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -281,9 +281,9 @@ export function AuditRunDetailsModal({
           position: 'relative',
           width: '100%',
           maxWidth: '750px',
-          background: 'rgba(13, 26, 45, 0.95)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.6)',
+          background: '#ffffff',
+          border: '1px solid #cbd5e1',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
           borderRadius: '16px',
           padding: '24px 32px',
           boxSizing: 'border-box',
@@ -293,12 +293,12 @@ export function AuditRunDetailsModal({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '18px', color: '#fff' }}>
+            <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>
               Audit Details: {selectedRunDetails.title}
             </h3>
-            <p style={{ margin: '4px 0 0 0', fontSize: '12.5px', color: '#94a3b8' }}>
+            <p style={{ margin: '4px 0 0 0', fontSize: '12.5px', color: '#64748b' }}>
               Standard: {selectedRunDetails.standard_name} | Auditor: {selectedRunDetails.auditor_name}
             </p>
           </div>
@@ -337,8 +337,8 @@ export function AuditRunDetailsModal({
                   style={{
                     padding: '14px',
                     borderRadius: '8px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '8px'
@@ -346,10 +346,10 @@ export function AuditRunDetailsModal({
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
                     <div>
-                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--cyan-light, #22d3ee)', marginRight: '8px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#0891b2', marginRight: '8px' }}>
                         Clause {clause.clause_number}
                       </span>
-                      <strong style={{ fontSize: '13.5px', color: '#f8fafc' }}>
+                      <strong style={{ fontSize: '13.5px', color: '#0f172a' }}>
                         {clause.title}
                       </strong>
                     </div>
@@ -359,22 +359,22 @@ export function AuditRunDetailsModal({
                   </div>
 
                   {result.requirement && (
-                    <div style={{ fontSize: '12.5px', color: '#cbd5e1', padding: '6px 10px', background: 'rgba(255,255,255,0.01)', borderLeft: '2px solid #22d3ee', borderRadius: '0 4px 4px 0' }}>
+                    <div style={{ fontSize: '12.5px', color: '#334155', padding: '6px 10px', background: 'rgba(8, 145, 178, 0.05)', borderLeft: '2px solid #0891b2', borderRadius: '0 4px 4px 0' }}>
                       <p style={{ margin: 0 }}><strong>Requirement:</strong> {result.requirement}</p>
-                      {result.what_to_look_for && <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#94a3b8' }}><strong>What to look for:</strong> {result.what_to_look_for}</p>}
+                      {result.what_to_look_for && <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}><strong>What to look for:</strong> {result.what_to_look_for}</p>}
                     </div>
                   )}
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {result.evidence && (
-                      <p style={{ margin: 0, fontSize: '12.5px', color: '#94a3b8', background: 'rgba(0,0,0,0.15)', padding: '6px 10px', borderRadius: '4px' }}>
-                        <span style={{ color: '#64748b', fontWeight: 'bold' }}>Evidence: </span>
+                      <p style={{ margin: 0, fontSize: '12.5px', color: '#334155', background: '#f1f5f9', padding: '6px 10px', borderRadius: '4px' }}>
+                        <span style={{ color: '#475569', fontWeight: 'bold' }}>Evidence: </span>
                         {result.evidence}
                       </p>
                     )}
                     {result.notes && (
-                      <p style={{ margin: 0, fontSize: '12.5px', color: '#94a3b8', background: 'rgba(0,0,0,0.15)', padding: '6px 10px', borderRadius: '4px' }}>
-                        <span style={{ color: '#64748b', fontWeight: 'bold' }}>Findings Notes: </span>
+                      <p style={{ margin: 0, fontSize: '12.5px', color: '#334155', background: '#f1f5f9', padding: '6px 10px', borderRadius: '4px' }}>
+                        <span style={{ color: '#475569', fontWeight: 'bold' }}>Findings Notes: </span>
                         {result.notes}
                       </p>
                     )}
@@ -385,7 +385,7 @@ export function AuditRunDetailsModal({
           )}
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
           <button
             type="button"
             className="sidebar-button"

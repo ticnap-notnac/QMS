@@ -542,9 +542,9 @@ div[class*="navbar"] {
 .sidebar-user-card-trigger {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px 4px;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s ease;
@@ -588,13 +588,13 @@ div[class*="navbar"] {
 }
 
 .sidebar-user-name {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   color: #ffffff;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 135px;
+  max-width: 160px;
   display: block;
 }
 

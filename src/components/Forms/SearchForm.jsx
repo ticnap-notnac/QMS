@@ -34,7 +34,6 @@ export default function SearchForm({ value, onChange, onSubmit, placeholder = 'S
         className="search-input-light"
         aria-label={ariaLabel}
       />
-      <button type="submit" className="search-icon" aria-label={ariaLabel}>🔍</button>
     </form>
   )
 }

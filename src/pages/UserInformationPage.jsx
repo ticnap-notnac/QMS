@@ -42,14 +42,6 @@ export default function UserInformationPage(props) {
         <SettingsNavbar userRole={userRole} />
 
         <div className="settings-container user-info-container--profile">
-          <div className="settings-sidebar user-info-sidebar--profile">
-            <button
-              className={`sidebar-button ${activeTab === 'Overview Summary' ? 'active' : ''}`}
-              onClick={() => setActiveTab('Overview Summary')}
-            >
-              Overview Summary
-            </button>
-          </div>
 
           <div className="settings-main user-info-main--profile">
             <div className="settings-content user-info-content--profile">

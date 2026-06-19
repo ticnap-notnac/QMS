@@ -71,7 +71,7 @@ export default function Navbar({
         {/* Site Badge — shows which site this user belongs to */}
         {userSiteName && (
           <div className="app-navbar-site-badge" title={`Active Site: ${userSiteName}`}>
-            🏢 {userSiteName}
+            {userSiteName}
           </div>
         )}
 
