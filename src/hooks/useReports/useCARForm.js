@@ -200,7 +200,21 @@ export function useCARForm(departments = []) {
   }
 
   const validate = () => {
-    // Relaxed validation: always return true
+    const hasCheckboxChecked = 
+      form.quality_food_safety ||
+      form.environment_health_safety ||
+      form.security_issue ||
+      form.internal_audit ||
+      form.customer_complaint ||
+      form.government_agency_audit ||
+      form.customer_audit_nonconformance ||
+      form.vendor_nonconformance
+
+    if (!hasCheckboxChecked) {
+      setError('Please select at least one Type of Non-Conformance checkbox.')
+      return false
+    }
+
     setError(null)
     return true
   }
