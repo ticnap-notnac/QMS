@@ -202,7 +202,11 @@ function AppInner() {
     }
   }
 
-  const handleLogout = async () => {
+  const handleLogout = async (showConfirm = false) => {
+    if (showConfirm) {
+      const confirmLogout = window.confirm("Are you sure you want to log out?");
+      if (!confirmLogout) return;
+    }
     if (isLoggingOutRef.current) return
     isLoggingOutRef.current = true
     try {

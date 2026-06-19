@@ -87,7 +87,7 @@ function UserMenu({
         <div className="user-menu" role="menu">
           <button className="menu-item" type="button" role="menuitem" onClick={() => onPageChange('Profile')}>User Information</button>
           <button className="menu-item" type="button" role="menuitem" onClick={() => onPageChange('Profile')}>Settings</button>
-          <button className="menu-item logout" type="button" role="menuitem" onClick={onLogout}>Logout</button>
+          <button className="menu-item logout" type="button" role="menuitem" onClick={() => onLogout && onLogout(true)}>Logout</button>
         </div>
       ) : null}
     </div>
