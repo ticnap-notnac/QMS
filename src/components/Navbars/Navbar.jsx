@@ -113,76 +113,77 @@ export default function Navbar({
         </nav>
 
         {/* Bottom Actions of Sidebar */}
-        <div className="app-nav-bottom">
-          <button 
-            onClick={() => { navigate('/settings'); setProfileTargetTab('Settings'); }} 
-            className="nav-icon-link-button" 
-            title="Settings"
-            aria-label="Settings"
-          >
-            <Settings size={20} />
-          </button>
-          <button 
-            onClick={onLogout} 
-            className="nav-icon-link-button logout" 
-            title="Logout"
-            aria-label="Logout"
-          >
-            <LogOut size={20} />
-          </button>
-        </div>
-      </div>
-
-      {/* 2. TOP RIGHT HEADER BAR PANEL */}
-      <div className="app-nav-right" ref={menuContainerRef}>
-        {shouldShowNotifications ? (
-          <button onClick={onToggleNotifications} className="nav-icon-button nav-bell-button" aria-label="Open notifications">
-            <Bell size={18} />
-            {unreadNotificationCount > 0 ? (
-              <span className="nav-bell-badge">
-                {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
-              </span>
-            ) : null}
-          </button>
-        ) : null}
-
-        <div onClick={onToggleMenu} className="app-user-trigger">
-          <div className={`user-avatar ${normalizedRole === 'admin' ? 'admin' : 'default'}`} />
-          <div className="nav-user-info">
-            <span className="nav-user-name">{userName || 'Name of the User'}</span>
-            <span className="nav-user-position">{userPosition || 'Position'}</span>
+        <div className="app-nav-bottom" ref={menuContainerRef}>
+          {/* User Card */}
+          <div onClick={onToggleMenu} className="sidebar-user-card-trigger">
+            <div className={`sidebar-user-avatar ${normalizedRole === 'admin' ? 'admin' : 'default'}`}>
+              {userName ? userName.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <div className="sidebar-user-info">
+              <span className="sidebar-user-name" title={userName}>{userName || 'Name of the User'}</span>
+              <span className="sidebar-user-position">{userPosition || 'Position'}</span>
+            </div>
           </div>
-        </div>
 
-        {/* DROPDOWN USER MENU */}
-        {isUserMenuOpen && (
-          <div className="user-menu-dropdown">
-            <button 
-              onClick={() => { navigate('/settings/profile'); setProfileTargetTab('User Information'); onToggleMenu(); }} 
-              className="user-menu-item"
-            >
-              User Information
-            </button>
-            <button 
-              onClick={() => { navigate('/settings'); setProfileTargetTab('Settings'); onToggleMenu(); }} 
-              className="user-menu-item"
-            >
-              Settings
-            </button>
-            {normalizedRole === 'admin' && (
+          {/* DROPDOWN USER MENU (now positioned relative to the sidebar bottom) */}
+          {isUserMenuOpen && (
+            <div className="sidebar-user-menu-dropdown">
               <button 
-                onClick={() => { navigate('/admin'); onToggleMenu(); }} 
-                className="user-menu-item admin"
+                onClick={() => { navigate('/settings/profile'); setProfileTargetTab('User Information'); onToggleMenu(); }} 
+                className="user-menu-item"
               >
-                Admin Panel
+                User Information
+              </button>
+              {normalizedRole === 'admin' && (
+                <button 
+                  onClick={() => { navigate('/admin'); onToggleMenu(); }} 
+                  className="user-menu-item admin"
+                >
+                  Admin Panel
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Actions Row */}
+          <div className="sidebar-actions-row">
+            {shouldShowNotifications && (
+              <button 
+                onClick={onToggleNotifications} 
+                className="nav-icon-link-button nav-bell-button-sidebar" 
+                aria-label="Open notifications"
+                title="Notifications"
+              >
+                <Bell size={20} />
+                {unreadNotificationCount > 0 ? (
+                  <span className="sidebar-bell-badge">
+                    {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+                  </span>
+                ) : null}
               </button>
             )}
-            <button onClick={() => { onLogout(); onToggleMenu(); }} className="user-menu-item logout">
-              Logout
+            
+            <button 
+              onClick={() => { navigate('/settings'); setProfileTargetTab('Settings'); }} 
+              className="nav-icon-link-button" 
+              title="Settings"
+              aria-label="Settings"
+            >
+              <Settings size={20} />
+            </button>
+            
+            <button 
+              onClick={onLogout} 
+              className="nav-icon-link-button logout" 
+              title="Logout"
+              aria-label="Logout"
+            >
+              <LogOut size={20} />
             </button>
           </div>
-        )}
+        </div>
       </div>
+
 
       <NotificationsModal
         isOpen={isNotificationsOpen}

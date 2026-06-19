@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js'
+import logger from '../utils/logger.js'
 
 /**
  * Reusable middleware to require that the authenticated user has one of the specified roles.
@@ -35,6 +36,9 @@ export function requireRoles(allowedRoles) {
 
       const normalizedRole = String(roleName || '').trim().toLowerCase()
       const isAllowed = allowedRoles.map(r => String(r).trim().toLowerCase()).includes(normalizedRole)
+
+      // Debug log to diagnose role mismatch
+      logger.info('Role validation checking', { authId, roleName, normalizedRole, allowedRoles, isAllowed })
 
       if (!isAllowed) {
         return res.status(403).json({ error: `Access forbidden. Requires one of these roles: ${allowedRoles.join(', ')}` })

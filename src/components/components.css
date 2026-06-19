@@ -171,21 +171,7 @@
 
 /* 2. TOP RIGHT HEADER BAR PANEL */
 .app-nav-right {
-  position: fixed;
-  top: 0;
-  left: 240px;
-  right: 0;
-  height: 64px;
-  background: #ffffff;
-  border-bottom: 1px solid #cbd5e1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 0 40px;
-  gap: 24px;
-  z-index: 90;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  box-sizing: border-box;
+  display: none !important;
 }
 
 .nav-icon-button {
@@ -551,3 +537,149 @@ div[class*="navbar"] {
 @keyframes spinnerRotate {
   to { transform: rotate(360deg); }
 }
+
+/* Sidebar User Profile Card & Action Bar Styles */
+.sidebar-user-card-trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  box-sizing: border-box;
+}
+
+.sidebar-user-card-trigger:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-user-avatar {
+  height: 40px;
+  width: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 16px;
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.sidebar-user-avatar.admin {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.sidebar-user-avatar.default {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.sidebar-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  overflow: hidden;
+}
+
+.sidebar-user-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 135px;
+  display: block;
+}
+
+.sidebar-user-position {
+  font-size: 10.5px;
+  color: #a1a1aa;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+/* Dropdown aligned relative to the bottom user card */
+.sidebar-user-menu-dropdown {
+  position: absolute;
+  bottom: 80px;
+  left: 20px;
+  right: 20px;
+  background: #2e2e2e;
+  border: 1px solid #3e3e3e;
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  z-index: 250;
+  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-user-menu-dropdown .user-menu-item {
+  background: none;
+  border: none;
+  color: #e2e8f0;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 6px;
+  width: 100%;
+  transition: background 0.2s ease;
+}
+
+.sidebar-user-menu-dropdown .user-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.sidebar-user-menu-dropdown .user-menu-item.admin {
+  color: #fca5a5;
+}
+
+.sidebar-user-menu-dropdown .user-menu-item.admin:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Action icons row */
+.sidebar-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding-left: 8px;
+  box-sizing: border-box;
+}
+
+.nav-bell-button-sidebar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  padding: 0 3px;
+  background: #22d3ee;
+  color: #0f172a;
+  font-size: 8.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #1e1e1e;
+}
+

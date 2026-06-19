@@ -21,12 +21,12 @@
 .dcc-main-wrapper,
 .iso-page-main {
   margin-left: 240px !important;
-  margin-top: 64px !important;
+  margin-top: 0px !important;
   width: calc(100% - 240px) !important;
   max-width: none !important;
   padding: 24px !important;
   box-sizing: border-box !important;
-  height: calc(100vh - 64px) !important;
+  height: 100vh !important;
   overflow-y: auto !important;
   scrollbar-width: none; /* Hide scrollbar for Firefox */
   -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
