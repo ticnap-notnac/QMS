@@ -30,6 +30,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
 
   // ── Async / UI state ────────────────────────────────────────────────────────
   const [isReviewSubmitting, setIsReviewSubmitting] = useState(false)
+  const [isNcrSubmitting, setIsNcrSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [toast, setToast] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
@@ -463,6 +464,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
 
   const handleSubmitReport = async (event) => {
     event.preventDefault()
+    setIsNcrSubmitting(true)
     try {
       setError(null)
 
@@ -532,6 +534,8 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       await dataState.refreshReportsList()
     } catch (err) {
       setError(err?.message || 'Failed to submit NCR report.')
+    } finally {
+      setIsNcrSubmitting(false)
     }
   }
 
@@ -677,6 +681,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
   return {
     isLoading: dataState.isLoading,
     isReviewSubmitting,
+    isNcrSubmitting,
     error,
     toast,
     setToast,
@@ -768,6 +773,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       handleFile: updateFormState.handleFile,
       errors: updateFormState.errors,
       error: updateFormState.error,
+      isSubmitting: updateFormState.isSubmitting,
       handleSubmit: handleUpdateReport,
       deptName: dataState.departmentNameById.get(String(modalsState.selectedReport?.department_id || '')) || '—',
       issueTypeOptions: dataState.issueTypeOptions,

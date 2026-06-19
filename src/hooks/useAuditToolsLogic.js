@@ -944,6 +944,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     handleCreateTemplate,
     handleUpdateTemplate,
     handleDeleteTemplate,
+    loading,
+    saving,
     selectedCar: carDetails.selectedCar,
     isCarDetailsModalOpen: carDetails.isCarDetailsModalOpen,
     openCarDetails: carDetails.openCarDetails,

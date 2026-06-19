@@ -6,6 +6,7 @@ import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import UsersTable from '@/components/UsersTable/UsersTable'
 import { useAddUserLogic } from '@/hooks/useAdminPanel.js'
 import './PagesStyles.css'
+import './AdminPanel.css'
 
 export default function AddUserPage({ userRole }) {
   const {

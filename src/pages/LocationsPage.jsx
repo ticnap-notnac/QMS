@@ -5,6 +5,7 @@ import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
 import { useLocationsLogic } from '@/hooks/useAdminPanel.js'
 import './PagesStyles.css'
+import './AdminPanel.css'
 
 export default function LocationsPage({ userRole }) {
   const {

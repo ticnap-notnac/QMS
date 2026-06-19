@@ -5,6 +5,7 @@ import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
 import { useDepartmentsLogic } from '@/hooks/useAdminPanel.js'
 import './PagesStyles.css'
+import './AdminPanel.css'
 
 export default function DepartmentsPage({ userRole }) {
   const {

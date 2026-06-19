@@ -494,3 +494,60 @@ div[class*="navbar"] {
   padding: 24px;
   color: #0f172a;
 }
+
+/* 6. FULLSCREEN LOADING OVERLAY */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999999 !important;
+  opacity: 0;
+  animation: overlayFadeIn 0.3s forwards ease;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 32px 48px;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+  max-width: 90%;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3.5px solid rgba(34, 211, 238, 0.1);
+  border-top-color: #22d3ee;
+  border-radius: 50%;
+  animation: spinnerRotate 0.85s infinite linear;
+}
+
+.loading-message {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #f8fafc;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+@keyframes overlayFadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes spinnerRotate {
+  to { transform: rotate(360deg); }
+}

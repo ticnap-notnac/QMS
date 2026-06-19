@@ -1,6 +1,7 @@
 import { SlidersHorizontal } from 'lucide-react'
 import Toast from '@/components/UI/Toast'
 import FilterModal from '../components/Modals/FilterModal.jsx'
+import SubmissionLoadingOverlay from '../components/UI/SubmissionLoadingOverlay.jsx'
 import UpdateReportModal from '../components/Modals/UpdateReportModal.jsx'
 import AssignReportModal from '../components/Modals/AssignReportModal.jsx'
 import CreateReportModal from '../components/Modals/CreateReportModal.jsx'
@@ -15,10 +16,28 @@ import CARReportsList from '../components/Reports/CARReportsList.jsx'
 import QDDRReportsList from '../components/Reports/QDDRReportsList.jsx'
 import { CAR_STATUS } from '../../shared/constants'
 import { useReportsLogic } from '@/hooks/useReportsLogic'
-import './PagesStyles.css'
+import './ReportsPage.css'
 
 export default function ReportsPage({ userRole, currentUserId, authUserId, userDepartmentId }) {
   const logic = useReportsLogic({ currentUserId, userRole, authUserId, userDepartmentId })
+
+  // Aggregate loading states for premium overlay spinner feedback
+  const isOverlayLoading = logic.isNcrSubmitting || 
+                            logic.carModalProps.isSubmitting || 
+                            logic.qddrModalProps.isSubmitting || 
+                            logic.updateModalProps.isSubmitting || 
+                            logic.assignModalProps.isSubmitting ||
+                            logic.rejectModalProps.isSubmitting ||
+                            logic.preventiveActionModalProps.isSubmitting
+
+  let overlayMessage = ''
+  if (logic.isNcrSubmitting) overlayMessage = 'Submitting NCR report...'
+  else if (logic.carModalProps.isSubmitting) overlayMessage = 'Submitting CAR report...'
+  else if (logic.qddrModalProps.isSubmitting) overlayMessage = 'Submitting QDDR report...'
+  else if (logic.updateModalProps.isSubmitting) overlayMessage = 'Updating NCR report...'
+  else if (logic.assignModalProps.isSubmitting) overlayMessage = 'Assigning report...'
+  else if (logic.rejectModalProps.isSubmitting) overlayMessage = 'Submitting review decision...'
+  else if (logic.preventiveActionModalProps.isSubmitting) overlayMessage = 'Submitting preventive action rating...'
 
   const displayedCars = logic.isClosedMode
     ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase())
@@ -115,6 +134,7 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
         isOpen={logic.isQddrDetailsModalOpen} onClose={logic.closeQddrDetails} qddr={logic.selectedQddr}
         onUpdateQddr={logic.updateQddr} users={logic.users} usersLoading={logic.usersLoading} userRole={userRole} authUserId={authUserId}
       />
+      <SubmissionLoadingOverlay isOpen={isOverlayLoading} message={overlayMessage} />
     </main>
   )
 }

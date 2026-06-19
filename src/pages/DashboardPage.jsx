@@ -1,5 +1,6 @@
 
 import Dashboard from '../components/Dashboard.jsx'
+import './DashboardPage.css'
 
 function DashboardPage() {
   return (

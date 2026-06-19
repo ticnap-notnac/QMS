@@ -84,3 +84,151 @@
   flex-direction: column;
   gap: 24px;
 }
+
+.iso-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 12px;
+}
+
+.iso-modal-icon-button {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.iso-modal-close-absolute {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.02);
+  transition: all 0.2s ease;
+}
+
+.iso-task-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+}
+
+.iso-task-item-button {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
+.iso-task-item-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+.iso-task-icon {
+  margin-bottom: 8px;
+}
+
+.iso-submodal-title {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: 0.3px;
+  text-align: left;
+}
+
+.iso-submodal-canvas {
+  width: 100%;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  background: rgba(18, 18, 18, 0.2);
+  box-sizing: border-box;
+  margin: 8px 0;
+}
+
+.iso-submodal-submit-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.iso-submodal-submit-button {
+  padding: 10px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.iso-progress-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+}
+
+.iso-progress-label-container {
+  display: flex;
+  align-items: center;
+  width: 130px;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.iso-progress-icon {
+  display: flex;
+  align-items: center;
+}
+
+.iso-progress-label-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.iso-progress-bar-container {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.iso-progress-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+}

@@ -4,7 +4,8 @@ import useAuditToolsLogic from '../hooks/useAuditToolsLogic'
 import { AuditLogsTab, AuditReportsTab, AuditSchedulesTab, AuditTemplatesTab } from '../components/AuditTools/AuditToolsTabs'
 import { AuditChecklistSection, AuditRunDetailsModal } from '../components/AuditTools/AuditToolsModals'
 import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
-import './PagesStyles.css'
+import SubmissionLoadingOverlay from '../components/UI/SubmissionLoadingOverlay.jsx'
+import './SettingsPage.css'
 
 
 export default function AuditToolsPage({ authUserId }) {
@@ -15,6 +16,13 @@ export default function AuditToolsPage({ authUserId }) {
 
   const logic = useAuditToolsLogic({ authUserId, activeTabParam: tabParam || 'Logs' })
   const { activeTab, setActiveTab, activeRun } = logic
+
+  // Aggregate loading and saving states for overlay progress spinner feedback
+  const isOverlayLoading = logic.loading || logic.saving || logic.savingProgress
+  let overlayMessage = ''
+  if (logic.loading) overlayMessage = 'Processing audit schedule...'
+  else if (logic.saving) overlayMessage = 'Saving template...'
+  else if (logic.savingProgress) overlayMessage = 'Saving checklist progress...'
 
   useEffect(() => {
     const tab = searchParams.get('tab')
@@ -81,6 +89,7 @@ export default function AuditToolsPage({ authUserId }) {
         authUserId={authUserId}
         readOnly={true}
       />
+      <SubmissionLoadingOverlay isOpen={isOverlayLoading} message={overlayMessage} />
     </div>
   )
 }

@@ -3,7 +3,7 @@ import React from 'react'
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import useUserInformationPageLogic from '@/hooks/useUserInformationPageLogic'
 import ProfileCard from '@/components/Cards/ProfileCard'
-import './PagesStyles.css'
+import './SettingsPage.css'
 
 export default function UserInformationPage(props) {
   const {

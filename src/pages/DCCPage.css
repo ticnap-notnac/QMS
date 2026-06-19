@@ -1,0 +1,370 @@
+/* src/pages/DCCPage.css */
+
+/* ===================== DCC PAGE ===================== */
+.dcc-root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.dcc-main-wrapper {
+  flex: 1;
+  width: 95%;
+  max-width: 1200px;
+  margin: 32px auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 10;
+}
+
+.glass-card-dcc {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+  min-height: 520px;
+}
+
+.flex-column { display: flex; flex-direction: column; }
+
+.search-container-centered {
+  max-width: 440px;
+  width: 100%;
+  margin: 0 auto 40px auto;
+  position: relative;
+}
+
+.search-bar-field {
+  width: 100%;
+  height: 40px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  padding: 0 44px 0 20px;
+  font-size: 13px;
+  color: #0f172a;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-bar-field::placeholder {
+  color: #94a3b8;
+}
+
+.search-bar-field:focus {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.05);
+}
+
+.search-icon-absolute {
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  color: #64748b;
+}
+
+.folder-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.folder-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.folder-square-block {
+  width: 48px;
+  height: 48px;
+  background: #f1f5f9;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f172a;
+}
+
+.folder-item-label { font-size: 12px; font-weight: 500; color: #475569; }
+
+.recently-viewed-heading {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.02em;
+}
+
+.recent-document-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  background: #f8fafc; border: 1px solid #cbd5e1;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 20px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.recent-doc-title { font-size: 13px; font-weight: 500; color: #0f172a; }
+.recent-doc-sub { font-size: 10px; color: #475569; }
+
+.back-button {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.back-button:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.doc-thumbnail {
+  width: 80px;
+  height: 80px;
+  background: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a8a29e;
+}
+
+.action-panel-button {
+  width: 100%;
+  height: 36px;
+  background: #0f172a; border: 1px solid #cbd5e1;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+}
+
+.action-panel-button--accent {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  color: #0f172a;
+}
+
+.text-left { text-align: left; }
+.col-gap-2 { display: flex; flex-direction: column; gap: 2px; }
+.full-height { height: 100%; }
+.top-row { display: flex; align-items: center; gap: 24px; margin-bottom: 48px; width: 100%; }
+.doc-item { display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; }
+.doc-title { font-size: 12px; font-weight: 500; color: #475569; max-width: 110px; text-align: center; }
+.action-panel { margin-left: auto; display: flex; flex-direction: column; gap: 12px; width: 160px; }
+.row-gap-40 { display: flex; gap: 40px; align-items: flex-start; }
+
+
+/* ==========================================================================
+   🎯 TASK REPORTS: COMPLETE TABLE COMPRESSION & CONTAINER BOX BOUNDING
+   ========================================================================== */
+.glass-card-dcc {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  padding-right: 32px !important;
+}
+
+.dcc-scrollable-table-box {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  margin-top: 15px !important;
+}
+
+.dcc-scrollable-table-box table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+}
+
+.dcc-scrollable-table-box th,
+.dcc-scrollable-table-box td {
+  padding: 12px 6px !important;
+  font-size: 0.78rem !important;
+  text-align: left !important;
+  vertical-align: middle !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.dcc-scrollable-table-box th:nth-child(1), .dcc-scrollable-table-box td:nth-child(1) { width: 9% !important; }
+.dcc-scrollable-table-box th:nth-child(2), .dcc-scrollable-table-box td:nth-child(2) { width: 6% !important; }
+.dcc-scrollable-table-box th:nth-child(3), .dcc-scrollable-table-box td:nth-child(3) { width: 11% !important; }
+.dcc-scrollable-table-box th:nth-child(4), .dcc-scrollable-table-box td:nth-child(4) { width: 8% !important; }
+.dcc-scrollable-table-box th:nth-child(5), .dcc-scrollable-table-box td:nth-child(5) { width: 6% !important; }
+.dcc-scrollable-table-box th:nth-child(6), .dcc-scrollable-table-box td:nth-child(6) { width: 8% !important; }
+.dcc-scrollable-table-box th:nth-child(7), .dcc-scrollable-table-box td:nth-child(7) { width: 7% !important; }
+.dcc-scrollable-table-box th:nth-child(8), .dcc-scrollable-table-box td:nth-child(8) { width: 7% !important; }
+.dcc-scrollable-table-box th:nth-child(9), .dcc-scrollable-table-box td:nth-child(9) { width: 8% !important; }
+.dcc-scrollable-table-box th:nth-child(10), .dcc-scrollable-table-box td:nth-child(10) { width: 8% !important; }
+.dcc-scrollable-table-box th:nth-child(11), .dcc-scrollable-table-box td:nth-child(11) { width: 6% !important; }
+.dcc-scrollable-table-box th:nth-child(12), .dcc-scrollable-table-box td:nth-child(12) { width: 8% !important; }
+.dcc-scrollable-table-box th:nth-child(13), .dcc-scrollable-table-box td:nth-child(13) { width: 8% !important; }
+
+.dcc-scrollable-table-box::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45) !important;
+}
+
+
+/* ==========================================================================
+   📂 DCC PAGE FULL-WIDTH GLASS CONTAINER ALIGNMENT
+   ========================================================================== */
+.dcc-page-container {
+  width: 100% !important;
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 24px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.dcc-glass-main-card {
+  width: 100% !important;
+  min-height: 75vh !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 12px !important;
+  padding: 32px !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────────────
+   🔒 PERFECT VIEWPORT FIT AND SCROLL CONTAINMENT FOR DCC PAGE
+   ────────────────────────────────────────────────────────────────────────── */
+.dcc-main-wrapper {
+  height: calc(100vh - 64px) !important;
+  max-height: calc(100vh - 64px) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+.dcc-main-wrapper .dcc-glass-main-card {
+  flex: 1 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  padding: 24px !important;
+}
+
+.dcc-glass-main-card .flex-column.full-height {
+  flex: 1 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.dcc-glass-main-card .row-gap-40 {
+  flex: 1 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  gap: 16px !important;
+}
+
+.dcc-glass-main-card .glass-card-dcc {
+  flex: 1 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  padding: 20px !important;
+}
+
+.dcc-glass-main-card .system-logs-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+
+.dcc-glass-main-card .system-logs-panel .logs-table,
+.dcc-glass-main-card .system-logs-panel .iso-table-wrap {
+  flex: 1 !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+  margin-top: 12px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+}
+
+.dcc-glass-main-card .dcc-scrollable-table-box {
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  margin-top: 12px !important;
+}
+
+.dcc-glass-main-card .iso-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+.dcc-glass-main-card .iso-table th {
+  position: sticky !important;
+  top: 0 !important;
+  background: #f8fafc !important;
+  z-index: 2 !important;
+  box-shadow: inset 0 -1px 0 #cbd5e1 !important;
+}

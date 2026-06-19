@@ -4,7 +4,7 @@ import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import Toast from '@/components/UI/Toast'
 import { useISOStandardsLogic } from '@/hooks/useAdminPanel.js'
 import { AddStandardSection, AddClausesSection, ManageClausesSection, ToggleStandardsSection } from '@/components/ISOStandards/ISOStandardsViews'
-import './ISOStandardsPage.css'
+import './AdminPanel.css'
 
 export default function ISOStandardsPage({ userRole, userName }) {
   const {

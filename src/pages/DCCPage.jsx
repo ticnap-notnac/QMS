@@ -1,7 +1,7 @@
 import DCCFolderContent from '../components/DCCFolderContent.jsx'
 import { useDCCLogic } from '../hooks/useDCCLogic.js'
 import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
-import './PagesStyles.css'
+import './DCCPage.css'
 
 const FOLDER_ITEMS = [
   { id: 'system_logs', label: 'System Logs' },
