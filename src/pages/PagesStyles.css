@@ -448,7 +448,6 @@ div[class*="navbar"] {
    ========================================================================== */
 
 /* 1. Ensure the deep inner container wraps tightly and allows scrolling */
-.iso-standards-content,
 .iso-standards-panel,
 .admin-inner-panel { background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;
   height: auto !important; /* Forces the glass container to scale naturally if needed */
