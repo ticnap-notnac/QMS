@@ -599,7 +599,7 @@ export function AuditTemplatesTab({
     const payload = {
       title: formTitle.trim(),
       description: formDescription.trim(),
-      standardId: formStandardId ? Number(formStandardId) : null,
+      standardId: formStandardId || null,
       items: formItems.map(item => ({
         clause_id: item.clause_id,
         requirement: item.requirement || '',
