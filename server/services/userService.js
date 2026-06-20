@@ -11,7 +11,8 @@ export async function fetchAllUsers() {
     supabase
       .from('users')
       .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, created_at, status, site_id')
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .limit(1000),
     supabase.from('roles').select('id, role_name'),
     supabase.from('departments').select('id, department_name'),
   ])
