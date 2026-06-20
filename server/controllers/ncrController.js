@@ -1,6 +1,3 @@
-// src/controllers/ncrReportsController.js
-// feat(ncr): refactor controller to pure HTTP orchestration; delegate logic to ncrReportsService
-
 import { getRequestActor } from '../lib/requestUtils.js'
 import { writeAudit } from '../lib/audit.js'
 import { safeCreateNotificationsForRoles, safeCreateNotification } from '../lib/notificationHelper.js'

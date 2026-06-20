@@ -18,6 +18,43 @@ npm run dev:all
 
 Client usually runs at `http://localhost:5173` and server at `http://localhost:3000`.
 
+## System Architecture
+
+The project follows a standard modern decoupled Monorepo structure, strictly separating the Client and Server codebases for cleaner scaling and deployment.
+
+```text
+c:\SchoolStuffs\ThesisSystem\
+│
+├── server/                 # Express.js Backend API
+│   ├── controllers/        # Business logic for each endpoint (e.g., ncrController.js)
+│   ├── middlewares/        # Global interceptors (Auth, Zod Validation, Winston Error Logs)
+│   ├── routes/             # API Endpoint definitions (/api/ncr)
+│   ├── services/           # External service integrations (Supabase DB calls)
+│   ├── utils/              # Helper utilities (Logger, AI CBR Engine, AsyncHandler)
+│   ├── validations/        # Zod Schema definitions for robust security
+│   └── index.js            # Express server initialization
+│
+├── src/                    # React.js + Vite Frontend
+│   ├── components/         # Reusable UI parts
+│   │   ├── Auth/           # Login screens
+│   │   ├── Forms/          # Inputs and Dropdowns
+│   │   ├── Layout/         # Main Layout wrappers (Navbar + AppRouter)
+│   │   ├── Modals/         # Pop-up overlays (NCR Submit, Filters)
+│   │   ├── Navbars/        # Top navigation
+│   │   └── Reports/        # Feeds and List Views
+│   ├── context/            # React Context Providers (LookupContext)
+│   ├── hooks/              # Custom React Hooks (useReportsLogic, useAuth)
+│   ├── lib/                # Core libraries (api.js global interceptor)
+│   ├── pages/              # Top-level Page components (Dashboard, Reports)
+│   ├── routes/             # AppRouter configuration
+│   ├── services/           # Frontend API fetch wrappers
+│   └── App.jsx             # React entry point
+│
+├── .env                    # Frontend Environment Variables
+├── server/.env             # Backend Environment Variables
+└── package.json            # Monorepo Scripts
+```
+
 ## Important environment variables
 
 - **Frontend (`.env` in project root)**:

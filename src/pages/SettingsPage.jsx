@@ -1,4 +1,4 @@
-import React from 'react'
+import { useState, useEffect } from 'react'
 
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import Toast from '@/components/UI/Toast'

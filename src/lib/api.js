@@ -23,8 +23,25 @@ async function request(path, options = {}) {
   const payload = contentType.includes('application/json') ? await response.json() : await response.text()
 
   if (!response.ok) {
-    const message = typeof payload === 'string' ? payload : payload?.error || response.statusText
-    throw new Error(message)
+    if (typeof payload === 'string') {
+      let parsed = []
+      try {
+        parsed = JSON.parse(payload.details)
+      } catch {
+        // Just fallback to returning the whole detail string if not JSON
+        parsed = [{ message: payload.details }]
+      }
+      
+      // Instead of hiding it, we map the Zod errors into a readable array of strings
+      const detailedErrors = parsed.map(err => err.message)
+      throw new Error(detailedErrors.join('\n'))
+    } else if (payload?.details && Array.isArray(payload.details) && payload.details.length > 0) {
+      // Extract specific field errors from Zod validation
+      const detailStr = payload.details.map(d => d.message).join(', ')
+      throw new Error(`${payload.error || 'Validation Error'}: ${detailStr}`)
+    } else {
+      throw new Error(payload?.error || response.statusText)
+    }
   }
 
   return payload

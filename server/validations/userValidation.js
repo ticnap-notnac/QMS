@@ -9,7 +9,7 @@ export const createUserSchema = z.object({
     userName: z.string().min(3, 'Username must be at least 3 characters'),
     contactNumber: z.string().optional().nullable(),
     roleId: z.string().uuid().optional().nullable(),
-    departmentId: z.string().uuid('Department ID must be a valid UUID'),
+    departmentId: z.string().min(1, 'Department ID is required'),
     siteId: z.string().uuid().optional().nullable(),
   })
 })
@@ -24,7 +24,7 @@ export const updateUserSchema = z.object({
     email: z.string().email().optional(),
     contactNumber: z.string().optional().nullable(),
     roleId: z.string().uuid().optional().nullable(),
-    departmentId: z.string().uuid().optional(),
+    departmentId: z.string().min(1).optional(),
     siteId: z.string().uuid().optional().nullable(),
   }).refine(data => Object.keys(data).length > 0, {
     message: "Request body cannot be empty"

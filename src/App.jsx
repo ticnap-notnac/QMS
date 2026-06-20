@@ -5,22 +5,10 @@ import Login from './components/Auth/Login.jsx'
 import IntroModal from './components/Modals/IntroModal.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { fetchUnreadNotificationCount } from '@/services/notificationService'
-import DashboardPage from './pages/DashboardPage.jsx'
-import ReportsPage from './pages/ReportsPage.jsx'
-import ISOPage from './pages/ISOPage.jsx'
-import DCCPage from './pages/DCCPage.jsx'
-import UserInformationPage from './pages/UserInformationPage.jsx'
-import AddUserPage from './pages/AddUserPage.jsx'
-import RolesPage from './pages/RolesPage.jsx'
-import DepartmentsPage from './pages/DepartmentsPage.jsx'
-import LocationsPage from './pages/LocationsPage.jsx'
-import ProductTypesPage from './pages/ProductTypesPage.jsx'
-import ISOStandardsPage from './pages/ISOStandardsPage.jsx'
-import SettingsPage from './pages/SettingsPage.jsx'
-import AuditToolsPage from './pages/AuditToolsPage.jsx'
+
 import { LookupProvider, useLookup } from './context/LookupContext'
-import { Routes, Route, useNavigate } from 'react-router-dom'
-import Navbar from './components/Navbars/Navbar.jsx'
+import { useNavigate } from 'react-router-dom'
+import MainLayout from './components/Layout/MainLayout.jsx'
 import { logAction } from '@/services/logService'
 import { useIdleTimeout } from './hooks/useIdleTimeout'
 
@@ -302,42 +290,27 @@ function AppInner() {
       ) : null}
 
       {user ? (
-        <>
-          <Navbar
-            isUserMenuOpen={isUserMenuOpen}
-            onToggleMenu={() => setIsUserMenuOpen((open) => !open)}
-            onLogout={handleLogout}
-            isNotificationsOpen={isNotificationsOpen}
-            onToggleNotifications={() => setIsNotificationsOpen((open) => !open)}
-            userRole={userRole}
-            userName={userName}
-            userPosition={userPosition}
-            userEmail={user?.email}
-            currentUserId={currentUserId}
-            unreadNotificationCount={unreadNotificationCount}
-            canViewNotifications={canViewNotifications}
-            onUnreadCountChange={setUnreadNotificationCount}
-            onRefreshUnreadCount={refreshUnreadNotificationCount}
-            onOpenReport={handleNotificationSelect}
-            setProfileTargetTab={setProfileTargetTab}
-            userSiteName={userSiteName}
-          />
-          <Routes>
-            <Route path="/" element={<DashboardPage {...sharedProps} />} />
-            <Route path="/reports" element={<ReportsPage {...sharedProps} />} />
-            <Route path="/iso" element={<ISOPage {...sharedProps} />} />
-            <Route path="/dcc" element={<DCCPage {...sharedProps} />} />
-            <Route path="/settings" element={<SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />} />
-            <Route path="/settings/profile" element={<UserInformationPage {...sharedProps} />} />
-            <Route path="/settings/roles" element={<RolesPage {...sharedProps} />} />
-            <Route path="/settings/departments" element={<DepartmentsPage {...sharedProps} />} />
-            <Route path="/settings/locations" element={<LocationsPage {...sharedProps} />} />
-            <Route path="/settings/product-types" element={<ProductTypesPage {...sharedProps} />} />
-            <Route path="/settings/iso-standards" element={<ISOStandardsPage {...sharedProps} />} />
-            <Route path="/admin" element={<AddUserPage {...sharedProps} />} />
-            <Route path="/audit-tools" element={<AuditToolsPage {...sharedProps} />} />
-          </Routes>
-        </>
+        <MainLayout
+          isUserMenuOpen={isUserMenuOpen}
+          setIsUserMenuOpen={setIsUserMenuOpen}
+          handleLogout={handleLogout}
+          isNotificationsOpen={isNotificationsOpen}
+          setIsNotificationsOpen={setIsNotificationsOpen}
+          userRole={userRole}
+          userName={userName}
+          userPosition={userPosition}
+          userEmail={user?.email}
+          currentUserId={currentUserId}
+          unreadNotificationCount={unreadNotificationCount}
+          canViewNotifications={canViewNotifications}
+          setUnreadNotificationCount={setUnreadNotificationCount}
+          refreshUnreadNotificationCount={refreshUnreadNotificationCount}
+          handleNotificationSelect={handleNotificationSelect}
+          setProfileTargetTab={setProfileTargetTab}
+          userSiteName={userSiteName}
+          sharedProps={sharedProps}
+          refreshUserData={refreshUserData}
+        />
       ) : (
         <Login
           onSubmit={handleSubmit}

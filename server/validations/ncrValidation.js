@@ -4,7 +4,7 @@ export const createReportSchema = z.object({
   body: z.object({
     batch_number: z.string().min(1, 'Batch number is required'),
     severity: z.string().min(1, 'Severity is required'),
-    department_id: z.string().uuid('Department ID must be a valid UUID'),
+    department_id: z.string().min(1, 'Department ID is required'),
     description: z.string().min(1, 'Description is required'),
   })
 })

@@ -1,5 +1,4 @@
-import { request, API_BASE_URL } from '@/lib/api'
-import { supabase } from '@/utils/supabase'
+import { request } from '@/lib/api'
 
 export async function fetchReports() {
   return await request('/ncr')

@@ -1,10 +1,12 @@
+import logger from '../utils/logger.js'
+
 /**
  * Express global error handling middleware to capture exceptions
  * and return standardized JSON responses safely.
  */
 export function errorHandler(err, req, res, next) {
-  // Log full stack internally for debugging
-  console.error('Express Request Handler Exception:', err)
+  // Log full stack internally for debugging using Winston
+  logger.error(`Express Request Handler Exception: ${err.message}`, err)
 
   const status = err?.status || err?.statusCode || 500
   
