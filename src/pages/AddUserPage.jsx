@@ -5,6 +5,7 @@ import SearchForm from '@/components/Forms/SearchForm'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import UsersTable from '@/components/UsersTable/UsersTable'
 import { useAddUserLogic } from '@/hooks/useAdminPanel.js'
+import SubmissionLoadingOverlay from '@/components/UI/SubmissionLoadingOverlay.jsx'
 import './PagesStyles.css'
 import './AdminPanel.css'
 
@@ -21,6 +22,9 @@ export default function AddUserPage({ userRole }) {
     addUserModalProps,
     editUserModalProps
   } = useAddUserLogic()
+
+  const isOverlayLoading = addUserModalProps.loading || editUserModalProps.loading
+  const overlayMessage = addUserModalProps.loading ? 'Creating user account...' : 'Updating user account...'
 
   return (
     <div className="page-root">
@@ -75,6 +79,7 @@ export default function AddUserPage({ userRole }) {
 
           <AddUserModal {...addUserModalProps} />
           <EditUserModal {...editUserModalProps} />
+          <SubmissionLoadingOverlay isOpen={isOverlayLoading} message={overlayMessage} />
         </main>
       ) : (
         <main className="page-main-centered">

@@ -6,6 +6,7 @@ import useSettingsPageLogic from '@/hooks/useSettingsPageLogic'
 import SettingsProfileForm from '@/components/Forms/SettingsProfileForm'
 import PasswordSection from '@/components/Auth/PasswordSection'
 import AuditToolsPage from './AuditToolsPage'
+import SubmissionLoadingOverlay from '@/components/UI/SubmissionLoadingOverlay.jsx'
 import './SettingsPage.css'
 
 export default function SettingsPage(props) {
@@ -82,6 +83,7 @@ export default function SettingsPage(props) {
           </div>
         </div>
       </main>
+      <SubmissionLoadingOverlay isOpen={saving} message="Saving settings changes..." />
     </>
   )
 }
