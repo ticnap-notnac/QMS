@@ -3,6 +3,7 @@ import './App.css'
 import { supabase } from './utils/supabase'
 import Login from './components/Auth/Login.jsx'
 import IntroModal from './components/Modals/IntroModal.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { fetchUnreadNotificationCount } from '@/services/notificationService'
 import DashboardPage from './pages/DashboardPage.jsx'
 import ReportsPage from './pages/ReportsPage.jsx'
@@ -354,8 +355,10 @@ function AppInner() {
 
 export default function App() {
   return (
-    <LookupProvider>
-      <AppInner />
-    </LookupProvider>
+    <ErrorBoundary>
+      <LookupProvider>
+        <AppInner />
+      </LookupProvider>
+    </ErrorBoundary>
   )
 }
