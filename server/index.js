@@ -54,6 +54,8 @@ app.use(cors({
 
 app.use(express.json())
 
+app.get('/api/health', (req, res) => res.status(200).json({ status: 'ok' }))
+
 app.use('/api/users', authMiddleware, userRoutes)
 app.use('/api/roles', authMiddleware, roleRoutes)
 app.use('/api/departments', authMiddleware, departmentRoutes)

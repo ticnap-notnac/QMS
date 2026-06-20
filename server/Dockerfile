@@ -23,4 +23,4 @@ ENV NODE_ENV=production
 # Switch to the non-root node user
 USER node
 
-CMD ["node", "index.js"]
+CMD ["node", "server.js"]
