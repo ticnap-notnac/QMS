@@ -51,6 +51,36 @@ If you or a groupmate run into `401 (Unauthorized)` errors:
 - Inactivity auto-logout: the client implements an inactivity timer (default 30 minutes) with a pre-timeout warning. The timer and warning are implemented in the frontend; see [src/App.jsx](src/App.jsx) to adjust durations or UI behavior.
 - ISO Clause association and AI-based clause suggestions are available on **CAR reports** (via `CARModal`). The NCR submission modal (`CreateReportModal`) does **not** include clause selection or auto-suggest — those fields were intentionally removed to keep the NCR form focused.
 
+## Industry Standards Readiness
+
+During our Industry Standards Readiness sprints, we heavily optimized and secured the system architecture:
+
+### 1. Enterprise Security
+- **Helmet.js** protects against cross-site scripting (XSS) and packet sniffing by injecting strict HTTP security headers.
+- **Express Rate Limiting** blocks brute-force login attempts and DDoS attacks (maximum 100 requests per 15 minutes per IP).
+- **Zod Schema Validation** intercepts all incoming requests to ensure malicious payloads are stripped out before they ever reach the database.
+
+### 2. Performance & Scaling
+- **In-Memory API Caching:** The Node.js server uses `node-cache` to memorize static configuration tables (Departments, Roles) for 5 minutes. This prevents unnecessary Supabase billing and ensures instantaneous frontend form loading.
+- **Database B-Tree Indexes:** Custom SQL indexes were injected into frequently queried columns (`user_id`, `status`, `batch_number`, `is_read`) to ensure the system remains lightning fast even after thousands of reports are generated.
+- **Query Pagination Limits:** A hard limit of 1000 rows was enforced on heavy backend `GET` requests (e.g., `fetchAllUsers`, `fetchReports`) to prevent the Node.js server from exhausting its heap memory and crashing under heavy data loads.
+
+### 3. Automated Testing Pipeline
+- **Vitest & Supertest:** A dedicated backend test suite isolates the database and runs automated health checks against our Express routes and Zod validation middleware. The backend test environment is correctly isolated from the React frontend test environment.
+
+## Case-Based Reasoning (CBR) Algorithm
+
+The system features a highly intelligent **Case-Based Reasoning** engine (`server/utils/cbr.js`) to automatically suggest the most historically effective corrective and preventive actions. 
+
+Instead of just fetching the "newest" reports, the engine dynamically scores all past cases based on a custom mathematical weight formula:
+- **Issue Type Match:** 35%
+- **Keyword Jaccard Similarity:** 35%
+- **Severity Level Match:** 15%
+- **Department Match:** 10%
+- **Product Type Match:** 5%
+
+The resulting raw similarity score is then dynamically blended with the past case's historical **Effectiveness Rating** (a 0-5 scale). The system calculates: `(Similarity Score * 85%) + (Effectiveness Rating * 15%)`. This guarantees that the AI always recommends the past solution that is both mathematically similar to the current issue AND proven to be highly effective.
+
 
 ## How to test the auth/session & logging fixes
 
