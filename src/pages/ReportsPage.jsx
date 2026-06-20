@@ -50,7 +50,7 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
   return (
     <main className="dashboard page-root">
       {logic.toast && (
-        <div style={{ position: 'fixed', right: '24px', top: '88px', zIndex: 50 }}>
+        <div className="reports-toast-container">
           <Toast message={logic.toast.message} type={logic.toast.type} onClose={() => logic.setToast(null)} />
         </div>
       )}
@@ -64,17 +64,7 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
             <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>{logic.isClosedMode ? 'Show Open' : `Closed (${logic.activeTab === 'ncr' ? logic.closedReports.length : logic.carReports.filter(c => c.status === CAR_STATUS.CLOSED).length})`}</button>
             {['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase()) && (
               <select
-                className="form-input"
-                style={{ 
-                  width: '180px', 
-                  padding: '6px 12px', 
-                  fontSize: '13px', 
-                  background: 'rgba(255,255,255,0.03)', 
-                  color: '#fff', 
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
+                className="form-input reports-dept-select"
                 value={logic.reportFilters.departmentId || ''}
                 onChange={(e) => {
                   logic.setReportFilters(prev => ({
@@ -83,25 +73,25 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
                   }))
                 }}
               >
-                <option value="" style={{ background: '#0f172a' }}>All Departments</option>
+                <option value="" className="reports-dept-option">All Departments</option>
                 {logic.departments.map(dept => (
-                  <option key={dept.id} value={dept.id} style={{ background: '#0f172a' }}>
+                  <option key={dept.id} value={dept.id} className="reports-dept-option">
                     {dept.department_name}
                   </option>
                 ))}
               </select>
             )}
           </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div className="reports-action-buttons-right">
             <button type="button" onClick={() => logic.openCARModal()} className="btn-gradient-primary reports-submit-primary">Submit CAR</button>
             <button type="button" onClick={() => logic.openQDDRModal()} className="btn-gradient-primary reports-submit-primary">Submit QDDR</button>
             <button type="button" onClick={logic.openCreateModal} className="btn-gradient-primary reports-submit-primary">Submit NCR</button>
           </div>
         </div>
 
-        <div className="reports-tab-nav" style={{ display: 'flex', gap: '8px', background: '#f1f5f9', border: '1px solid #e2e8f0', padding: '6px', borderRadius: '8px', marginBottom: '20px', alignSelf: 'flex-start' }}>
+        <div className="reports-tab-nav reports-tab-nav-bar">
           {['ncr', 'car', 'qddr'].map(t => (
-            <button key={t} type="button" className={`btn-quick-toggle ${logic.activeTab === t ? 'active' : ''}`} onClick={() => logic.setActiveTab(t)} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: logic.activeTab === t ? '#0f172a' : 'transparent', color: logic.activeTab === t ? '#ffffff' : '#64748b', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', fontSize: '12px' }}>{t} Reports</button>
+            <button key={t} type="button" className={`btn-quick-toggle reports-tab-nav-btn ${logic.activeTab === t ? 'active' : ''}`} onClick={() => logic.setActiveTab(t)}>{t} Reports</button>
           ))}
         </div>
 

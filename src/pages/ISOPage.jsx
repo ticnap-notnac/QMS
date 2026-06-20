@@ -17,10 +17,10 @@ export default function ISOPage({ userRole, userName }) {
   const isAuthorized = ['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
   if (!isAuthorized) {
     return (
-      <main className="dashboard page-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh' }}>
-        <div className="metric-card" style={{ maxWidth: '480px', width: '90%', textAlign: 'center', padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', border: '1px solid #e4e4e7', background: '#ffffff' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Access Denied</h2>
-          <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.5', margin: 0 }}>You do not have permission to view the ISO Compliance panel.</p>
+      <main className="dashboard page-root iso-denied-container">
+        <div className="metric-card iso-denied-card">
+          <h2 className="iso-denied-title">Access Denied</h2>
+          <p className="iso-denied-text">You do not have permission to view the ISO Compliance panel.</p>
         </div>
       </main>
     )
@@ -53,26 +53,26 @@ export default function ISOPage({ userRole, userName }) {
           </div>
         </div>
 
-        <div className="metric-card metric-card--padded" style={{ margin: 0, padding: '32px' }}>
-          <h3 className="metric-card-title iso-review-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 10px 0', color: '#0f172a' }}><AlertTriangle size={18} className="icon-amber" />Gaps Action Center</h3>
-          <p style={{ color: '#475569', fontSize: '13.5px', margin: '0 0 20px 0', lineHeight: '1.6' }}>Review non-compliant clauses and generate CARs.</p>
+        <div className="metric-card metric-card--padded iso-action-center-card">
+          <h3 className="metric-card-title iso-review-title iso-action-center-title"><AlertTriangle size={18} className="icon-amber" />Gaps Action Center</h3>
+          <p className="iso-action-center-text">Review non-compliant clauses and generate CARs.</p>
           {nonCompliantFindings.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: '#64748b', fontSize: '14px', border: '1px dashed #cbd5e1', borderRadius: '8px', background: '#f8fafc' }}>No active gaps found!</div>
+            <div className="iso-no-gaps">No active gaps found!</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="iso-findings-stack">
               {nonCompliantFindings.map((finding) => (
-                <div key={finding.id} style={{ padding: '16px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minWidth: '240px' }}>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '11px', background: '#fee2e2', color: '#b91c1c', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>Clause {finding.iso_clauses?.clause_number || 'N/A'}</span>
-                      <strong style={{ fontSize: '14px', color: '#0f172a' }}>{finding.iso_clauses?.title || 'Unknown Clause'}</strong>
+                <div key={finding.id} className="iso-finding-item">
+                  <div className="iso-finding-info">
+                    <div className="iso-finding-title-row">
+                      <span className="iso-finding-badge">Clause {finding.iso_clauses?.clause_number || 'N/A'}</span>
+                      <strong className="iso-finding-title">{finding.iso_clauses?.title || 'Unknown Clause'}</strong>
                     </div>
                   </div>
                   <div>
                     {createdCars[finding.id] ? (
-                      <div style={{ fontSize: '13px', color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '8px 16px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.2)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle2 size={14} />CAR Generated ({createdCars[finding.id]})</div>
+                      <div className="iso-car-generated"><CheckCircle2 size={14} />CAR Generated ({createdCars[finding.id]})</div>
                     ) : (
-                      <button type="button" onClick={() => handleOpenCarModal(finding)} className="btn-gradient-primary" style={{ padding: '8px 16px', fontSize: '13px', fontWeight: '600', background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)', border: 'none' }}>Generate CAR</button>
+                      <button type="button" onClick={() => handleOpenCarModal(finding)} className="btn-gradient-primary iso-btn-generate-car">Generate CAR</button>
                     )}
                   </div>
                 </div>

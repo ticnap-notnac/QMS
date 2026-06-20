@@ -231,4 +231,123 @@
 .iso-progress-bar-fill {
   height: 100%;
   border-radius: 99px;
+}
+
+/* Access Denied Page Styles */
+.iso-denied-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+}
+.iso-denied-card {
+  max-width: 480px;
+  width: 90%;
+  text-align: center;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid #e4e4e7;
+  background: #ffffff;
+}
+.iso-denied-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.iso-denied-text {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Gaps Action Center Styles */
+.iso-action-center-card {
+  margin: 0;
+  padding: 32px;
+}
+.iso-action-center-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px 0;
+  color: #0f172a;
+}
+.iso-action-center-text {
+  color: #475569;
+  font-size: 13.5px;
+  margin: 0 0 20px 0;
+  line-height: 1.6;
+}
+.iso-no-gaps {
+  text-align: center;
+  padding: 24px 0;
+  color: #64748b;
+  font-size: 14px;
+  border: 1px dashed #cbd5e1;
+  borderRadius: 8px;
+  background: #f8fafc;
+}
+.iso-findings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.iso-finding-item {
+  padding: 16px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.03);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.iso-finding-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 240px;
+}
+.iso-finding-title-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.iso-finding-badge {
+  font-size: 11px;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+.iso-finding-title {
+  font-size: 14px;
+  color: #0f172a;
+}
+.iso-car-generated {
+  font-size: 13px;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  fontWeight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.iso-btn-generate-car {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  border: none;
 }
