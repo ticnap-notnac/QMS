@@ -289,7 +289,7 @@
   color: #64748b;
   font-size: 14px;
   border: 1px dashed #cbd5e1;
-  borderRadius: 8px;
+  border-radius: 8px;
   background: #f8fafc;
 }
 .iso-findings-stack {
@@ -339,7 +339,7 @@
   padding: 8px 16px;
   border-radius: 6px;
   border: 1px solid rgba(16, 185, 129, 0.2);
-  fontWeight: 600;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 6px;
