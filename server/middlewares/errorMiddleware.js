@@ -7,11 +7,18 @@ export function errorHandler(err, req, res, next) {
   console.error('Express Request Handler Exception:', err)
 
   const status = err?.status || err?.statusCode || 500
-  const message = err?.message || String(err) || 'Internal server error'
+  
+  // Sanitize 500 errors to prevent leaking stack traces or internal DB info
+  const isInternalError = status === 500
+  const message = isInternalError 
+    ? 'Internal server error' 
+    : (err?.message || String(err) || 'Internal server error')
+    
+  const details = isInternalError ? undefined : (err?.details || undefined)
 
   return res.status(status).json({
     error: message,
-    details: err?.details || undefined,
+    details,
   })
 }
 

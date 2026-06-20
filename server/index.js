@@ -1,6 +1,8 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 import userRoutes from './routes/userRoutes.js'
 import roleRoutes from './routes/roleRoutes.js'
 import departmentRoutes from './routes/departmentRoutes.js'
@@ -21,8 +23,35 @@ import { errorHandler } from './middlewares/errorMiddleware.js'
 
 const app = express()
 
+app.use(helmet())
 app.disable('x-powered-by')
-app.use(cors())
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests from this IP, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+app.use(limiter)
+
+const allowedOrigins = [
+  'http://localhost:8080',
+  'http://localhost:5173',
+  process.env.FRONTEND_URL
+].filter(Boolean)
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true
+}))
+
 app.use(express.json())
 
 app.use('/api/users', authMiddleware, userRoutes)
