@@ -34,6 +34,7 @@ app.use((req, res, next) => {
 app.use(helmet())
 app.disable('x-powered-by')
 
+
 const allowedOrigins = [
   'http://localhost:8080',
   'http://localhost:5173',

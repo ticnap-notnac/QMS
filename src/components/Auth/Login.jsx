@@ -141,7 +141,7 @@ function Login({
             {error ? <p className="error">{error}</p> : null}
 
             <button className="primary-button" type="submit" disabled={loading}>
-              {loading ? 'Signing In...' : 'Sign In'} <span className="arrow">-&gt;</span>
+              {loading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
         </div>

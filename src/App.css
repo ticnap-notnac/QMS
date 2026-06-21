@@ -70,6 +70,14 @@
   letter-spacing: 0.5px;
 }
 
+.logo-img {
+  height: 90px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+}
+
 .logo-mark {
   display: flex;
   align-items: center;

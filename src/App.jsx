@@ -281,8 +281,7 @@ function AppInner() {
       {!user ? (
         <header className="brand">
           <div className="logo">
-            <span className="logo-mark">Q</span>
-            <span className="logo-text">Flow</span>
+            <img src="/qflow_logo_transparent.png" alt="QFlow Logo" className="logo-img" />
           </div>
           <p className="brand-subtitle">QUALITY MANAGEMENT SYSTEM</p>
         </header>

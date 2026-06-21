@@ -281,11 +281,7 @@ export default function Dashboard() {
           transition: 'transform 0.2s',
           cursor: 'default',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-        }}
-          // Fix standard container typo
-          onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseOut={e => e.currentTarget.style.transform = 'none'}
-        >
+        }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#475569' }}>
             <p style={{ margin: 0, fontSize: '13px', fontWeight: 500 }}>ISO Compliance Rate</p>
             <Shield size={18} color="#0f172a" />
