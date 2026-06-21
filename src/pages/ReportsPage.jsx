@@ -20,6 +20,7 @@ import './ReportsPage.css'
 
 export default function ReportsPage({ userRole, currentUserId, authUserId, userDepartmentId }) {
   const logic = useReportsLogic({ currentUserId, userRole, authUserId, userDepartmentId })
+  const canAccessCar = ['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
 
   // Aggregate loading states for premium overlay spinner feedback
   const isOverlayLoading = logic.isNcrSubmitting || 
@@ -83,14 +84,16 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
             )}
           </div>
           <div className="reports-action-buttons-right">
-            <button type="button" onClick={() => logic.openCARModal()} className="btn-gradient-primary reports-submit-primary">Submit CAR</button>
+            {canAccessCar && (
+              <button type="button" onClick={() => logic.openCARModal()} className="btn-gradient-primary reports-submit-primary">Submit CAR</button>
+            )}
             <button type="button" onClick={() => logic.openQDDRModal()} className="btn-gradient-primary reports-submit-primary">Submit QDDR</button>
             <button type="button" onClick={logic.openCreateModal} className="btn-gradient-primary reports-submit-primary">Submit NCR</button>
           </div>
         </div>
 
         <div className="reports-tab-nav reports-tab-nav-bar">
-          {['ncr', 'car', 'qddr'].map(t => (
+          {['ncr', ...(canAccessCar ? ['car'] : []), 'qddr'].map(t => (
             <button key={t} type="button" className={`btn-quick-toggle reports-tab-nav-btn ${logic.activeTab === t ? 'active' : ''}`} onClick={() => logic.setActiveTab(t)}>{t} Reports</button>
           ))}
         </div>
