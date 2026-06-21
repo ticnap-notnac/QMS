@@ -80,11 +80,20 @@ export async function buildEvidenceDisplayUrl(rawUrl) {
 }
 
 export async function createNotification({ title, message, type = 'info', reportId = null, userId = null }) {
-  if (!userId) return
-  const { error } = await supabase
+  if (!userId) return null
+
+  const { data, error } = await supabase
     .from('notifications')
-    .insert([{ user_id: userId, title, message, type, is_read: false, report_id: reportId }])
+    .insert([{ title, message, type, report_id: reportId, user_id: userId, is_read: false }])
+    .select()
+
   if (error) throw error
+
+  // Send SMTP email in the background
+  sendNotificationEmail(userId, title, message)
+    .catch(err => console.error('Failed to send SMTP email in background:', err.message))
+
+  return data ? data[0] : null
 }
 
 export async function getUsersByRoleNames(roleNames = []) {
@@ -113,6 +122,8 @@ export async function getUsersByRoleNames(roleNames = []) {
   return users || []
 }
 
+import { sendNotificationEmail } from './emailService.js'
+
 export async function createNotificationsForRoles({ roleNames = [], title, message, type = 'info', reportId = null }) {
   const users = await getUsersByRoleNames(roleNames)
   if (users.length === 0) return 0
@@ -128,6 +139,12 @@ export async function createNotificationsForRoles({ roleNames = [], title, messa
 
   const { error } = await supabase.from('notifications').insert(rows)
   if (error) throw error
+
+  // Send SMTP emails for each notification in the background
+  rows.forEach((row) => {
+    sendNotificationEmail(row.user_id, row.title, row.message)
+      .catch((err) => console.error('Failed to send SMTP email in background:', err.message))
+  })
 
   return rows.length
 }

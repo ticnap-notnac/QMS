@@ -741,18 +741,35 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       const auditorSerialId = selectedAuditorObj ? selectedAuditorObj.id : null
 
       if (auditorSerialId) {
+        const titleText = `Audit Scheduled: ${title.trim()}`
+        const messageText = `You have been assigned to conduct the "${title.trim()}" audit scheduled on ${scheduledDate}.`
+
         const { error: notifError } = await supabase
           .from('notifications')
           .insert({
             user_id: auditorSerialId,
-            title: `Audit Scheduled: ${title.trim()}`,
-            message: `You have been assigned to conduct the "${title.trim()}" audit scheduled on ${scheduledDate}.`,
+            title: titleText,
+            message: messageText,
             type: 'info',
             is_read: false
           })
         
         if (notifError) {
           console.warn('Failed to insert notification for auditor:', notifError.message)
+        } else {
+          // Trigger email via backend
+          fetch(`${import.meta.env.VITE_API_BASE_URL}/notifications/send-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user-auth-id': (await supabase.auth.getSession()).data.session?.user?.id || ''
+            },
+            body: JSON.stringify({
+              userId: auditorSerialId,
+              title: titleText,
+              message: messageText
+            })
+          }).catch(err => console.warn('Failed to trigger email notification:', err))
         }
       }
 
