@@ -6,7 +6,9 @@ import {
   Award, 
   History, 
   Settings, 
-  LogOut 
+  LogOut,
+  User,
+  ShieldAlert
 } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import NotificationsModal from '../Modals/NotificationsModal.jsx'
@@ -32,9 +34,9 @@ export default function Navbar({
   userSiteName
 }) {
   const navigate = useNavigate()
+  const desktopMenuContainerRef = useRef(null)
+  const mobileMenuContainerRef = useRef(null)
   const location = useLocation()
-  const menuContainerRef = useRef(null)
-
   const normalizedRole = String(userRole || '').trim().toLowerCase()
   const shouldShowNotifications = typeof canViewNotifications === 'boolean'
     ? canViewNotifications
@@ -45,7 +47,11 @@ export default function Navbar({
     if (!isUserMenuOpen) return
 
     const handleClickOutside = (event) => {
-      if (menuContainerRef.current && !menuContainerRef.current.contains(event.target)) {
+      const isOutsideDesktop = desktopMenuContainerRef.current && !desktopMenuContainerRef.current.contains(event.target)
+      const isOutsideMobile = mobileMenuContainerRef.current && !mobileMenuContainerRef.current.contains(event.target)
+      
+      // If the click is outside BOTH the desktop and mobile menu containers, close it
+      if (isOutsideDesktop && isOutsideMobile) {
         onToggleMenu()
       }
     }
@@ -56,7 +62,7 @@ export default function Navbar({
     }
   }, [isUserMenuOpen, onToggleMenu])
 
-  const NavTabs = ({ isMobile }) => (
+  const navTabsJSX = (isMobile) => (
     <>
       <button 
         onClick={() => navigate('/')} 
@@ -94,20 +100,20 @@ export default function Navbar({
     </>
   )
 
-  const UserMenuDropdown = () => (
+  const userMenuDropdownJSX = (
     <div className="sidebar-user-menu-dropdown">
       <button 
         onClick={() => { navigate('/settings/profile'); setProfileTargetTab('User Information'); onToggleMenu(); }} 
         className="user-menu-item"
       >
-        User Information
+        <User size={16} /> User Information
       </button>
       {normalizedRole === 'admin' && (
         <button 
           onClick={() => { navigate('/admin'); onToggleMenu(); }} 
           className="user-menu-item admin"
         >
-          Admin Panel
+          <ShieldAlert size={16} /> Admin Panel
         </button>
       )}
 
@@ -116,19 +122,19 @@ export default function Navbar({
         onClick={() => { navigate('/settings'); setProfileTargetTab('Settings'); onToggleMenu(); }} 
         className="user-menu-item mobile-only"
       >
-        Settings
+        <Settings size={16} /> Settings
       </button>
       <button 
         onClick={() => { onLogout(); onToggleMenu(); }} 
         className="user-menu-item mobile-only"
         style={{ color: '#fca5a5' }}
       >
-        Logout
+        <LogOut size={16} /> Logout
       </button>
     </div>
   )
 
-  const ActionIcons = () => (
+  const actionIconsJSX = (
     <div className="sidebar-actions-row">
       {shouldShowNotifications && (
         <button 
@@ -182,10 +188,10 @@ export default function Navbar({
           )}
 
           <nav className="app-nav-center">
-            <NavTabs isMobile={false} />
+            {navTabsJSX(false)}
           </nav>
 
-          <div className="app-nav-bottom" ref={menuContainerRef}>
+          <div className="app-nav-bottom" ref={desktopMenuContainerRef}>
             <div onClick={onToggleMenu} className="sidebar-user-card-trigger">
               <div className={`sidebar-user-avatar ${normalizedRole === 'admin' ? 'admin' : 'default'}`}>
                 {userName ? userName.charAt(0).toUpperCase() : 'U'}
@@ -196,33 +202,33 @@ export default function Navbar({
               </div>
             </div>
 
-            {isUserMenuOpen && <UserMenuDropdown />}
+            {isUserMenuOpen && userMenuDropdownJSX}
 
-            <ActionIcons />
+            {actionIconsJSX}
           </div>
         </div>
       </header>
 
       {/* 2. MOBILE TOP HEADER (Hidden on desktop) */}
-      <header className="app-navbar-mobile-top mobile-only" ref={menuContainerRef}>
+      <header className="app-navbar-mobile-top mobile-only" ref={mobileMenuContainerRef}>
         <div onClick={() => navigate('/')} className="mobile-brand">
           <img src="/qflow_logo_transparent.png" alt="QFlow Logo" className="brand-logo-img-mobile" />
         </div>
         
         <div className="mobile-top-actions">
-          <ActionIcons />
+          {actionIconsJSX}
           <div onClick={onToggleMenu} className="mobile-user-avatar-trigger">
             <div className={`sidebar-user-avatar ${normalizedRole === 'admin' ? 'admin' : 'default'}`}>
               {userName ? userName.charAt(0).toUpperCase() : 'U'}
             </div>
           </div>
-          {isUserMenuOpen && <UserMenuDropdown />}
+          {isUserMenuOpen && userMenuDropdownJSX}
         </div>
       </header>
 
       {/* 3. MOBILE BOTTOM NAV (Hidden on desktop) */}
       <nav className="app-navbar-mobile-bottom mobile-only">
-        <NavTabs isMobile={true} />
+        {navTabsJSX(true)}
       </nav>
 
       <NotificationsModal

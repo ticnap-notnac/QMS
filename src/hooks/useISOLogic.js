@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useComplianceData } from './useISO/useComplianceData'
 import { useISOModules } from './useISO/useISOModules'
 import { useISOCARForm } from './useISO/useISOCARForm'
+import { useISOTemplates } from './useISO/useISOTemplates'
 
 export default function useISOLogic({ userName }) {
   const { user: authUser } = useAuth()
@@ -79,6 +80,17 @@ export default function useISOLogic({ userName }) {
     fetchComplianceData
   })
 
+  // 4. ISO Templates logic
+  const {
+    isTemplatesModalOpen,
+    loadingTemplates,
+    templates,
+    selectedTemplate,
+    setSelectedTemplate,
+    fetchAndOpenTemplates,
+    closeTemplatesModal
+  } = useISOTemplates({ currentAuthId, setToast })
+
   // Load compliance and dropdown options on mount
   useEffect(() => {
     fetchComplianceData()
@@ -137,6 +149,16 @@ export default function useISOLogic({ userName }) {
   return {
     toast,
     setToast,
+
+    isTemplatesModalOpen,
+    loadingTemplates,
+    templates,
+    selectedTemplate,
+    setSelectedTemplate,
+    fetchAndOpenTemplates,
+    closeTemplatesModal,
+
+    // Compliance stats
     overallScore,
     fetchActiveModules,
     compliantPct,

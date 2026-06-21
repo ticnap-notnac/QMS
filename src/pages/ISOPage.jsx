@@ -1,7 +1,7 @@
 import Toast from '../components/UI/Toast.jsx'
 import CARModal from '../components/Modals/CARModal.jsx'
 import { AlertTriangle, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react'
-import { ISOModulesModal, ISOTaskSelectionModal, ISOSubTaskModal } from '../components/ISOPage/ISOModals.jsx'
+import { ISOModulesModal, ISOTaskSelectionModal, ISOSubTaskModal, ISOTemplatesModal } from '../components/ISOPage/ISOModals.jsx'
 import useISOLogic from '../hooks/useISOLogic'
 import { ProgressRow } from '../components/ISOPage/ProgressRow.jsx'
 import './ISOPage.css'
@@ -11,7 +11,9 @@ export default function ISOPage({ userRole, userName }) {
     toast, setToast, overallScore, fetchActiveModules, compliantPct, partialPct, gapPct, nonCompliantFindings,
     createdCars, handleOpenCarModal, modulesModalProps, taskSelectionModalProps, carModalProps, isAuditTaskModalOpen,
     setIsAuditTaskModalOpen, isCapaTaskModalOpen, setIsCapaTaskModalOpen, isDocumentTaskModalOpen, setIsDocumentTaskModalOpen,
-    isTrainingTaskModalOpen, setIsTrainingTaskModalOpen, handleTaskCreation
+    isTrainingTaskModalOpen, setIsTrainingTaskModalOpen, handleTaskCreation,
+    isTemplatesModalOpen, loadingTemplates, templates, selectedTemplate, setSelectedTemplate,
+    fetchAndOpenTemplates, closeTemplatesModal
   } = useISOLogic({ userName })
 
   const isAuthorized = ['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
@@ -38,7 +40,7 @@ export default function ISOPage({ userRole, userName }) {
             </div>
             <div className="iso-button-grid">
               <button type="button" className="btn-metric-card iso-metric-button" onClick={fetchActiveModules}>ISO Modules</button>
-              <button type="button" className="btn-metric-card iso-metric-button" onClick={() => setToast({ message: "Fetching checklists...", type: 'info' })}>ISO Requirements</button>
+              <button type="button" className="btn-metric-card iso-metric-button" onClick={fetchAndOpenTemplates}>ISO Template</button>
             </div>
           </div>
           <div className="metric-card iso-graph-card"><span className="graph-placeholder-text iso-graph-placeholder-text">Compliance Analysis Graph Canvas</span></div>
@@ -83,6 +85,14 @@ export default function ISOPage({ userRole, userName }) {
       </div>
       <ISOModulesModal {...modulesModalProps} />
       <ISOTaskSelectionModal {...taskSelectionModalProps} />
+      <ISOTemplatesModal 
+        isOpen={isTemplatesModalOpen} 
+        onClose={closeTemplatesModal} 
+        templates={templates} 
+        loadingTemplates={loadingTemplates} 
+        selectedTemplate={selectedTemplate} 
+        setSelectedTemplate={setSelectedTemplate} 
+      />
       <ISOSubTaskModal isOpen={isAuditTaskModalOpen} onClose={() => setIsAuditTaskModalOpen(false)} title="Internal Audit Task" canvasText="Task Configuration Workspace" onSubmit={() => handleTaskCreation("Internal Audit Task")} />
       <ISOSubTaskModal isOpen={isCapaTaskModalOpen} onClose={() => setIsCapaTaskModalOpen(false)} title="CAPA Task" canvasText="CAPA Task Configuration Canvas" onSubmit={() => handleTaskCreation("CAPA Task")} />
       <ISOSubTaskModal isOpen={isDocumentTaskModalOpen} onClose={() => setIsDocumentTaskModalOpen(false)} title="Document Update Task" canvasText="Document Update Workspace Canvas" onSubmit={() => handleTaskCreation("Document Update Task")} />
