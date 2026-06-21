@@ -10,6 +10,7 @@ export default function ReportsFeedList({
   reports,
   departmentNameById,
   canAssignReports,
+  canApproveReport,
   canUpdateReport,
   canDeleteReport,
   onApprove,
@@ -36,6 +37,7 @@ export default function ReportsFeedList({
               report={report}
               departmentNameById={departmentNameById}
               canAssignReports={canAssignReports}
+              canApproveReport={canApproveReport}
               canUpdateReport={canUpdateReport}
               canDeleteReport={canDeleteReport}
               onApprove={onApprove}

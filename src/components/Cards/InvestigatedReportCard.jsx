@@ -26,7 +26,7 @@ import { formatDate, getStatusStyle, getSeverityStyle, getApprovalState } from '
  *   onUpdate: (report: object) => void,
  * }} props
  */
-function InvestigatedReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, canDeleteReport, onApprove, onReject, onUpdate, onDelete }) {
+function InvestigatedReportCard({ report, departmentNameById, canAssignReports, canApproveReport, canUpdateReport, canDeleteReport, onApprove, onReject, onUpdate, onDelete }) {
   const reporterName = report.reporter_full_name || 'Name of the User'
   const reporterRole = report.reporter_role_name || 'Position'
   const reporterDepartment =
@@ -140,7 +140,7 @@ function InvestigatedReportCard({ report, departmentNameById, canAssignReports, 
 
       {/* ── Action row ─────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
-        {canAssignReports && (
+        {canApproveReport && canApproveReport(report) && (
           <button
             type="button"
             className="btn-edit-user"
@@ -152,7 +152,7 @@ function InvestigatedReportCard({ report, departmentNameById, canAssignReports, 
           </button>
         )}
 
-        {canAssignReports && !isApproved && (
+        {canApproveReport && canApproveReport(report) && !isApproved && (
           <button
             type="button"
             className="btn-edit-user"

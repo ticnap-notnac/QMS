@@ -292,6 +292,16 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     [userRole],
   )
 
+  const canApproveReport = useCallback((report) => {
+    if (!report) return false;
+    const role = String(userRole || '').trim().toLowerCase();
+    if (role === 'admin') return true;
+    if (role === 'manager') {
+      return String(report.department_id) === String(userDepartmentId);
+    }
+    return false;
+  }, [userRole, userDepartmentId])
+
   const canUpdateReport = useCallback(
     (report) => {
       if (!report) return false
@@ -741,6 +751,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     setEvidenceErrorMain: formState.evidenceState.setEvidenceErrorMain,
 
     canAssignReports,
+    canApproveReport,
     canUpdateReport,
     canDeleteReport,
     handleDeleteReport,
