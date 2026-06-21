@@ -67,6 +67,34 @@
 .reports-details-title-wrap { text-align: left; margin-bottom: 12px; }
 .reports-details-title { margin: 0; font-size: 14px; font-weight: 500; color: #475569; }
 
+.preview-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #f1f5f9;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.preview-metadata span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 768px) {
+  .report-details-grid,
+  .nc-details-grid,
+  .capa-details-grid,
+  .capa-header-grid,
+  .audit-schedule-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 .reports-workspace {
   width: 100%;
   height: 320px;
@@ -586,3 +614,24 @@
   color: #ffffff;
 }
 
+@media (max-width: 768px) {
+  .reports-action-header-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .reports-header-controls-left {
+    flex-wrap: wrap;
+  }
+  
+  .reports-action-buttons-right {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .reports-submit-primary {
+    flex: 1; /* Makes buttons span the width equally */
+    text-align: center;
+  }
+}

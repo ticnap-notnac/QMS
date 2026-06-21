@@ -44,6 +44,27 @@
   display: none !important;
 }
 
+@media (max-width: 768px) {
+  .page-main, 
+  .page-main-wide, 
+  .settings-page-container, 
+  .user-info-page-container, 
+  .admin-page-container-narrow, 
+  .reports-main-wrap, 
+  .dcc-main-wrapper,
+  .iso-page-main {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-top: 80px !important; /* Space for Top Header */
+    padding-bottom: 80px !important; /* Space for Bottom Nav */
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+}
+
 /* Hide colorful background orbs */
 .bg-orb {
   display: none;

@@ -440,6 +440,11 @@
   gap: 12px;
   margin-bottom: 24px;
   align-items: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  padding-bottom: 8px; /* scrollbar space */
 }
 
 .user-info-tab-button {
@@ -468,5 +473,49 @@
   border-color: #cbd5e1;
   color: #0f172a;
   font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .settings-container,
+  .settings-container--profile {
+    grid-template-columns: 1fr !important;
+    padding: 16px !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  
+  .form-row-2,
+  .edit-profile-grid-2col,
+  .form-row-3,
+  .edit-profile-grid-3col {
+    grid-template-columns: 1fr !important;
+  }
+
+  .settings-sidebar,
+  .settings-sidebar--profile {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .sidebar-button {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .settings-page-container {
+    width: 100% !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    box-sizing: border-box;
+  }
 }
 

@@ -2,7 +2,16 @@
 .admin-panel-main { padding: 24px; max-width: 1200px; margin: 0 auto; }
 .admin-panel-title { margin-bottom: 24px; color: #0f172a; font-size: 28px; font-weight: 600; }
 
-.admin-tab-navigation { display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid #cbd5e1; padding-bottom: 12px; }
+.admin-tab-navigation { 
+  display: flex; 
+  gap: 12px; 
+  margin-bottom: 24px; 
+  border-bottom: 1px solid #cbd5e1; 
+  padding-bottom: 12px; 
+  overflow-x: auto; 
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+}
 
 /* Control Search Utility Rows */
 .admin-search-row { display: flex; gap: 16px; align-items: center; margin-bottom: 24px; }
@@ -30,15 +39,17 @@
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
+  white-space: nowrap;
 }
 .admin-add-button:hover { background: #1e293b; }
 
 /* ==========================================================================
-   MANAGEMENT INFORMATION TABLE LAYOUTS (FIXED NO-SCROLL ENGINE)
+   MANAGEMENT INFORMATION TABLE LAYOUTS (SCROLLABLE ENGINE)
    ========================================================================== */
 .admin-users-table-wrap {
   width: 100%;
-  overflow-x: hidden; 
+  overflow-x: auto; 
+  -webkit-overflow-scrolling: touch;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
   background: #ffffff;
@@ -47,8 +58,8 @@
 .admin-users-table { 
   width: 100%; 
   border-collapse: collapse; 
-  min-width: unset;
-  table-layout: fixed; /* 🔒 Forces columns to stay inside parent container layout bounds */
+  min-width: 1000px; /* Forces scroll on small screens instead of squishing */
+  table-layout: auto;
 }
 
 .admin-users-table th, 
@@ -860,6 +871,8 @@
   border: 1px solid #e2e8f0;
   border-radius: 18px;
   padding: 14px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .admin-top-row {
@@ -867,11 +880,16 @@
   justify-content: flex-start;
   gap: 12px;
   position: relative;
+  max-width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .admin-tabs-wrap {
   display: flex;
   z-index: 2;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .admin-search-actions-row {
@@ -881,15 +899,16 @@
   justify-content: flex-start;
   gap: 12px;
   margin-top: 14px;
+  flex-wrap: wrap;
 }
 
 .admin-search-container {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  width: min(520px, 48%);
-  min-width: 300px;
+  width: 100%;
+  min-width: 0;
   position: relative;
 }
 
