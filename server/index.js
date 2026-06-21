@@ -34,15 +34,6 @@ app.use((req, res, next) => {
 app.use(helmet())
 app.disable('x-powered-by')
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { error: 'Too many requests from this IP, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-})
-app.use(limiter)
-
 const allowedOrigins = [
   'http://localhost:8080',
   'http://localhost:5173',
@@ -59,6 +50,15 @@ app.use(cors({
   },
   credentials: true
 }))
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests from this IP, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+app.use(limiter)
 
 app.use(express.json())
 

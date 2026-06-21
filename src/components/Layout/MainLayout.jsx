@@ -1,5 +1,6 @@
 import Navbar from '@/components/Navbars/Navbar.jsx'
 import AppRouter from '@/routes/AppRouter.jsx'
+import ErrorBoundary from '@/components/ErrorBoundary.jsx'
 
 export default function MainLayout({
   isUserMenuOpen,
@@ -43,7 +44,9 @@ export default function MainLayout({
         setProfileTargetTab={setProfileTargetTab}
         userSiteName={userSiteName}
       />
-      <AppRouter sharedProps={sharedProps} refreshUserData={refreshUserData} />
+      <ErrorBoundary>
+        <AppRouter sharedProps={sharedProps} refreshUserData={refreshUserData} />
+      </ErrorBoundary>
     </>
   )
 }
