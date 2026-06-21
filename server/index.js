@@ -24,6 +24,13 @@ import { errorHandler } from './middlewares/errorMiddleware.js'
 
 const app = express()
 
+import logger from './utils/logger.js'
+
+app.use((req, res, next) => {
+  logger.info(`[${req.method}] ${req.url}`)
+  next()
+})
+
 app.use(helmet())
 app.disable('x-powered-by')
 
