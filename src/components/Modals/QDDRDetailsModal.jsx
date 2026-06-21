@@ -166,7 +166,9 @@ export default function QDDRDetailsModal({
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            paddingRight: '40px' // 🎯 THE FIX: Keeps status pill elements left of the '✕' exit trigger
+            paddingLeft: '28px',
+            paddingRight: '48px', // 🎯 THE FIX: Keeps status pill elements left of the '✕' exit trigger
+            paddingTop: '24px'
           }}
         >
           <h3 className="reports-update-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
@@ -181,11 +183,11 @@ export default function QDDRDetailsModal({
         {error && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0 }}>{error}</div>}
 
         {/* Scrollable Form Content */}
-        <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* Metadata Grid */}
           <div style={{
-            background: '#f8fafc',
+            background: '#ffffff',
             border: '1px solid #e2e8f0',
             borderRadius: '8px',
             padding: '16px',
@@ -222,7 +224,7 @@ export default function QDDRDetailsModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label className="label-field" style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase' }}>Types of Discrepancy Checked</label>
             <div style={{
-              background: '#f8fafc',
+              background: '#ffffff',
               border: '1px solid #e2e8f0',
               padding: '12px',
               borderRadius: '6px',
@@ -266,7 +268,7 @@ export default function QDDRDetailsModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label className="label-field" style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase' }}>Reason of Discrepancy</label>
             <div style={{
-              background: '#f8fafc',
+              background: '#ffffff',
               border: '1px solid #e2e8f0',
               padding: '12px',
               borderRadius: '6px',
@@ -399,7 +401,7 @@ export default function QDDRDetailsModal({
                 <div>
                   <span style={{ color: 'var(--muted)', fontSize: '12px' }}>Corrective Action:</span>
                   <div style={{
-                    background: '#f8fafc',
+                    background: '#ffffff',
                     border: '1px solid #e2e8f0',
                     padding: '10px',
                     borderRadius: '6px',
@@ -411,7 +413,7 @@ export default function QDDRDetailsModal({
                 <div>
                   <span style={{ color: 'var(--muted)', fontSize: '12px' }}>Preventive Action:</span>
                   <div style={{
-                    background: '#f8fafc',
+                    background: '#ffffff',
                     border: '1px solid #e2e8f0',
                     padding: '10px',
                     borderRadius: '6px',
@@ -440,9 +442,9 @@ export default function QDDRDetailsModal({
             display: 'flex',
             justifyContent: 'flex-end',
             alignItems: 'center',
-            padding: '14px 0 0 0',
+            padding: '18px 28px',
             borderTop: '1px solid #cbd5e1',
-            marginTop: '12px'
+            boxSizing: 'border-box'
           }}
         >
           <button type="button" className="btn-secondary-light" onClick={onClose} style={{ margin: 0, padding: '8px 24px', fontSize: '13px' }}>

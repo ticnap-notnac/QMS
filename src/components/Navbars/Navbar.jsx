@@ -62,10 +62,7 @@ export default function Navbar({
       <div className="app-navbar-inner">
         {/* Brand Logo Identity Section */}
         <div onClick={() => navigate('/')} className="app-navbar-brand">
-          <div className="brand-logo-box"><span>Q</span></div>
-          <div className="brand-text-stack">
-            <span className="brand-text">QFlow</span>
-          </div>
+          <img src="/qflow_logo_transparent.png" alt="QFlow Logo" className="brand-logo-img" />
         </div>
 
         {/* Site Badge — shows which site this user belongs to */}

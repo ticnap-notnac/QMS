@@ -36,7 +36,7 @@ app.disable('x-powered-by')
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 5000, // Increased from 100 to prevent 429 Too Many Requests during local dev/testing
   message: { error: 'Too many requests from this IP, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,

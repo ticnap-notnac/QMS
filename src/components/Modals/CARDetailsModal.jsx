@@ -90,7 +90,9 @@ export default function CARDetailsModal({
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            paddingRight: '40px' // 🎯 THE FIX: Keeps elements left of the '✕' close handle area
+            paddingLeft: '28px',
+            paddingRight: '48px', // 🎯 THE FIX: Keeps elements left of the '✕' close handle area
+            paddingTop: '24px'
           }}
         >
           <h3 className="reports-update-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
@@ -105,11 +107,11 @@ export default function CARDetailsModal({
         {error && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0 }}>{error}</div>}
 
         {/* Scrollable Form Content */}
-        <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* Metadata Grid */}
           <div style={{
-            background: '#f8fafc',
+            background: '#ffffff',
             border: '1px solid #e2e8f0',
             borderRadius: '8px',
             padding: '16px',
@@ -133,7 +135,7 @@ export default function CARDetailsModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label className="label-field" style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase' }}>Details of Non-Conformance</label>
             <div style={{
-              background: '#f8fafc',
+              background: '#ffffff',
               border: '1px solid #e2e8f0',
               padding: '12px',
               borderRadius: '6px',
@@ -148,7 +150,7 @@ export default function CARDetailsModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label className="label-field" style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase' }}>Linked ISO Clauses</label>
             <div style={{
-              background: '#f8fafc',
+              background: '#ffffff',
               border: '1px solid #e2e8f0',
               padding: '12px',
               borderRadius: '6px',
@@ -262,21 +264,21 @@ export default function CARDetailsModal({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span style={{ fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase' }}>Root Cause Analysis</span>
-                    <div style={{ padding: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#0f172a' }}>
+                    <div style={{ padding: '10px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#0f172a' }}>
                       {car.root_cause_analysis}
                     </div>
                   </div>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span style={{ fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase' }}>Immediate Corrective Action</span>
-                    <div style={{ padding: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#0f172a' }}>
+                    <div style={{ padding: '10px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#0f172a' }}>
                       {car.corrective_action}
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span style={{ fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase' }}>Preventive Action</span>
-                    <div style={{ padding: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#0f172a' }}>
+                    <div style={{ padding: '10px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#0f172a' }}>
                       {car.preventive_action}
                     </div>
                   </div>
@@ -397,9 +399,9 @@ export default function CARDetailsModal({
             display: 'flex',
             justifyContent: 'flex-end',
             alignItems: 'center',
-            padding: '14px 0 0 0',
+            padding: '18px 28px',
             borderTop: '1px solid #cbd5e1',
-            marginTop: '12px'
+            boxSizing: 'border-box'
           }}
         >
           <button type="button" className="btn-secondary-light" onClick={onClose} style={{ margin: 0, padding: '8px 24px', fontSize: '13px' }}>
