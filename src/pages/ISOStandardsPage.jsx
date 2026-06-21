@@ -21,14 +21,22 @@ export default function ISOStandardsPage({ userRole, userName }) {
           <SettingsNavbar userRole={userRole} />
           <div className="glass-card-rounded-bottom">
             <div className="admin-inner-panel iso-standards-panel">
-              <div className="admin-top-row"><div className="admin-tabs-wrap"><AdminNavbar activeTab="ISO Standards" /></div></div>
-              <div className="glass-card-content iso-standards-content">
-                <div className="iso-section-tabs" role="tablist" aria-label="ISO standards sections">
-                  <button type="button" className={`iso-section-tab ${activeSection === 'Add Standard' ? 'active' : ''}`} onClick={() => setActiveSection('Add Standard')}><PlusCircle size={16} />Add Standard</button>
-                  <button type="button" className={`iso-section-tab ${activeSection === 'Add Clauses' ? 'active' : ''}`} onClick={() => setActiveSection('Add Clauses')}><Save size={16} />Add Clauses</button>
-                  <button type="button" className={`iso-section-tab ${activeSection === 'Toggle Standards' ? 'active' : ''}`} onClick={() => setActiveSection('Toggle Standards')}><CheckCircle2 size={16} />Toggle Standards</button>
-                  <button type="button" className={`iso-section-tab ${activeSection === 'Manage Clauses' ? 'active' : ''}`} onClick={() => setActiveSection('Manage Clauses')}><List size={16} />Manage Clauses</button>
+              <div className="search-row">
+                <div className="admin-top-row" style={{ width: '100%', marginBottom: '0' }}>
+                  <div className="admin-tabs-wrap">
+                    <AdminNavbar activeTab="ISO Standards" />
+                  </div>
                 </div>
+                <div className="admin-search-actions-row">
+                  <div className="iso-section-tabs" role="tablist" aria-label="ISO standards sections" style={{ width: '100%', justifyContent: 'flex-start' }}>
+                    <button type="button" className={`iso-section-tab ${activeSection === 'Add Standard' ? 'active' : ''}`} onClick={() => setActiveSection('Add Standard')}><PlusCircle size={16} />Add Standard</button>
+                    <button type="button" className={`iso-section-tab ${activeSection === 'Add Clauses' ? 'active' : ''}`} onClick={() => setActiveSection('Add Clauses')}><Save size={16} />Add Clauses</button>
+                    <button type="button" className={`iso-section-tab ${activeSection === 'Toggle Standards' ? 'active' : ''}`} onClick={() => setActiveSection('Toggle Standards')}><CheckCircle2 size={16} />Toggle Standards</button>
+                    <button type="button" className={`iso-section-tab ${activeSection === 'Manage Clauses' ? 'active' : ''}`} onClick={() => setActiveSection('Manage Clauses')}><List size={16} />Manage Clauses</button>
+                  </div>
+                </div>
+              </div>
+              <div className="glass-card-content iso-standards-content">
                 {standardsError && <div className="iso-banner iso-banner--error"><span>{standardsError}</span></div>}
                 {activeSection === 'Add Standard' && <AddStandardSection {...addStandardSectionProps} />}
                 {activeSection === 'Add Clauses' && <AddClausesSection {...addClausesSectionProps} />}

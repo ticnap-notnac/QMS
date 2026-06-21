@@ -11,9 +11,8 @@ function SettingsNavbar({ userRole }) {
   const navItem = (label, path, Icon) => {
     let isActive = location.pathname === path
 
-    // Treat the Admin Panel tab as active for several admin-related pages
     if (path === '/admin') {
-      const adminPaths = ['/admin', '/settings/departments', '/settings/roles', '/settings/locations', '/settings/product-types', '/settings/users']
+      const adminPaths = ['/admin', '/settings/departments', '/settings/roles', '/settings/locations', '/settings/product-types', '/settings/users', '/settings/iso-standards']
       isActive = adminPaths.includes(location.pathname)
     }
 

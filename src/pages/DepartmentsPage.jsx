@@ -4,7 +4,6 @@ import AddCategoryModal from '@/components/Modals/AddCategoryModal'
 import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
 import { useDepartmentsLogic } from '@/hooks/useAdminPanel.js'
-import './PagesStyles.css'
 import './AdminPanel.css'
 
 export default function DepartmentsPage({ userRole }) {
@@ -33,13 +32,12 @@ export default function DepartmentsPage({ userRole }) {
                     <AdminNavbar activeTab="Dept" />
                   </div>
                 </div>
-
                 <div className="admin-search-actions-row">
                   <div className="admin-search-container">
                     <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reload} placeholder="Search departments..." />
                   </div>
                   <div className="admin-actions-right">
-                    <button onClick={openCategoryModal} className="btn-add-action">+ Add Department</button>
+                    <button onClick={openCategoryModal} className="btn-add-action"><span>+ Add Department</span></button>
                   </div>
                 </div>
               </div>

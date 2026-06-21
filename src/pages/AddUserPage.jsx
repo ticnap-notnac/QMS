@@ -6,7 +6,6 @@ import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import UsersTable from '@/components/UsersTable/UsersTable'
 import { useAddUserLogic } from '@/hooks/useAdminPanel.js'
 import SubmissionLoadingOverlay from '@/components/UI/SubmissionLoadingOverlay.jsx'
-import './PagesStyles.css'
 import './AdminPanel.css'
 
 export default function AddUserPage({ userRole }) {

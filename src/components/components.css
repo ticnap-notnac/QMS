@@ -365,7 +365,22 @@
 /* AdminNavbar styles */
 .admin-top-nav { display: flex; gap: 20px; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 .admin-tabs { display: flex; gap: 8px; align-items: center; }
-.admin-tab-button { background: #ffffff; border: 1px solid #cbd5e1; color: #475569; padding: 8px 12px; border-radius: 14px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s ease; }
+.admin-tab-button { 
+  background: #ffffff; 
+  border: 1px solid #cbd5e1; 
+  color: #475569; 
+  padding: 0 16px; 
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px; 
+  cursor: pointer; 
+  font-weight: 600; 
+  font-size: 13px; 
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
 .admin-tab-button.active { background: #0f172a; color: #ffffff; border-color: #0f172a; }
 .admin-tab-button.disabled,
 .admin-tab-button:disabled { opacity: 0.45; cursor: not-allowed; color: #94a3b8; }
@@ -683,5 +698,690 @@ div[class*="navbar"] {
   align-items: center;
   justify-content: center;
   border: 1.5px solid #1e1e1e;
+}
+
+
+/* --- Migrated from PagesStyles.css --- */
+/* ===================== SHARED LAYOUT + UTILITIES ===================== */
+
+.page-root {
+  width: 100%;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+
+
+
+.page-main-wide {
+  flex: 1;
+  width: 95%;
+  max-width: 1050px;
+  margin: 40px auto;
+  padding: 0 16px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 10;
+}
+
+/* Backwards-compatible alias for pages that use `page-main` */
+.page-main {
+  flex: 1;
+  width: 95%;
+  max-width: 1160px;
+  margin: 48px auto 24px; /* give space below navbar */
+  padding: 8px 20px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 10;
+}
+
+.page-main-centered {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+
+.page-padding { padding: 24px; }
+.page-container { padding: 24px; max-width: 1000px; margin: 0 auto; }
+.page-heading { margin-bottom: 24px; color: #334155; }
+.page-title {
+  margin-bottom: 24px;
+  text-align: left;
+  color: #334155;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.success-message {
+  color: green;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid green;
+  border-radius: 6px;
+}
+
+.mb-24 { margin-bottom: 24px; }
+.mt-24 { margin-top: 24px; }
+.full-width { width: 100%; }
+.max-w-320 { max-width: 320px; }
+.self-start { align-self: flex-start; }
+.relative { position: relative; }
+.wrap { flex-wrap: wrap; }
+
+.center-row {
+  display: flex;
+  justify-content: center;
+}
+
+.flex-start-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 16px;
+}
+
+.badges-row {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-cyan { color: #0f172a; }
+.icon-teal { color: #a1a1aa; }
+.icon-amber { color: #f59e0b; }
+.icon-blue { color: #e4e4e7; }
+.icon-green { color: #10b981; }
+.icon-abs { position: absolute; right: 12px; top: 12px; color: #64748b; }
+.icon-fill-soft { fill: rgba(255, 255, 255, 0.1); }
+
+.glass-card-heading {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.glass-card-subtext {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* ==========================================================================
+   REPORTS HUB HEADER ACTION ROW UPDATES
+   ========================================================================== */
+.reports-action-header-row {
+  display: flex;
+  justify-content: space-between; /* Keeps left cluster on far left, submit on far right */
+  align-items: center;
+  margin-bottom: 24px;
+  width: 100%;
+}
+/* ==========================================================================
+   NOTIFICATION MODAL LAYER STACKING FIX
+   ========================================================================== */
+
+/* 🎯 This targets the main background overlay of notification and modal panels */
+.notification-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); /* Semi-transparent backdrop */
+  
+  /* 🚀 CRITICAL: Forces the modal to sit securely on top of the navbar layer */
+  z-index: 9999 !important;
+  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Ensure navbar stays underneath modal overlays at safe z-index */
+.app-navbar {
+  z-index: 100; /* Keeps it layered safely underneath modal overlays */
+}
+
+/* ==========================================================================
+   📦 PREMIUM OVERFLOW-SAFE CREATION MODAL FIX
+   ========================================================================== */
+
+/* 1. Ensure the modal container blocks leaking content and centers itself */
+.modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(4px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
+}
+
+/* 2. Fix the main card container shape and lock down layout boundaries */
+.modal-card {
+  width: 100%;
+  max-width: 580px; /* Default width for standard modals */
+  max-height: 85vh; /* Prevents modal from shooting past viewport edges */
+  background: #f8fafc; /* QMS dashboard panel background tone */
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column; /* Structured ordering layout stack: Header -> Content -> Footer */
+  overflow: hidden; /* Hides component leakage so corner curves clip beautifully */
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+  position: relative !important; /* Crucial for absolute close button positioning */
+}
+
+/* 3. Freeze the title header elements block at the top */
+.modal-header {
+  flex-shrink: 0;
+  padding: 24px 28px 12px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* 4. Confine scrolling EXCLUSIVELY to the inner form field zone */
+.modal-form-content {
+  flex: 1;
+  overflow-y: auto; /* Enables clean internal vertical scrollbars inside your input box fields */
+  min-height: 0; /* 🚀 CRITICAL: Fix flexbox overflow clipping - allows child to shrink and scroll */
+  padding: 12px 28px 24px 28px;
+  box-sizing: border-box;
+}
+
+/* 📐 OPTIONAL GRID: Mix simple short fields side-by-side to save huge vertical space */
+.modal-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* 5. Fix Action Buttons to stay anchored permanently at the bottom footer */
+.modal-footer-actions {
+  flex-shrink: 0; /* Keeps footer completely stationary and un-shrinkable */
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 28px;
+  background: transparent; 
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 6. Central styling for absolute modal close button positioning */
+.modal-close-button {
+  position: absolute !important;
+  top: 16px !important;
+  right: 16px !important;
+  z-index: 10 !important;
+  background: none !important;
+  border: none !important;
+  color: #64748b !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  transition: color 0.2s ease !important;
+}
+
+.modal-close-button:hover {
+  color: #0f172a !important;
+}
+
+/* ==========================================================================
+   🧼 CLEAN MINIMALIST INTERNAL SCROLLBAR FOR THE FORM DATA TRACK
+   ========================================================================== */
+.modal-form-content::-webkit-scrollbar {
+  width: 6px;
+  display: block;
+}
+
+.modal-form-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-form-content::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.15); /* Theme dark scroll tracker for light background */
+  border-radius: 10px;
+}
+
+.modal-form-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+/* ==========================================================================
+   🟢🟡🔴 DYNAMIC STATUS BADGE STYLING (ACTIVE, INACTIVE, DEACTIVATED)
+   ========================================================================== */
+
+.status-badge { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155;
+  display: inline-flex !important;     /* 🚀 Switches to inline layout so the container naturally wraps the text length */
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  height: 22px !important;             /* Crisp vertical dimension height mapping */
+  
+  /* 🎯 THE SECRET SAET: Replaces fixed widths with comfortable left/right cushioning gaps */
+  padding: 0 12px !important;          
+  min-width: unset !important;         /* ✂️ Removes the rigid fixed box width limit constraints */
+  max-width: unset !important;         /* ✂️ Removes the rigid fixed box width limit constraints */
+  
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+}
+
+.status-active {
+  background: rgba(16, 185, 129, 0.14) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.status-inactive {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.status-deactivated {
+  background: rgba(245, 158, 11, 0.14) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+
+
+/* ==========================================================================
+   FIX: FORCING NOTIFICATION PANEL TO SCREEN CENTER & ABSOLUTE FRONT
+   ========================================================================== */
+
+.notification-floating-dropdown {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 99999 !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  right: auto !important;
+}
+
+.notification-floating-dropdown .modal-card {
+  z-index: 9999999 !important;
+  position: relative !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* ==========================================================================
+   THE NUCLEAR OVERRIDE: SIBLING STACKING ENGINE CORRECTION
+   ========================================================================== */
+
+.navbar + .notification-floating-dropdown,
+.navbar-container + .notification-floating-dropdown,
+.notification-floating-dropdown {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 2147483647 !important;
+}
+
+.navbar,
+.navbar-container,
+div[class*="navbar"] {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* ==========================================================================
+   PORTAL-POWERED NOTIFICATION OVERLAY STYLES
+   ========================================================================== */
+
+.notification-portal-overlay {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(24, 24, 27, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999999 !important;
+}
+
+.notification-modal-card {
+  position: relative !important;
+  background: rgba(24, 24, 27, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 650px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8);
+  padding: 24px;
+}
+
+/* ==========================================================================
+   📊 AUDIT ACTIVITY LOGS SCROLL WINDOW CORRECTION ENGINE
+   ========================================================================== */
+
+/* 1. Ensure the deep inner container wraps tightly and allows scrolling */
+.iso-standards-panel,
+.admin-inner-panel { background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;
+  height: auto !important; /* Forces the glass container to scale naturally if needed */
+  max-height: none !important;
+}
+
+/* 2. THE MAIN FIX: Create a contained, scrollable viewport box wrapper strictly for the table object */
+.iso-table-wrap,
+div[class*="table-wrap"] {
+  width: 100% !important;
+  max-height: 520px !important;       /* 🛑 Clamps the maximum allowed height box space to fit perfectly */
+  overflow-y: auto !important;         /* ⚓ Adds a vertical scrollbar when data exceeds the height limit */
+  overflow-x: auto !important;         /* Handles any horizontal text blowout seamlessly */
+  border-radius: 8px !important;
+  background: #f1f5f9 !important; /* Soft interior backing contrast tint */
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  box-sizing: border-box !important;
+}
+
+/* 3. Freeze the table header row at the top so it stays visible while scrolling */
+.iso-table thead th,
+.table-wrap table thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background: #f8fafc !important;     /* Deep dark background matches your theme palette color */
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08) !important; /* Keeps a clean bottom divider edge */
+}
+
+/* 4. Custom premium scrollbar styling to match your high-fidelity theme design */
+div[class*="table-wrap"]::-webkit-scrollbar,
+.iso-table-wrap::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+div[class*="table-wrap"]::-webkit-scrollbar-track,
+.iso-table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+div[class*="table-wrap"]::-webkit-scrollbar-thumb,
+.iso-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.1) !important; /* Soft cyan glass color scheme tint track glow */
+  border-radius: 999px;
+}
+
+div[class*="table-wrap"]::-webkit-scrollbar-thumb:hover,
+.iso-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.2) !important;
+}
+
+/* ==========================================================================
+   🧩 FIX: HORIZONTAL WIDTH LOCK ENGINE FOR SYSTEM SYSTEM LOGS TABLE
+   ========================================================================== */
+
+/* 1. Set explicit width constraints on the parent log section shell */
+.panel-narrow,
+.glass-card-content {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 2. Lock down the table grid layout calculation mechanics */
+.system-logs-table {
+  width: 100% !important;
+  table-layout: fixed !important; /* 🎯 Forces columns to strictly respect the % widths assigned in the file */
+  border-collapse: collapse !important;
+}
+
+/* 3. Surgical fix: Force metadata text lines or JSON strings to wrap naturally instead of stretching the row width */
+.system-logs-table td {
+  white-space: normal !important;  /* Overrides any rigid inline non-wrapping defaults */
+  word-wrap: break-word !important; /* ✂️ Breaks up long string paths safely without overflowing columns */
+  word-break: break-all !important;  /* Extreme safety guard rail against continuous characters blockages */
+  overflow-wrap: break-word !important;
+  vertical-align: top !important;   /* Aligns multi-line strings cleanly to the top of the grid cell */
+  padding: 10px 12px !important;
+}
+
+/* 4. Match alignment styling properties for the row heads */
+.system-logs-table th {
+  text-align: left !important;
+  padding: 12px !important;
+  white-space: nowrap !important;
+}
+
+/* ==========================================================================
+   🔒 ABSOLUTE WIDTH CONTAINMENT FOR AUDIT LOGS SUB-PANEL
+   ========================================================================== */
+
+/* 1. Force the root sub-panel components to never break past 100% width */
+.system-logs-panel {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important; /* Prevents the panel inner components from bleeding out */
+}
+
+/* 2. Constrain the internal logs table wrapper block */
+.system-logs-panel .logs-table,
+.system-logs-panel .iso-table-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important; /* ⚓ Force a local horizontal scrollbar inside the table if columns need more room, keeping the main card intact */
+  box-sizing: border-box !important;
+}
+
+/* 3. Re-enforce strict fixed table columns sizing bounds */
+.system-logs-table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important; 
+}
+
+/* 4. Force JSON text and detail descriptions to stay wrapped within their grid coordinates */
+.system-logs-table td {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+}
+
+/* ==========================================================================
+   🏷️ UNIFIED REPORT CARD STATUS BADGES
+   ========================================================================== */
+
+/* Target the header status tags together */
+.app-navbar-inner ~ .page-container .glass-card-dcc span, 
+.app-navbar-inner ~ main span[class*="status"],
+div:has(> .nav-user-info) ~ div span,
+.severity-critical, .severity-high, .severity-medium, .severity-low {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  
+  /* 🎯 THE FIX: Force them to share identical sizing variables */
+  min-width: 90px !important;       /* Ensures tags are the exact same width */
+  height: 28px !important;          /* Enforces identical block heights */
+  padding: 0 12px !important;       /* Uniform internal horizontal spacing */
+  box-sizing: border-box !important;
+  
+  /* Typography & Presentation Consistency */
+  border-radius: 6px !important;    /* Clean, identical corner rounding rounding */
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  text-align: center !important;
+}
+
+/* ==========================================================================
+   📂 SETTINGS TOP NAVBAR
+   ========================================================================== */
+.settings-top-nav {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.user-info-tab-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.user-info-tab-button:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.user-info-tab-button.active {
+  background: #cbd5e1;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   🔍 SEARCH FORM LIGHT THEME
+   ========================================================================== */
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.search-input-light {
+  width: 100%;
+  padding: 10px 48px 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  outline: none;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.search-input-light:focus {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.05);
+}
+
+.search-icon {
+  position: absolute;
+  right: 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #475569;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.search-icon:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+/* ==========================================================================
+   FORM CONTROLS AND LABELS STYLING FOR MODALS
+   ========================================================================== */
+.input-field {
+  width: 100% !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  color: #0f172a !important;
+  font-size: 14px !important;
+  font-family: var(--body) !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+input.input-field,
+select.input-field {
+  height: 40px !important;
+  padding: 0 16px !important;
+}
+
+textarea.input-field {
+  padding: 12px 16px !important;
+}
+
+.input-field:hover {
+  border-color: #94a3b8 !important;
+}
+
+.input-field:focus {
+  border-color: #0f172a !important;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.05) !important;
+}
+
+.input-field:disabled {
+  background: #f1f5f9 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed !important;
+}
+
+.label-field {
+  display: block !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #475569 !important;
+  margin-bottom: 6px !important;
 }
 

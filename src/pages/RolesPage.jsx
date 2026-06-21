@@ -4,7 +4,6 @@ import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import AddCategoryModal from '@/components/Modals/AddCategoryModal'
 import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
-import './PagesStyles.css'
 import './AdminPanel.css'
 import useRolesPageLogic from '@/hooks/useRolesPageLogic'
 import {
