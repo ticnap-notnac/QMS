@@ -32,8 +32,8 @@ export default function CARReportsList({
               <th>Recipient</th>
               <th>Requesting Dept</th>
               <th>Responsible Dept</th>
-              <th>Product / Material</th>
-              <th>Model / Type</th>
+              <th>Product&nbsp;/<br />Material</th>
+              <th>Model&nbsp;/<br />Type</th>
               <th>Control No.</th>
               <th>Affected Qty</th>
               <th>Nonconformance Details</th>

@@ -623,6 +623,7 @@
 .iso-actions-row {
   display: flex;
   justify-content: flex-end;
+  gap: 12px;
 }
 
 .iso-primary-button {

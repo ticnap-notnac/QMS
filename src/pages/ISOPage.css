@@ -34,9 +34,34 @@
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+.btn-metric-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  background: linear-gradient(135deg, #a1a1aa, #e4e4e7);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.25);
+}
+
+.btn-metric-card:hover {
+  background: linear-gradient(135deg, #94a3b8, #cbd5e1);
+  color: #0f172a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15);
+}
+
 .iso-metric-button {
   cursor: pointer;
-  padding: 12px 8px;
 }
 .iso-graph-card {
   flex: 1;
@@ -223,7 +248,7 @@
 .iso-progress-bar-container {
   flex: 1;
   height: 8px;
-  background: rgba(255,255,255,0.05);
+  background: #e2e8f0;
   border-radius: 99px;
   overflow: hidden;
 }
@@ -231,6 +256,18 @@
 .iso-progress-bar-fill {
   height: 100%;
   border-radius: 99px;
+}
+
+.progress-fill-success {
+  background: #10b981;
+}
+
+.progress-fill-warning {
+  background: #f59e0b;
+}
+
+.progress-fill-danger {
+  background: #ef4444;
 }
 
 /* Access Denied Page Styles */

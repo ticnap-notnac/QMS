@@ -15,14 +15,25 @@
 }
 
 .btn-glass-action {
-  background: rgba(24, 24, 27, 0.65);
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 8px;
   padding: 8px;
-  color: #0f172a;
+  color: #475569;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  height: 38px;
+  width: 38px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.btn-glass-action:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
 }
 
 .reports-card {
@@ -138,6 +149,14 @@
   font-size: 13px;
   font-weight: 600;
   box-shadow: 0 4px 15px rgba(255, 255, 255, 0.25);
+  transition: all 0.2s ease;
+}
+
+.reports-submit-primary:hover {
+  background: linear-gradient(135deg, #94a3b8, #cbd5e1) !important;
+  color: #0f172a !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15);
 }
 
 .dropdown-option-btn {
@@ -459,22 +478,24 @@
 }
 
 .btn-quick-toggle:hover {
-  background: #f1f5f9; border-color: #94a3b8;
-  color: #fff;
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
 }
 
 .btn-quick-toggle.active {
-  background: #0f172a; border-color: #0f172a; color: #ffffff;
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
 }
 
-.btn-glass-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 38px;
-  width: 38px;
-  box-sizing: border-box;
+.btn-quick-toggle.active:hover {
+  background: #1e293b;
+  border-color: #1e293b;
+  color: #ffffff;
 }
+
+/* btn-glass-action properties consolidated in first block */
 
 /* ==========================================================================
    📱 FACEBOOK-STYLE LAYOUT ENGINE FOR REPORT TIMELINE CARDS
@@ -537,30 +558,55 @@
   border-collapse: collapse !important;
 }
 
+.reports-table-scroll-wrap .iso-table td {
+  padding: 12px 10px !important;
+  font-size: 0.78rem !important;
+  text-align: left !important;
+  vertical-align: middle !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+.reports-table-scroll-wrap .iso-table th {
+  padding: 12px 10px !important;
+  font-size: 0.78rem !important;
+  text-align: left !important;
+  vertical-align: middle !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  background: #f8fafc !important;
+}
+
 .reports-table-scroll-wrap::-webkit-scrollbar {
-  width: 6px !important;
-  height: 6px !important;
+  height: 8px !important;
+  display: block !important;
 }
 
 .reports-table-scroll-wrap::-webkit-scrollbar-track {
-  background: transparent !important;
+  background: rgba(15, 23, 42, 0.02) !important;
+  border-radius: 4px !important;
 }
 
 .reports-table-scroll-wrap::-webkit-scrollbar-thumb {
-  background: rgba(15, 23, 42, 0.1) !important;
-  border-radius: 999px !important;
+  background: #cbd5e1 !important;
+  border-radius: 4px !important;
 }
 
 .reports-table-scroll-wrap::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 23, 42, 0.2) !important;
+  background: #94a3b8 !important;
 }
 
 .reports-table-scroll-wrap .iso-table td div.clause-description,
 .reports-table-scroll-wrap .iso-table .clause-description {
-  max-width: 300px !important;
   white-space: normal !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  word-break: break-word !important;
+  max-width: 100% !important;
+  line-height: 1.5 !important;
 }
 
 /* ReportsPage Inline Style Extractions */
@@ -611,6 +657,14 @@
 }
 .reports-tab-nav-btn.active {
   background: #0f172a;
+  color: #ffffff;
+}
+.reports-tab-nav-btn:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.06);
+}
+.reports-tab-nav-btn.active:hover {
+  background: #1e293b;
   color: #ffffff;
 }
 

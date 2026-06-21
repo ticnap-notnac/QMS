@@ -136,7 +136,11 @@ input {
   font-weight: 600;
   transition: all 0.2s ease;
 }
-.btn-secondary-light:hover { background: #f8fafc; border-color: #94a3b8; color: #0f172a; }
+.iso-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
 
 /* Universal Shared Form Layout Contexts */
 .form-group {

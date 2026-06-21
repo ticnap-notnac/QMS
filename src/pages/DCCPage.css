@@ -241,7 +241,6 @@
   border-collapse: collapse !important;
 }
 
-.dcc-scrollable-table-box th,
 .dcc-scrollable-table-box td {
   padding: 12px 10px !important;
   font-size: 0.78rem !important;
@@ -250,6 +249,17 @@
   overflow: visible !important;
   text-overflow: clip !important;
   white-space: nowrap !important;
+}
+
+.dcc-scrollable-table-box th {
+  padding: 12px 10px !important;
+  font-size: 0.78rem !important;
+  text-align: left !important;
+  vertical-align: middle !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
 }
 
 .dcc-scrollable-table-box .clause-description,
