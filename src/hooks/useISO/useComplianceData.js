@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import * as isoService from '@/services/isoService'
 import { supabase } from '@/utils/supabase'
-import { SEVERITY_LEVELS, AUDIT_STATUS } from '../../../shared/constants'
+import { SEVERITY_LEVELS, AUDIT_STATUS, REPORT_STATUS } from '../../../shared/constants'
 
 export function useComplianceData() {
   const [compliantCount, setCompliantCount] = useState(0)
@@ -63,7 +63,10 @@ export function useComplianceData() {
 
       // Fetch NCRs
       const rawNcrData = await isoService.fetchNcrReportsForISO()
-      const ncrData = (rawNcrData || []).filter(ncr => !linkedNcrIds.has(Number(ncr.id)))
+      const ncrData = (rawNcrData || []).filter(ncr => 
+        !linkedNcrIds.has(Number(ncr.id)) && 
+        String(ncr.status || '').toUpperCase() !== REPORT_STATUS.CLOSED
+      )
 
       // Group active NCRs by clause_id in memory
       const ncrGroups = {}
@@ -71,6 +74,8 @@ export function useComplianceData() {
 
       ncrData.forEach(ncr => {
         const cid = ncr.clause_id
+        const sev = String(ncr.severity || '').trim().toLowerCase()
+        
         if (cid) {
           if (!ncrGroups[cid]) {
             ncrGroups[cid] = {
@@ -80,7 +85,6 @@ export function useComplianceData() {
           }
           ncrGroups[cid].ncrs.push(ncr)
         } else {
-          const sev = String(ncr.severity || '').trim().toLowerCase()
           if ([SEVERITY_LEVELS.HIGH, SEVERITY_LEVELS.CRITICAL].includes(sev)) {
             unlinkedEscalations.push({
               id: `ncr-unlinked-${ncr.id}`,
@@ -91,6 +95,19 @@ export function useComplianceData() {
               ncr_ids: [ncr.id],
               ncr_references: [ncr.reference_no]
             })
+          } else {
+            const hasAttributes = ncr.department_id || ncr.location_id || ncr.product_type_id || ncr.issue_type_id;
+            if (hasAttributes) {
+              const trendKey = `trend-${ncr.department_id || 'none'}-${ncr.location_id || 'none'}-${ncr.product_type_id || 'none'}-${ncr.issue_type_id || 'none'}`
+              if (!ncrGroups[trendKey]) {
+                ncrGroups[trendKey] = {
+                  clause: { clause_number: 'Trend', title: 'Recurring Unlinked Issues' },
+                  isTrend: true,
+                  ncrs: []
+                }
+              }
+              ncrGroups[trendKey].ncrs.push(ncr)
+            }
           }
         }
       })
@@ -114,12 +131,13 @@ export function useComplianceData() {
 
           const matchedNcrs = [...highNcrs, ...medNcrs, ...lowNcrs]
 
+          const isTrend = String(clauseId).startsWith('trend-')
           escalatedFindings.push({
             id: `ncr-gap-${clauseId}`,
             isNcrGap: true,
-            clause_id: clauseId,
+            clause_id: isTrend ? null : clauseId,
             iso_clauses: group.clause,
-            evidence: `Escalated NCR Trend: ${matchedNcrs.length} active NCRs (${details.join(', ')}) violating this clause. Affected: ${matchedNcrs.map(n => n.reference_no).join(', ')}`,
+            evidence: `Escalated NCR Trend: ${matchedNcrs.length} active NCRs (${details.join(', ')}) violating this ${isTrend ? 'area' : 'clause'}. Affected: ${matchedNcrs.map(n => n.reference_no).join(', ')}`,
             ncr_ids: matchedNcrs.map(n => n.id),
             ncr_references: matchedNcrs.map(n => n.reference_no)
           })

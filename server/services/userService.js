@@ -79,6 +79,18 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
     return { authUser: null, profile: null, error: authError.message, status: 500 }
   }
 
+  // Force update the public.users record right after creation, because the DB trigger
+  // might not have been updated to map site_id from user_metadata.
+  const profileUpdates = {}
+  if (siteId) profileUpdates.site_id = siteId
+  if (roleId) profileUpdates.role_id = roleId
+  if (departmentId) profileUpdates.department_id = departmentId
+  if (contactNumber) profileUpdates.contact_number = contactNumber
+
+  if (Object.keys(profileUpdates).length > 0) {
+    await supabase.from('users').update(profileUpdates).eq('auth_id', authData.user.id)
+  }
+
   const { data: profileData, error: profileError } = await supabase
     .from('users')
     .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, employee_no, site_id')

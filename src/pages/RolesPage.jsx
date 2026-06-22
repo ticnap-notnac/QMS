@@ -30,10 +30,12 @@ export default function RolesPage({
     setCategoryInput,
     formError,
     formMessage,
+    pageMessage,
+    pageError,
     handleSubmitCategory,
     handleDeleteRole,
     creating,
-    error,
+    categoryError,
   } = useRolesPageLogic({ loadFn: loadRolesController, createFn: createRoleController, deleteFn: deleteRoleController })
 
   return (
@@ -69,7 +71,8 @@ export default function RolesPage({
                 <div className="panel-narrow">
                   <p className="glass-card-subtext">Use the add button above to create a new role.</p>
                   <AdminListPanel title="Available Roles" items={filtered} loading={loading} labelKey="role_name" onDelete={handleDeleteRole} deletingId={deletingId} noMatchesText="No matches found." />
-                  {error ? <p className="glass-card-subtext">{error}</p> : null}
+                  {pageMessage ? <div className="user-info-success">{pageMessage}</div> : null}
+                  {(pageError || categoryError) ? <p className="user-info-error">{pageError || categoryError}</p> : null}
                 </div>
               </div>
             </div>

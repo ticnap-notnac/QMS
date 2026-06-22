@@ -11,16 +11,16 @@ export const createReportSchema = z.object({
 
 export const assignReportSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Report ID must be a valid UUID')
+    id: z.string().min(1, 'Report ID is required')
   }),
   body: z.object({
-    assignedToId: z.string().uuid('Assigned To ID must be a valid UUID')
+    assignedToId: z.union([z.string(), z.number()]).transform(String).refine(val => val.trim().length > 0, 'Assigned To ID is required')
   })
 })
 
 export const reviewReportApprovalSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Report ID must be a valid UUID')
+    id: z.string().min(1, 'Report ID is required')
   }),
   body: z.object({
     decision: z.enum(['approve', 'reject'], { errorMap: () => ({ message: 'Decision must be either approve or reject.' }) }),
@@ -38,7 +38,7 @@ export const reviewReportApprovalSchema = z.object({
 
 export const rateReportSchema = z.object({
   params: z.object({
-    id: z.string().uuid('Report ID must be a valid UUID')
+    id: z.string().min(1, 'Report ID is required')
   }),
   body: z.object({
     rating: z.number().min(0.5).max(5.0, 'Rating must be a number between 0.5 and 5.0.')

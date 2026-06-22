@@ -58,6 +58,11 @@ export async function fetchNcrReportsForISO() {
       severity,
       clause_id,
       description,
+      status,
+      department_id,
+      product_type_id,
+      location_id,
+      issue_type_id,
       iso_clauses (
         clause_number,
         title

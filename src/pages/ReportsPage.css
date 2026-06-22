@@ -153,10 +153,17 @@
 }
 
 .reports-submit-primary:hover {
+<<<<<<< HEAD
   background: linear-gradient(135deg, #94a3b8, #cbd5e1) !important;
   color: #0f172a !important;
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15);
+=======
+  background: #0f172a !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.15) !important;
+  transform: translateY(-1px);
+>>>>>>> ISO
 }
 
 .dropdown-option-btn {
@@ -478,8 +485,12 @@
 }
 
 .btn-quick-toggle:hover {
+<<<<<<< HEAD
   background: #f1f5f9;
   border-color: #94a3b8;
+=======
+  background: #f1f5f9; border-color: #94a3b8;
+>>>>>>> ISO
   color: #0f172a;
 }
 
@@ -659,9 +670,9 @@
   background: #0f172a;
   color: #ffffff;
 }
-.reports-tab-nav-btn:hover {
-  color: #0f172a;
-  background: rgba(15, 23, 42, 0.06);
+.reports-tab-nav-btn:hover:not(.active) {
+  color: #0f172a !important;
+  background: rgba(15, 23, 42, 0.06) !important;
 }
 .reports-tab-nav-btn.active:hover {
   background: #1e293b;
