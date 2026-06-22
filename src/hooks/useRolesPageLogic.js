@@ -9,7 +9,10 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
   const [formError, setFormError] = useState('')
   const [formMessage, setFormMessage] = useState('')
 
-  const { items, loading, deletingId, creating, reload, createItem, deleteItem, error } = useCategoryManager({
+  const [pageMessage, setPageMessage] = useState('')
+  const [pageError, setPageError] = useState('')
+
+  const { items, loading, deletingId, creating, reload, createItem, deleteItem, error: categoryError } = useCategoryManager({
     loadFn,
     createFn,
     deleteFn,
@@ -46,7 +49,8 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
       setFormError('')
       await createItem(nextValue)
       await reloadLookups()
-      setFormMessage(`Added role ${nextValue} successfully.`)
+      setPageMessage(`Added role "${nextValue}" successfully.`)
+      setPageError('')
       closeCategoryModal()
     } catch (err) {
       setFormError(err.message)
@@ -57,12 +61,12 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
     const confirmed = window.confirm(`Delete role "${role.role_name}"?`)
     if (!confirmed) return
     try {
-      setFormError('')
+      setPageError('')
       await deleteItem(role.id)
       await reloadLookups()
-      setFormMessage(`Deleted role ${role.role_name} successfully.`)
+      setPageMessage(`Deleted role "${role.role_name}" successfully.`)
     } catch (err) {
-      setFormError(err.message)
+      setPageError(err.message)
     }
   }
 
@@ -84,8 +88,12 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
     setFormError,
     formMessage,
     setFormMessage,
+    pageMessage,
+    setPageMessage,
+    pageError,
+    setPageError,
     handleSubmitCategory,
     handleDeleteRole,
-    error,
+    categoryError,
   }
 }
