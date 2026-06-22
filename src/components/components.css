@@ -39,11 +39,16 @@
 }
 
 .brand-logo-img {
-  height: 48px;
+  height: 80px;
   width: auto;
   max-width: 100%;
   object-fit: contain;
   display: block;
+  transition: transform 0.25s ease;
+}
+
+.app-navbar-brand:hover .brand-logo-img {
+  transform: scale(1.05);
 }
 
 .brand-logo-box {

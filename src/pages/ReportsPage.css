@@ -110,6 +110,14 @@
   font-size: 13px;
   font-weight: 600;
   box-shadow: 0 4px 15px rgba(255, 255, 255, 0.25);
+  transition: all 0.2s ease;
+}
+
+.reports-submit-primary:hover {
+  background: #0f172a !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.15) !important;
+  transform: translateY(-1px);
 }
 
 .dropdown-option-btn {
@@ -432,7 +440,7 @@
 
 .btn-quick-toggle:hover {
   background: #f1f5f9; border-color: #94a3b8;
-  color: #fff;
+  color: #0f172a;
 }
 
 .btn-quick-toggle.active {
@@ -584,5 +592,9 @@
 .reports-tab-nav-btn.active {
   background: #0f172a;
   color: #ffffff;
+}
+.reports-tab-nav-btn:hover:not(.active) {
+  color: #0f172a !important;
+  background: rgba(15, 23, 42, 0.06) !important;
 }
 
