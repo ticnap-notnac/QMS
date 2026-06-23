@@ -1,4 +1,5 @@
 import React from 'react';
+import { logAction } from '../services/logService';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -12,6 +13,20 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
+    
+    // Log the error to the backend
+    logAction({
+      level: 'error',
+      source: 'frontend_error_boundary',
+      action: 'react_component_crash',
+      details: {
+        message: error?.message || String(error),
+        stack: error?.stack,
+        componentStack: errorInfo?.componentStack
+      }
+    }).catch(err => {
+      console.error("Failed to log ErrorBoundary error to backend:", err);
+    });
   }
 
   render() {

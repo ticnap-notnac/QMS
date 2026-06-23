@@ -20,8 +20,8 @@ export default function CARDetailsModal({
   submitting,
   suggesting,
   error,
-  linkedClauses,
-  loadingClauses,
+  linkedClauses = [],
+  loadingClauses = false,
 
   // Handlers
   handleSuggestActions,
