@@ -210,8 +210,15 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
           const carsMap = {}
           for (const row of linkData || []) {
             if (!row.car_reports) continue
+            const car = row.car_reports
+            
+            // Filter: If the CAR belongs to a DIFFERENT audit schedule, do not show it
+            if (car.audit_schedule_id && car.audit_schedule_id !== schedule.id) {
+              continue
+            }
+            
             if (!carsMap[row.clause_id]) carsMap[row.clause_id] = []
-            carsMap[row.clause_id].push(row.car_reports)
+            carsMap[row.clause_id].push(car)
           }
           setLinkedCarsMap(carsMap)
         } catch (linkErr) {
@@ -409,8 +416,14 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
             const carsMap = {}
             for (const row of linkData || []) {
               if (!row.car_reports) continue
+              const car = row.car_reports
+              
+              if (car.audit_schedule_id && car.audit_schedule_id !== activeRun.schedule_id) {
+                continue
+              }
+              
               if (!carsMap[row.clause_id]) carsMap[row.clause_id] = []
-              carsMap[row.clause_id].push(row.car_reports)
+              carsMap[row.clause_id].push(car)
             }
             setLinkedCarsMap(carsMap)
           } catch (linkErr) {

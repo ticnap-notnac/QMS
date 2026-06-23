@@ -13,14 +13,21 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
-    // Attempt to log the crash to the backend
+    
+    // Log the error to the backend
     try {
       logAction({
         level: 'error',
-        source: 'frontend',
+        source: 'frontend_error_boundary',
         action: 'react_component_crash',
-        details: { message: error.message, componentStack: errorInfo.componentStack }
-      }).catch(err => console.error("Failed to log crash:", err));
+        details: {
+          message: error?.message || String(error),
+          stack: error?.stack,
+          componentStack: errorInfo?.componentStack
+        }
+      }).catch(err => {
+        console.error("Failed to log ErrorBoundary error to backend:", err);
+      });
     } catch (e) {
       console.error("Logging failed:", e);
     }
