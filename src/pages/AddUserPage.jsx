@@ -19,7 +19,9 @@ export default function AddUserPage({ userRole }) {
     filteredUsers,
     usersTableProps,
     addUserModalProps,
-    editUserModalProps
+    editUserModalProps,
+    pageMessage,
+    pageError
   } = useAddUserLogic()
 
   const isOverlayLoading = addUserModalProps.loading || editUserModalProps.loading
@@ -51,6 +53,8 @@ export default function AddUserPage({ userRole }) {
 
               <div className="glass-card-content">
                 <div className="admin-users-section">
+                  {pageMessage && <div className="user-info-success">{pageMessage}</div>}
+                  {(pageError || usersError) && <div className="user-info-error">{pageError || usersError}</div>}
                   <div className="admin-users-header">
                     <div>
                       <h3 className="glass-card-heading">Manage Users</h3>
@@ -58,8 +62,6 @@ export default function AddUserPage({ userRole }) {
                     </div>
                     <div className="admin-users-count">{filteredUsers.length} users</div>
                   </div>
-
-                  {usersError && <div className="user-info-error">{usersError}</div>}
 
                   {usersLoading ? (
                     <p className="glass-card-subtext">Loading users...</p>

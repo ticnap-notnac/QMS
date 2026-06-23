@@ -89,7 +89,7 @@ export default function QDDRReportsList({
                   
                   <td>
                     <span className={`iso-status-pill ${
-                      statusClean === 'closed' ? 'is-closed' : 'is-inactive'
+                      statusClean === 'closed' ? 'is-closed' : 'is-open'
                     }`}>
                       {statusClean === 'closed' ? 'Closed' : 'Open'}
                     </span>

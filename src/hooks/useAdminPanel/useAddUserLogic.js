@@ -12,6 +12,8 @@ export default function useAddUserLogic() {
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
+  const [pageMessage, setPageMessage] = useState('')
+  const [pageError, setPageError] = useState('')
   
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
@@ -91,6 +93,8 @@ export default function useAddUserLogic() {
       })
 
       setFormMessage(`Created ${result.authUser.email} successfully.`)
+      setPageMessage(`Created user "${result.authUser.email}" successfully.`)
+      setPageError('')
       setNewUser({
         firstName: '',
         lastName: '',
@@ -119,12 +123,12 @@ export default function useAddUserLogic() {
 
     if (!confirmed) return
     try {
-      setFormError('')
+      setPageError('')
       await deleteItem(user.id)
-      setFormMessage(`Deleted ${displayName} successfully.`)
+      setPageMessage(`Deleted user "${displayName}" successfully.`)
     } catch (err) {
       console.error('Delete user error:', err)
-      setFormError(`Failed to delete user: ${err.message}`)
+      setPageError(`Failed to delete user: ${err.message}`)
     }
   }
 
@@ -178,6 +182,8 @@ export default function useAddUserLogic() {
 
       await updateUser(editingUser.id, payload)
       setEditFormMessage('User updated successfully.')
+      setPageMessage(`Updated user "${editingUser.firstName} ${editingUser.lastName}" successfully.`)
+      setPageError('')
       await reloadUsers()
 
       try {
@@ -278,6 +284,8 @@ export default function useAddUserLogic() {
     filteredUsers,
     usersTableProps,
     addUserModalProps,
-    editUserModalProps
+    editUserModalProps,
+    pageMessage,
+    pageError
   }
 }

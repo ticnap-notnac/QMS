@@ -13,6 +13,8 @@ export default function DepartmentsPage({ userRole }) {
     reload,
     openCategoryModal,
     error,
+    pageMessage,
+    pageError,
     listPanelProps,
     categoryModalProps
   } = useDepartmentsLogic()
@@ -44,9 +46,10 @@ export default function DepartmentsPage({ userRole }) {
 
               <div className="glass-card-content">
                 <div className="panel-narrow">
+                  {pageMessage && <div className="user-info-success">{pageMessage}</div>}
+                  {(pageError || error) && <div className="user-info-error">{pageError || error}</div>}
                   <p className="glass-card-subtext">Use the add button above to create a new department.</p>
                   <AdminListPanel {...listPanelProps} />
-                  {error && <p className="glass-card-subtext">{error}</p>}
                 </div>
               </div>
             </div>

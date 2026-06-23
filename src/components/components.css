@@ -109,7 +109,7 @@
   color: #a1a1aa;
   padding: 12px 14px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
   border-radius: 8px;
   width: 100%;
@@ -134,7 +134,7 @@
 .nav-tab-button.active {
   background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .nav-tab-button.active svg {
@@ -1022,15 +1022,15 @@ div[class*="navbar"] {
 }
 
 .status-inactive {
-  background: rgba(239, 68, 68, 0.14) !important;
-  color: #f87171 !important;
-  border: 1px solid rgba(239, 68, 68, 0.3) !important;
-}
-
-.status-deactivated {
   background: rgba(245, 158, 11, 0.14) !important;
   color: #fbbf24 !important;
   border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+.status-deactivated {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
 }
 
 
@@ -1115,7 +1115,7 @@ div[class*="navbar"] {
 
 /* 1. Ensure the deep inner container wraps tightly and allows scrolling */
 .iso-standards-panel,
-.admin-inner-panel { background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;
+.admin-inner-panel { background: #ffffff; border: none !important; color: #0f172a;
   height: auto !important; /* Forces the glass container to scale naturally if needed */
   max-height: none !important;
 }
@@ -1528,3 +1528,52 @@ textarea.input-field {
     border-radius: 8px;
   }
 }
+
+/* Status Pill/Badge Styles */
+.iso-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700 !important;
+  white-space: nowrap;
+}
+
+.iso-status-pill.is-active {
+  background: #e4e4e7;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+}
+
+.iso-status-pill.is-inactive {
+  background: #f4f4f5;
+  color: #71717a;
+  border: 1px solid #e4e4e7;
+}
+
+.iso-status-pill.is-closed {
+  background: rgba(226, 232, 240, 0.5) !important;
+  color: #475569 !important;
+  border: 1px solid rgba(203, 213, 225, 0.6) !important;
+}
+
+.iso-status-pill.is-open {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #16a34a !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  font-weight: 700 !important;
+}
+
+/* Update Modal Image Fit */
+.update-modal-image {
+  max-width: 100%;
+  max-height: 350px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  display: block;
+  margin-top: 8px;
+}
+
+

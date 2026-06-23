@@ -1,4 +1,4 @@
-# 📘 Quality Management System Introduction
+# Quality Management System Introduction
 
 Our Quality Management System (QMS) is designed to ensure consistent excellence across all our processes, products, and services. It provides a structured framework that aligns our operations with defined standards, regulatory requirements, and customer expectations.
 

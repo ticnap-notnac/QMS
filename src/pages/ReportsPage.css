@@ -501,7 +501,7 @@
    📱 FACEBOOK-STYLE LAYOUT ENGINE FOR REPORT TIMELINE CARDS
    ========================================================================== */
 .facebook-feed-layout-wrapper {
-  max-width: 620px !important;
+  max-width: 960px !important;
   margin: 24px auto 0 auto !important;
   width: 100% !important;
   box-sizing: border-box !important;
@@ -513,14 +513,14 @@
 .facebook-feed-layout-wrapper .reports-card,
 .facebook-feed-layout-wrapper .reports-list-stack > div {
   width: 100% !important;
-  max-width: 620px !important;
+  max-width: 960px !important;
   margin-left: auto !important;
   margin-right: auto !important;
   box-sizing: border-box !important;
 }
 
 .facebook-feed-layout-wrapper img {
-  max-height: 440px !important;
+  max-height: 700px !important;
   object-fit: contain !important;
   background: #ffffff !important;
   width: 100% !important;
@@ -688,4 +688,9 @@
     flex: 1; /* Makes buttons span the width equally */
     text-align: center;
   }
+}
+
+.reports-table-scroll-wrap .iso-table th.text-center-important,
+.reports-table-scroll-wrap .iso-table td.text-center-important {
+  text-align: center !important;
 }

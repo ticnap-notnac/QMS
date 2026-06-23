@@ -94,7 +94,7 @@ export default function QDDRDetailsModal({
   const getStatusBadgeClass = (s) => {
     const statusVal = String(s || '').toLowerCase()
     if (statusVal === 'closed') return 'is-closed'
-    return 'is-inactive'
+    return 'is-open'
   }
 
   const getStatusLabel = (s) => {

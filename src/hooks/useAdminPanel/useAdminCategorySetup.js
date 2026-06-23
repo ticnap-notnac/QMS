@@ -16,6 +16,8 @@ export default function useAdminCategorySetup({
   const [categoryInput, setCategoryInput] = useState('')
   const [formError, setFormError] = useState('')
   const [formMessage, setFormMessage] = useState('')
+  const [pageMessage, setPageMessage] = useState('')
+  const [pageError, setPageError] = useState('')
 
   const { items, loading, deletingId, creating, reload, createItem, deleteItem, error } = useCategoryManager({
     loadFn,
@@ -54,7 +56,8 @@ export default function useAdminCategorySetup({
       setFormError('')
       await createItem(nextValue)
       await reloadLookups()
-      setFormMessage(`Added ${entityName.toLowerCase()} "${nextValue}" successfully.`)
+      setPageMessage(`Added ${entityName.toLowerCase()} "${nextValue}" successfully.`)
+      setPageError('')
       closeCategoryModal()
     } catch (err) {
       setFormError(err.message)
@@ -65,12 +68,12 @@ export default function useAdminCategorySetup({
     const confirmed = window.confirm(`Delete ${entityName.toLowerCase()} "${item[labelKey]}"?`)
     if (!confirmed) return
     try {
-      setFormError('')
+      setPageError('')
       await deleteItem(item.id)
       await reloadLookups()
-      setFormMessage(`Deleted ${entityName.toLowerCase()} "${item[labelKey]}" successfully.`)
+      setPageMessage(`Deleted ${entityName.toLowerCase()} "${item[labelKey]}" successfully.`)
     } catch (err) {
-      setFormError(err.message)
+      setPageError(err.message)
     }
   }
 
@@ -106,6 +109,8 @@ export default function useAdminCategorySetup({
     reload,
     openCategoryModal,
     error,
+    pageMessage,
+    pageError,
     listPanelProps,
     categoryModalProps
   }

@@ -48,7 +48,7 @@ export default function UsersTable({
                 </td>
                 <td>{user.contact_number || '-'}</td>
                 <td>{user.employee_no || '-'}</td>
-                <td>
+                <td className="text-center">
                   <span className={`status-badge ${user.status === 'ACTIVE' ? 'status-active' :
                     user.status === 'DEACTIVATED' ? 'status-deactivated' :
                       'status-inactive'

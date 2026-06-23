@@ -267,7 +267,7 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
                   <td>
                     {/* 🚀 Dynamic Gray vs Green Theme Route Switcher */}
                     <span className={`iso-status-pill ${
-                      statusClean === 'completed' ? 'is-active' : statusClean === 'closed' ? 'is-closed' : 'is-inactive'
+                      statusClean === 'completed' ? 'is-active' : statusClean === 'closed' ? 'is-closed' : 'is-open'
                     }`}>
                       {ncr.status}
                     </span>
@@ -380,7 +380,7 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
                       <th>Affected Qty</th>
                       <th>Nonconformance Details</th>
                       <th>Request Date</th>
-                      <th>Resolution Time</th>
+                      <th className="text-center-important">Resolution Time</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -412,10 +412,10 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
                           <td>
                             {car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}
                           </td>
-                          <td>{car.resolution_time ?? '—'}</td>
+                          <td className="text-center-important">{car.resolution_time ?? '—'}</td>
                           <td>
                             <span className={`iso-status-pill ${
-                              statusClean === 'closed' ? 'is-closed' : statusClean === 'under_verification' ? 'is-active' : 'is-inactive'
+                              statusClean === 'closed' ? 'is-closed' : statusClean === 'under_verification' ? 'is-active' : 'is-open'
                             }`}>
                               {statusClean === 'under_verification' ? 'Under Verification' : statusClean === 'closed' ? 'Closed' : 'Open'}
                             </span>
@@ -507,7 +507,7 @@ function QDDRClosedTable({ qddrReports, loadingQddr }) {
                   <td>
                     {/* 🚀 Dynamic Gray vs Green Theme Route Switcher */}
                     <span className={`iso-status-pill ${
-                      statusClean === 'completed' ? 'is-active' : statusClean === 'closed' ? 'is-closed' : 'is-inactive'
+                      statusClean === 'completed' ? 'is-active' : statusClean === 'closed' ? 'is-closed' : 'is-open'
                     }`}>
                       {qddr.status}
                     </span>

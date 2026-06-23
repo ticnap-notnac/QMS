@@ -37,7 +37,7 @@ export default function CARDetailsModal({
     const s = String(status || '').toLowerCase()
     if (s === 'closed') return 'is-closed'
     if (s === 'under_verification') return 'is-active'
-    return 'is-inactive'
+    return 'is-open'
   }
 
   const getStatusLabel = (status) => {
