@@ -5,7 +5,7 @@ import SearchableDropdown from '../Forms/SearchableDropdown'
 
 export default function NCRSubmitModal({ 
   isOpen, onClose, onSuccess,
-  form, setField, handleFile, errors,
+  form, setField, handleFiles, removeFile, errors,
   isSubmitting, handleSubmit, departments,
   locations, productTypes, issueTypes, loadingDropdowns, evidenceError
 }) {
@@ -94,70 +94,62 @@ export default function NCRSubmitModal({
           
           {/* 📸 WIREFRAME POSITION 1: Evidence Image Uploader Box (Top Position) */}
           <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
-            <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Evidence:</label>
-            <div
-              className="qflow-upload-box-container"
-              onClick={() => fileInputRef.current && fileInputRef.current.click()}
-              style={{
-                width: '100%',
-                minHeight: '52px',
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px dashed rgba(255, 255, 255, 0.15)',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxSizing: 'border-box',
-                cursor: 'pointer',
-                padding: '6px'
-              }}
-            >
-              {!form.previewUrl ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
-                  <UploadIcon size={18} className="icon-teal" />
-                  <span>Upload an Image</span>
-                </div>
-              ) : (
-                <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-                  <img 
-                    src={form.previewUrl} 
-                    alt="Evidence asset preview" 
-                    style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: 6 }} 
-                  />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleFile(null)
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      background: 'rgba(15, 23, 42, 0.8)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      color: '#fff',
-                      borderRadius: '50%',
-                      width: 24,
-                      height: 24,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ✕
-                  </button>
+            <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Evidence (Max 3 files):</label>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {form.previewUrls && form.previewUrls.length > 0 && (
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {form.previewUrls.map((preview, idx) => (
+                    <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '6px', overflow: 'hidden', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                      {preview.type?.includes('image') ? (
+                        <img src={preview.url} alt="Evidence" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.7)', fontSize: '0.65rem', padding: '4px', textAlign: 'center' }}>
+                          <span style={{ fontSize: '1.2rem', marginBottom: '4px' }}>📄</span>
+                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>{preview.name}</span>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); removeFile && removeFile(idx) }}
+                        style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.7rem' }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/jpg,image/png,image/webp"
-                onChange={(e) => handleFile(e.target.files[0])}
-                style={{ display: 'none' }}
-              />
+              {(!form.files || form.files.length < 3) && (
+                <div
+                  className="qflow-upload-box-container"
+                  onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                  style={{
+                    width: '100%', minHeight: '52px', background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px dashed rgba(255, 255, 255, 0.15)', borderRadius: '8px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: '6px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
+                    <UploadIcon size={18} className="icon-teal" />
+                    <span>Upload File (Images, PDF, Doc)</span>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={(e) => {
+                      if (handleFiles) {
+                        handleFiles(Array.from(e.target.files))
+                      }
+                      e.target.value = null // reset so same file can be selected again
+                    }}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+              )}
             </div>
             {evidenceError && <div style={{ color: '#f87171', fontSize: '0.75rem', marginTop: '2px' }}>{evidenceError}</div>}
           </div>

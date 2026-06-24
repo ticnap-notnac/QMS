@@ -134,11 +134,26 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
         <h4 className="reports-details-title">Evidence</h4>
       </div>
       <div className="evidence-box">
-        {report.evidence_url ? (
+        {(report.evidence_files && report.evidence_files.length > 0) ? (
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {report.evidence_files.map((fileUrl, idx) => {
+              const isImage = fileUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)
+              return (
+                <div key={idx} style={{ width: '60px', height: '60px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-color)', cursor: 'pointer' }} onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}>
+                  {isImage ? (
+                    <img src={fileUrl} alt={`Evidence ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-card-secondary)', fontSize: '20px' }} title="Document">📄</div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        ) : report.evidence_url ? (
           <img
             src={report.evidence_url}
             alt="Evidence"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px', cursor: 'pointer' }}
+            className="reports-evidence-img"
             onClick={() => window.open(report.evidence_url, '_blank', 'noopener,noreferrer')}
           />
         ) : (

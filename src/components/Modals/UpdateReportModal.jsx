@@ -31,7 +31,8 @@ export default function UpdateReportModal({
   previewUrl,
   deptName,
   setField,
-  handleFile,
+  handleFiles,
+  removeFile,
   errors,
   error,
   isSubmitting,
@@ -310,55 +311,80 @@ export default function UpdateReportModal({
           {isClosed ? (
             <div>
               <label className="label-field">Investigation Evidence</label>
-              {report?.investigation_evidence_url ? (
-                <img
-                  src={report.investigation_evidence_url}
-                  alt="Investigation evidence"
-                  className="update-modal-image"
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => window.open(report.investigation_evidence_url, '_blank', 'noopener,noreferrer')}
-                />
+              {(report?.investigation_evidence_files && report.investigation_evidence_files.length > 0) ? (
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {report.investigation_evidence_files.map((fileUrl, idx) => {
+                    const isImage = fileUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)
+                    return (
+                      <div key={idx} style={{ width: '80px', height: '80px', borderRadius: '6px', overflow: 'hidden', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', cursor: 'pointer' }} onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}>
+                        {isImage ? (
+                          <img src={fileUrl} alt="Evidence" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.7)', fontSize: '0.65rem' }}>
+                            <span style={{ fontSize: '1.2rem', marginBottom: '4px' }}>📄</span>
+                            <span>Document</span>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               ) : (
-                <div className="reports-readonly-field">No investigation evidence image attached</div>
+                <div className="reports-readonly-field">No investigation evidence attached</div>
               )}
             </div>
           ) : (
             <div>
-              <label className="label-field">Investigation Evidence</label>
-              <div
-                className="upload-box upload-box--padded"
-                onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                style={{ cursor: 'pointer', position: 'relative' }}
-              >
-                {!previewUrl ? (
-                  <>
-                    <UploadIcon size={18} className="icon-teal" />
-                    <span className="reports-upload-text-small">Upload investigation evidence</span>
-                  </>
-                ) : (
-                  <div style={{ position: 'relative', width: '100%' }}>
-                    <img src={previewUrl} alt="Investigation evidence preview" className="update-modal-image" />
-                    <button
-                      type="button"
-                      className="remove-preview-btn"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        handleFile(null)
-                      }}
-                      style={{ position: 'absolute', top: 8, right: 8 }}
-                    >
-                      ×
-                    </button>
+              <label className="label-field">Investigation Evidence (Max 3 files)</label>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {form.previewUrls && form.previewUrls.length > 0 && (
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {form.previewUrls.map((preview, idx) => (
+                      <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '6px', overflow: 'hidden', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                        {preview.type?.includes('image') ? (
+                          <img src={preview.url} alt="Evidence" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.7)', fontSize: '0.65rem', padding: '4px', textAlign: 'center' }}>
+                            <span style={{ fontSize: '1.2rem', marginBottom: '4px' }}>📄</span>
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>{preview.name}</span>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); removeFile && removeFile(idx) }}
+                          style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.7rem' }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                  onChange={(event) => handleFile(event.target.files?.[0] || null)}
-                  style={{ display: 'none' }}
-                />
+                {(!form.files || form.files.length < 3) && (
+                  <div
+                    className="upload-box upload-box--padded"
+                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                    style={{ cursor: 'pointer', position: 'relative' }}
+                  >
+                    <UploadIcon size={18} className="icon-teal" />
+                    <span className="reports-upload-text-small">Upload File (Images, PDF, Doc)</span>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={(e) => {
+                        if (handleFiles) {
+                          handleFiles(Array.from(e.target.files))
+                        }
+                        e.target.value = null // reset so same file can be selected again
+                      }}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}

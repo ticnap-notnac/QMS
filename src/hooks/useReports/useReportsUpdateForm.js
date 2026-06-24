@@ -6,8 +6,8 @@ const DEFAULT_FORM = {
   resolutionDetails: '',
   verificationDate: '',
   issueType: '',
-  file: null,
-  previewUrl: null,
+  files: [],
+  previewUrls: [],
 }
 
 export function useReportsUpdateForm({ report }) {
@@ -21,27 +21,63 @@ export function useReportsUpdateForm({ report }) {
     setForm((current) => ({ ...current, [key]: value }))
   }, [])
 
-  const handleFile = useCallback((file) => {
+  const handleFiles = useCallback((newFiles) => {
+    if (!newFiles || newFiles.length === 0) return
+
     setForm((current) => {
-      if (current.previewUrl) {
-        try { URL.revokeObjectURL(current.previewUrl) } catch (err) {}
-        previewUrlRef.current = null
-      }
-      if (!file) return { ...current, file: null, previewUrl: null }
+      const currentFiles = current.files || []
+      const currentUrls = current.previewUrls || []
       
-      const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-      if (!allowed.includes(file.type)) {
-        setError('Only jpg, jpeg, png, webp images are allowed')
+      const totalFiles = currentFiles.length + newFiles.length
+      if (totalFiles > 3) {
+        setError('Maximum 3 files allowed.')
         return current
       }
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Image must be under 5MB')
-        return current
+
+      const allowed = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/webp',
+        'application/pdf', 'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ]
+
+      const validFiles = []
+      const validUrls = []
+
+      for (let i = 0; i < newFiles.length; i++) {
+        const f = newFiles[i]
+        if (!allowed.includes(f.type)) {
+          setError('Invalid file type detected. Only images, PDFs, and Docs allowed.')
+          continue
+        }
+        if (f.size > 5 * 1024 * 1024) {
+          setError('One or more files exceed the 5MB limit.')
+          continue
+        }
+        validFiles.push(f)
+        validUrls.push({ url: URL.createObjectURL(f), type: f.type, name: f.name })
       }
+
       setError(null)
-      const nextPreviewUrl = URL.createObjectURL(file)
-      previewUrlRef.current = nextPreviewUrl
-      return { ...current, file, previewUrl: nextPreviewUrl }
+      return { 
+        ...current, 
+        files: [...currentFiles, ...validFiles], 
+        previewUrls: [...currentUrls, ...validUrls] 
+      }
+    })
+  }, [])
+
+  const removeFile = useCallback((index) => {
+    setForm((current) => {
+      const newFiles = [...current.files]
+      const newUrls = [...current.previewUrls]
+      
+      const removed = newUrls.splice(index, 1)[0]
+      if (removed && removed.url) {
+        try { URL.revokeObjectURL(removed.url) } catch (e) {}
+      }
+      newFiles.splice(index, 1)
+
+      return { ...current, files: newFiles, previewUrls: newUrls }
     })
   }, [])
 
@@ -58,17 +94,14 @@ export function useReportsUpdateForm({ report }) {
       resolutionDetails: report.resolution_details || '',
       verificationDate: report.verification_date || '',
       issueType: report.issue_type || '',
-      file: null,
-      previewUrl: null,
+      files: [],
+      previewUrls: [],
     })
     setErrors({})
     setError(null)
 
     return () => {
-      if (previewUrlRef.current) {
-        try { URL.revokeObjectURL(previewUrlRef.current) } catch (err) {}
-        previewUrlRef.current = null
-      }
+      // Cleanup URLs if necessary (usually handled on unmount)
     }
   }, [report])
 
@@ -85,7 +118,8 @@ export function useReportsUpdateForm({ report }) {
     form,
     previewUrl: form.previewUrl,
     setField,
-    handleFile,
+    handleFiles,
+    removeFile,
     errors,
     error,
     setError,

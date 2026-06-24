@@ -376,6 +376,122 @@ export async function fetchReports(scope = 'open', actorAuthId = null) {
   return buildEnrichedReports(data || [])
 }
 
+export async function submitNcrMultipart({ body, files, reportedByAuthId }) {
+  // Extract all expected fields
+  const {
+    department_id,
+    product_type_id,
+    batch_number,
+    location_id,
+    severity,
+    issue_type_id,
+    description,
+    clause_id,
+  } = body || {}
+
+  const { data: creatorObj } = await supabase
+    .from('users')
+    .select('id, site_id')
+    .eq('auth_id', reportedByAuthId)
+    .maybeSingle()
+
+  if (!creatorObj) {
+    const err = new Error('Creator profile not found.')
+    err.status = 404
+    throw err
+  }
+
+  // Generate Reference No
+  const { data: records, error: latestError } = await supabase
+    .from('ncr_reports')
+    .select('reference_no')
+    .ilike('reference_no', 'NCR-%')
+    .order('reference_no', { ascending: false })
+    .limit(50)
+
+  if (latestError) throw new Error(`Database error getting latest NCR ref: ${latestError.message}`)
+  const latestNumeric = (records || []).find(r => /^NCR-\d{4}-\d{3}$/i.test(r.reference_no))
+  const referenceNo = generateNextNcrReferenceNo(latestNumeric?.reference_no)
+
+  // Determine initial status based on severity
+  const normalizedSeverity = String(severity || '').trim().toLowerCase()
+  const status = (normalizedSeverity === 'critical' || normalizedSeverity === 'high')
+    ? REPORT_STATUS.OPEN
+    : REPORT_STATUS.PENDING_REVIEW
+
+  // Handle multiple evidence files upload
+  let evidenceUrls = []
+  if (files && files.length > 0) {
+    for (const file of files) {
+      const extMatch = file.originalname.match(/\.([a-z0-9]+)$/i)
+      const ext = extMatch ? extMatch[1] : ''
+      let filename = `initial/${referenceNo}-${Date.now()}-${Math.floor(Math.random() * 100000)}-evidence${ext ? `.${ext}` : ''}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('ncr-evidence')
+        .upload(filename, file.buffer, {
+          contentType: file.mimetype,
+          upsert: true
+        })
+
+      if (uploadError) {
+        console.error('Evidence file upload error:', uploadError)
+        throw new Error(uploadError.message || 'Failed to upload evidence')
+      }
+
+      const { data: publicData } = await supabase.storage.from('ncr-evidence').getPublicUrl(filename)
+      if (publicData?.publicUrl) {
+        evidenceUrls.push(publicData.publicUrl)
+      }
+    }
+  }
+
+  // Create NCR DB Record
+  const payload = {
+    reference_no: referenceNo,
+    department_id: department_id || null,
+    product_type_id: product_type_id || null,
+    batch_number: batch_number || null,
+    location_id: location_id || null,
+    severity: severity || null,
+    issue_type_id: issue_type_id || null,
+    description: description || null,
+    clause_id: clause_id || null,
+    evidence_files: evidenceUrls.length > 0 ? evidenceUrls : [],
+    status: status,
+    reported_by: creatorObj.id,
+    site_id: creatorObj.site_id
+  }
+
+  const { data: reportData, error: insertError } = await supabase
+    .from('ncr_reports')
+    .insert(payload)
+    .select('*')
+    .maybeSingle()
+
+  if (insertError) {
+    console.error('NCR Insert error:', insertError)
+    throw new Error(`Database error creating NCR: ${insertError.message}`)
+  }
+
+  try {
+    await writeAudit({
+      source: 'ncr_reports',
+      action: 'create_report',
+      userAuthId: reportedByAuthId,
+      details: {
+        report_id: reportData.id,
+        reference_no: reportData.reference_no,
+        severity: reportData.severity,
+      },
+    })
+  } catch (auditError) {
+    console.warn('Failed to record create audit log:', auditError)
+  }
+
+  return reportData
+}
+
 /**
  * Creates a new NCR report (no file upload). Used by createReport controller action.
  */
@@ -468,7 +584,7 @@ export async function createNcrReport({ body, reportedByAuthId }) {
 /**
  * Creates a new NCR report with file upload (multipart). Used by createReportSubmit controller action.
  */
-export async function createNcrReportWithUpload({ body, file, reportedByAuthId }) {
+export async function createNcrReportWithUpload({ body, files, reportedByAuthId }) {
   const {
     product_type,
     product_type_id,
@@ -527,34 +643,39 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
     throw Object.assign(new Error('Location and product type are required.'), { status: 400 })
   }
 
-  let evidenceUrl = null
-  if (file && file.buffer) {
+  let evidenceUrls = []
+  if (files && files.length > 0) {
     if (!hasServiceRole) {
       throw Object.assign(new Error('Service role key is required for uploads.'), { status: 500 })
     }
-    const orig = file.originalname || `${referenceNo}`
-    const ext = (orig.match(/\.([0-9a-zA-Z]+)$/) || [])[1] || ''
-    let filename = `initial/${referenceNo}-${Date.now()}-evidence${ext ? `.${ext}` : ''}`
+    
+    for (const file of files) {
+      const orig = file.originalname || `${referenceNo}`
+      const ext = (orig.match(/\.([0-9a-zA-Z]+)$/) || [])[1] || ''
+      let filename = `initial/${referenceNo}-${Date.now()}-evidence${ext ? `.${ext}` : ''}`
 
-    let uploadData = null
-    let uploadError = null
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const resUpload = await supabase.storage
-        .from('ncr-evidence')
-        .upload(filename, file.buffer, { contentType: file.mimetype, upsert: true })
-      uploadData = resUpload.data
-      uploadError = resUpload.error
-      if (!uploadError) break
-      if ((uploadError.statusCode || uploadError.status) === 409) {
-        filename = `initial/${referenceNo}-${Date.now()}-${Math.floor(Math.random() * 100000)}-evidence${ext ? `.${ext}` : ''}`
-        continue
+      let uploadData = null
+      let uploadError = null
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const resUpload = await supabase.storage
+          .from('ncr-evidence')
+          .upload(filename, file.buffer, { contentType: file.mimetype, upsert: true })
+        uploadData = resUpload.data
+        uploadError = resUpload.error
+        if (!uploadError) break
+        if ((uploadError.statusCode || uploadError.status) === 409) {
+          filename = `initial/${referenceNo}-${Date.now()}-${Math.floor(Math.random() * 100000)}-evidence${ext ? `.${ext}` : ''}`
+          continue
+        }
+        break
       }
-      break
-    }
-    if (uploadError) throw new Error(uploadError.message || 'Failed to upload evidence')
+      if (uploadError) throw new Error(uploadError.message || 'Failed to upload evidence')
 
-    const { data: publicData } = await supabase.storage.from('ncr-evidence').getPublicUrl(filename)
-    evidenceUrl = publicData?.publicUrl || null
+      const { data: publicData } = await supabase.storage.from('ncr-evidence').getPublicUrl(filename)
+      if (publicData?.publicUrl) {
+        evidenceUrls.push(publicData.publicUrl)
+      }
+    }
   }
 
   const payload = {
@@ -572,7 +693,7 @@ export async function createNcrReportWithUpload({ body, file, reportedByAuthId }
     severity: normalizeSeverityValue(severity),
     department_id: normalizeId(department_id),
     description,
-    evidence_url: evidenceUrl,
+    evidence_files: evidenceUrls.length > 0 ? evidenceUrls : [],
     clause_id: clause_id ? String(clause_id).trim() : null,
     site_id: reporter.site_id || null,
   }
@@ -652,7 +773,7 @@ export async function updateNcrReport({ id, body }) {
 /**
  * Submits investigation details for a report; handles optional evidence file upload.
  */
-export async function updateNcrInvestigation({ id, body, file }) {
+export async function updateNcrInvestigation({ id, body, files }) {
   const {
     investigation_details, resolution_details, corrective_action,
     verification_date, issue_type, preventive_rating,
@@ -660,7 +781,7 @@ export async function updateNcrInvestigation({ id, body, file }) {
 
   const { data: existing, error: existingError } = await supabase
     .from('ncr_reports')
-    .select('id, reference_no, investigation_evidence_url, status')
+    .select('id, reference_no, investigation_evidence_files, status')
     .eq('id', id)
     .maybeSingle()
   if (existingError) throw existingError
@@ -670,20 +791,25 @@ export async function updateNcrInvestigation({ id, body, file }) {
     throw Object.assign(new Error('Closed reports cannot be updated.'), { status: 400 })
   }
 
-  let investigationEvidenceUrl = existing.investigation_evidence_url || null
+  let evidenceUrls = Array.isArray(existing.investigation_evidence_files) ? [...existing.investigation_evidence_files] : []
 
-  if (file && file.buffer) {
-    const orig = file.originalname || `${existing.reference_no}-investigation`
-    const ext = (orig.match(/\.([0-9a-zA-Z]+)$/) || [])[1] || ''
-    const filename = `investigation/${existing.reference_no}-investigation${ext ? `.${ext}` : ''}`
+  if (files && files.length > 0) {
+    for (const file of files) {
+      const orig = file.originalname || `${existing.reference_no}-investigation`
+      const ext = (orig.match(/\.([0-9a-zA-Z]+)$/) || [])[1] || ''
+      const filename = `investigation/${existing.reference_no}-investigation-${Date.now()}-${Math.floor(Math.random() * 100000)}${ext ? `.${ext}` : ''}`
 
-    const { error: uploadError } = await supabase.storage
-      .from('ncr-evidence')
-      .upload(filename, file.buffer, { contentType: file.mimetype, upsert: true })
-    if (uploadError) throw new Error(uploadError.message || 'Failed to upload investigation evidence.')
+      const { error: uploadError } = await supabase.storage
+        .from('ncr-evidence')
+        .upload(filename, file.buffer, { contentType: file.mimetype, upsert: true })
+      
+      if (uploadError) throw new Error(uploadError.message || 'Failed to upload investigation evidence.')
 
-    const { data: publicData } = await supabase.storage.from('ncr-evidence').getPublicUrl(filename)
-    investigationEvidenceUrl = publicData?.publicUrl || null
+      const { data: publicData } = await supabase.storage.from('ncr-evidence').getPublicUrl(filename)
+      if (publicData?.publicUrl) {
+        evidenceUrls.push(publicData.publicUrl)
+      }
+    }
   }
 
   const updates = {
@@ -691,7 +817,7 @@ export async function updateNcrInvestigation({ id, body, file }) {
     corrective_action: normalizeText(corrective_action) || null,
     resolution_details: normalizeText(resolution_details) || null,
     verification_date: normalizeVerificationDate(verification_date),
-    investigation_evidence_url: investigationEvidenceUrl,
+    investigation_evidence_files: evidenceUrls.length > 0 ? evidenceUrls : [],
     preventive_rating: normalizeText(preventive_rating) || null,
     assigned_to: null,
     assigned_at: null,
@@ -920,19 +1046,29 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
   if (!normalizedReportId) throw new Error('Report id is required.')
 
   const { data: currentUser, error: currentUserError } = await supabase
-    .from('users').select('id, user_name').eq('auth_id', userAuthId).maybeSingle()
+    .from('users')
+    .select('id, user_name, department_id, role:roles(role_name)')
+    .eq('auth_id', userAuthId)
+    .maybeSingle()
   if (currentUserError) throw currentUserError
   if (!currentUser) throw new Error('Current user profile not found.')
 
   const { data: report, error: reportError } = await supabase
     .from('ncr_reports')
-    .select('id, reference_no, status, issue_type, investigation_details, resolution_details')
+    .select('id, reference_no, status, department_id, issue_type, investigation_details, resolution_details')
     .eq('id', normalizedReportId)
     .maybeSingle()
   if (reportError) throw reportError
   if (!report) throw new Error('NCR report not found.')
   if (String(report.status || '').trim().toUpperCase() !== REPORT_STATUS.CLOSED) {
     throw Object.assign(new Error('Only closed reports can be rated.'), { status: 400 })
+  }
+
+  // Department-based rating validation
+  const userRole = currentUser.role?.role_name?.toLowerCase() || ''
+  const isPrivileged = userRole === 'admin' || userRole === 'auditor'
+  if (!isPrivileged && report.department_id !== currentUser.department_id) {
+    throw Object.assign(new Error('You can only rate reports from your own department.'), { status: 403 })
   }
 
   // Insert or update rating

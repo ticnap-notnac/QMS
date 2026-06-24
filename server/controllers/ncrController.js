@@ -69,7 +69,7 @@ export async function updateReport(req, res) {
 export async function updateReportInvestigation(req, res) {
   const { id } = req.params
   try {
-    const { data, existing } = await updateNcrInvestigation({ id, body: req.body || {}, file: req.file })
+    const { data, existing } = await updateNcrInvestigation({ id, body: req.body || {}, files: req.files })
     await writeAudit({
       level: 'audit',
       source: 'ncr_reports',
@@ -128,7 +128,7 @@ export async function createReportSubmit(req, res) {
   }
 
   try {
-    const { data, referenceNo, reporter } = await createNcrReportWithUpload({ body: req.body, file: req.file, reportedByAuthId })
+    const { data, referenceNo, reporter } = await createNcrReportWithUpload({ body: req.body, files: req.files, reportedByAuthId })
     await writeAudit({
       level: 'audit',
       source: 'ncr_reports',

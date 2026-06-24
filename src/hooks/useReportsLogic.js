@@ -396,8 +396,10 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
         payload.append('issue_type', updateFormState.form.issueType)
       }
 
-      if (updateFormState.form.file) {
-        payload.append('investigation_evidence', updateFormState.form.file)
+      if (updateFormState.form.files && updateFormState.form.files.length > 0) {
+        updateFormState.form.files.forEach(f => {
+          payload.append('investigation_evidence_files', f)
+        })
       }
 
       await updateReportInvestigationMultipart(modalsState.selectedReport.id, payload)
@@ -780,9 +782,10 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       onClose: modalsState.closeUpdateModal,
       report: modalsState.selectedReport,
       form: updateFormState.form,
-      previewUrl: updateFormState.previewUrl,
+      previewUrls: updateFormState.previewUrls,
       setField: updateFormState.setField,
-      handleFile: updateFormState.handleFile,
+      handleFiles: updateFormState.handleFiles,
+      removeFile: updateFormState.removeFile,
       errors: updateFormState.errors,
       error: updateFormState.error,
       isSubmitting: updateFormState.isSubmitting,

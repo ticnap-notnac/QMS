@@ -16,8 +16,8 @@ export default function useNCRSubmitModal({ onSuccess, authUserId }) {
     issueTypeId: '',
     description: '',
     clauseId: '',
-    file: null,
-    previewUrl: null,
+    files: [],
+    previewUrls: [],
   })
   const [errors, setErrors] = useState({})
   const [evidenceError, setEvidenceError] = useState(null)
@@ -58,33 +58,64 @@ export default function useNCRSubmitModal({ onSuccess, authUserId }) {
     }
   }, [form.description, form.issueType, authUserId])
 
-  const handleFile = useCallback((file) => {
-    if (!file) {
-      // clear file
-      if (form.previewUrl) {
-        try { URL.revokeObjectURL(form.previewUrl) } catch (e) {}
+  const handleFiles = useCallback((newFiles) => {
+    if (!newFiles || newFiles.length === 0) return
+
+    setForm((s) => {
+      const currentFiles = s.files || []
+      const currentUrls = s.previewUrls || []
+      
+      const totalFiles = currentFiles.length + newFiles.length
+      if (totalFiles > 3) {
+        setEvidenceError('Maximum 3 files allowed.')
+        return s
       }
-      setForm((s) => ({ ...s, file: null, previewUrl: null }))
+
+      const allowed = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/webp',
+        'application/pdf', 'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ]
+
+      const validFiles = []
+      const validUrls = []
+
+      for (let i = 0; i < newFiles.length; i++) {
+        const f = newFiles[i]
+        if (!allowed.includes(f.type)) {
+          setEvidenceError('Invalid file type detected. Only images, PDFs, and Docs allowed.')
+          continue
+        }
+        if (f.size > 5 * 1024 * 1024) {
+          setEvidenceError('One or more files exceed the 5MB limit.')
+          continue
+        }
+        validFiles.push(f)
+        validUrls.push({ url: URL.createObjectURL(f), type: f.type, name: f.name })
+      }
+
       setEvidenceError(null)
-      return
-    }
+      return { 
+        ...s, 
+        files: [...currentFiles, ...validFiles], 
+        previewUrls: [...currentUrls, ...validUrls] 
+      }
+    })
+  }, [])
 
-    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-    if (!allowed.includes(file.type)) {
-      setEvidenceError('Only jpg, jpeg, png, webp images are allowed')
-      return
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setEvidenceError('Image must be under 5MB')
-      return
-    }
+  const removeFile = useCallback((index) => {
+    setForm((s) => {
+      const newFiles = [...s.files]
+      const newUrls = [...s.previewUrls]
+      
+      const removed = newUrls.splice(index, 1)[0]
+      if (removed && removed.url) {
+        try { URL.revokeObjectURL(removed.url) } catch (e) {}
+      }
+      newFiles.splice(index, 1)
 
-    if (form.previewUrl) {
-      try { URL.revokeObjectURL(form.previewUrl) } catch (e) {}
-    }
-    const url = URL.createObjectURL(file)
-    setEvidenceError(null)
-    setForm((s) => ({ ...s, file, previewUrl: url }))
+      return { ...s, files: newFiles, previewUrls: newUrls }
+    })
   }, [])
 
   const validate = useCallback(() => {
@@ -94,10 +125,17 @@ export default function useNCRSubmitModal({ onSuccess, authUserId }) {
     if (!form.issueType) e.issueType = 'Issue category is required'
     if (!form.description || form.description.length < 20)
       e.description = 'Description must be at least 20 characters'
-    if (form.file) {
-      const allowed = ['image/png', 'image/jpeg', 'image/jpg']
-      if (!allowed.includes(form.file.type)) e.file = 'Only PNG/JPEG allowed'
-      if (form.file.size > 5 * 1024 * 1024) e.file = 'File must be <= 5MB'
+    if (form.files && form.files.length > 0) {
+      if (form.files.length > 3) e.files = 'Maximum 3 files allowed'
+      const allowed = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/webp',
+        'application/pdf', 'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ]
+      form.files.forEach(f => {
+        if (!allowed.includes(f.type)) e.files = 'Invalid file type'
+        if (f.size > 5 * 1024 * 1024) e.files = 'File must be <= 5MB'
+      })
     }
     setErrors(e)
     return Object.keys(e).length === 0
@@ -160,10 +198,10 @@ export default function useNCRSubmitModal({ onSuccess, authUserId }) {
       if (form.clauseId) {
         fd.append('clause_id', form.clauseId)
       }
-      if (form.file) {
-        // add both field names to be compatible with different server expectations
-        fd.append('evidence', form.file)
-        fd.append('file', form.file)
+      if (form.files && form.files.length > 0) {
+        form.files.forEach(f => {
+          fd.append('evidence_files', f)
+        })
       }
       const res = await submitNcrMultipart(fd, authId)
       setIsSubmitting(false)
@@ -180,8 +218,9 @@ export default function useNCRSubmitModal({ onSuccess, authUserId }) {
           issueTypeId: '',
           description: '',
           clauseId: '',
-          file: null,
-          previewUrl: null,
+          clauseId: '',
+          files: [],
+          previewUrls: [],
         })
         if (onSuccess) onSuccess(res.data)
       }
@@ -195,7 +234,8 @@ export default function useNCRSubmitModal({ onSuccess, authUserId }) {
   return {
     form,
     setField,
-    handleFile,
+    handleFiles,
+    removeFile,
     errors,
     isSubmitting,
     suggestingClause,

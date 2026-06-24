@@ -150,42 +150,38 @@ function resolveStorageUrl(path) {
   return data?.publicUrl ?? null
 }
 
-function EvidenceThumbnail({ path, label }) {
-  const publicUrl = resolveStorageUrl(path)
+function EvidenceThumbnail({ path, files, label }) {
+  if (!path && (!files || files.length === 0)) return <span className="muted">—</span>
+  
+  let publicUrl = resolveStorageUrl(path)
+  if (!publicUrl && files && files.length > 0) {
+    publicUrl = resolveStorageUrl(files[0])
+  }
 
   if (!publicUrl) return <span className="muted">—</span>
 
+  const isImage = publicUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)
+
   return (
-    <a
-      href={publicUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={`Open ${label}`}
-      style={{ display: 'inline-block', lineHeight: 0 }}
+    <div
+      onClick={() => window.open(publicUrl, '_blank', 'noopener,noreferrer')}
+      style={{
+        width: '36px', height: '36px', borderRadius: '4px', overflow: 'hidden',
+        cursor: 'pointer', border: '1px solid rgba(255,255,255,0.12)', display: 'inline-block',
+        background: 'rgba(255,255,255,0.05)', verticalAlign: 'middle', transition: 'opacity 0.15s'
+      }}
+      title={`View ${label} ${files?.length > 1 ? `(+${files.length - 1} more)` : ''}`}
+      onMouseOver={(e) => (e.currentTarget.style.opacity = '0.75')}
+      onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
     >
-      <img
-        src={publicUrl}
-        alt={label}
-        style={{
-          width: 36,
-          height: 36,
-          objectFit: 'cover',
-          borderRadius: 4,
-          border: '1px solid rgba(255,255,255,0.12)',
-          cursor: 'pointer',
-          transition: 'opacity 0.15s',
-        }}
-        onMouseOver={(e) => (e.currentTarget.style.opacity = '0.75')}
-        onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
-        onError={(e) => {
-          e.currentTarget.style.display = 'none'
-          e.currentTarget.parentElement.insertAdjacentHTML(
-            'beforeend',
-            `<span style="font-size:11px;opacity:0.6">View</span>`,
-          )
-        }}
-      />
-    </a>
+      {isImage ? (
+        <img src={publicUrl} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      ) : (
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+          📄
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -259,10 +255,10 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
                     {ncr.created_at ? new Date(ncr.created_at).toLocaleString() : '—'}
                   </td>
                   <td style={{ width: 48, textAlign: 'center' }}>
-                    <EvidenceThumbnail path={ncr.evidence_url} label="Evidence" />
+                    <EvidenceThumbnail path={ncr.evidence_url} files={ncr.evidence_files} label="Evidence" />
                   </td>
                   <td style={{ width: 48, textAlign: 'center' }}>
-                    <EvidenceThumbnail path={ncr.investigation_evidence_url} label="Inv. Evidence" />
+                    <EvidenceThumbnail path={ncr.investigation_evidence_url} files={ncr.investigation_evidence_files} label="Inv. Evidence" />
                   </td>
                   <td>
                     {/* 🚀 Dynamic Gray vs Green Theme Route Switcher */}
