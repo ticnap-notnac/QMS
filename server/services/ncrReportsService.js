@@ -924,15 +924,67 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
     .maybeSingle()
   if (ratingError) throw ratingError
 
-  // Fetch updated average
+  // Fetch all ratings for this report
   const { data: allRatings, error: allRatingsError } = await supabase
     .from('ncr_report_ratings')
-    .select('rating')
+    .select('rating, rated_by')
     .eq('report_id', report.id)
 
   if (!allRatingsError && allRatings && allRatings.length > 0) {
-    const avg = allRatings.reduce((sum, r) => sum + Number(r.rating), 0) / allRatings.length
-    if (avg >= 3.0) {
+    // 1. Fetch user roles for these raters
+    const userIds = [...new Set(allRatings.map((r) => r.rated_by))]
+    const { data: ratersRoles } = await supabase
+      .from('users')
+      .select('id, role_id (name)')
+      .in('id', userIds)
+
+    const raterRoleMap = {}
+    if (ratersRoles) {
+      ratersRoles.forEach((user) => {
+        const roleName = String(user.role_id?.name || '').trim().toLowerCase()
+        raterRoleMap[user.id] = roleName
+      })
+    }
+
+    // 2. Group ratings by bucket
+    const bucketA = [] // Auditors / Admins
+    const bucketB = [] // Managers
+    const bucketC = [] // Staff
+
+    allRatings.forEach((r) => {
+      const role = raterRoleMap[r.rated_by] || 'staff'
+      const val = Number(r.rating)
+      if (role === 'admin' || role === 'auditor') bucketA.push(val)
+      else if (role === 'department manager' || role === 'manager') bucketB.push(val)
+      else bucketC.push(val)
+    })
+
+    // 3. Calculate internal bucket averages
+    const avgA = bucketA.length > 0 ? bucketA.reduce((a, b) => a + b, 0) / bucketA.length : 0
+    const avgB = bucketB.length > 0 ? bucketB.reduce((a, b) => a + b, 0) / bucketB.length : 0
+    const avgC = bucketC.length > 0 ? bucketC.reduce((a, b) => a + b, 0) / bucketC.length : 0
+
+    // 4. Determine dynamic weights
+    let weightA = 0.40
+    let weightB = 0.20
+    let weightC = 0.40
+
+    if (bucketA.length === 0) { weightA = 0 }
+    if (bucketB.length === 0) { weightB = 0 }
+    if (bucketC.length === 0) { weightC = 0 }
+
+    const totalWeight = weightA + weightB + weightC
+    
+    // 5. Calculate final weighted average
+    let finalAvg = 0
+    if (totalWeight > 0) {
+      finalAvg = ( (avgA * weightA) + (avgB * weightB) + (avgC * weightC) ) / totalWeight
+    }
+
+    // Ensure finalAvg is rounded nicely or strictly capped to 5
+    const effectivenessScore = Math.min(5, Math.max(0.5, finalAvg))
+
+    if (effectivenessScore >= 3.0) {
       // Promote to case_repository
       const { data: existingCase, error: existingCaseError } = await supabase
         .from('case_repository')
@@ -946,7 +998,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
           issue_type: report.issue_type || 'ncr',
           corrective_action: report.corrective_action || report.investigation_details || 'None provided',
           preventive_action: report.resolution_details || 'None provided',
-          effectiveness_score: avg,
+          effectiveness_score: effectivenessScore,
           // CBR: store extracted keywords (not raw slice) + new feature columns
           problem_keywords: extractKeywordsAsString(report.description),
           severity: report.severity || null,
@@ -956,7 +1008,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
         }])
       } else if (existingCase) {
         // Update effectiveness score
-        await supabase.from('case_repository').update({ effectiveness_score: avg })
+        await supabase.from('case_repository').update({ effectiveness_score: effectivenessScore })
           .eq('id', existingCase.id)
       }
     }
