@@ -35,7 +35,8 @@ class ErrorBoundary extends React.Component {
 // Global error logging telemetry
 const logErrorToBackend = (errorData) => {
   try {
-    fetch('/api/logs/client-error', {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+    fetch(`${apiBaseUrl}/logs/client-error`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -3,6 +3,7 @@ import { supabase } from '../utils/supabase'
 import { fetchLogs } from '../services/logService'
 import { useCARDetails } from './useCARDetails'
 import * as checklistService from '../services/auditChecklistService'
+import { request } from '../lib/api'
 
 export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs' }) {
   const [activeTab, setActiveTab] = useState(activeTabParam)
@@ -278,6 +279,26 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       setResultsMap(updatedResultsMap)
 
       if (complete) {
+        // Bind existing open CARs to this schedule so they don't appear in future audits
+        const clauseIds = Object.keys(resultsMap)
+        if (clauseIds.length > 0) {
+          const { data: linksData, error: linksErr } = await supabase
+            .from('car_clause_links')
+            .select('car_report_id')
+            .in('clause_id', clauseIds)
+            
+          if (!linksErr && linksData && linksData.length > 0) {
+            const carIdsToBind = linksData.map(l => l.car_report_id)
+            
+            // Only bind CARs that don't already belong to an audit schedule
+            await supabase
+              .from('car_reports')
+              .update({ audit_schedule_id: activeRun.schedule_id })
+              .in('id', carIdsToBind)
+              .is('audit_schedule_id', null)
+          }
+        }
+
         const { error: runErr } = await supabase
           .from('audit_runs')
           .update({ completed_at: new Date().toISOString() })
@@ -569,9 +590,31 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
           .eq('is_active', true)
         
         if (clauseErr) throw clauseErr
+        
         clausesList = (clausesData || []).sort((a, b) =>
           a.clause_number.localeCompare(b.clause_number, undefined, { numeric: true })
         )
+        
+        // Fetch linked CARs for these clauses to display in details
+        const clauseIds = clausesList.map(c => c.id)
+        if (clauseIds.length > 0) {
+          const { data: linksData, error: linkErr } = await supabase
+            .from('car_clause_links')
+            .select('clause_id, car_reports(*)')
+            .in('clause_id', clauseIds)
+            
+          if (!linkErr && linksData) {
+            clausesList = clausesList.map(c => {
+              // Only attach CARs that belong to this audit run's schedule, OR are global
+              // Wait, if it's completed, it should only show CARs that were bound to this schedule.
+              // If we bind them upon completion, they will have audit_schedule_id === run.schedule_id.
+              const cars = linksData
+                .filter(l => l.clause_id === c.id && l.car_reports && l.car_reports.audit_schedule_id === run.schedule_id)
+                .map(l => l.car_reports)
+              return { ...c, linked_cars: cars }
+            })
+          }
+        }
       }
       setRunClauses(clausesList)
     } catch (err) {
@@ -777,12 +820,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
           console.warn('Failed to insert notification for auditor:', notifError.message)
         } else {
           // Trigger email via backend
-          fetch(`${import.meta.env.VITE_API_BASE_URL}/notifications/send-email`, {
+          request('/notifications/send-email', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-user-auth-id': (await supabase.auth.getSession()).data.session?.user?.id || ''
-            },
             body: JSON.stringify({
               userId: auditorSerialId,
               title: titleText,
@@ -806,6 +845,32 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       setError(err.message || 'Failed to create audit schedule.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleDeleteSchedule = async (scheduleId) => {
+    if (!window.confirm('Are you sure you want to delete this schedule?')) return
+    
+    // Optimistic UI update: instantly remove it from the screen
+    setSchedules(prev => prev.filter(s => s.id !== scheduleId))
+    setLoading(true)
+    try {
+      const { error: deleteErr } = await supabase
+        .from('audit_schedules')
+        .delete()
+        .eq('id', scheduleId)
+
+      if (deleteErr) throw deleteErr
+      setSuccess('Audit schedule deleted successfully!')
+      // Still fetch to ensure we're completely synced with the database
+      fetchData()
+    } catch (err) {
+      console.error(err)
+      setError(err.message || 'Failed to delete schedule.')
+      // Revert the UI if it failed
+      fetchData()
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -975,6 +1040,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     fetchRunDetails,
     handlePrintReport,
     handleScheduleSubmit,
+    handleDeleteSchedule,
     handleRemoveCarLink,
     fetchClausesForStandard,
     handleCreateTemplate,

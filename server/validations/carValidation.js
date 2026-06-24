@@ -2,10 +2,9 @@ import { z } from 'zod'
 
 export const createCarSchema = z.object({
   body: z.object({
-    auditId: z.string().uuid().optional(),
-    description: z.string().min(1, 'Description is required'),
-    suggested_capa: z.string().optional(),
-  })
+    requestor: z.string().optional(),
+    details_of_nonconformance: z.string().min(1, 'Details of non-conformance is required'),
+  }).passthrough()
 })
 
 export const submitCapaSchema = z.object({

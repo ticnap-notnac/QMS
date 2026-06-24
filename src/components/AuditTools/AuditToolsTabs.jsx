@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { BookOpen, LoaderCircle, Calendar, Plus, CheckCircle, Clock } from 'lucide-react'
+import { BookOpen, LoaderCircle, Calendar, Plus, CheckCircle, Clock, Trash2 } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 
 export function AuditLogsTab({
@@ -271,6 +271,7 @@ export function AuditSchedulesTab({
   loading,
   schedules,
   handleStartAudit,
+  handleDeleteSchedule,
   templateId,
   setTemplateId,
   templates
@@ -485,14 +486,25 @@ export function AuditSchedulesTab({
                       </td>
                       <td className="text-center">
                         {sched.status !== 'completed' && (
-                          <button
-                            type="button"
-                            className="btn-primary"
-                            style={{ padding: '6px 12px', fontSize: '12px' }}
-                            onClick={() => handleStartAudit(sched)}
-                          >
-                            Start Run
-                          </button>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <button
+                              type="button"
+                              className="btn-primary"
+                              style={{ padding: '6px 12px', fontSize: '12px' }}
+                              onClick={() => handleStartAudit(sched)}
+                            >
+                              Start Run
+                            </button>
+                            <button
+                              type="button"
+                              className="sidebar-button"
+                              style={{ padding: '6px 10px', fontSize: '12px', color: '#ef4444' }}
+                              onClick={() => handleDeleteSchedule(sched.id)}
+                              title="Delete Schedule"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>

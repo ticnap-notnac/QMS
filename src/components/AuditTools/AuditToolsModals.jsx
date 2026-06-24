@@ -1,4 +1,4 @@
-import { LoaderCircle } from 'lucide-react'
+import { LoaderCircle, BookOpen } from 'lucide-react'
 
 export function AuditChecklistSection({
   activeRun,
@@ -377,6 +377,30 @@ export function AuditRunDetailsModal({
                         <span style={{ color: '#475569', fontWeight: 'bold' }}>Findings Notes: </span>
                         {result.notes}
                       </p>
+                    )}
+                    {clause.linked_cars && clause.linked_cars.length > 0 && (
+                      <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', flexShrink: 0 }}>Linked CARs:</span>
+                        {clause.linked_cars.map(car => (
+                          <div 
+                            key={car.id} 
+                            style={{ 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              background: '#fffbeb', 
+                              border: '1px solid #fde68a', 
+                              padding: '2px 8px', 
+                              borderRadius: '12px', 
+                              fontSize: '11px', 
+                              color: '#b45309', 
+                              gap: '6px' 
+                            }}
+                          >
+                            <BookOpen size={10} />
+                            {car.title} ({car.status})
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>
