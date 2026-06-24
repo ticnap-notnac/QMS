@@ -101,6 +101,7 @@ export function useDCCISO() {
     loadActiveStandards,
     loadClausesForStandard,
     openStandard,
-    closeStandard
+    closeStandard,
+    setClauses
   }
 }
