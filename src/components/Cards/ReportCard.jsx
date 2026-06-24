@@ -112,10 +112,26 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
         </div>
       </div>
 
-      {/* ── Description ─────────────────────────────────────────────────── */}
+      {/* ── Details Section ─────────────────────────────────────────────── */}
       <div className="reports-details-title-wrap">
         <h4 className="reports-details-title">Details</h4>
       </div>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '0 20px', marginTop: '12px', marginBottom: '12px' }}>
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Product Type</div>
+          <div style={{ fontSize: '14px', color: 'var(--text-color)' }}>{report.product_type_name || report.product_type || '—'}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Batch Number</div>
+          <div style={{ fontSize: '14px', color: 'var(--text-color)' }}>{report.batch_number || '—'}</div>
+        </div>
+        <div style={{ gridColumn: 'span 2' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Issue Category</div>
+          <div style={{ fontSize: '14px', color: 'var(--text-color)' }}>{report.issue_type_name || report.issue_type || report.issue_category || '—'}</div>
+        </div>
+      </div>
+
       <div className="reports-details-box">
         <span className="reports-workspace-text">
           {report.description || 'No description provided.'}

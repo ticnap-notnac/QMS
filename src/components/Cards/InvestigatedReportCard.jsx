@@ -1,17 +1,3 @@
-/**
- * components/InvestigatedReportCard.jsx
- *
- * feat(reports): extract InvestigatedReportCard from ReportsPage approval queue
- *
- * Renders a single investigated/resolved NCR report with:
- *   - Reporter identity block
- *   - Status / severity / approval badges
- *   - Investigation + resolution detail panels
- *   - Resolution time & verification date grid
- *   - Investigation evidence image
- *   - Approve / Reject / Update action row (role-gated)
- */
-
 import { User, SquarePen, Trash2 } from 'lucide-react'
 import { formatDate, getStatusStyle, getSeverityStyle, getApprovalState, formatAssignedUser } from '@/utils/themeHelpers'
 
@@ -78,8 +64,28 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
         </div>
       </div>
 
-      {/* ── Investigation details ───────────────────────────────────────── */}
+      {/* ── Additional Info ────────────────────────────────────────────── */}
       <div className="reports-details-title-wrap">
+        <h4 className="reports-details-title">Details</h4>
+      </div>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '0 20px', marginTop: '12px', marginBottom: '12px' }}>
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Product Type</div>
+          <div style={{ fontSize: '14px', color: 'var(--text-color)' }}>{report.product_type_name || report.product_type || '—'}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Batch Number</div>
+          <div style={{ fontSize: '14px', color: 'var(--text-color)' }}>{report.batch_number || '—'}</div>
+        </div>
+        <div style={{ gridColumn: 'span 2' }}>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Issue Category</div>
+          <div style={{ fontSize: '14px', color: 'var(--text-color)' }}>{report.issue_type_name || report.issue_type || report.issue_category || '—'}</div>
+        </div>
+      </div>
+
+      {/* ── Investigation details ───────────────────────────────────────── */}
+      <div className="reports-details-title-wrap" style={{ display: 'none' }}>
         <h4 className="reports-details-title">Investigation Details</h4>
       </div>
       <div className="reports-details-box">
