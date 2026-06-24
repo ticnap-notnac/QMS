@@ -216,6 +216,11 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
             if (car.audit_schedule_id && car.audit_schedule_id !== schedule.id) {
               continue
             }
+
+            // Filter: If the CAR is already closed, it's considered audited/resolved, so hide it
+            if (String(car.status || '').toLowerCase() === 'closed') {
+              continue
+            }
             
             if (!carsMap[row.clause_id]) carsMap[row.clause_id] = []
             carsMap[row.clause_id].push(car)
@@ -502,6 +507,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
         return {
           id: run.id,
+          schedule_id: run.schedule_id,
           title: sched?.title || 'Unnamed Audit',
           standard_name: std ? `${std.name} (${std.version})` : 'Unknown Standard',
           auditor_name: aud ? `${aud.first_name} ${aud.last_name}` : 'Unknown Auditor',

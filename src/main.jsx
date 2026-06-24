@@ -56,6 +56,17 @@ window.onerror = function (message, source, lineno, colno, error) {
 window.addEventListener('unhandledrejection', function (event) {
   logErrorToBackend({ message: 'Unhandled Promise Rejection', error: event.reason?.stack || event.reason })
 })
+
+const originalConsoleError = console.error;
+console.error = function (...args) {
+  originalConsoleError.apply(console, args);
+  logErrorToBackend({ 
+    message: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '), 
+    source: 'console.error', 
+    error: args.map(a => a?.stack || a).join('\n') 
+  })
+}
+
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
