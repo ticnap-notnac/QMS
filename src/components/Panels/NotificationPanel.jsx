@@ -1,4 +1,7 @@
 import { Bell, CheckCheck, Clock3, X } from 'lucide-react'
+import { useState } from 'react'
+import StarRating from '../UI/StarRating'
+import { rateReport } from '@/services/ncrService'
 
 function formatNotificationDate(value) {
   if (!value) return ''
@@ -29,6 +32,23 @@ export default function NotificationPanel({
   onMarkAllAsRead,
 }) {
   const list = Array.isArray(notifications) ? notifications : []
+  const [ratingError, setRatingError] = useState(null)
+  const [submittingRatingId, setSubmittingRatingId] = useState(null)
+
+  const handleInlineRating = async (notification, ratingValue) => {
+    if (!notification.report_id) return
+    setRatingError(null)
+    setSubmittingRatingId(notification.id)
+    try {
+      await rateReport(notification.report_id, ratingValue)
+      // Once rating is successfully submitted, automatically dismiss the notification
+      onMarkOneAsRead(notification.id)
+    } catch (err) {
+      setRatingError(err?.message || 'Failed to submit rating.')
+    } finally {
+      setSubmittingRatingId(null)
+    }
+  }
 
   return (
     <div className="notification-floating-dropdown">
@@ -100,6 +120,22 @@ export default function NotificationPanel({
             <div className="notification-card-body">
               <h3 className="notification-card-title">{notification.title}</h3>
               <p className="notification-card-message">{notification.message}</p>
+              
+              {String(notification.title || '').startsWith('Report Approved:') && (
+                <div className="notification-inline-rating" style={{ marginTop: '8px' }} onClick={(e) => e.stopPropagation()}>
+                  <span style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
+                    Rate effectiveness to dismiss:
+                  </span>
+                  <StarRating 
+                    rating={0} 
+                    onRatingChange={(val) => handleInlineRating(notification, val)} 
+                    readOnly={submittingRatingId === notification.id}
+                  />
+                  {submittingRatingId === notification.id && <span style={{ fontSize: '11px', color: 'var(--muted)', marginLeft: '8px' }}>Submitting...</span>}
+                  {ratingError && <span style={{ fontSize: '11px', color: 'var(--error, #ef4444)', marginLeft: '8px' }}>{ratingError}</span>}
+                </div>
+              )}
+
               <div className="notification-card-meta">
                 <span>{formatNotificationDate(notification.created_at) || 'Just now'}</span>
                 {notification.report_id ? <span>Report #{notification.report_id}</span> : null}
