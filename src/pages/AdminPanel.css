@@ -1,5 +1,5 @@
 /* src/pages/AdminPanel.css */
-.admin-panel-main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.admin-panel-main { padding: 24px; max-width: 100%; margin: 0 auto; }
 .admin-panel-title { margin-bottom: 24px; color: #0f172a; font-size: 28px; font-weight: 600; }
 
 .admin-tab-navigation { 
@@ -352,7 +352,7 @@
 .folder-content-container table,
 .folder-content-container [style*="grid"],
 .folder-content-container div div {
-  width: max-content !important;
+  width: 100% !important;
   min-width: 1400px !important; /* 🛑 Demands 1400px of width so columns never crush together! */
 }
 
@@ -409,7 +409,7 @@
 /* 3. Give the data matrix its natural width so columns never overlap */
 .folder-content-container table,
 .folder-content-container [style*="grid"] {
-  width: max-content !important;
+  width: 100% !important;
   min-width: 1400px !important; /* 🌟 Spreads headers out beautifully across a 1400px responsive canvas */
 }
 
@@ -747,9 +747,9 @@
 }
 
 .iso-status-pill.is-active {
-  background: #e4e4e7;
-  color: #0f172a;
-  border: 1px solid #cbd5e1;
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #16a34a !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
 }
 
 .iso-status-pill.is-inactive {

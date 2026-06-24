@@ -12,7 +12,7 @@
 .dcc-main-wrapper {
   flex: 1;
   width: 95%;
-  max-width: 1200px;
+  max-width: 100%;
   margin: 32px auto;
   padding: 0 16px;
   display: flex;
@@ -235,7 +235,7 @@
 .dcc-glass-main-card .dcc-scrollable-table-box .iso-table,
 .dcc-scrollable-table-box table,
 .dcc-scrollable-table-box .iso-table {
-  width: max-content !important;
+  width: 100% !important;
   min-width: 100% !important;
   table-layout: auto !important;
   border-collapse: collapse !important;
@@ -268,7 +268,8 @@
   overflow: visible !important;
   text-overflow: clip !important;
   word-break: break-word !important;
-  max-width: 100% !important;
+  min-width: 120px !important;
+  max-width: 420px !important;
   line-height: 1.5 !important;
 }
 
@@ -338,6 +339,7 @@ main.page-root .dcc-glass-main-card .glass-card-dcc {
 
 main.page-root .dcc-glass-main-card .row-gap-40 {
   gap: 16px !important;
+  align-items: stretch !important;
 }
 
 main.page-root .dcc-glass-main-card .row-gap-20 {
@@ -477,7 +479,7 @@ main.page-root .dcc-glass-main-card .car-group-card {
 
 main.page-root .dcc-glass-main-card .car-group-card .iso-table {
   min-width: 1400px !important;
-  width: max-content !important;
+  width: 100% !important;
   table-layout: auto !important;
 }
 
