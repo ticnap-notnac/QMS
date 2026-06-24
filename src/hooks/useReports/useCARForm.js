@@ -236,26 +236,11 @@ export function useCARForm(departments = []) {
       return false
     }
 
-    if (!form.product_material_name?.trim()) {
-      setError('Product / Material Name is required.')
-      return false
-    }
-    if (!form.model_type?.trim()) {
-      setError('Model / Type is required.')
-      return false
-    }
-    if (!form.control_no?.trim()) {
-      setError('Control No. is required.')
-      return false
-    }
-    if (form.affected_quantity === undefined || form.affected_quantity === null || String(form.affected_quantity).trim() === '') {
-      setError('Affected Quantity is required.')
-      return false
-    }
     if (!form.details_of_nonconformance?.trim()) {
       setError('Details of Non-Conformance is required.')
       return false
     }
+
     if (!form.request_date) {
       setError('Request Date is required.')
       return false

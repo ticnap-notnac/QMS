@@ -268,7 +268,23 @@ function CARModal({
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <label className="label-field">Affected Quantity:</label>
-                    <input type="number" value={form.affected_quantity} onChange={(e) => handleChange('affected_quantity', e.target.value)} className="input-field" />
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={form.affected_quantity} 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || Number(val) >= 0) {
+                          handleChange('affected_quantity', val);
+                        }
+                      }} 
+                      onKeyDown={(e) => {
+                        if (e.key === '-' || e.key === 'e') {
+                          e.preventDefault();
+                        }
+                      }}
+                      className="input-field" 
+                    />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <label className="label-field">Others, Pls. Specify:</label>
