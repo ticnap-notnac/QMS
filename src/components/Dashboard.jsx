@@ -90,6 +90,8 @@ const groupResolutionTimesByMonth = (ncrs, cars, qddrs) => {
 }
 
 // Custom tooltips for nice monotone popup displays
+import PendingRatingsWidget from './Dashboard/PendingRatingsWidget'
+
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload
@@ -138,7 +140,7 @@ const CustomResolutionTooltip = ({ active, payload, label }) => {
   return null
 }
 
-export default function Dashboard() {
+export default function Dashboard({ currentUserId }) {
   const [metrics, setMetrics] = useState(null)
   const [complianceStats, setComplianceStats] = useState([])
   const [trends, setTrends] = useState([])
@@ -243,6 +245,9 @@ export default function Dashboard() {
           <span>{error}</span>
         </div>
       )}
+
+      {/* Pending Ratings Widget - Fast Frictionless Rating UI */}
+      <PendingRatingsWidget currentUserId={currentUserId} />
 
       {/* Top Metrics Cards Row */}
       <section className="metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
