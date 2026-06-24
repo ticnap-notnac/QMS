@@ -4,7 +4,7 @@ import StarRating from '../UI/StarRating'
 import { rateReport } from '@/services/ncrService'
 import { CheckCircle } from 'lucide-react'
 
-export default function PendingRatingsWidget({ currentUserId }) {
+export default function PendingRatingsWidget({ currentUserId, userRole, userDepartmentId }) {
   const [pendingReports, setPendingReports] = useState([])
   const [loading, setLoading] = useState(true)
   const [ratingError, setRatingError] = useState(null)
@@ -12,19 +12,32 @@ export default function PendingRatingsWidget({ currentUserId }) {
   const [successId, setSuccessId] = useState(null)
 
   useEffect(() => {
-    if (!currentUserId) {
+    if (!currentUserId || !userRole) {
       setLoading(false)
       return
     }
 
     const fetchPendingRatings = async () => {
       try {
-        // Fetch CLOSED reports where this user is the reported_by
-        const { data: reports, error: reportsErr } = await supabase
+        const normalizedRole = String(userRole).toLowerCase().trim()
+        const isAuditorOrAdmin = normalizedRole === 'auditor' || normalizedRole === 'admin'
+        
+        let query = supabase
           .from('ncr_reports')
-          .select('id, reference_no, description, corrective_action')
+          .select('id, reference_no, description, corrective_action, department_id, reported_by')
           .eq('status', 'CLOSED')
-          .eq('reported_by', currentUserId)
+
+        if (!isAuditorOrAdmin) {
+          // If not auditor/admin, must be in the same department
+          if (userDepartmentId) {
+            query = query.eq('department_id', userDepartmentId)
+          } else {
+            // Fallback just in case: only show their own reported ones if no dept
+            query = query.eq('reported_by', currentUserId)
+          }
+        }
+
+        const { data: reports, error: reportsErr } = await query
 
         if (reportsErr) {
           console.warn('Failed to fetch reports with reported_by', reportsErr)

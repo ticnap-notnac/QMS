@@ -140,7 +140,7 @@ const CustomResolutionTooltip = ({ active, payload, label }) => {
   return null
 }
 
-export default function Dashboard({ currentUserId }) {
+export default function Dashboard({ currentUserId, userRole, userDepartmentId }) {
   const [metrics, setMetrics] = useState(null)
   const [complianceStats, setComplianceStats] = useState([])
   const [trends, setTrends] = useState([])
@@ -247,7 +247,11 @@ export default function Dashboard({ currentUserId }) {
       )}
 
       {/* Pending Ratings Widget - Fast Frictionless Rating UI */}
-      <PendingRatingsWidget currentUserId={currentUserId} />
+      <PendingRatingsWidget 
+        currentUserId={currentUserId} 
+        userRole={userRole}
+        userDepartmentId={userDepartmentId}
+      />
 
       {/* Top Metrics Cards Row */}
       <section className="metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
