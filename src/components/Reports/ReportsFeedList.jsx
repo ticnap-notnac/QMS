@@ -9,6 +9,7 @@ export default function ReportsFeedList({
   closedReports,
   reports,
   departmentNameById,
+  userNameById,
   canAssignReports,
   canApproveReport,
   canUpdateReport,
@@ -36,6 +37,7 @@ export default function ReportsFeedList({
               key={`investigated-${report.id}`}
               report={report}
               departmentNameById={departmentNameById}
+              userNameById={userNameById}
               canAssignReports={canAssignReports}
               canApproveReport={canApproveReport}
               canUpdateReport={canUpdateReport}
@@ -101,6 +103,7 @@ export default function ReportsFeedList({
           key={report.id}
           report={report}
           departmentNameById={departmentNameById}
+          userNameById={userNameById}
           canAssignReports={canAssignReports}
           canUpdateReport={canUpdateReport}
           canDeleteReport={canDeleteReport}

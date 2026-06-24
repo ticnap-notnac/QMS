@@ -5,7 +5,7 @@ import { getReportRating, rateReport } from '@/services/ncrService'
 import StarRating from '../UI/StarRating'
 import { REPORT_STATUS } from '../../../shared/constants'
 
-function ReportCard({ report, departmentNameById, canAssignReports, canUpdateReport, canDeleteReport, onUpdate, onAssign, onDelete }) {
+function ReportCard({ report, departmentNameById, userNameById, canAssignReports, canUpdateReport, canDeleteReport, onUpdate, onAssign, onDelete }) {
   const reporterName = report.reporter_full_name || 'Name of the User'
   const reporterRole = report.reporter_role_name || 'Position'
   const reporterDepartment =
@@ -15,7 +15,7 @@ function ReportCard({ report, departmentNameById, canAssignReports, canUpdateRep
   const reportLocation = report.location_name || report.complaint_location || 'Location'
   const statusStyle = getStatusStyle(report.status)
   const severityStyle = getSeverityStyle(report.severity)
-  const assignmentLabel = formatAssignedUser(report)
+  const assignmentLabel = formatAssignedUser(report, userNameById)
   const isAssigned = Boolean(report.assigned_to)
   const isClosed = String(report.status || '').toUpperCase() === REPORT_STATUS.CLOSED.toUpperCase()
 

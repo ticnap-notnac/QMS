@@ -162,6 +162,10 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
     () => new Map((departments || []).map((d) => [String(d.id), d.department_name])),
     [departments]
   )
+  const userNameById = useMemo(
+    () => new Map((users || []).map((u) => [String(u.id), u.user_name || 'Unnamed'])),
+    [users]
+  )
 
   return {
     isLoading,
@@ -182,6 +186,7 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
     productTypeOptions,
     issueTypeOptions,
     departmentNameById,
+    userNameById,
     refreshReportsList,
     loadLookupData
   }

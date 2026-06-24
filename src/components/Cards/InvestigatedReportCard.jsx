@@ -13,7 +13,7 @@
  */
 
 import { User, SquarePen, Trash2 } from 'lucide-react'
-import { formatDate, getStatusStyle, getSeverityStyle, getApprovalState } from '@/utils/themeHelpers'
+import { formatDate, getStatusStyle, getSeverityStyle, getApprovalState, formatAssignedUser } from '@/utils/themeHelpers'
 
 /**
  * @param {{
@@ -26,7 +26,7 @@ import { formatDate, getStatusStyle, getSeverityStyle, getApprovalState } from '
  *   onUpdate: (report: object) => void,
  * }} props
  */
-function InvestigatedReportCard({ report, departmentNameById, canAssignReports, canApproveReport, canUpdateReport, canDeleteReport, onApprove, onReject, onUpdate, onDelete }) {
+function InvestigatedReportCard({ report, departmentNameById, userNameById, canAssignReports, canApproveReport, canUpdateReport, canDeleteReport, onApprove, onReject, onUpdate, onDelete }) {
   const reporterName = report.reporter_full_name || 'Name of the User'
   const reporterRole = report.reporter_role_name || 'Position'
   const reporterDepartment =
@@ -35,6 +35,7 @@ function InvestigatedReportCard({ report, departmentNameById, canAssignReports, 
     'Department'
   const reportLocation = report.location_name || report.complaint_location || 'Location'
 
+  const assignmentLabel = formatAssignedUser(report, userNameById)
   const statusStyle = getStatusStyle(report.status)
   const severityStyle = getSeverityStyle(report.severity)
   const approvalState = getApprovalState(report)

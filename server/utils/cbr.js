@@ -79,7 +79,7 @@ export function jaccardSimilarity(setA, setB) {
   return intersection.length / unionSize
 }
 
-const SEVERITY_ORDER = { low: 0, medium: 1, high: 2, critical: 3 }
+const SEVERITY_ORDER = { low: 0, medium: 1, high: 2 }
 
 /**
  * Severity similarity:

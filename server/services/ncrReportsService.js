@@ -27,7 +27,6 @@ export function normalizeText(value) {
 
 export function normalizeSeverityValue(value) {
   const normalized = normalizeText(value).toLowerCase()
-  if (normalized === 'critical') return 'CRITICAL'
   if (normalized === 'high') return 'HIGH'
   if (normalized === 'medium') return 'MEDIUM'
   if (normalized === 'low') return 'LOW'

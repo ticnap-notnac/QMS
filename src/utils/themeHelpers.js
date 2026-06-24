@@ -27,7 +27,8 @@ export function getApprovalState(report) {
   return String(report?.status || '').trim().toLowerCase() === 'closed' ? 'approved' : 'pending'
 }
 
-export function formatAssignedUser(report) {
+export function formatAssignedUser(report, userNameById) {
   if (!report?.assigned_to) return ''
-  return `Assigned to user #${report.assigned_to}`
+  const assignedName = userNameById?.get(String(report.assigned_to))
+  return assignedName ? `Assigned to ${assignedName}` : `Assigned to user #${report.assigned_to}`
 }

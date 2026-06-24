@@ -727,6 +727,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     locationOptions: dataState.locationOptions,
     productTypeOptions: dataState.productTypeOptions,
     departmentNameById: dataState.departmentNameById,
+    userNameById: dataState.userNameById,
 
     departmentsLoading: dataState.departmentsLoading,
     locationsLoading: dataState.locationsLoading,
