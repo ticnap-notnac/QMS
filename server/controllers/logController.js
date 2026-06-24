@@ -3,6 +3,7 @@ import {
   insertSystemLog,
   recordSystemLogRead,
 } from '../services/logService.js'
+import logger from '../utils/logger.js'
 
 export async function getLogs(req, res, next) {
   const limit  = Number(req.query.limit  || 50)
@@ -34,4 +35,18 @@ export async function recordLogRead(req, res, next) {
   } catch (err) {
     next(err)
   }
+}
+
+export function logClientError(req, res) {
+  const { message, source, lineno, colno, error, userAgent, path } = req.body || {}
+  logger.error(`Client Error: ${message}`, {
+    source: 'frontend',
+    client_source: source,
+    lineno,
+    colno,
+    stack: error?.stack || error,
+    userAgent,
+    path
+  })
+  res.status(204).end()
 }
