@@ -18,9 +18,9 @@ import { useSuggestionLogic } from './useReports/useSuggestionLogic'
 import { fetchExistingAiSuggestion } from '@/services/suggestionService'
 import { dismissVerificationNotification } from '@/services/notificationService'
 import { updateReportInvestigationMultipart } from '@/services/ncrService'
-import { submitCarReport, suggestClausesForCar, submitCapaPlan, verifyCarPlan } from '@/services/carService'
+import { submitCarReport, suggestClausesForCar, submitCapaPlan, verifyCarPlan, updateCarReport, fetchLinkedClausesForCar } from '@/services/carService'
 import { supabase } from '@/utils/supabase'
-import { submitQddrReport, updateQddrReport } from '@/services/qddrService'
+import { submitQddrReport, updateQddrReport, editQddrReport } from '@/services/qddrService'
 import { useCARDetails } from './useCARDetails'
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
@@ -572,9 +572,14 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
           : carFormState.form.ncr_ids
       }
       
-      await submitCarReport(payload, currentAuthId)
+      if (carFormState.form.id) {
+        await updateCarReport(carFormState.form.id, payload, currentAuthId)
+        setToast({ message: 'CAR report updated successfully', type: 'success' })
+      } else {
+        await submitCarReport(payload, currentAuthId)
+        setToast({ message: 'CAR report submitted successfully', type: 'success' })
+      }
       
-      setToast({ message: 'CAR report submitted successfully', type: 'success' })
       modalsState.closeCARModal()
       carFormState.resetForm()
       await dataState.refreshReportsList()
@@ -608,9 +613,15 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
           : qddrFormState.form.ncr_id
       }
       
-      await submitQddrReport(payload, currentAuthId)
+      if (qddrFormState.form.id) {
+        // use editQddrReport for the new backend edit endpoint
+        await editQddrReport(qddrFormState.form.id, payload, currentAuthId)
+        setToast({ message: 'QDDR report updated successfully', type: 'success' })
+      } else {
+        await submitQddrReport(payload, currentAuthId)
+        setToast({ message: 'QDDR report submitted successfully', type: 'success' })
+      }
       
-      setToast({ message: 'QDDR report submitted successfully', type: 'success' })
       modalsState.closeQDDRModal()
       qddrFormState.resetForm()
       await dataState.refreshReportsList()
@@ -688,6 +699,29 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     authUserId: currentAuthId
   })
 
+  // Edit Handlers
+  const openEditCarModal = async (car) => {
+    try {
+      const linkedClauses = await fetchLinkedClausesForCar(car.id)
+      const linkedClauseIds = linkedClauses.map(c => c.clause_id)
+      carFormState.initForm({ 
+        ...car, 
+        linked_clause_ids: linkedClauseIds,
+        suggested_clauses: linkedClauses.map(c => ({ ...c, confidence: 1 }))
+      })
+      modalsState.openCARModal(car)
+    } catch (err) {
+      console.error('Failed to fetch linked clauses for edit:', err)
+      carFormState.initForm(car)
+      modalsState.openCARModal(car)
+    }
+  }
+
+  const openEditQddrModal = (qddr) => {
+    qddrFormState.initForm(qddr)
+    modalsState.openQDDRModal(qddr) // Same here
+  }
+
   // ─── Returned API ──────────────────────────────────────────────────────────
 
   return {
@@ -704,6 +738,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     loadingCar,
     qddrReports,
     loadingQddr,
+    refreshCarAndQddrLists,
     selectedCar: carDetails.selectedCar,
     isCarDetailsModalOpen: carDetails.isCarDetailsModalOpen,
     openCarDetails: carDetails.openCarDetails,
@@ -717,6 +752,9 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     updateQddr: handleUpdateQddr,
     users: dataState.users.map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
     usersLoading: dataState.usersLoading,
+
+    openEditCarModal,
+    openEditQddrModal,
 
     ...modalsState,
     

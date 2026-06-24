@@ -465,7 +465,7 @@ function CARModal({
                 onClick={onSubmit}
                 style={{ margin: 0, padding: '8px 24px', fontSize: '13px', height: 'auto', boxShadow: 'none' }}
               >
-                {isSubmitting ? 'Submitting…' : 'Submit CAR'}
+                {isSubmitting ? 'Submitting…' : (form.id ? 'Update CAR' : 'Submit CAR')}
               </button>
             </>
           )}

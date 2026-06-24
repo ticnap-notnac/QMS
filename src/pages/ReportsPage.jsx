@@ -14,6 +14,8 @@ import QDDRDetailsModal from '../components/Modals/QDDRDetailsModal.jsx'
 import ReportsFeedList from '../components/Reports/ReportsFeedList.jsx'
 import CARReportsList from '../components/Reports/CARReportsList.jsx'
 import QDDRReportsList from '../components/Reports/QDDRReportsList.jsx'
+import { deleteCarReport } from '../services/carService.js'
+import { deleteQddrReport } from '../services/qddrService.js'
 import { CAR_STATUS } from '../../shared/constants'
 import { useReportsLogic } from '@/hooks/useReportsLogic'
 import './ReportsPage.css'
@@ -48,6 +50,28 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
     ? logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed')
     : logic.qddrReports.filter(q => String(q.status).toLowerCase() !== 'closed')
 
+  const handleDeleteCar = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this CAR report? This action cannot be fully undone.')) return
+    try {
+      await deleteCarReport(id, authUserId)
+      logic.setToast({ message: 'CAR deleted successfully', type: 'success' })
+      logic.refreshCarAndQddrLists()
+    } catch (err) {
+      logic.setToast({ message: 'Failed to delete CAR: ' + err.message, type: 'error' })
+    }
+  }
+
+  const handleDeleteQddr = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this QDDR report? This action cannot be fully undone.')) return
+    try {
+      await deleteQddrReport(id, authUserId)
+      logic.setToast({ message: 'QDDR deleted successfully', type: 'success' })
+      logic.refreshCarAndQddrLists()
+    } catch (err) {
+      logic.setToast({ message: 'Failed to delete QDDR: ' + err.message, type: 'error' })
+    }
+  }
+
   return (
     <main className="dashboard page-root">
       {logic.toast && (
@@ -66,7 +90,7 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
             {['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase()) && (
               <select
                 className="form-input reports-dept-select"
-                value={logic.reportFilters.departmentId || ''}
+                value={logic.reportFilters?.departmentId || ''}
                 onChange={(e) => {
                   logic.setReportFilters(prev => ({
                     ...prev,
@@ -75,7 +99,7 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
                 }}
               >
                 <option value="" className="reports-dept-option">All Departments</option>
-                {logic.departments.map(dept => (
+                {logic.departments?.map(dept => (
                   <option key={dept.id} value={dept.id} className="reports-dept-option">
                     {dept.department_name}
                   </option>
@@ -109,8 +133,26 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
               onUpdate={logic.openUpdateModal} onAssign={logic.openAssignModal} onDelete={logic.handleDeleteReport}
             />
           )}
-          {logic.activeTab === 'car' && <CARReportsList carReports={displayedCars} isLoading={logic.loadingCar} onSelectCar={logic.openCarDetails} />}
-          {logic.activeTab === 'qddr' && <QDDRReportsList qddrReports={displayedQddrs} isLoading={logic.loadingQddr} onSelectQddr={logic.openQddrDetails} />}
+          {logic.activeTab === 'car' && (
+            <CARReportsList 
+              carReports={displayedCars} 
+              isLoading={logic.loadingCar} 
+              onSelectCar={logic.openCarDetails} 
+              canEdit={canAccessCar}
+              onEditCar={logic.openEditCarModal}
+              onDeleteCar={handleDeleteCar}
+            />
+          )}
+          {logic.activeTab === 'qddr' && (
+            <QDDRReportsList 
+              qddrReports={displayedQddrs} 
+              isLoading={logic.loadingQddr} 
+              onSelectQddr={logic.openQddrDetails} 
+              canEdit={canAccessCar}
+              onEditQddr={logic.openEditQddrModal}
+              onDeleteQddr={handleDeleteQddr}
+            />
+          )}
         </div>
       </div>
 

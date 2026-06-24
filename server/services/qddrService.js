@@ -193,3 +193,94 @@ export async function updateQddrReport({ id, body }) {
 
   return { data }
 }
+
+/**
+ * Hard deletes a QDDR report
+ */
+export async function softDeleteQddrReport({ id, actorAuthId }) {
+  const { data, error } = await supabase
+    .from('qddr_reports')
+    .delete()
+    .eq('id', id)
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw error
+
+  try {
+    const { writeAudit } = await import('../lib/audit.js')
+    await writeAudit({
+      level: 'audit',
+      source: 'qddr_reports',
+      action: 'qddr_soft_delete',
+      userAuthId: actorAuthId,
+      details: { id, reference_no: data?.reference_no }
+    })
+  } catch (err) {
+    console.warn('Failed to write audit log:', err.message || err)
+  }
+
+  return { data }
+}
+
+/**
+ * Updates a QDDR report fully
+ */
+export async function editQddrReport({ id, body, actorAuthId }) {
+  const payload = {
+    location: body.location,
+    date: body.date ? body.date : null,
+    time: body.time ? body.time : null,
+    trucker_broker: body.trucker_broker,
+    plate_number: body.plate_number,
+    container_number: body.container_number,
+    po_reference: body.po_reference,
+    drwb_number: body.drwb_number,
+    brand_supplier: body.brand_supplier,
+    material_description: body.material_description,
+    material_code: body.material_code,
+    batch_code_su_number: body.batch_code_su_number,
+    holes_punctures: Boolean(body.holes_punctures),
+    deformed_torn: Boolean(body.deformed_torn),
+    open_carton: Boolean(body.open_carton),
+    crushed_dented: Boolean(body.crushed_dented),
+    wet_leaked: Boolean(body.wet_leaked),
+    stain_graffiti: Boolean(body.stain_graffiti),
+    bulging: Boolean(body.bulging),
+    improper_stretch_wrapping: Boolean(body.improper_stretch_wrapping),
+    wrong_no_batchcode: Boolean(body.wrong_no_batchcode),
+    opened_seal: Boolean(body.opened_seal),
+    no_label_broken_label: Boolean(body.no_label_broken_label),
+    short_pack: Boolean(body.short_pack),
+    excess_shipment: Boolean(body.excess_shipment),
+    documentation_error: Boolean(body.documentation_error),
+    picking_discrepancy: Boolean(body.picking_discrepancy),
+    others: body.others,
+    qty: body.qty ? parseInt(body.qty, 10) : null,
+    reason_of_discrepancy: body.reason_of_discrepancy
+  }
+
+  const { data, error } = await supabase
+    .from('qddr_reports')
+    .update(payload)
+    .eq('id', id)
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw error
+
+  try {
+    const { writeAudit } = await import('../lib/audit.js')
+    await writeAudit({
+      level: 'audit',
+      source: 'qddr_reports',
+      action: 'qddr_update',
+      userAuthId: actorAuthId,
+      details: { id, reference_no: data?.reference_no }
+    })
+  } catch (err) {
+    console.warn('Failed to write audit log:', err.message || err)
+  }
+
+  return { data }
+}

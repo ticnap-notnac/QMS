@@ -39,3 +39,38 @@ export async function updateQddr(req, res, next) {
     next(err)
   }
 }
+
+export async function deleteQddr(req, res, next) {
+  const actorAuthId = getRequestActor(req)
+  if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+  const { id } = req.params
+
+  try {
+    const { softDeleteQddrReport } = await import('../services/qddrService.js')
+    const { data } = await softDeleteQddrReport({
+      id: parseInt(id, 10),
+      actorAuthId
+    })
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function editQddr(req, res, next) {
+  const actorAuthId = getRequestActor(req)
+  if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+  const { id } = req.params
+
+  try {
+    const { editQddrReport } = await import('../services/qddrService.js')
+    const { data } = await editQddrReport({
+      id: parseInt(id, 10),
+      body: req.body,
+      actorAuthId
+    })
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}

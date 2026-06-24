@@ -1,7 +1,11 @@
-import { useState } from 'react'
-import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download } from 'lucide-react'
 import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
+import html2pdf from 'html2pdf.js'
+import CARPrintTemplate from './Print/CARPrintTemplate.jsx'
+import NCRPrintTemplate from './Print/NCRPrintTemplate.jsx'
+import QDDRPrintTemplate from './Print/QDDRPrintTemplate.jsx'
 
 const TASK_REPORT_SUBFOLDERS = [
   { id: 'car', label: 'CAR' },
@@ -189,7 +193,7 @@ function EvidenceThumbnail({ path, files, label }) {
 // Sub-view: Task Reports › NCR – closed reports table
 // ---------------------------------------------------------------------------
 
-function NCRClosedTable({ ncrReports, loadingNcr }) {
+function NCRClosedTable({ ncrReports, loadingNcr, onDownloadPDF }) {
   if (loadingNcr) return <div>Loading NCR reports...</div>
 
   if (!ncrReports.length) {
@@ -220,6 +224,7 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
               <th>Evidence</th>
               <th>Inv. Evidence</th>
               <th>Status</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -268,6 +273,19 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
                       {ncr.status}
                     </span>
                   </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <button
+                      className="btn btn-outline"
+                      style={{ padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px' }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDownloadPDF && onDownloadPDF(ncr)
+                      }}
+                      title="Download PDF"
+                    >
+                      <Download size={14} /> PDF
+                    </button>
+                  </td>
                 </tr>
               )
             })}
@@ -282,7 +300,7 @@ function NCRClosedTable({ ncrReports, loadingNcr }) {
 // Sub-view: Task Reports › CAR – closed reports table
 // ---------------------------------------------------------------------------
 
-function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
+function CARClosedTable({ carReports, loadingCar, onSelectCar, onDownloadPDF }) {
   const [collapsedGroups, setCollapsedGroups] = useState({})
 
   if (loadingCar) return <div>Loading CAR reports...</div>
@@ -366,6 +384,7 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
                   <thead>
                     <tr>
                       <th>Ref No.</th>
+                      <th>Issue Type</th>
                       <th>Requestor</th>
                       <th>Recipient</th>
                       <th>Requesting Dept</th>
@@ -378,11 +397,23 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
                       <th>Request Date</th>
                       <th className="text-center-important">Resolution Time</th>
                       <th>Status</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {cars.map((car) => {
                       const statusClean = String(car.status || '').trim().toLowerCase()
+                      const issueTypes = []
+                      if (car.quality_food_safety) issueTypes.push('Quality/Food Safety')
+                      if (car.environment_health_safety) issueTypes.push('EHS')
+                      if (car.security_issue) issueTypes.push('Security')
+                      if (car.internal_audit) issueTypes.push('Internal Audit')
+                      if (car.customer_complaint) issueTypes.push('Customer Complaint')
+                      if (car.government_agency_audit) issueTypes.push('Gov Audit')
+                      if (car.customer_audit_nonconformance) issueTypes.push('Customer Audit')
+                      if (car.vendor_nonconformance) issueTypes.push('Vendor')
+                      if (car.others) issueTypes.push(`Others: ${car.others}`)
+                      const issueTypeStr = issueTypes.join(', ') || '—'
 
                       return (
                         <tr
@@ -392,6 +423,7 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
                           title="Click to view details and CAPA/VoE actions"
                         >
                           <td style={{ fontWeight: 600 }}>{car.reference_no ?? '—'}</td>
+                          <td>{issueTypeStr}</td>
                           <td>{car.requestor ?? '—'}</td>
                           <td>{car.recipient ?? '—'}</td>
                           <td>{car.requesting_department ?? '—'}</td>
@@ -416,6 +448,19 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
                               {statusClean === 'under_verification' ? 'Under Verification' : statusClean === 'closed' ? 'Closed' : 'Open'}
                             </span>
                           </td>
+                          <td style={{ textAlign: 'center' }}>
+                            <button
+                              className="btn btn-outline"
+                              style={{ padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px' }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onDownloadPDF && onDownloadPDF(car)
+                              }}
+                              title="Download PDF"
+                            >
+                              <Download size={14} /> PDF
+                            </button>
+                          </td>
                         </tr>
                       )
                     })}
@@ -434,7 +479,7 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar }) {
 // Sub-view: Task Reports › QDDR – closed reports table
 // ---------------------------------------------------------------------------
 
-function QDDRClosedTable({ qddrReports, loadingQddr }) {
+function QDDRClosedTable({ qddrReports, loadingQddr, onDownloadPDF }) {
   if (loadingQddr) return <div>Loading QDDR reports...</div>
 
   if (!qddrReports.length) {
@@ -507,6 +552,19 @@ function QDDRClosedTable({ qddrReports, loadingQddr }) {
                     }`}>
                       {qddr.status}
                     </span>
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <button
+                      className="btn btn-outline"
+                      style={{ padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px' }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDownloadPDF && onDownloadPDF(qddr)
+                      }}
+                      title="Download PDF"
+                    >
+                      <Download size={14} /> PDF
+                    </button>
                   </td>
                 </tr>
               )
@@ -700,6 +758,59 @@ export default function DCCFolderContent({
   userRole,
 }) {
   const queryClean = (searchQuery || '').trim().toLowerCase()
+
+  // PDF Download State & Refs
+  const [downloadingReport, setDownloadingReport] = useState(null)
+  const [downloadingType, setDownloadingType] = useState(null)
+  
+  const carPrintRef = useRef(null)
+  const ncrPrintRef = useRef(null)
+  const qddrPrintRef = useRef(null)
+
+  const handleDownloadPDF = async (report, type) => {
+    setDownloadingReport(report)
+    setDownloadingType(type)
+    
+    // Allow React a tick to render the hidden component
+    setTimeout(async () => {
+      let elementRef = null
+      let filename = ''
+      
+      if (type === 'CAR') {
+        elementRef = carPrintRef.current
+        filename = `CAR_${report.reference_no || report.id}.pdf`
+      } else if (type === 'NCR') {
+        elementRef = ncrPrintRef.current
+        filename = `NCR_${report.reference_no || report.id}.pdf`
+      } else if (type === 'QDDR') {
+        elementRef = qddrPrintRef.current
+        filename = `QDDR_${report.reference_no || report.id}.pdf`
+      }
+      
+      if (!elementRef) {
+        setDownloadingReport(null)
+        setDownloadingType(null)
+        return
+      }
+
+      const opt = {
+        margin:       0,
+        filename:     filename,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      }
+
+      try {
+        await html2pdf().from(elementRef).set(opt).save()
+      } catch (err) {
+        console.error('Error generating PDF:', err)
+      } finally {
+        setDownloadingReport(null)
+        setDownloadingType(null)
+      }
+    }, 100)
+  }
 
   // 1. Root level filtering
   const filteredFolderItems = folderItems.filter((item) =>
@@ -896,18 +1007,18 @@ export default function DCCFolderContent({
           ) : selectedTaskFolder.id === 'ncr' ? (
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; NCR &gt; Closed</div>
-              <NCRClosedTable ncrReports={filteredNcrReports} loadingNcr={loadingNcr} />
+              <NCRClosedTable ncrReports={filteredNcrReports} loadingNcr={loadingNcr} onDownloadPDF={(report) => handleDownloadPDF(report, 'NCR')} />
             </div>
           ) : selectedTaskFolder.id === 'car' ? (
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; CAR &gt; Workflow</div>
-              <CARClosedTable carReports={filteredCarReports} loadingCar={loadingCar} onSelectCar={onSelectCar} />
+              <CARClosedTable carReports={filteredCarReports} loadingCar={loadingCar} onSelectCar={onSelectCar} onDownloadPDF={(report) => handleDownloadPDF(report, 'CAR')} />
             </div>
 
           ) : selectedTaskFolder.id === 'qddr' ? (
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; QDDR &gt; Closed</div>
-              <QDDRClosedTable qddrReports={filteredQddrReports} loadingQddr={loadingQddr} />
+              <QDDRClosedTable qddrReports={filteredQddrReports} loadingQddr={loadingQddr} onDownloadPDF={(report) => handleDownloadPDF(report, 'QDDR')} />
             </div>
           ) : selectedTaskFolder.id === 'audit' ? (
             <div className="flex-column full-height">
@@ -926,6 +1037,13 @@ export default function DCCFolderContent({
           )}
         </div>
       )}
+
+      {/* Hidden Print Templates for PDF Generation */}
+      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', opacity: 0, pointerEvents: 'none' }}>
+        {downloadingType === 'CAR' && <CARPrintTemplate ref={carPrintRef} report={downloadingReport} />}
+        {downloadingType === 'NCR' && <NCRPrintTemplate ref={ncrPrintRef} report={downloadingReport} />}
+        {downloadingType === 'QDDR' && <QDDRPrintTemplate ref={qddrPrintRef} report={downloadingReport} />}
+      </div>
     </div>
   )
 }

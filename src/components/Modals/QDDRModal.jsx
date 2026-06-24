@@ -466,11 +466,11 @@ function QDDRModal({
               <button 
                 type="button" 
                 className="btn-gradient-primary" 
-                disabled={isSubmitting}
                 onClick={onSubmit}
+                disabled={isSubmitting}
                 style={{ margin: 0, padding: '8px 24px', fontSize: '13px', height: 'auto', boxShadow: 'none' }}
               >
-                {isSubmitting ? 'Submitting…' : 'Submit QDDR'}
+                {isSubmitting ? 'Submitting…' : (form.id ? 'Update QDDR' : 'Submit QDDR')}
               </button>
             </>
           )}

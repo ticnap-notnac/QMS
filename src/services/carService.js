@@ -81,5 +81,44 @@ export async function fetchLinkedClausesForCar(carId) {
     .select('clause_id, iso_clauses(clause_number, title)')
     .eq('car_report_id', carId)
   if (error) throw error
-  return (data || []).map(row => row.iso_clauses).filter(Boolean)
+  return (data || []).map(row => ({
+    clause_id: row.clause_id,
+    ...(row.iso_clauses || {})
+  })).filter(c => c.clause_number)
+}
+
+/**
+ * Updates an existing CAR report
+ *
+ * @param {number} carId
+ * @param {object} payload
+ * @param {string} userAuthId
+ */
+export async function updateCarReport(carId, payload, userAuthId) {
+  if (!userAuthId) throw new Error('Missing authentication. Please log in.')
+
+  return await request(`/car/${carId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    headers: {
+      'x-user-auth-id': userAuthId
+    }
+  })
+}
+
+/**
+ * Soft deletes a CAR report
+ *
+ * @param {number} carId
+ * @param {string} userAuthId
+ */
+export async function deleteCarReport(carId, userAuthId) {
+  if (!userAuthId) throw new Error('Missing authentication. Please log in.')
+
+  return await request(`/car/${carId}`, {
+    method: 'DELETE',
+    headers: {
+      'x-user-auth-id': userAuthId
+    }
+  })
 }

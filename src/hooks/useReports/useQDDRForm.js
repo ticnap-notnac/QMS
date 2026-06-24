@@ -65,6 +65,52 @@ export function useQDDRForm() {
     setError(null)
   }
 
+  const initForm = (existingQddr) => {
+    setForm({
+      ...initialState,
+      ...existingQddr,
+      // Handle potential null values to prevent uncontrolled input warnings
+      location: existingQddr.location || '',
+      date: existingQddr.date ? existingQddr.date.split('T')[0] : '',
+      time: existingQddr.time || '',
+      trucker_broker: existingQddr.trucker_broker || '',
+      plate_number: existingQddr.plate_number || '',
+      container_number: existingQddr.container_number || '',
+      po_reference: existingQddr.po_reference || '',
+      drwb_number: existingQddr.drwb_number || '',
+      brand_supplier: existingQddr.brand_supplier || '',
+      material_description: existingQddr.material_description || '',
+      material_code: existingQddr.material_code || '',
+      batch_code_su_number: existingQddr.batch_code_su_number || '',
+      holes_punctures: Boolean(existingQddr.holes_punctures),
+      deformed_torn: Boolean(existingQddr.deformed_torn),
+      open_carton: Boolean(existingQddr.open_carton),
+      crushed_dented: Boolean(existingQddr.crushed_dented),
+      wet_leaked: Boolean(existingQddr.wet_leaked),
+      stain_graffiti: Boolean(existingQddr.stain_graffiti),
+      bulging: Boolean(existingQddr.bulging),
+      improper_stretch_wrapping: Boolean(existingQddr.improper_stretch_wrapping),
+      wrong_no_batchcode: Boolean(existingQddr.wrong_no_batchcode),
+      opened_seal: Boolean(existingQddr.opened_seal),
+      no_label_broken_label: Boolean(existingQddr.no_label_broken_label),
+      short_pack: Boolean(existingQddr.short_pack),
+      excess_shipment: Boolean(existingQddr.excess_shipment),
+      documentation_error: Boolean(existingQddr.documentation_error),
+      picking_discrepancy: Boolean(existingQddr.picking_discrepancy),
+      others: existingQddr.others || '',
+      qty: existingQddr.qty || '',
+      reason_of_discrepancy: existingQddr.reason_of_discrepancy || '',
+      corrective_action: existingQddr.corrective_action || '',
+      preventive_action: existingQddr.preventive_action || '',
+      approved_by: existingQddr.approved_by || '',
+      noted_by: existingQddr.noted_by || '',
+      leader: existingQddr.leader || '',
+      ncr_id: existingQddr.ncr_id || null,
+      linked_ncr_reference: existingQddr.linked_ncr_reference || ''
+    })
+    setError(null)
+  }
+
   const suggestActions = async () => {
     if (!form.material_description?.trim() && !form.reason_of_discrepancy?.trim()) {
       setError('Please fill in Material Description and Reason of Discrepancy first.')
@@ -144,6 +190,7 @@ export function useQDDRForm() {
     handleChange,
     selectNcr,
     resetForm,
+    initForm,
     error,
     setError,
     validate,

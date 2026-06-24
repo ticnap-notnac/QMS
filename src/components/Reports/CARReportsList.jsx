@@ -1,8 +1,12 @@
+import { Edit2, Trash2 } from 'lucide-react'
 
 export default function CARReportsList({
   carReports,
   isLoading,
-  onSelectCar
+  onSelectCar,
+  canEdit,
+  onEditCar,
+  onDeleteCar
 }) {
   if (isLoading) {
     return (
@@ -28,6 +32,7 @@ export default function CARReportsList({
           <thead>
             <tr>
               <th>Ref No.</th>
+              <th>Issue Type</th>
               <th>Requestor</th>
               <th>Recipient</th>
               <th>Requesting Dept</th>
@@ -40,11 +45,24 @@ export default function CARReportsList({
               <th>Request Date</th>
               <th className="text-center-important">Resolution Time</th>
               <th>Status</th>
+              {canEdit && <th className="text-center-important">Actions</th>}
             </tr>
           </thead>
           <tbody>
             {carReports.map((car) => {
               const statusClean = String(car.status || '').trim().toLowerCase()
+              const issueTypes = []
+              if (car.quality_food_safety) issueTypes.push('Quality/Food Safety')
+              if (car.environment_health_safety) issueTypes.push('EHS')
+              if (car.security_issue) issueTypes.push('Security')
+              if (car.internal_audit) issueTypes.push('Internal Audit')
+              if (car.customer_complaint) issueTypes.push('Customer Complaint')
+              if (car.government_agency_audit) issueTypes.push('Gov Audit')
+              if (car.customer_audit_nonconformance) issueTypes.push('Customer Audit')
+              if (car.vendor_nonconformance) issueTypes.push('Vendor')
+              if (car.others) issueTypes.push(`Others: ${car.others}`)
+              const issueTypeStr = issueTypes.join(', ') || '—'
+
               return (
                 <tr
                   key={car.id}
@@ -53,6 +71,7 @@ export default function CARReportsList({
                   title="Click to view details and CAPA/VoE actions"
                 >
                   <td style={{ fontWeight: 600 }}>{car.reference_no ?? '—'}</td>
+                  <td>{issueTypeStr}</td>
                   <td>{car.requestor ?? '—'}</td>
                   <td>{car.recipient ?? '—'}</td>
                   <td>{car.requesting_department ?? '—'}</td>
@@ -77,6 +96,28 @@ export default function CARReportsList({
                       {statusClean === 'under_verification' ? 'Under Verification' : statusClean === 'closed' ? 'Closed' : 'Open'}
                     </span>
                   </td>
+                  {canEdit && (
+                    <td className="text-center-important" onClick={(e) => e.stopPropagation()}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        <button
+                          className="btn-icon"
+                          style={{ color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer' }}
+                          title="Edit Report"
+                          onClick={() => onEditCar && onEditCar(car)}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          className="btn-icon"
+                          style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}
+                          title="Delete Report"
+                          onClick={() => onDeleteCar && onDeleteCar(car.id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               )
             })}

@@ -73,3 +73,38 @@ export async function getCarsForClause(req, res, next) {
     next(err)
   }
 }
+
+export async function editCar(req, res, next) {
+  const actorAuthId = getRequestActor(req)
+  if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+  const { id } = req.params
+
+  try {
+    const { updateCarReport } = await import('../services/carService.js')
+    const { data } = await updateCarReport({
+      carId: parseInt(id, 10),
+      body: req.body,
+      actorAuthId
+    })
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function deleteCar(req, res, next) {
+  const actorAuthId = getRequestActor(req)
+  if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+  const { id } = req.params
+
+  try {
+    const { softDeleteCarReport } = await import('../services/carService.js')
+    const { data } = await softDeleteCarReport({
+      carId: parseInt(id, 10),
+      actorAuthId
+    })
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}

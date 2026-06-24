@@ -285,3 +285,114 @@ export async function fetchLinkedCarsForClauses(clauseIds) {
   }
   return map
 }
+
+/**
+ * Hard deletes a CAR report
+ */
+export async function softDeleteCarReport({ carId, actorAuthId }) {
+  // 1. First delete the links
+  await supabase.from('car_clause_links').delete().eq('car_report_id', carId)
+  
+  // 2. Delete the report itself
+  const { data, error } = await supabase
+    .from('car_reports')
+    .delete()
+    .eq('id', carId)
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw error
+
+  try {
+    const { writeAudit } = await import('../lib/audit.js')
+    await writeAudit({
+      level: 'audit',
+      source: 'car_reports',
+      action: 'car_soft_delete',
+      userAuthId: actorAuthId,
+      details: { id: carId, reference_no: data?.reference_no }
+    })
+  } catch (err) {
+    console.warn('Failed to write audit log:', err.message || err)
+  }
+
+  return { data }
+}
+
+/**
+ * Updates a CAR report
+ */
+export async function updateCarReport({ carId, body, actorAuthId }) {
+  const payload = {
+    requesting_department: body.requesting_department,
+    responsible_department: body.responsible_department,
+    requestor: body.requestor,
+    recipient: body.recipient,
+    date: body.date ? body.date : null,
+    reason_reissue: body.reason_reissue,
+    no_reply: Boolean(body.no_reply),
+    re_corrective_action: Boolean(body.re_corrective_action),
+    quality_food_safety: Boolean(body.quality_food_safety),
+    environment_health_safety: Boolean(body.environment_health_safety),
+    security_issue: Boolean(body.security_issue),
+    internal_audit: Boolean(body.internal_audit),
+    customer_complaint: Boolean(body.customer_complaint),
+    government_agency_audit: Boolean(body.government_agency_audit),
+    customer_audit_nonconformance: Boolean(body.customer_audit_nonconformance),
+    vendor_nonconformance: Boolean(body.vendor_nonconformance),
+    others: body.others,
+    product_material_name: body.product_material_name,
+    model_type: body.model_type,
+    control_no: body.control_no,
+    affected_quantity: body.affected_quantity ? parseInt(body.affected_quantity, 10) : null,
+    details_of_nonconformance: body.details_of_nonconformance,
+    request_date: body.request_date ? body.request_date : null
+  }
+
+  const { data, error } = await supabase
+    .from('car_reports')
+    .update(payload)
+    .eq('id', carId)
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw error
+
+  // Handle clause links
+  const { clause_ids } = body || {}
+  if (Array.isArray(clause_ids)) {
+    // 1. Delete existing links
+    await supabase.from('car_clause_links').delete().eq('car_report_id', carId)
+
+    // 2. Insert new links
+    const linkRows = clause_ids
+      .map(cid => String(cid).trim())
+      .filter(cid => cid.length > 0)
+      .map(cid => ({ car_report_id: carId, clause_id: cid }))
+
+    if (linkRows.length > 0) {
+      const { error: linkError } = await supabase
+        .from('car_clause_links')
+        .insert(linkRows)
+
+      if (linkError) {
+        console.warn('[carService] Failed to insert car_clause_links during update:', linkError.message)
+      }
+    }
+  }
+
+  try {
+    const { writeAudit } = await import('../lib/audit.js')
+    await writeAudit({
+      level: 'audit',
+      source: 'car_reports',
+      action: 'car_update',
+      userAuthId: actorAuthId,
+      details: { id: carId, reference_no: data?.reference_no }
+    })
+  } catch (err) {
+    console.warn('Failed to write audit log:', err.message || err)
+  }
+
+  return { data }
+}

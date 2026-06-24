@@ -47,6 +47,40 @@ export function useCARForm(departments = []) {
     if (error) setError('')
   }
 
+  const initForm = (existingCar) => {
+    setForm({
+      ...initialState,
+      ...existingCar,
+      // override nulls with empty strings or false to avoid controlled/uncontrolled warnings
+      requesting_department: existingCar.requesting_department || '',
+      responsible_department: existingCar.responsible_department || '',
+      requestor: existingCar.requestor || '',
+      recipient: existingCar.recipient || '',
+      date: existingCar.date ? existingCar.date.split('T')[0] : '',
+      request_date: existingCar.request_date ? existingCar.request_date.split('T')[0] : '',
+      reason_reissue: existingCar.reason_reissue || '',
+      no_reply: Boolean(existingCar.no_reply),
+      re_corrective_action: Boolean(existingCar.re_corrective_action),
+      quality_food_safety: Boolean(existingCar.quality_food_safety),
+      environment_health_safety: Boolean(existingCar.environment_health_safety),
+      security_issue: Boolean(existingCar.security_issue),
+      internal_audit: Boolean(existingCar.internal_audit),
+      customer_complaint: Boolean(existingCar.customer_complaint),
+      government_agency_audit: Boolean(existingCar.government_agency_audit),
+      customer_audit_nonconformance: Boolean(existingCar.customer_audit_nonconformance),
+      vendor_nonconformance: Boolean(existingCar.vendor_nonconformance),
+      others: existingCar.others || '',
+      product_material_name: existingCar.product_material_name || '',
+      model_type: existingCar.model_type || '',
+      control_no: existingCar.control_no || '',
+      affected_quantity: existingCar.affected_quantity || '',
+      details_of_nonconformance: existingCar.details_of_nonconformance || '',
+      linked_clause_ids: existingCar.linked_clause_ids || [],
+      suggested_clauses: existingCar.suggested_clauses || []
+    })
+    setError(null)
+  }
+
   const toggleNcrSelection = (id, reference, report = null) => {
     setForm(prev => {
       const isSelected = prev.ncr_ids.includes(String(id));
@@ -259,6 +293,8 @@ export function useCARForm(departments = []) {
     fetchClauseSuggestions,
     clausesLoading,
     clausesError,
+    setClausesError,
+    initForm,
     resetForm,
     error,
     setError,

@@ -1,9 +1,13 @@
 import React from 'react'
+import { Edit2, Trash2 } from 'lucide-react'
 
 export default function QDDRReportsList({
   qddrReports,
   isLoading,
-  onSelectQddr
+  onSelectQddr,
+  canEdit,
+  onEditQddr,
+  onDeleteQddr
 }) {
   if (isLoading) {
     return (
@@ -41,6 +45,7 @@ export default function QDDRReportsList({
               <th>Corrective Action</th>
               <th>Preventive Action</th>
               <th>Status</th>
+              {canEdit && <th className="text-center-important">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -94,6 +99,28 @@ export default function QDDRReportsList({
                       {statusClean === 'closed' ? 'Closed' : 'Open'}
                     </span>
                   </td>
+                  {canEdit && (
+                    <td className="text-center-important" onClick={(e) => e.stopPropagation()}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        <button
+                          className="btn-icon"
+                          style={{ color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer' }}
+                          title="Edit Report"
+                          onClick={() => onEditQddr && onEditQddr(qddr)}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          className="btn-icon"
+                          style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}
+                          title="Delete Report"
+                          onClick={() => onDeleteQddr && onDeleteQddr(qddr.id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               )
             })}

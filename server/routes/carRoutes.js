@@ -13,4 +13,8 @@ router.put('/car/:id/capa', requireRoles(['admin', 'auditor', 'department_head']
 router.put('/car/:id/verify', requireRoles(['admin', 'auditor']), validateRequest(verifyCarSchema), verifyCar)
 router.get('/car/clause/:clauseId/cars', getCarsForClause)
 
+import { editCar, deleteCar } from '../controllers/carController.js'
+router.put('/car/:id', requireRoles(['admin', 'auditor']), editCar)
+router.delete('/car/:id', requireRoles(['admin', 'auditor']), deleteCar)
+
 export default router

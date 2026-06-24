@@ -50,6 +50,7 @@ export async function fetchQddrReports() {
   const { data, error } = await supabase
     .from('qddr_reports')
     .select('*')
+    .neq('is_deleted', true)
     .order('created_at', { ascending: false })
   if (error) throw error
   return data || []
