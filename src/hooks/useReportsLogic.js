@@ -296,7 +296,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     if (!report) return false;
     const role = String(userRole || '').trim().toLowerCase();
     if (role === 'admin') return true;
-    if (role === 'manager') {
+    if (role === 'department manager' || role === 'manager') {
       return String(report.department_id) === String(userDepartmentId);
     }
     return false;
@@ -900,6 +900,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       onSubmitCapa: handleCapaSubmit,
       onVerify: handleCarVerify,
       userRole,
+      userDepartmentId,
       authUserId: currentAuthId,
       rootCause: carDetails.rootCause,
       setRootCause: carDetails.setRootCause,

@@ -6,6 +6,7 @@ export default function CARDetailsModal({
   onClose,
   car,
   userRole,
+  userDepartmentId,
   readOnly = false,
 
   // States
@@ -31,7 +32,10 @@ export default function CARDetailsModal({
   if (!isOpen || !car) return null
 
   const isUserRecipient = true // Allow processing. In production, can check if current user matches car.recipient.
-  const isAuditorOrAdmin = userRole === 'admin' || userRole === 'auditor'
+  const isAuditorOrAdmin = 
+    userRole === 'admin' || 
+    userRole === 'auditor' || 
+    (userRole === 'manager' && String(car.department_id) === String(userDepartmentId))
 
   const getStatusBadgeClass = (status) => {
     const s = String(status || '').toLowerCase()

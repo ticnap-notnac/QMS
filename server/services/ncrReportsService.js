@@ -715,11 +715,34 @@ export async function updateNcrInvestigation({ id, body, file }) {
 export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
   const { data: report, error: reportError } = await supabase
     .from('ncr_reports')
-    .select('id, reference_no, reported_by, status, created_at')
+    .select('id, reference_no, reported_by, status, created_at, department_id')
     .eq('id', id)
     .maybeSingle()
   if (reportError) throw reportError
   if (!report) throw Object.assign(new Error('NCR report not found.'), { status: 404 })
+
+  // 1. Fetch user role
+  let roleName = ''
+  if (currentUser?.role_id) {
+    const { data: roleData } = await supabase
+      .from('roles')
+      .select('role_name')
+      .eq('id', currentUser.role_id)
+      .maybeSingle()
+    roleName = roleData?.role_name || ''
+  }
+  const normalizedRole = String(roleName).trim().toLowerCase()
+
+  // 2. Enforce Role and Department restrictions
+  if (normalizedRole === 'staff' || normalizedRole === 'auditor') {
+    throw Object.assign(new Error('Auditors and Staff members do not have permission to review or approve reports. This must be done by a Manager or Admin.'), { status: 403 })
+  }
+
+  if (normalizedRole === 'department manager' || normalizedRole === 'manager') {
+    if (String(report.department_id) !== String(currentUser.department_id)) {
+      throw Object.assign(new Error('Managers can only approve reports that belong to their own department.'), { status: 403 })
+    }
+  }
 
   const nextStatus = decision === 'approve' ? REPORT_STATUS.CLOSED : REPORT_STATUS.OPEN
 

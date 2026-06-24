@@ -170,8 +170,8 @@ export default function FilterModal({
           {/* 📐 ROW 3: Severity Level Grid Array Rows */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label className="label-field" style={{ margin: 0 }}>Severity Level</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px' }}>
-              {['Low', 'Medium', 'High', 'Critical'].map((sev) => {
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+              {['Low', 'Medium', 'High'].map((sev) => {
                 const isActive = currentSeverity === sev;
                 return (
                   <button
