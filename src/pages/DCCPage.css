@@ -501,3 +501,87 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
 .dcc-scrollable-table-box td.text-center-important {
   text-align: center !important;
 }
+
+/* ===================== MOBILE RESPONSIVENESS (PHASE 9) ===================== */
+@media (max-width: 768px) {
+  /* Reduce outer wrapper spacing */
+  .dcc-main-wrapper {
+    margin: 16px auto;
+    padding: 0 8px;
+    width: 100%;
+  }
+
+  /* Reduce glass card padding for more usable space */
+  .glass-card-dcc {
+    padding: 16px;
+    min-height: auto;
+  }
+
+  /* Make search bar span 100% and scale nicely */
+  .search-container-centered {
+    width: 100%;
+    margin: 0 auto 24px auto;
+  }
+  .search-bar-field {
+    font-size: 14px; /* prevent iOS zoom */
+  }
+
+  /* Folder grid: 3 columns or 2 columns based on screen size */
+  .folder-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  /* Make sure folder label text is readable */
+  .folder-item-label {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  /* Make breadcrumbs wrap */
+  .breadcrumb {
+    white-space: normal;
+    word-break: break-word;
+    margin-bottom: 16px;
+    line-height: 1.4;
+  }
+
+  /* Table responsiveness */
+  .dcc-scrollable-table-box,
+  .audit-scrollable-table-box {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 8px;
+  }
+
+  /* Ensure tables don't squish horizontally */
+  .iso-table, 
+  .dcc-table, 
+  .audit-table {
+    min-width: 600px;
+  }
+
+  /* Header row flex adjustments */
+  .header-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  /* Standard controls (create, refresh) wrap nicely */
+  .dcc-header-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* On very small screens, folders might need 2 columns */
+  .folder-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
