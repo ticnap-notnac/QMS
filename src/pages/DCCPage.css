@@ -269,7 +269,6 @@
   text-overflow: clip !important;
   word-break: break-word !important;
   min-width: 120px !important;
-  max-width: 420px !important;
   line-height: 1.5 !important;
 }
 
@@ -504,6 +503,38 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
   text-align: center !important;
 }
 
+/* Styles for DCC Page PDF download buttons to match the sleek QMS theme */
+.dcc-scrollable-table-box .btn.btn-outline,
+.dcc-scrollable-table-box button.btn-outline {
+  background: rgba(239, 68, 68, 0.08) !important;
+  border: 1px solid rgba(239, 68, 68, 0.25) !important;
+  color: #dc2626 !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.05) !important;
+}
+
+.dcc-scrollable-table-box .btn.btn-outline:hover,
+.dcc-scrollable-table-box button.btn-outline:hover {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(220, 38, 38, 0.15) !important;
+}
+
+.dcc-scrollable-table-box .btn.btn-outline:active,
+.dcc-scrollable-table-box button.btn-outline:active {
+  background: #b91c1c !important;
+  border-color: #b91c1c !important;
+  transform: translateY(0) !important;
+}
+
+
+
 /* ===================== MOBILE RESPONSIVENESS (PHASE 9) ===================== */
 @media (max-width: 768px) {
   /* Reduce outer wrapper spacing */
@@ -586,4 +617,11 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
   .folder-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* Allow clause description to spread across the full width of the ISO clauses table */
+.dcc-scrollable-table-box .iso-clauses-table .clause-description,
+.dcc-scrollable-table-box td .iso-clauses-table .clause-description,
+.iso-clauses-table .clause-description {
+  max-width: none !important;
 }

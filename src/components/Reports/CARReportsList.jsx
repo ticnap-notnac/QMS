@@ -37,10 +37,10 @@ export default function CARReportsList({
               <th>Recipient</th>
               <th>Requesting Dept</th>
               <th>Responsible Dept</th>
-              <th>Product&nbsp;/<br />Material</th>
-              <th>Model&nbsp;/<br />Type</th>
-              <th>Control No.</th>
-              <th>Affected Qty</th>
+              <th className="text-center-important">Product&nbsp;/<br />Material</th>
+              <th className="text-center-important">Model&nbsp;/<br />Type</th>
+              <th className="text-center-important">Control No.</th>
+              <th className="text-center-important">Affected Qty</th>
               <th>Nonconformance Details</th>
               <th>Request Date</th>
               <th className="text-center-important">Resolution Time</th>
@@ -70,16 +70,16 @@ export default function CARReportsList({
                   style={{ cursor: 'pointer' }}
                   title="Click to view details and CAPA/VoE actions"
                 >
-                  <td style={{ fontWeight: 600 }}>{car.reference_no ?? '—'}</td>
+                  <td style={{ fontWeight: 600 }}>{car.reference_no?.trim() || '—'}</td>
                   <td>{issueTypeStr}</td>
-                  <td>{car.requestor ?? '—'}</td>
-                  <td>{car.recipient ?? '—'}</td>
-                  <td>{car.requesting_department ?? '—'}</td>
-                  <td>{car.responsible_department ?? '—'}</td>
-                  <td>{car.product_material_name ?? '—'}</td>
-                  <td>{car.model_type ?? '—'}</td>
-                  <td>{car.control_no ?? '—'}</td>
-                  <td>{car.affected_quantity ?? '—'}</td>
+                  <td>{car.requestor?.trim() || '—'}</td>
+                  <td>{car.recipient?.trim() || '—'}</td>
+                  <td>{car.requesting_department?.trim() || '—'}</td>
+                  <td>{car.responsible_department?.trim() || '—'}</td>
+                  <td className="text-center-important">{car.product_material_name?.trim() || '—'}</td>
+                  <td className="text-center-important">{car.model_type?.trim() || '—'}</td>
+                  <td className="text-center-important">{car.control_no?.trim() || '—'}</td>
+                  <td className="text-center-important">{String(car.affected_quantity ?? '').trim() || '—'}</td>
                   <td>
                     <div className="clause-description" title={car.details_of_nonconformance}>
                       {car.details_of_nonconformance ?? <span className="muted">No details</span>}

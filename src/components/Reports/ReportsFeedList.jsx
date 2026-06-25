@@ -22,8 +22,8 @@ export default function ReportsFeedList({
 }) {
   if (isApprovalQueueMode) {
     return (
-      <div className="reports-main-wrap" style={{ marginTop: '24px' }}>
-        <div className="reports-details-title-wrap" style={{ marginBottom: '12px' }}>
+      <div className="reports-approval-wrap" style={{ marginTop: '24px' }}>
+        <div className="reports-details-title-wrap" style={{ marginBottom: '12px', maxWidth: '960px', width: '100%', margin: '0 auto 12px auto' }}>
           <h4 className="reports-details-title">Updated Reports Needing Approval</h4>
         </div>
         <div className="reports-list-stack">

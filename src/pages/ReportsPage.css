@@ -519,6 +519,34 @@
   box-sizing: border-box !important;
 }
 
+.reports-list-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.reports-approval-wrap {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+.badges-row .status-badge,
+.badges-row .day-badge {
+  width: 100px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 0 !important;
+  height: 22px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  box-sizing: border-box !important;
+}
+
 .facebook-feed-layout-wrapper img {
   max-height: 700px !important;
   object-fit: contain !important;

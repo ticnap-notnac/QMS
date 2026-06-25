@@ -132,6 +132,9 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
         </div>
       </div>
 
+      <div style={{ padding: '0 20px', marginTop: '14px', marginBottom: '4px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase' }}>Description</div>
+      </div>
       <div className="reports-details-box">
         <span className="reports-workspace-text">
           {report.description || 'No description provided.'}
@@ -140,8 +143,13 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
 
       {/* ── Assignment label ────────────────────────────────────────────── */}
       {assignmentLabel && (
-        <div className="reports-details-box" style={{ marginTop: '10px' }}>
-          <span className="reports-workspace-text">{assignmentLabel}</span>
+        <div style={{ marginTop: '14px' }}>
+          <div style={{ padding: '0 20px', marginBottom: '4px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase' }}>Assignment</div>
+          </div>
+          <div className="reports-details-box">
+            <span className="reports-workspace-text">{assignmentLabel}</span>
+          </div>
         </div>
       )}
 

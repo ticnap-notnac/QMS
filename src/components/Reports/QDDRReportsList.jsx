@@ -40,7 +40,7 @@ export default function QDDRReportsList({
               <th>PO Reference</th>
               <th>Material Description</th>
               <th>Material Code</th>
-              <th>Qty</th>
+              <th className="text-center-important">Qty</th>
               <th>Reason of Discrepancy</th>
               <th>Corrective Action</th>
               <th>Preventive Action</th>
@@ -73,7 +73,7 @@ export default function QDDRReportsList({
                   <td><div className="table-text-cell">{qddr.po_reference ?? '—'}</div></td>
                   <td><div className="table-text-cell">{qddr.material_description ?? '—'}</div></td>
                   <td><div className="table-text-cell">{qddr.material_code ?? '—'}</div></td>
-                  <td><div className="table-text-cell" style={{ fontWeight: 600 }}>{qddr.qty ?? '—'}</div></td>
+                  <td className="text-center-important"><div className="table-text-cell" style={{ fontWeight: 600, justifyContent: 'center' }}>{qddr.qty ?? '—'}</div></td>
                   
                   {/* 📋 Description Text Columns — Protected by Width-Limiting & Line Wrapping Rules */}
                   <td>

@@ -59,7 +59,7 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
             {String(report.severity || 'low').toUpperCase()}
           </span>
           <span className="status-badge" style={approvalBadgeStyle}>
-            {isApproved ? 'APPROVED' : 'PENDING APPROVAL'}
+            {isApproved ? 'APPROVED' : 'PENDING'}
           </span>
         </div>
       </div>
@@ -85,8 +85,8 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
       </div>
 
       {/* ── Investigation details ───────────────────────────────────────── */}
-      <div className="reports-details-title-wrap" style={{ display: 'none' }}>
-        <h4 className="reports-details-title">Investigation Details</h4>
+      <div style={{ padding: '0 20px', marginTop: '14px', marginBottom: '4px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase' }}>Investigation Details</div>
       </div>
       <div className="reports-details-box">
         <span className="reports-workspace-text">
@@ -95,8 +95,8 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
       </div>
 
       {/* ── Resolution details ──────────────────────────────────────────── */}
-      <div className="reports-details-title-wrap">
-        <h4 className="reports-details-title">Resolution Details</h4>
+      <div style={{ padding: '0 20px', marginTop: '14px', marginBottom: '4px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase' }}>Resolution Details</div>
       </div>
       <div className="reports-details-box">
         <span className="reports-workspace-text">

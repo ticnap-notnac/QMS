@@ -221,8 +221,8 @@ function NCRClosedTable({ ncrReports, loadingNcr, onDownloadPDF }) {
               <th>Location</th>
               <th>Occurrence Date</th>
               <th>Created At</th>
-              <th>Evidence</th>
-              <th>Inv. Evidence</th>
+              <th className="text-center-important">Evidence</th>
+              <th className="text-center-important">Inv. Evidence</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -259,10 +259,10 @@ function NCRClosedTable({ ncrReports, loadingNcr, onDownloadPDF }) {
                   <td style={{ whiteSpace: 'nowrap' }}>
                     {ncr.created_at ? new Date(ncr.created_at).toLocaleString() : '—'}
                   </td>
-                  <td style={{ width: 48, textAlign: 'center' }}>
+                  <td className="text-center-important" style={{ width: 48 }}>
                     <EvidenceThumbnail path={ncr.evidence_url} files={ncr.evidence_files} label="Evidence" />
                   </td>
-                  <td style={{ width: 48, textAlign: 'center' }}>
+                  <td className="text-center-important" style={{ width: 48 }}>
                     <EvidenceThumbnail path={ncr.investigation_evidence_url} files={ncr.investigation_evidence_files} label="Inv. Evidence" />
                   </td>
                   <td>
@@ -389,10 +389,10 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar, onDownloadPDF }) 
                       <th>Recipient</th>
                       <th>Requesting Dept</th>
                       <th>Responsible Dept</th>
-                      <th>Product&nbsp;/<br />Material</th>
-                      <th>Model&nbsp;/<br />Type</th>
-                      <th>Control No.</th>
-                      <th>Affected Qty</th>
+                      <th className="text-center-important">Product&nbsp;/<br />Material</th>
+                      <th className="text-center-important">Model&nbsp;/<br />Type</th>
+                      <th className="text-center-important">Control No.</th>
+                      <th className="text-center-important">Affected Qty</th>
                       <th>Nonconformance Details</th>
                       <th>Request Date</th>
                       <th className="text-center-important">Resolution Time</th>
@@ -428,10 +428,10 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar, onDownloadPDF }) 
                           <td>{car.recipient ?? '—'}</td>
                           <td>{car.requesting_department ?? '—'}</td>
                           <td>{car.responsible_department ?? '—'}</td>
-                          <td>{car.product_material_name ?? '—'}</td>
-                          <td>{car.model_type ?? '—'}</td>
-                          <td>{car.control_no ?? '—'}</td>
-                          <td>{car.affected_quantity ?? '—'}</td>
+                          <td className="text-center-important">{car.product_material_name && car.product_material_name.trim() !== '' ? car.product_material_name : '—'}</td>
+                          <td className="text-center-important">{car.model_type && car.model_type.trim() !== '' ? car.model_type : '—'}</td>
+                          <td className="text-center-important">{car.control_no && car.control_no.trim() !== '' ? car.control_no : '—'}</td>
+                          <td className="text-center-important">{car.affected_quantity && String(car.affected_quantity).trim() !== '' ? car.affected_quantity : '—'}</td>
                           <td>
                             <div className="clause-description" title={car.details_of_nonconformance}>
                               {car.details_of_nonconformance ?? <span className="muted">No details</span>}
@@ -440,7 +440,7 @@ function CARClosedTable({ carReports, loadingCar, onSelectCar, onDownloadPDF }) 
                           <td>
                             {car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}
                           </td>
-                          <td className="text-center-important">{car.resolution_time ?? '—'}</td>
+                          <td className="text-center-important">{car.resolution_time && String(car.resolution_time).trim() !== '' ? car.resolution_time : '—'}</td>
                           <td>
                             <span className={`iso-status-pill ${
                               statusClean === 'closed' ? 'is-closed' : statusClean === 'under_verification' ? 'is-active' : 'is-open'

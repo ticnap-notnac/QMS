@@ -7,13 +7,13 @@
   left: 0;
   bottom: 0;
   width: 240px;
-  background: #1e1e1e; /* Dark sidebar background */
+  background: linear-gradient(180deg, #0b1528 0%, #050a14 100%); /* Premium deep dark slate-blue blending with the logo */
   color: #ffffff;
   display: flex;
   flex-direction: column;
   z-index: 100;
   box-sizing: border-box;
-  border-right: 1px solid #2e2e2e;
+  border-right: 1px solid rgba(14, 165, 233, 0.15); /* Soft cyan-tinted border glow */
 }
 
 .app-navbar-inner {
@@ -106,7 +106,7 @@
   gap: 12px;
   background: none;
   border: none;
-  color: #a1a1aa;
+  color: #94a3b8; /* Slate-400 text color */
   padding: 12px 14px;
   font-size: 14px;
   font-weight: 700;
@@ -114,31 +114,33 @@
   border-radius: 8px;
   width: 100%;
   text-align: left;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-tab-button svg {
-  color: #a1a1aa;
-  transition: color 0.2s ease;
+  color: #64748b; /* Muted slate icon color */
+  transition: color 0.25s ease, transform 0.25s ease;
 }
 
 .nav-tab-button:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(14, 165, 233, 0.08); /* Soft cyan backdrop */
   color: #ffffff;
 }
 
 .nav-tab-button:hover svg {
-  color: #ffffff;
+  color: #0ea5e9; /* Light cyan icon highlight */
+  transform: translateX(2px);
 }
 
 .nav-tab-button.active {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background: rgba(14, 165, 233, 0.15) !important; /* Semi-translucent cyan active block */
+  color: #38bdf8 !important; /* Vibrant cyan-sky text */
   font-weight: 700;
+  box-shadow: inset 3px 0 0 #0ea5e9 !important; /* Left-side active border stripe */
 }
 
 .nav-tab-button.active svg {
-  color: #ffffff;
+  color: #38bdf8 !important;
 }
 
 /* Bottom Actions of Sidebar */
