@@ -9,9 +9,9 @@ export const createCarSchema = z.object({
 
 export const submitCapaSchema = z.object({
   body: z.object({
-    root_cause: z.string().min(1, 'Root cause is required'),
-    corrective_action: z.string().min(1, 'Corrective action is required'),
-    preventive_action: z.string().min(1, 'Preventive action is required'),
+    rootCauseAnalysis: z.string().min(1, 'Root cause analysis is required'),
+    correctiveAction: z.string().min(1, 'Corrective action is required'),
+    preventiveAction: z.string().min(1, 'Preventive action is required'),
   })
 })
 

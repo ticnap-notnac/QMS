@@ -309,6 +309,7 @@ function QDDRModal({
                     onChange={(e) => handleChange('qty', e.target.value)}
                     className="input-field"
                     placeholder="Qty..."
+                    min="0"
                   />
                 </div>
               </div>

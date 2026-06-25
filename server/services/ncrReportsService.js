@@ -250,12 +250,25 @@ export async function buildEnrichedReports(reports) {
   })
 
   return Promise.all(
-    enriched.map(async (report) => ({
-      ...report,
-      evidence_url: await buildEvidenceDisplayUrl(report.evidence_url),
-      investigation_evidence_url: await buildEvidenceDisplayUrl(report.investigation_evidence_url),
-    }))
+    enriched.map(async (report) => {
+      const signedEvidenceFiles = Array.isArray(report.evidence_files)
+        ? await Promise.all(report.evidence_files.map((url) => buildEvidenceDisplayUrl(url)))
+        : []
+
+      const signedInvestigationFiles = Array.isArray(report.investigation_evidence_files)
+        ? await Promise.all(report.investigation_evidence_files.map((url) => buildEvidenceDisplayUrl(url)))
+        : []
+
+      return {
+        ...report,
+        evidence_url: await buildEvidenceDisplayUrl(report.evidence_url),
+        evidence_files: signedEvidenceFiles,
+        investigation_evidence_url: await buildEvidenceDisplayUrl(report.investigation_evidence_url),
+        investigation_evidence_files: signedInvestigationFiles,
+      }
+    })
   )
+
 }
 
 export async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, rawName }) {
