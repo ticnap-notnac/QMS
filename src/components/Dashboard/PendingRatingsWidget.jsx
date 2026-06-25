@@ -52,9 +52,9 @@ export default function PendingRatingsWidget({ currentUserId, userRole, userDepa
 
         // Find which of these reports the user has ALREADY rated
         const { data: ratings, error: ratingsErr } = await supabase
-          .from('ncr_ratings')
+          .from('ncr_report_ratings')
           .select('report_id')
-          .eq('user_id', currentUserId)
+          .eq('rated_by', currentUserId)
           .in('report_id', reportIds)
 
         const ratedIds = new Set((ratings || []).map(r => r.report_id))
