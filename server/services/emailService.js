@@ -54,7 +54,7 @@ export async function sendNotificationEmail(userId, title, message) {
     }
 
     const mailOptions = {
-      from: process.env.SMTP_FROM || '"QFlow Automated Alerts" <noreply@qflow.com>',
+      from: process.env.SMTP_FROM || `"QFlow Automated Alerts" <${process.env.SMTP_USER}>`,
       to: toEmail,
       subject: `QFlow Alert: ${title}`,
       html: `

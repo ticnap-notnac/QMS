@@ -1010,18 +1010,25 @@ export async function assignReportToEmployee({ reportId, assignedToId, currentUs
     .maybeSingle()
   if (updateError) throw updateError
 
+  const title = `New Report Assigned: ${report.reference_no}`
+  const message = `You have been assigned to investigate report ${report.reference_no}. Please review the details and submit your investigation.`
+
   const { error: notificationError } = await supabase
     .from('notifications')
     .insert([{
       user_id: assignee.id,
-      title: `New Report Assigned: ${report.reference_no}`,
-      message: `You have been assigned to investigate report ${report.reference_no}. Please review the details and submit your investigation.`,
+      title,
+      message,
       type: 'info',
       report_id: report.id,
       created_at: assignedAt,
       is_read: false,
     }])
   if (notificationError) throw notificationError
+
+  // Send SMTP email in the background
+  sendNotificationEmail(assignee.id, title, message)
+    .catch(err => console.error('Failed to send SMTP email in background:', err.message))
 
   try {
     await writeAudit({
