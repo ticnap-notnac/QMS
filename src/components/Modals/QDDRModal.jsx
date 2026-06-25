@@ -186,6 +186,7 @@ function QDDRModal({
                     type="date"
                     value={form.date}
                     onChange={(e) => handleChange('date', e.target.value)}
+                    max="9999-12-31"
                     className="input-field"
                   />
                 </div>

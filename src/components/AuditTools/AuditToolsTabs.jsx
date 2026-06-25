@@ -376,6 +376,8 @@ export function AuditSchedulesTab({
                   className="form-input"
                   value={scheduledDate}
                   onChange={(e) => setScheduledDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  max="9999-12-31"
                 />
               </div>
             </div>

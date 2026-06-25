@@ -300,6 +300,8 @@ export default function UpdateReportModal({
                   type="date"
                   value={form.verificationDate}
                   onChange={(event) => setField('verificationDate', event.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  max="9999-12-31"
                   className="input-field"
                 />
                 <Calendar size={14} className="icon-abs" />

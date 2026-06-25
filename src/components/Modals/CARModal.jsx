@@ -188,6 +188,7 @@ function CARModal({
                     type="date"
                     value={form.date}
                     onChange={(e) => handleChange('date', e.target.value)}
+                    max="9999-12-31"
                     className="input-field"
                   />
                 </div>
@@ -425,6 +426,8 @@ function CARModal({
                     type="date"
                     value={form.request_date}
                     onChange={(e) => handleChange('request_date', e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    max="9999-12-31"
                     className="input-field"
                   />
                 </div>

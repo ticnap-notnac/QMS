@@ -126,6 +126,7 @@ export default function FilterModal({
                     type="date"
                     value={currentDate}
                     onChange={(e) => setFilters && setFilters(prev => ({ ...prev, date: e.target.value }))}
+                    max="9999-12-31"
                     className="input-field"
                     style={{ width: '100%', height: '38px', padding: '0 12px' }}
                   />
