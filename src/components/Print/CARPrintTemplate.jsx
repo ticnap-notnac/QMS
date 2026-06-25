@@ -4,8 +4,8 @@ import './print.css'
 const CARPrintTemplate = forwardRef(({ report }, ref) => {
   if (!report) return null
 
-  const occurrenceDate = report.request_date 
-    ? new Date(report.request_date).toLocaleDateString() 
+  const occurrenceDate = report.request_date
+    ? new Date(report.request_date).toLocaleDateString()
     : (report.created_at ? new Date(report.created_at).toLocaleDateString() : '')
 
   const typeOfNC = (report.type_of_nonconformance || report.issue_type || '').toUpperCase()
@@ -13,11 +13,6 @@ const CARPrintTemplate = forwardRef(({ report }, ref) => {
   return (
     <div ref={ref} className="print-template-container">
       <div className="print-header">
-        <div style={{ textAlign: 'left', marginBottom: '10px' }}>
-          <div style={{ fontStyle: 'italic', fontSize: '12px', color: '#0055A5' }}>
-            where supplychain connects™
-          </div>
-        </div>
         <div className="print-title">CORRECTIVE ACTION REQUEST (CAR)</div>
       </div>
 

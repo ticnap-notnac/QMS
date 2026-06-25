@@ -9,11 +9,6 @@ const QDDRPrintTemplate = forwardRef(({ report }, ref) => {
   return (
     <div ref={ref} className="print-template-container">
       <div className="print-header">
-        <div style={{ textAlign: 'left', marginBottom: '10px' }}>
-          <div style={{ fontStyle: 'italic', fontSize: '12px', color: '#0055A5' }}>
-            where supplychain connects™
-          </div>
-        </div>
         <div className="print-title">QUALITY DOCUMENT DEFECT REPORT (QDDR)</div>
       </div>
 
@@ -47,7 +42,7 @@ const QDDRPrintTemplate = forwardRef(({ report }, ref) => {
               <span className="print-value">{report.reference_no || '—'}</span>
             </td>
           </tr>
-          
+
           <tr>
             <td colSpan="3" className="print-section-title">
               DEFECT CLASSIFICATION
@@ -57,7 +52,7 @@ const QDDRPrintTemplate = forwardRef(({ report }, ref) => {
             <td colSpan="3" style={{ padding: '15px' }}>
               <span className="print-label">Defect Category:</span>
               <span className="print-value" style={{ display: 'block', marginBottom: '10px' }}>{report.defect_type_name || report.defect_type || '—'}</span>
-              
+
               <span className="print-label">Severity Level:</span>
               <span className="print-value">{report.severity || '—'}</span>
             </td>
@@ -75,7 +70,7 @@ const QDDRPrintTemplate = forwardRef(({ report }, ref) => {
               </div>
             </td>
           </tr>
-          
+
           <tr>
             <td colSpan="3" className="print-section-title-dark">
               PROPOSED DOCUMENT CORRECTION / RESOLUTION
