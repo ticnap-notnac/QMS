@@ -520,7 +520,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
         if (formState.createFormState.clauseId) {
           fd.append('clause_id', formState.createFormState.clauseId)
         }
-        fd.append('evidence', formState.evidenceState.evidenceFileMain)
+        fd.append('evidence_files', formState.evidenceState.evidenceFileMain)
         await submitNcrMultipart(fd, currentAuthId)
       } else {
         await createReport({
