@@ -10,6 +10,7 @@ export async function safeCreateNotificationsForRoles(options) {
   } catch (err) {
     console.warn('Failed to create notifications for roles:', err?.message || err)
   }
+}
 
 /**
  * Safely creates notifications for global roles and department-specific roles.
