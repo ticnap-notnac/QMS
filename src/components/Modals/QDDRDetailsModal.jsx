@@ -64,7 +64,7 @@ export default function QDDRDetailsModal({
       }
     } catch (err) {
       console.error('Failed to get suggestions:', err)
-      setError('Failed to fetch suggestions from CBR: ' + err.message)
+      setError('We could not generate suggestions. Please try again later.')
     } finally {
       setSuggesting(false)
     }
@@ -85,7 +85,7 @@ export default function QDDRDetailsModal({
       }, authUserId)
       onClose()
     } catch (err) {
-      setError(err?.message || 'Failed to update QDDR report.')
+      setError('The QDDR report could not be updated. Please try again.')
     } finally {
       setSubmitting(false)
     }

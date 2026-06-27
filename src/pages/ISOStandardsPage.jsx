@@ -2,6 +2,7 @@ import { PlusCircle, Save, CheckCircle2, List } from 'lucide-react'
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import Toast from '@/components/UI/Toast'
+import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import { useISOStandardsLogic } from '@/hooks/useAdminPanel.js'
 import { AddStandardSection, AddClausesSection, ManageClausesSection, ToggleStandardsSection } from '@/components/ISOStandards/ISOStandardsViews'
 import './AdminPanel.css'
@@ -9,7 +10,8 @@ import './AdminPanel.css'
 export default function ISOStandardsPage({ userRole, userName }) {
   const {
     toast, setToast, activeSection, setActiveSection, standardsError, addStandardSectionProps,
-    addClausesSectionProps, manageClausesSectionProps, toggleStandardsSectionProps
+    addClausesSectionProps, manageClausesSectionProps, toggleStandardsSectionProps,
+    confirmStandardDialogProps, confirmClauseDialogProps
   } = useISOStandardsLogic({ userName })
 
   return (
@@ -45,6 +47,8 @@ export default function ISOStandardsPage({ userRole, userName }) {
               </div>
             </div>
           </div>
+          <ConfirmDialog {...confirmStandardDialogProps} />
+          <ConfirmDialog {...confirmClauseDialogProps} />
         </main>
       ) : (
         <main className="page-main-centered">

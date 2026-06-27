@@ -134,7 +134,7 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
         setClausesError('No matching clauses found. Try adding more detail to the description.')
       }
     } catch (err) {
-      setClausesError('Failed to fetch clause suggestions. ' + (err.message || ''))
+      setClausesError('We could not fetch clause suggestions. Please try again later.')
     } finally {
       setClausesLoading(false)
     }
@@ -223,7 +223,7 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
       await fetchComplianceData()
     } catch (err) {
       console.error('[useISOCARForm] Error generating CAR:', err)
-      setCarError('Failed to generate CAR. ' + err.message)
+      setCarError('The CAR could not be generated. Please try again.')
     } finally {
       setIsSubmittingCar(false)
     }

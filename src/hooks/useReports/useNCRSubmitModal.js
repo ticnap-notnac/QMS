@@ -52,7 +52,7 @@ export default function useNCRSubmitModal({ onSuccess, authUserId }) {
         setForm((s) => ({ ...s, clauseId: suggestions[0].clause_id }))
       }
     } catch (err) {
-      console.warn('[useNCRSubmitModal] AI suggestion failed:', err.message)
+      console.warn('[useNCRSubmitModal] AI suggestion failed:', err)
     } finally {
       setSuggestingClause(false)
     }
@@ -227,7 +227,7 @@ export default function useNCRSubmitModal({ onSuccess, authUserId }) {
       return res
     } catch (err) {
       setIsSubmitting(false)
-      return { success: false, message: err.message || 'Submit failed' }
+      return { success: false, message: 'The report could not be submitted. Please check your network and try again.' }
     }
   }, [form, validate, onSuccess, errors])
 

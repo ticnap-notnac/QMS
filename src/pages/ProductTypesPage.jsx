@@ -3,6 +3,7 @@ import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import AddCategoryModal from '@/components/Modals/AddCategoryModal'
 import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
+import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import { useProductTypesLogic } from '@/hooks/useAdminPanel.js'
 import './AdminPanel.css'
 
@@ -16,7 +17,8 @@ export default function ProductTypesPage({ userRole }) {
     pageMessage,
     pageError,
     listPanelProps,
-    categoryModalProps
+    categoryModalProps,
+    confirmDialogProps
   } = useProductTypesLogic()
 
   return (
@@ -57,6 +59,7 @@ export default function ProductTypesPage({ userRole }) {
           </div>
 
           <AddCategoryModal {...categoryModalProps} />
+          <ConfirmDialog {...confirmDialogProps} />
         </main>
       ) : (
         <main className="page-main-centered">

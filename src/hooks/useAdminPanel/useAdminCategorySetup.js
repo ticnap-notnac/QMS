@@ -18,6 +18,7 @@ export default function useAdminCategorySetup({
   const [formMessage, setFormMessage] = useState('')
   const [pageMessage, setPageMessage] = useState('')
   const [pageError, setPageError] = useState('')
+  const [itemToDelete, setItemToDelete] = useState(null)
 
   const { items, loading, deletingId, creating, reload, createItem, deleteItem, error } = useCategoryManager({
     loadFn,
@@ -60,21 +61,30 @@ export default function useAdminCategorySetup({
       setPageError('')
       closeCategoryModal()
     } catch (err) {
-      setFormError(err.message)
+      setFormError('This item could not be added. Please try again.')
     }
   }
 
-  const handleDeleteCategory = async (item) => {
-    const confirmed = window.confirm(`Delete ${entityName.toLowerCase()} "${item[labelKey]}"?`)
-    if (!confirmed) return
+  const handleDeleteCategory = (item) => {
+    setItemToDelete(item)
+  }
+
+  const confirmDeleteCategory = async () => {
+    if (!itemToDelete) return
     try {
       setPageError('')
-      await deleteItem(item.id)
+      await deleteItem(itemToDelete.id)
       await reloadLookups()
-      setPageMessage(`Deleted ${entityName.toLowerCase()} "${item[labelKey]}" successfully.`)
+      setPageMessage(`Deleted ${entityName.toLowerCase()} "${itemToDelete[labelKey]}" successfully.`)
     } catch (err) {
-      setPageError(err.message)
+      setPageError('This item could not be deleted. It may be in use elsewhere in the system.')
+    } finally {
+      setItemToDelete(null)
     }
+  }
+
+  const cancelDeleteCategory = () => {
+    setItemToDelete(null)
   }
 
   const listPanelProps = {
@@ -103,6 +113,17 @@ export default function useAdminCategorySetup({
     helperText: helperTextText
   }
 
+  const confirmDialogProps = {
+    isOpen: !!itemToDelete,
+    title: `Delete ${entityName}`,
+    message: itemToDelete ? `Are you sure you want to delete ${entityName.toLowerCase()} "${itemToDelete[labelKey]}"?` : '',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    isDestructive: true,
+    onConfirm: confirmDeleteCategory,
+    onCancel: cancelDeleteCategory,
+  }
+
   return {
     searchQuery,
     setSearchQuery,
@@ -112,6 +133,7 @@ export default function useAdminCategorySetup({
     pageMessage,
     pageError,
     listPanelProps,
-    categoryModalProps
+    categoryModalProps,
+    confirmDialogProps
   }
 }

@@ -206,8 +206,8 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           defectRate: 0.4
         })
       } catch (err) {
-        console.error('Error fetching dashboard metrics:', err)
-        setError('Failed to load dashboard metrics.')
+        console.error('Error fetching dashboard data:', err)
+        setError('We could not load your dashboard. Please refresh the page to try again.')
       } finally {
         setLoading(false)
       }

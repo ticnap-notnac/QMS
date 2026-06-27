@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/utils/supabase'
+import { translateAuthError } from '@/utils/authErrors'
 
 export function useAuth() {
   const [user, setUser] = useState(null)
@@ -13,7 +14,7 @@ export function useAuth() {
         if (error) throw error
         setUser(data?.user || null)
       } catch (err) {
-        setError(err.message)
+        setError(translateAuthError(err, 'Could not verify your session. Please try refreshing.'))
       } finally {
         setLoading(false)
       }
@@ -37,7 +38,7 @@ export function useAuth() {
       if (error) throw error
       return data
     } catch (err) {
-      setError(err.message)
+      setError(translateAuthError(err))
       throw err
     }
   }
@@ -49,7 +50,7 @@ export function useAuth() {
       if (error) throw error
       setUser(null)
     } catch (err) {
-      setError(err.message)
+      setError(translateAuthError(err, 'Sign-out failed. Please refresh the page and try again.'))
       throw err
     }
   }

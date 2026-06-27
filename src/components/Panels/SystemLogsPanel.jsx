@@ -26,7 +26,7 @@ export default function SystemLogsPanel({ onClose }) {
       // record that the current user viewed logs
       try { await recordLogRead({ query: query || null, count: res.count || (res.data || []).length }) } catch (e) { }
     } catch (err) {
-      setError(err?.message || String(err))
+      setError('We could not load the system logs. Please try again.')
     } finally {
       setLoading(false)
     }

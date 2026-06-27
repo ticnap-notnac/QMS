@@ -14,6 +14,7 @@ export default function useAddUserLogic() {
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
   const [pageMessage, setPageMessage] = useState('')
   const [pageError, setPageError] = useState('')
+  const [userToDelete, setUserToDelete] = useState(null)
   
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
@@ -109,27 +110,33 @@ export default function useAddUserLogic() {
       await reloadUsers()
       setIsAddUserModalOpen(false)
     } catch (err) {
-      setFormError(err.message)
+      setFormError('The user could not be added. Please try again.')
     } finally {
       setSubmitting(false)
     }
   }
 
-  const handleDeleteUser = async (user) => {
-    const displayName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.user_name || user.email
-    const confirmed = window.confirm(
-      `This will delete ${displayName} from the users table.\n\nThis does not remove the Supabase auth account unless you also delete it from Auth separately. Continue?`
-    )
+  const handleDeleteUser = (user) => {
+    setUserToDelete(user)
+  }
 
-    if (!confirmed) return
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return
+    const displayName = `${userToDelete.first_name || ''} ${userToDelete.last_name || ''}`.trim() || userToDelete.user_name || userToDelete.email
     try {
       setPageError('')
-      await deleteItem(user.id)
+      await deleteItem(userToDelete.id)
       setPageMessage(`Deleted user "${displayName}" successfully.`)
     } catch (err) {
       console.error('Delete user error:', err)
-      setPageError(`Failed to delete user: ${err.message}`)
+      setPageError('This user could not be deleted. Please try again.')
+    } finally {
+      setUserToDelete(null)
     }
+  }
+
+  const cancelDeleteUser = () => {
+    setUserToDelete(null)
   }
 
   const openEditUserModal = (user) => {
@@ -200,7 +207,7 @@ export default function useAddUserLogic() {
       }, 700)
     } catch (err) {
       console.error('Update user error:', err)
-      setEditFormError(err.message || 'Failed to update user')
+      setEditFormError('The user account could not be updated. Please try again.')
     } finally {
       setEditSubmitting(false)
     }
@@ -274,18 +281,32 @@ export default function useAddUserLogic() {
     message: editFormMessage,
   }
 
-  return {
-    searchQuery,
-    setSearchQuery,
-    reloadUsers,
-    openAddUserModal,
-    usersLoading,
-    usersError,
-    filteredUsers,
-    usersTableProps,
-    addUserModalProps,
-    editUserModalProps,
-    pageMessage,
-    pageError
-  }
+    const confirmDialogProps = {
+      isOpen: !!userToDelete,
+      title: 'Delete User',
+      message: userToDelete 
+        ? `This will delete ${`${userToDelete.first_name || ''} ${userToDelete.last_name || ''}`.trim() || userToDelete.user_name || userToDelete.email} from the users table.\n\nThis does not remove the Supabase auth account unless you also delete it from Auth separately. Continue?`
+        : '',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      onConfirm: confirmDeleteUser,
+      onCancel: cancelDeleteUser,
+    }
+
+    return {
+      searchQuery,
+      setSearchQuery,
+      reloadUsers,
+      openAddUserModal,
+      usersLoading,
+      usersError,
+      filteredUsers,
+      usersTableProps,
+      addUserModalProps,
+      editUserModalProps,
+      confirmDialogProps,
+      pageMessage,
+      pageError
+    }
 }

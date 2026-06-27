@@ -27,7 +27,7 @@ export function useFetch(table, options = {}) {
       setData(data)
       setError(null)
     } catch (err) {
-      setError(err.message)
+      setError('We could not load the requested data. Please try again or refresh the page.')
       console.error(`Error fetching from ${table}:`, err)
     } finally {
       setLoading(false)

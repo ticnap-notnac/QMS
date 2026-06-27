@@ -11,6 +11,7 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
 
   const [pageMessage, setPageMessage] = useState('')
   const [pageError, setPageError] = useState('')
+  const [roleToDelete, setRoleToDelete] = useState(null)
 
   const { items, loading, deletingId, creating, reload, createItem, deleteItem, error: categoryError } = useCategoryManager({
     loadFn,
@@ -53,21 +54,41 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
       setPageError('')
       closeCategoryModal()
     } catch (err) {
-      setFormError(err.message)
+      closeCategoryModal()
+    } catch (err) {
+      setFormError('This role could not be added. Please try again.')
     }
   }
 
-  const handleDeleteRole = async (role) => {
-    const confirmed = window.confirm(`Delete role "${role.role_name}"?`)
-    if (!confirmed) return
+  const handleDeleteRole = (role) => {
+    setRoleToDelete(role)
+  }
+
+  const confirmDeleteRole = async () => {
+    if (!roleToDelete) return
     try {
       setPageError('')
-      await deleteItem(role.id)
+      await deleteItem(roleToDelete.id)
       await reloadLookups()
-      setPageMessage(`Deleted role "${role.role_name}" successfully.`)
+      setPageMessage(`Deleted role "${roleToDelete.role_name}" successfully.`)
     } catch (err) {
-      setPageError(err.message)
+      setPageError('This role could not be deleted. It may be assigned to users.')
+    } finally {
+      setRoleToDelete(null)
     }
+  }
+
+  const cancelDeleteRole = () => setRoleToDelete(null)
+
+  const confirmDialogProps = {
+    isOpen: !!roleToDelete,
+    title: 'Delete Role',
+    message: roleToDelete ? `Are you sure you want to delete role "${roleToDelete.role_name}"?` : '',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    isDestructive: true,
+    onConfirm: confirmDeleteRole,
+    onCancel: cancelDeleteRole,
   }
 
   return {
@@ -95,5 +116,6 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
     handleSubmitCategory,
     handleDeleteRole,
     categoryError,
+    confirmDialogProps,
   }
 }

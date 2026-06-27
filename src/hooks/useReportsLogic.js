@@ -34,6 +34,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
   const [error, setError] = useState(null)
   const [toast, setToast] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [reportToDelete, setReportToDelete] = useState(null)
 
   // ── Preventive Action Rating state ──────────────────────────────────────────
   const [preventiveRating, setPreventiveRating] = useState('')
@@ -175,7 +176,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       setQddrReports(filteredQddrs)
     } catch (err) {
       console.error('Failed to load CAR/QDDR lists:', err)
-      setError('Failed to load CAR/QDDR lists: ' + err.message)
+      setError('We could not load the CAR/QDDR lists. Please refresh the page.')
     } finally {
       setLoadingCar(false)
       setLoadingQddr(false)
@@ -322,24 +323,30 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     [canAssignReports, currentUserId]
   )
 
-  const handleDeleteReport = useCallback(
-    async (report) => {
-      if (!report) return
-      const confirmed = window.confirm(`Are you sure you want to delete report ${report.reference_no || 'this report'}?`)
-      if (!confirmed) return
-      try {
-        setError(null)
-        await deleteReport(report.id)
-        setToast({ message: `Report ${report.reference_no || ''} deleted successfully.`, type: 'success' })
-        await dataState.refreshReportsList(formState.reportFilters)
-      } catch (err) {
-        console.error('Error deleting report:', err)
-        setError('Failed to delete report: ' + (err.message || 'Unknown error'))
-        setToast({ message: 'Failed to delete report.', type: 'error' })
-      }
-    },
-    [dataState, formState.reportFilters]
-  )
+  const handleDeleteReport = useCallback((report) => {
+    if (!report) return
+    setReportToDelete(report)
+  }, [])
+
+  const confirmDeleteReport = useCallback(async () => {
+    if (!reportToDelete) return
+    try {
+      setError(null)
+      await deleteReport(reportToDelete.id)
+      setToast({ message: `Report ${reportToDelete.reference_no || ''} deleted successfully.`, type: 'success' })
+      await dataState.refreshReportsList(formState.reportFilters)
+    } catch (err) {
+      console.error('Delete report error:', err)
+      setError('The report could not be deleted. It may be in use elsewhere.')
+      setToast({ message: 'Failed to delete report.', type: 'error' })
+    } finally {
+      setReportToDelete(null)
+    }
+  }, [reportToDelete, dataState, formState.reportFilters])
+
+  const cancelDeleteReport = useCallback(() => {
+    setReportToDelete(null)
+  }, [])
 
   const approvalQueueReports = useMemo(
     () => filterApprovalQueueReports(dataState.investigatedReports),
@@ -803,6 +810,17 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     handleAssignSuccess,
     handleReviewReport,
     handleSubmitReport,
+
+    confirmDeleteDialogProps: {
+      isOpen: !!reportToDelete,
+      title: 'Delete Report',
+      message: reportToDelete ? `Are you sure you want to delete report ${reportToDelete.reference_no || 'this report'}?` : '',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      onConfirm: confirmDeleteReport,
+      onCancel: cancelDeleteReport,
+    },
 
     // Bundled Modal Props for Clean Architecture (Prop Spreading)
     filterModalProps: {

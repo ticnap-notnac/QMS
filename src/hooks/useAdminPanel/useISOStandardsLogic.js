@@ -42,6 +42,9 @@ export default function useISOStandardsLogic({ userName }) {
   const [clauses, setClauses] = useState([])
   const [loadingClauses, setLoadingClauses] = useState(false)
   const [deletingClauseIds, setDeletingClauseIds] = useState({})
+  
+  const [standardToDelete, setStandardToDelete] = useState(null)
+  const [clauseToDelete, setClauseToDelete] = useState(null)
 
   const getCurrentAuthId = async () => {
     try {
@@ -86,7 +89,7 @@ export default function useISOStandardsLogic({ userName }) {
         setStandards(data || [])
         setSelectedStandardId((current) => current || data?.[0]?.id || '')
       } catch (error) {
-        setStandardsError(error.message || 'Failed to load ISO standards.')
+        setStandardsError('We could not load the ISO standards. Please refresh the page.')
       } finally {
         setLoadingStandards(false)
       }
@@ -135,7 +138,7 @@ export default function useISOStandardsLogic({ userName }) {
       setClauses(sorted)
     } catch (err) {
       console.error(err)
-      setToast({ message: 'Failed to load clauses.', type: 'error' })
+      setToast({ message: 'We could not load the ISO clauses. Please try again.', type: 'error' })
     } finally {
       setLoadingClauses(false)
     }
@@ -147,28 +150,34 @@ export default function useISOStandardsLogic({ userName }) {
     }
   }, [activeSection, selectedStandardId])
 
-  const handleDeleteClause = async (clause) => {
-    const confirmed = window.confirm(`Are you sure you want to delete clause ${clause.clause_number}?`)
-    if (!confirmed) return
-    setDeletingClauseIds(prev => ({ ...prev, [clause.id]: true }))
+  const handleDeleteClause = (clause) => {
+    setClauseToDelete(clause)
+  }
+
+  const confirmDeleteClause = async () => {
+    if (!clauseToDelete) return
+    setDeletingClauseIds(prev => ({ ...prev, [clauseToDelete.id]: true }))
     try {
       const { error } = await supabase
         .from('iso_clauses')
         .delete()
-        .eq('id', clause.id)
+        .eq('id', clauseToDelete.id)
 
       if (error) throw new Error(error.message)
 
-      setClauses(current => current.filter(c => c.id !== clause.id))
-      setToast({ message: `Clause ${clause.clause_number} deleted.`, type: 'success' })
-      await logIsoActivity('DELETE_ISO_CLAUSE', { clause_number: clause.clause_number, title: clause.title })
+      setClauses(current => current.filter(c => c.id !== clauseToDelete.id))
+      setToast({ message: `Clause ${clauseToDelete.clause_number} deleted.`, type: 'success' })
+      await logIsoActivity('DELETE_ISO_CLAUSE', { clause_number: clauseToDelete.clause_number, title: clauseToDelete.title })
     } catch (err) {
       console.error(err)
-      setToast({ message: 'Failed to delete clause.', type: 'error' })
+      setToast({ message: 'This clause could not be deleted. Please try again.', type: 'error' })
     } finally {
-      setDeletingClauseIds(prev => ({ ...prev, [clause.id]: false }))
+      setDeletingClauseIds(prev => ({ ...prev, [clauseToDelete.id]: false }))
+      setClauseToDelete(null)
     }
   }
+
+  const cancelDeleteClause = () => setClauseToDelete(null)
 
   const ensureClauseGroup = async (standardId) => {
     const { data: existingGroup, error: groupError } = await supabase
@@ -228,7 +237,7 @@ export default function useISOStandardsLogic({ userName }) {
       setStandardForm(initialStandardForm)
       setToast({ message: 'ISO standard saved successfully.', type: 'success' })
     } catch (error) {
-      setStandardError(error.message || 'Failed to save ISO standard.')
+      setStandardError('The ISO standard could not be saved. Please try again.')
     } finally {
       setSavingStandard(false)
     }
@@ -377,47 +386,49 @@ export default function useISOStandardsLogic({ userName }) {
       )))
       setUpdatedStandardId(standard.id)
     } catch (error) {
-      setToggleError(error.message || 'Failed to update ISO standard.')
+      setToggleError('The standard could not be updated. Please try again.')
     } finally {
       setUpdatingStandardIds((current) => ({ ...current, [standard.id]: false }))
     }
   }
 
-  const handleDeleteStandard = async (standard) => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${standard.name}? This will also delete all associated clauses and cannot be undone.`
-    )
-    if (!confirmed) {
-      return
-    }
+  const handleDeleteStandard = (standard) => {
+    setStandardToDelete(standard)
+  }
+
+  const confirmDeleteStandard = async () => {
+    if (!standardToDelete) return
     setToggleError('')
-    setDeletingStandardIds((current) => ({ ...current, [standard.id]: true }))
+    setDeletingStandardIds((current) => ({ ...current, [standardToDelete.id]: true }))
     try {
       const { error } = await supabase
         .from('iso_standards')
         .delete()
-        .eq('id', standard.id)
+        .eq('id', standardToDelete.id)
       if (error) {
         throw new Error(error.message)
       }
-      const standardLabel = `${standard.name}${standard.version ? ` - ${standard.version}` : ''}`
+      const standardLabel = `${standardToDelete.name}${standardToDelete.version ? ` - ${standardToDelete.version}` : ''}`
       const performedBy = await getCurrentAuthId()
       await logIsoActivity('DELETE_ISO_STANDARD', {
         entity_type: 'iso_standard',
-        entity_id: standard.id,
+        entity_id: standardToDelete.id,
         entity_name: standardLabel,
         performed_by: performedBy,
         timestamp: new Date().toISOString(),
         details: `Deleted ISO standard '${standardLabel}' along with all associated clause groups and clauses.`,
       })
       await refreshStandards()
-      setToast({ message: `${standard.name} has been deleted.`, type: 'success' })
+      setToast({ message: `${standardToDelete.name} has been deleted.`, type: 'success' })
     } catch (error) {
-      setToast({ message: 'Failed to delete standard.', type: 'error' })
+      setToast({ message: 'This standard could not be deleted. It may be linked to existing records.', type: 'error' })
     } finally {
-      setDeletingStandardIds((current) => ({ ...current, [standard.id]: false }))
+      setDeletingStandardIds((current) => ({ ...current, [standardToDelete.id]: false }))
+      setStandardToDelete(null)
     }
   }
+
+  const cancelDeleteStandard = () => setStandardToDelete(null)
 
   const addStandardSectionProps = {
     standardForm,
@@ -467,6 +478,28 @@ export default function useISOStandardsLogic({ userName }) {
     handleDeleteStandard
   }
 
+  const confirmStandardDialogProps = {
+    isOpen: !!standardToDelete,
+    title: 'Delete ISO Standard',
+    message: standardToDelete ? `Are you sure you want to delete ${standardToDelete.name}? This will also delete all associated clauses and cannot be undone.` : '',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    isDestructive: true,
+    onConfirm: confirmDeleteStandard,
+    onCancel: cancelDeleteStandard,
+  }
+
+  const confirmClauseDialogProps = {
+    isOpen: !!clauseToDelete,
+    title: 'Delete Clause',
+    message: clauseToDelete ? `Are you sure you want to delete clause ${clauseToDelete.clause_number}?` : '',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    isDestructive: true,
+    onConfirm: confirmDeleteClause,
+    onCancel: cancelDeleteClause,
+  }
+
   return {
     toast,
     setToast,
@@ -476,6 +509,8 @@ export default function useISOStandardsLogic({ userName }) {
     addStandardSectionProps,
     addClausesSectionProps,
     manageClausesSectionProps,
-    toggleStandardsSectionProps
+    toggleStandardsSectionProps,
+    confirmStandardDialogProps,
+    confirmClauseDialogProps
   }
 }

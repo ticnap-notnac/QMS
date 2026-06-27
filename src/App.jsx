@@ -10,6 +10,8 @@ import { useNavigate } from 'react-router-dom'
 import MainLayout from './components/Layout/MainLayout.jsx'
 import { logAction } from '@/services/logService'
 import { useIdleTimeout } from './hooks/useIdleTimeout'
+import ConfirmDialog from './components/Modals/ConfirmDialog.jsx'
+import { friendlyError } from './utils/friendlyError.js'
 
 function normalizeRoleValue(value) {
   return String(value || '').trim().toLowerCase()
@@ -36,6 +38,7 @@ function AppInner() {
   const canViewNotifications = Boolean(user)
   const navigate = useNavigate()
   const isLoggingOutRef = useRef(false)
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
 
   // Pull site context from LookupContext (loaded on auth state change)
   const { userSiteId, userSiteName } = useLookup()
@@ -169,7 +172,7 @@ function AppInner() {
         navigate('/')
       }
     } catch (err) {
-      setError(err.message)
+      setError(friendlyError(err, 'Your session could not be loaded. Please refresh the page or log in again.'))
       console.error('Submit error:', err)
     }
   }
@@ -190,11 +193,12 @@ function AppInner() {
     }
   }
 
-  const handleLogout = async (showConfirm = false) => {
-    if (showConfirm) {
-      const confirmLogout = window.confirm("Are you sure you want to log out?");
-      if (!confirmLogout) return;
-    }
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true)
+  }
+
+  const handleLogout = async () => {
+    setIsLogoutModalOpen(false)
     if (isLoggingOutRef.current) return
     isLoggingOutRef.current = true
     try {
@@ -218,7 +222,7 @@ function AppInner() {
       // Perform actual network signout
       await supabase.auth.signOut()
     } catch (err) {
-      setError(err.message)
+      setError(friendlyError(err, 'Sign-out failed. Please refresh the page and try again.'))
       console.error('Logout error:', err)
 
       await logAction({
@@ -291,7 +295,7 @@ function AppInner() {
         <MainLayout
           isUserMenuOpen={isUserMenuOpen}
           setIsUserMenuOpen={setIsUserMenuOpen}
-          handleLogout={handleLogout}
+          handleLogout={handleLogoutClick}
           isNotificationsOpen={isNotificationsOpen}
           setIsNotificationsOpen={setIsNotificationsOpen}
           userRole={userRole}
@@ -317,6 +321,16 @@ function AppInner() {
       )}
 
       <IntroModal isOpen={showIntro} onClose={() => setShowIntro(false)} />
+      
+      <ConfirmDialog
+        isOpen={isLogoutModalOpen}
+        title="Sign Out"
+        message="Are you sure you want to log out of your account?"
+        confirmText="Log Out"
+        cancelText="Cancel"
+        onConfirm={handleLogout}
+        onCancel={() => setIsLogoutModalOpen(false)}
+      />
     </div>
   )
 }

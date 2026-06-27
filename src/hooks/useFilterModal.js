@@ -56,7 +56,7 @@ export default function useFilterModal({ onApplyFilters, onClearFilters }) {
         }
       } catch (fetchError) {
         if (active) {
-          setError(fetchError?.message || 'Failed to load departments.')
+          setError('We could not load the departments list. Please try again.')
         }
       } finally {
         if (active) {
@@ -106,7 +106,7 @@ export default function useFilterModal({ onApplyFilters, onClearFilters }) {
         date: normalizeDateInput(selectedDate),
       })
     } catch (applyError) {
-      setError(applyError?.message || 'Failed to apply filters.')
+      setError('The filters could not be applied. Please try again.')
       throw applyError
     } finally {
       setIsApplying(false)

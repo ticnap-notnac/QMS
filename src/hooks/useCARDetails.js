@@ -70,7 +70,7 @@ export function useCARDetails() {
       setRootCause('Based on historical matching cases, the root cause is being verified. Action plan suggested.')
     } catch (err) {
       console.error('Failed to get suggestions:', err)
-      setError('Failed to fetch suggestions from CBR: ' + err.message)
+      setError('We could not generate suggestions. Please try again later.')
     } finally {
       setSuggesting(false)
     }
@@ -99,7 +99,7 @@ export function useCARDetails() {
       }
       closeCarDetails()
     } catch (err) {
-      setError(err?.message || 'Failed to submit CAPA plan.')
+      setError('The CAPA plan could not be submitted. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -125,7 +125,7 @@ export function useCARDetails() {
       }
       closeCarDetails()
     } catch (err) {
-      setError(err?.message || 'Failed to submit verification.')
+      setError('The verification could not be submitted. Please try again.')
     } finally {
       setSubmitting(false)
     }

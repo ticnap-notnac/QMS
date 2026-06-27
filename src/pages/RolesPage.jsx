@@ -1,7 +1,7 @@
-
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import AddCategoryModal from '@/components/Modals/AddCategoryModal'
+import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
 import './AdminPanel.css'
@@ -36,6 +36,7 @@ export default function RolesPage({
     handleDeleteRole,
     creating,
     categoryError,
+    confirmDialogProps,
   } = useRolesPageLogic({ loadFn: loadRolesController, createFn: createRoleController, deleteFn: deleteRoleController })
 
   return (
@@ -79,6 +80,7 @@ export default function RolesPage({
           </div>
 
           <AddCategoryModal isOpen={isCategoryModalOpen} onClose={closeCategoryModal} onSubmit={handleSubmitCategory} title="Create New Role" label="Role Name" value={categoryInput} onChange={(event) => setCategoryInput(event.target.value)} placeholder="Enter role name" loading={creating} error={formError} message={formMessage} submitLabel="Create Role" helperText="Create a role entry that will be available in the user modal." />
+          <ConfirmDialog {...confirmDialogProps} />
         </main>
       ) : (
         <main className="page-main-centered">

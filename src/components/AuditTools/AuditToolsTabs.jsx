@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { BookOpen, LoaderCircle, Calendar, Plus, CheckCircle, Clock, Trash2 } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
+import ConfirmDialog from '../Modals/ConfirmDialog'
 
 export function AuditLogsTab({
   isInsideSettings,
@@ -272,6 +273,7 @@ export function AuditSchedulesTab({
   schedules,
   handleStartAudit,
   handleDeleteSchedule,
+  confirmDeleteScheduleDialogProps,
   templateId,
   setTemplateId,
   templates
@@ -517,6 +519,7 @@ export function AuditSchedulesTab({
           </div>
         </div>
 
+        <ConfirmDialog {...confirmDeleteScheduleDialogProps} />
       </div>
     </div>
   )
@@ -633,13 +636,32 @@ export function AuditTemplatesTab({
     }
   }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this checklist template?')) return
+  const [templateToDelete, setTemplateToDelete] = useState(null)
+
+  const handleDelete = (id) => setTemplateToDelete(id)
+
+  const confirmDeleteTemplate = async () => {
+    if (!templateToDelete) return
     try {
-      await handleDeleteTemplate(id)
+      await handleDeleteTemplate(templateToDelete)
     } catch (err) {
       // handled in hook
+    } finally {
+      setTemplateToDelete(null)
     }
+  }
+
+  const cancelDeleteTemplate = () => setTemplateToDelete(null)
+
+  const confirmDeleteTemplateDialogProps = {
+    isOpen: !!templateToDelete,
+    title: 'Delete Checklist Template',
+    message: 'Are you sure you want to delete this checklist template?',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    isDestructive: true,
+    onConfirm: confirmDeleteTemplate,
+    onCancel: cancelDeleteTemplate,
   }
 
   if (showForm) {

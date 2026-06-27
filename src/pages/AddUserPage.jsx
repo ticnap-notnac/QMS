@@ -4,6 +4,7 @@ import EditUserModal from '@/components/Modals/EditUserModal'
 import SearchForm from '@/components/Forms/SearchForm'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import UsersTable from '@/components/UsersTable/UsersTable'
+import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import { useAddUserLogic } from '@/hooks/useAdminPanel.js'
 import SubmissionLoadingOverlay from '@/components/UI/SubmissionLoadingOverlay.jsx'
 import './AdminPanel.css'
@@ -20,6 +21,7 @@ export default function AddUserPage({ userRole }) {
     usersTableProps,
     addUserModalProps,
     editUserModalProps,
+    confirmDialogProps,
     pageMessage,
     pageError
   } = useAddUserLogic()
@@ -80,6 +82,7 @@ export default function AddUserPage({ userRole }) {
 
           <AddUserModal {...addUserModalProps} />
           <EditUserModal {...editUserModalProps} />
+          <ConfirmDialog {...confirmDialogProps} />
           <SubmissionLoadingOverlay isOpen={isOverlayLoading} message={overlayMessage} />
         </main>
       ) : (

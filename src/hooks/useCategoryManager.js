@@ -15,7 +15,7 @@ export default function useCategoryManager({ loadFn, createFn, deleteFn }) {
       setItems(data || [])
     } catch (err) {
       setItems([])
-      setError(err?.message || String(err))
+      setError('We could not load the data. Please refresh the page or try again.')
     } finally {
       setLoading(false)
     }
@@ -32,7 +32,7 @@ export default function useCategoryManager({ loadFn, createFn, deleteFn }) {
       await createFn(name)
       await reload()
     } catch (err) {
-      setError(err?.message || String(err))
+      setError('This item could not be created. Please try again.')
       throw err
     } finally {
       setCreating(false)
@@ -46,7 +46,7 @@ export default function useCategoryManager({ loadFn, createFn, deleteFn }) {
       await deleteFn(id)
       await reload()
     } catch (err) {
-      setError(err?.message || String(err))
+      setError('This item could not be deleted. It may be in use elsewhere.')
       throw err
     } finally {
       setDeletingId(null)

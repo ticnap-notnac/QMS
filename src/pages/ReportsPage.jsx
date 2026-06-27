@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
 import Toast from '@/components/UI/Toast'
+import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import FilterModal from '../components/Modals/FilterModal.jsx'
 import SubmissionLoadingOverlay from '../components/UI/SubmissionLoadingOverlay.jsx'
 import UpdateReportModal from '../components/Modals/UpdateReportModal.jsx'
@@ -23,6 +25,9 @@ import './ReportsPage.css'
 export default function ReportsPage({ userRole, currentUserId, authUserId, userDepartmentId }) {
   const logic = useReportsLogic({ currentUserId, userRole, authUserId, userDepartmentId })
   const canAccessCar = ['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
+
+  const [carToDelete, setCarToDelete] = useState(null)
+  const [qddrToDelete, setQddrToDelete] = useState(null)
 
   // Aggregate loading states for premium overlay spinner feedback
   const isOverlayLoading = logic.isNcrSubmitting || 
@@ -50,26 +55,60 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
     ? logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed')
     : logic.qddrReports.filter(q => String(q.status).toLowerCase() !== 'closed')
 
-  const handleDeleteCar = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this CAR report? This action cannot be fully undone.')) return
+  const handleDeleteCar = (id) => setCarToDelete(id)
+
+  const confirmDeleteCar = async () => {
+    if (!carToDelete) return
     try {
-      await deleteCarReport(id, authUserId)
+      await deleteCarReport(carToDelete, authUserId)
       logic.setToast({ message: 'CAR deleted successfully', type: 'success' })
       logic.refreshCarAndQddrLists()
     } catch (err) {
-      logic.setToast({ message: 'Failed to delete CAR: ' + err.message, type: 'error' })
+      logic.setToast({ message: 'This CAR could not be deleted. It may be linked to other records.', type: 'error' })
+    } finally {
+      setCarToDelete(null)
     }
   }
 
-  const handleDeleteQddr = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this QDDR report? This action cannot be fully undone.')) return
+  const cancelDeleteCar = () => setCarToDelete(null)
+
+  const handleDeleteQddr = (id) => setQddrToDelete(id)
+
+  const confirmDeleteQddr = async () => {
+    if (!qddrToDelete) return
     try {
-      await deleteQddrReport(id, authUserId)
+      await deleteQddrReport(qddrToDelete, authUserId)
       logic.setToast({ message: 'QDDR deleted successfully', type: 'success' })
       logic.refreshCarAndQddrLists()
     } catch (err) {
-      logic.setToast({ message: 'Failed to delete QDDR: ' + err.message, type: 'error' })
+      logic.setToast({ message: 'This QDDR could not be deleted. It may be linked to other records.', type: 'error' })
+    } finally {
+      setQddrToDelete(null)
     }
+  }
+
+  const cancelDeleteQddr = () => setQddrToDelete(null)
+
+  const confirmDeleteCarDialogProps = {
+    isOpen: !!carToDelete,
+    title: 'Delete CAR Report',
+    message: 'Are you sure you want to delete this CAR report? This action cannot be fully undone.',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    isDestructive: true,
+    onConfirm: confirmDeleteCar,
+    onCancel: cancelDeleteCar,
+  }
+
+  const confirmDeleteQddrDialogProps = {
+    isOpen: !!qddrToDelete,
+    title: 'Delete QDDR Report',
+    message: 'Are you sure you want to delete this QDDR report? This action cannot be fully undone.',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    isDestructive: true,
+    onConfirm: confirmDeleteQddr,
+    onCancel: cancelDeleteQddr,
   }
 
   return (
@@ -169,6 +208,9 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
         isOpen={logic.isQddrDetailsModalOpen} onClose={logic.closeQddrDetails} qddr={logic.selectedQddr}
         onUpdateQddr={logic.updateQddr} users={logic.users} usersLoading={logic.usersLoading} userRole={userRole} authUserId={authUserId}
       />
+      <ConfirmDialog {...logic.confirmDeleteDialogProps} />
+      <ConfirmDialog {...confirmDeleteCarDialogProps} />
+      <ConfirmDialog {...confirmDeleteQddrDialogProps} />
       <SubmissionLoadingOverlay isOpen={isOverlayLoading} message={overlayMessage} />
     </main>
   )

@@ -221,7 +221,7 @@ export function useCARForm(departments = []) {
         setClausesError('No matching clauses found. Try adding more detail to the description.')
       }
     } catch (err) {
-      setClausesError('Failed to fetch clause suggestions. ' + (err.message || ''))
+      setClausesError('We could not generate clause suggestions. Please try again.')
     } finally {
       setClausesLoading(false)
     }

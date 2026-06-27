@@ -23,7 +23,7 @@ export function useISOModules({ setToast }) {
       setActiveModules(data)
     } catch (err) {
       console.error('Error fetching active ISO standards:', err)
-      setToast({ message: 'Failed to load active ISO modules.', type: 'error' })
+      setToast({ message: 'We could not load the active ISO modules. Please try again.', type: 'error' })
       setIsModulesModalOpen(false)
     } finally {
       setLoadingModules(false)
@@ -49,7 +49,7 @@ export function useISOModules({ setToast }) {
       setClauses(sorted)
     } catch (err) {
       console.error('Error fetching clauses for ISO standard:', err)
-      setToast({ message: 'Failed to load ISO clauses.', type: 'error' })
+      setToast({ message: 'We could not load the ISO clauses. Please try again.', type: 'error' })
       setSelectedModule(null)
     } finally {
       setLoadingClauses(false)

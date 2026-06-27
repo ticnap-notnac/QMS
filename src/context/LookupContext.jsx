@@ -79,7 +79,7 @@ export function LookupProvider({ children }) {
       setRoles([])
       setDepartments([])
       setSites([])
-      setError(err?.message || String(err))
+      setError('We could not load reference data (departments, roles, etc.). Please refresh the page.')
     } finally {
       setLoading(false)
     }

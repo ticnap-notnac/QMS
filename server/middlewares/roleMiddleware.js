@@ -10,7 +10,7 @@ export function requireRoles(allowedRoles) {
     try {
       const authId = req.user?.id
       if (!authId) {
-        return res.status(401).json({ error: 'Unauthorized. No active session.' })
+        return res.status(401).json({ error: 'You are not logged in. Please log in to continue.' })
       }
 
       // Fetch user profile from DB
@@ -21,7 +21,7 @@ export function requireRoles(allowedRoles) {
         .maybeSingle()
 
       if (error || !profile) {
-        return res.status(403).json({ error: 'Access forbidden. User profile not found.' })
+        return res.status(403).json({ error: 'We could not find your user profile. Please contact support.' })
       }
 
       let roleName = null
@@ -41,7 +41,7 @@ export function requireRoles(allowedRoles) {
       logger.info('Role validation checking', { authId, roleName, normalizedRole, allowedRoles, isAllowed })
 
       if (!isAllowed) {
-        return res.status(403).json({ error: `Access forbidden. Requires one of these roles: ${allowedRoles.join(', ')}` })
+        return res.status(403).json({ error: 'You do not have permission to perform this action. Please contact an administrator if you believe this is an error.' })
       }
 
       // Attach the DB user profile with role_name to the request object for downstream use
@@ -50,7 +50,7 @@ export function requireRoles(allowedRoles) {
       next()
     } catch (err) {
       console.error('Role validation middleware error:', err)
-      return res.status(500).json({ error: 'Internal server error during role validation.' })
+      return res.status(500).json({ error: 'We could not verify your permissions at this time. Please try again later.' })
     }
   }
 }

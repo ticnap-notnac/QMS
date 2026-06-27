@@ -28,7 +28,7 @@ export default function useNotifications({
         await onRefreshUnreadCount()
       }
     } catch (err) {
-      setError(err?.message || 'Failed to load notifications.')
+      setError('We could not load your notifications. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -51,7 +51,7 @@ export default function useNotifications({
         await onRefreshUnreadCount()
       }
     } catch (err) {
-      setError(err?.message || 'Failed to mark notification as read.')
+      setError('The notification could not be marked as read. Please try again.')
     }
   }, [onRefreshUnreadCount, onUnreadCountChange])
 
@@ -67,7 +67,7 @@ export default function useNotifications({
         await onRefreshUnreadCount()
       }
     } catch (err) {
-      setError(err?.message || 'Failed to mark notifications as read.')
+      setError('We could not mark the notifications as read. Please try again.')
     }
   }, [notifications, onRefreshUnreadCount, onUnreadCountChange])
 

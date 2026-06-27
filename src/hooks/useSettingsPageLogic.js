@@ -41,7 +41,7 @@ export function useSettingsPageLogic({ authUserId, onProfileUpdate } = {}) {
 
           if (error) {
             console.error('Error fetching user profile:', error)
-            setToast({ message: `Failed to load user credentials: ${error.message}`, type: 'error' })
+            setToast({ message: 'We could not load your user credentials. Please refresh the page.', type: 'error' })
           } else if (data) {
             setUserProfile({
               first_name: data.first_name || '',
@@ -56,7 +56,7 @@ export function useSettingsPageLogic({ authUserId, onProfileUpdate } = {}) {
           }
         }
       } catch (err) {
-        setToast({ message: err.message, type: 'error' })
+        setToast({ message: 'We could not load your user profile. Please refresh the page.', type: 'error' })
         console.error('Error fetching user profile:', err)
       } finally {
         setLoading(false)
@@ -79,7 +79,7 @@ export function useSettingsPageLogic({ authUserId, onProfileUpdate } = {}) {
         })
         .eq('auth_id', authId)
 
-      if (profileError) throw new Error(profileError.message)
+      if (profileError) throw new Error('We could not update your profile. Please try again.')
 
       const updatedFullName = `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim()
       await insertLog({
@@ -109,13 +109,13 @@ export function useSettingsPageLogic({ authUserId, onProfileUpdate } = {}) {
         if (signInError) throw new Error('Current password is incorrect.')
 
         const { error: passwordError } = await supabase.auth.updateUser({ password: passwords.new })
-        if (passwordError) throw new Error(passwordError.message)
+        if (passwordError) throw new Error('We could not update your password. Please try again.')
 
         setPasswords({ current: '', new: '', confirm: '' })
       }
 
       if (onProfileUpdate) await onProfileUpdate()
-      setToast({ message: 'Profile account settings committed successfully!', type: 'success' })
+      setToast({ message: 'Your profile has been updated successfully!', type: 'success' })
     } catch (err) {
       setToast({ message: err.message, type: 'error' })
     } finally {

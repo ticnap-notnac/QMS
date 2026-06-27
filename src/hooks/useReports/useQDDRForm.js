@@ -161,7 +161,7 @@ export function useQDDRForm() {
       }
     } catch (err) {
       console.error('CBR suggestion error:', err)
-      setError('Failed to fetch suggestions from CBR: ' + err.message)
+      setError('We could not generate suggestions. Please try again later.')
     } finally {
       setSuggesting(false)
     }

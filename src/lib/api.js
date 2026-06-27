@@ -32,15 +32,15 @@ async function request(path, options = {}) {
         parsed = [{ message: payload.details }]
       }
       
-      // Instead of hiding it, we map the Zod errors into a readable array of strings
+      // Instead of hiding it, we map the Zod errors into a readable list
       const detailedErrors = parsed.map(err => err.message)
-      throw new Error(detailedErrors.join('\n'))
+      throw new Error(`Please check the following:\n• ` + detailedErrors.join('\n• '))
     } else if (payload?.details && Array.isArray(payload.details) && payload.details.length > 0) {
       // Extract specific field errors from Zod validation
-      const detailStr = payload.details.map(d => d.message).join(', ')
-      throw new Error(`${payload.error || 'Validation Error'}: ${detailStr}`)
+      const detailStr = payload.details.map(d => d.message).join('\n• ')
+      throw new Error(`Please check the following:\n• ${detailStr}`)
     } else {
-      throw new Error(payload?.error || response.statusText)
+      throw new Error(payload?.error || 'A server error occurred while processing your request. Please try again.')
     }
   }
 

@@ -6,7 +6,7 @@ export async function authMiddleware(req, res, next) {
     
     // Check if the header exists and starts with 'Bearer '
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Missing or invalid Authorization header. Must provide Bearer token.' })
+      return res.status(401).json({ error: 'You are not logged in. Please log in to continue.' })
     }
 
     const token = authHeader.split(' ')[1]
@@ -15,7 +15,7 @@ export async function authMiddleware(req, res, next) {
     const { data, error } = await supabase.auth.getUser(token)
 
     if (error || !data?.user) {
-      return res.status(401).json({ error: 'Invalid or expired token.', details: error?.message })
+      return res.status(401).json({ error: 'Your session has expired or is invalid. Please log in again.' })
     }
 
     // Attach the authenticated user to the request object
@@ -24,6 +24,6 @@ export async function authMiddleware(req, res, next) {
     next()
   } catch (err) {
     console.error('Auth middleware error:', err)
-    return res.status(500).json({ error: 'Internal server error during authentication.' })
+    return res.status(500).json({ error: 'We could not authenticate your session at this time. Please try again.' })
   }
 }

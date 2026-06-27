@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '@/utils/supabase'
 import { insertLog } from '@/services/logService'
+import { translateAuthError } from '@/utils/authErrors'
 
 function Login({
   onSubmit,
@@ -68,7 +69,7 @@ function Login({
         onSubmit({ user: data.user, session: data.session })
       }
     } catch (err) {
-      setError(err.message || 'Login failed')
+      setError(translateAuthError(err))
       console.error('Login error:', err)
 
       // Only attempt logging audit trails if the backend is actively listening

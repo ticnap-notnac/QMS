@@ -13,8 +13,8 @@ export function errorHandler(err, req, res, next) {
   // Sanitize 500 errors to prevent leaking stack traces or internal DB info
   const isInternalError = status === 500
   const message = isInternalError 
-    ? 'Internal server error' 
-    : (err?.message || String(err) || 'Internal server error')
+    ? 'An unexpected system error occurred. Our technical team has been notified. Please try again.' 
+    : (err?.message || String(err) || 'An unexpected system error occurred. Our technical team has been notified. Please try again.')
     
   const details = isInternalError ? undefined : (err?.details || undefined)
 

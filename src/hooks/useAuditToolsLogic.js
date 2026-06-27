@@ -234,7 +234,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       }
     } catch (err) {
       console.error('Error starting audit run:', err)
-      setError('Failed to start audit run. ' + err.message)
+      setError('We could not start the audit run. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -848,17 +848,23 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     }
   }
 
-  const handleDeleteSchedule = async (scheduleId) => {
-    if (!window.confirm('Are you sure you want to delete this schedule?')) return
+  const [scheduleToDelete, setScheduleToDelete] = useState(null)
+
+  const handleDeleteSchedule = (scheduleId) => {
+    setScheduleToDelete(scheduleId)
+  }
+
+  const confirmDeleteSchedule = async () => {
+    if (!scheduleToDelete) return
     
     // Optimistic UI update: instantly remove it from the screen
-    setSchedules(prev => prev.filter(s => s.id !== scheduleId))
+    setSchedules(prev => prev.filter(s => s.id !== scheduleToDelete))
     setLoading(true)
     try {
       const { error: deleteErr } = await supabase
         .from('audit_schedules')
         .delete()
-        .eq('id', scheduleId)
+        .eq('id', scheduleToDelete)
 
       if (deleteErr) throw deleteErr
       setSuccess('Audit schedule deleted successfully!')
@@ -866,12 +872,26 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       fetchData()
     } catch (err) {
       console.error(err)
-      setError(err.message || 'Failed to delete schedule.')
+      setError('This schedule could not be deleted. Please try again.')
       // Revert the UI if it failed
       fetchData()
     } finally {
       setLoading(false)
+      setScheduleToDelete(null)
     }
+  }
+
+  const cancelDeleteSchedule = () => setScheduleToDelete(null)
+
+  const confirmDeleteScheduleDialogProps = {
+    isOpen: !!scheduleToDelete,
+    title: 'Delete Audit Schedule',
+    message: 'Are you sure you want to delete this schedule?',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    isDestructive: true,
+    onConfirm: confirmDeleteSchedule,
+    onCancel: cancelDeleteSchedule,
   }
 
   const fetchClausesForStandard = async (stdId) => {
@@ -900,7 +920,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       return []
     } catch (err) {
       console.error('Error fetching clauses for standard:', err)
-      setError('Failed to fetch standard clauses. ' + err.message)
+      setError('We could not fetch the standard clauses.')
       return []
     }
   }
@@ -916,7 +936,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       return result
     } catch (err) {
       console.error('Error creating template:', err)
-      setError(err.message || 'Failed to create checklist template.')
+      setError('The checklist template could not be created. Please try again.')
       throw err
     } finally {
       setSaving(false)
@@ -934,7 +954,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       return result
     } catch (err) {
       console.error('Error updating template:', err)
-      setError(err.message || 'Failed to update checklist template.')
+      setError('The checklist template could not be updated. Please try again.')
       throw err
     } finally {
       setSaving(false)
@@ -952,7 +972,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       return result
     } catch (err) {
       console.error('Error deleting template:', err)
-      setError(err.message || 'Failed to delete checklist template.')
+      setError('The checklist template could not be deleted. Please try again.')
       throw err
     } finally {
       setSaving(false)
@@ -979,7 +999,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       })
     } catch (err) {
       console.error('Failed to remove CAR link:', err)
-      setError('Failed to remove CAR link: ' + err.message)
+      setError('We could not remove the CAR link. Please try again.')
     }
   }
 
@@ -1041,6 +1061,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     handlePrintReport,
     handleScheduleSubmit,
     handleDeleteSchedule,
+    confirmDeleteScheduleDialogProps,
     handleRemoveCarLink,
     fetchClausesForStandard,
     handleCreateTemplate,

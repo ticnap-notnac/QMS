@@ -48,7 +48,7 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
       })
       alert('Rating submitted successfully!')
     } catch (err) {
-      setRatingError('Failed to submit rating: ' + (err.message || 'Unknown error'))
+      setRatingError('We could not submit your rating. Please try again.')
       console.error(err)
     }
   }

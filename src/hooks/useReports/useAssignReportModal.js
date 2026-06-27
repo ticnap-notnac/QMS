@@ -42,7 +42,7 @@ export default function useAssignReportModal({ report, onSuccess, onClose }) {
         setUsers(Array.isArray(data) ? data : [])
       } catch (err) {
         if (active) {
-          setError(err?.message || 'Failed to load employees.')
+          setError('We could not load the employee list. Please try again.')
         }
       } finally {
         if (active) {
@@ -84,7 +84,7 @@ export default function useAssignReportModal({ report, onSuccess, onClose }) {
       }
       return { success: true }
     } catch (assignError) {
-      setError(assignError?.message || 'Failed to assign report. Please try again.')
+      setError('The report could not be assigned. Please try again.')
       return { success: false }
     } finally {
       setIsSubmitting(false)
