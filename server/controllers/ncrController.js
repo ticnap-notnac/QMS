@@ -1,6 +1,6 @@
 import { getRequestActor } from '../lib/requestUtils.js'
 import { writeAudit } from '../lib/audit.js'
-import { safeCreateNotificationsForRoles, safeCreateNotification } from '../lib/notificationHelper.js'
+import { safeCreateNotificationsForRoles, safeCreateNotificationsForRolesAndDepartment, safeCreateNotification } from '../lib/notificationHelper.js'
 import {
   fetchReports,
   createNcrReport,
@@ -41,6 +41,16 @@ export async function createReport(req, res) {
       action: 'ncr_create',
       userAuthId: reportedByAuthId,
       details: { id: data?.id ?? null, reference_no: referenceNo }
+    })
+    const reporterName = `${data?.reporter_first_name || ''} ${data?.reporter_last_name || ''}`.trim() || 'a user'
+    await safeCreateNotificationsForRolesAndDepartment({
+      globalRoleNames: ['admin'],
+      departmentRoleNames: ['manager', 'department manager'],
+      departmentId: department_id,
+      title: `New Report Submitted: ${referenceNo}`,
+      message: `A new NCR report ${referenceNo} has been submitted. Please review and assign it.`,
+      type: 'info',
+      reportId: data?.id ?? null
     })
     return res.status(201).json(data)
   } catch (err) {
@@ -137,8 +147,10 @@ export async function createReportSubmit(req, res) {
       details: { id: data?.id ?? null, reference_no: referenceNo }
     })
     const reporterName = `${reporter.first_name || ''} ${reporter.last_name || ''}`.trim() || reporter.user_name || 'a user'
-    await safeCreateNotificationsForRoles({
-      roleNames: ['admin', 'auditor'],
+    await safeCreateNotificationsForRolesAndDepartment({
+      globalRoleNames: ['admin'],
+      departmentRoleNames: ['manager', 'department manager'],
+      departmentId: department_id,
       title: `New Report Submitted: ${referenceNo}`,
       message: `A new NCR report ${referenceNo} has been submitted by ${reporterName}. Please review and assign it.`,
       type: 'info',

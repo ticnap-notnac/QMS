@@ -1,6 +1,7 @@
 import { getRequestActor } from '../lib/requestUtils.js'
 import { writeAudit } from '../lib/audit.js'
 import { createCarReport, submitCapaReport, verifyCarEffectiveness, fetchCarsForClause } from '../services/carService.js'
+import { safeCreateNotificationsForRoles } from '../lib/notificationHelper.js'
 
 export async function createCar(req, res, next) {
   const reportedByAuthId = getRequestActor(req)
@@ -14,6 +15,13 @@ export async function createCar(req, res, next) {
       action: 'car_create',
       userAuthId: reportedByAuthId,
       details: { id: data?.id ?? null, reference_no: data?.reference_no }
+    })
+    await safeCreateNotificationsForRoles({
+      roleNames: ['admin', 'auditor'],
+      title: `New CAR Submitted: ${data?.reference_no || 'Unknown'}`,
+      message: `A new Corrective Action Report (CAR) ${data?.reference_no || ''} has been generated. Please review it.`,
+      type: 'warning',
+      reportId: data?.id ?? null
     })
     return res.status(201).json(data)
   } catch (err) {

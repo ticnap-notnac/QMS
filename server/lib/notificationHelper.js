@@ -1,4 +1,4 @@
-import { createNotificationsForRoles, createNotification } from '../services/ncrReportsService.js'
+import { createNotificationsForRoles, createNotificationsForRolesAndDepartment, createNotification } from '../services/ncrReportsService.js'
 
 /**
  * Safely creates notifications for roles by wrapping the service call in a try-catch block
@@ -9,6 +9,16 @@ export async function safeCreateNotificationsForRoles(options) {
     await createNotificationsForRoles(options)
   } catch (err) {
     console.warn('Failed to create notifications for roles:', err?.message || err)
+  }
+
+/**
+ * Safely creates notifications for global roles and department-specific roles.
+ */
+export async function safeCreateNotificationsForRolesAndDepartment(options) {
+  try {
+    await createNotificationsForRolesAndDepartment(options)
+  } catch (err) {
+    console.warn('Failed to create notifications for roles and department:', err?.message || err)
   }
 }
 
@@ -23,4 +33,4 @@ export async function safeCreateNotification(options) {
   }
 }
 
-export default { safeCreateNotificationsForRoles, safeCreateNotification }
+export default { safeCreateNotificationsForRoles, safeCreateNotificationsForRolesAndDepartment, safeCreateNotification }

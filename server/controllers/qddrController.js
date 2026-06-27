@@ -1,6 +1,7 @@
 import { getRequestActor } from '../lib/requestUtils.js'
 import { writeAudit } from '../lib/audit.js'
 import { createQddrReport, updateQddrReport } from '../services/qddrService.js'
+import { safeCreateNotificationsForRoles } from '../lib/notificationHelper.js'
 
 export async function createQddr(req, res, next) {
   const reportedByAuthId = getRequestActor(req)
@@ -14,6 +15,13 @@ export async function createQddr(req, res, next) {
       action: 'qddr_create',
       userAuthId: reportedByAuthId,
       details: { id: data?.id ?? null, reference_no: data?.reference_no }
+    })
+    await safeCreateNotificationsForRoles({
+      roleNames: ['admin', 'auditor'],
+      title: `New QDDR Submitted: ${data?.reference_no || 'Unknown'}`,
+      message: `A new Quality Defect & Deviation Report (QDDR) ${data?.reference_no || ''} has been generated. Please review it.`,
+      type: 'warning',
+      reportId: data?.id ?? null
     })
     return res.status(201).json(data)
   } catch (err) {

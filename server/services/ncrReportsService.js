@@ -148,6 +148,61 @@ export async function createNotificationsForRoles({ roleNames = [], title, messa
   return rows.length
 }
 
+export async function createNotificationsForRolesAndDepartment({ globalRoleNames = [], departmentRoleNames = [], departmentId, title, message, type = 'info', reportId = null }) {
+  const globalUsers = await getUsersByRoleNames(globalRoleNames)
+  let deptUsers = []
+  
+  if (departmentId && departmentRoleNames.length > 0) {
+    const normalizedRoleNames = [...new Set(departmentRoleNames.map((name) => String(name || '').trim().toLowerCase()).filter(Boolean))]
+    const { data: roles, error: rolesError } = await supabase.from('roles').select('id, role_name')
+    if (!rolesError && roles) {
+      const targetRoleIds = roles
+        .filter((role) => normalizedRoleNames.includes(String(role.role_name || '').trim().toLowerCase()))
+        .map((role) => role.id)
+      
+      if (targetRoleIds.length > 0) {
+        const { data: users, error: usersError } = await supabase
+          .from('users')
+          .select('id, user_name, first_name, last_name, auth_id, role_id, department_id')
+          .in('role_id', targetRoleIds)
+          .eq('department_id', departmentId)
+          
+        if (!usersError && users) {
+          deptUsers = users
+        }
+      }
+    }
+  }
+
+  // Combine and deduplicate users by id
+  const userMap = new Map()
+  globalUsers.forEach(u => userMap.set(u.id, u))
+  deptUsers.forEach(u => userMap.set(u.id, u))
+  
+  const finalUsers = Array.from(userMap.values())
+  if (finalUsers.length === 0) return 0
+
+  const rows = finalUsers.map((user) => ({
+    user_id: user.id,
+    title,
+    message,
+    type,
+    report_id: reportId,
+    is_read: false,
+  }))
+
+  const { error } = await supabase.from('notifications').insert(rows)
+  if (error) throw error
+
+  // Send SMTP emails for each notification in the background
+  rows.forEach((row) => {
+    sendNotificationEmail(row.user_id, row.title, row.message)
+      .catch((err) => console.error('Failed to send SMTP email in background:', err.message))
+  })
+
+  return rows.length
+}
+
 export async function getCurrentUser(authId) {
   if (!authId) throw new Error('Missing x-user-auth-id header.')
 
