@@ -858,7 +858,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       isOpen: modalsState.isModalOpen,
       onClose: modalsState.closeCreateModal,
       onSubmit: handleSubmitReport,
-      error,
+      error: null,
       isLoading: dataState.isLoading,
       createFormState: formState.createFormState,
       locationOptions: dataState.locationOptions,

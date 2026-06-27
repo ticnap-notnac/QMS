@@ -180,7 +180,7 @@ function AppInner() {
     try {
       if (authData && authData.user) {
         setUser(authData.user)
-        setError('')
+        setToast(null)
         
         try {
           const { data } = await supabase
@@ -210,7 +210,7 @@ function AppInner() {
         navigate('/')
       }
     } catch (err) {
-      setError(friendlyError(err, 'Your session could not be loaded. Please refresh the page or log in again.'))
+      setToast({ message: friendlyError(err, 'Your session could not be loaded. Please refresh the page or log in again.'), type: 'error' })
       console.error('Submit error:', err)
     }
   }
