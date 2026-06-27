@@ -9,7 +9,7 @@ import './AdminPanel.css'
 
 export default function ISOStandardsPage({ userRole, userName }) {
   const {
-    toast, setToast, activeSection, setActiveSection, standardsError, addStandardSectionProps,
+    toast, setToast, activeSection, setActiveSection, addStandardSectionProps,
     addClausesSectionProps, manageClausesSectionProps, toggleStandardsSectionProps,
     confirmStandardDialogProps, confirmClauseDialogProps
   } = useISOStandardsLogic({ userName })
@@ -39,7 +39,6 @@ export default function ISOStandardsPage({ userRole, userName }) {
                 </div>
               </div>
               <div className="glass-card-content iso-standards-content">
-                {standardsError && <div className="iso-banner iso-banner--error"><span>{standardsError}</span></div>}
                 {activeSection === 'Add Standard' && <AddStandardSection {...addStandardSectionProps} />}
                 {activeSection === 'Add Clauses' && <AddClausesSection {...addClausesSectionProps} />}
                 {activeSection === 'Manage Clauses' && <ManageClausesSection {...manageClausesSectionProps} />}

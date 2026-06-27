@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { fetchLogs, recordLogRead } from '@/services/logService'
+import Toast from '@/components/UI/Toast'
 
 export default function SystemLogsPanel({ onClose }) {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [toast, setToast] = useState(null)
   const [query, setQuery] = useState('')
 
   // ⚓ Set a larger batch limit since we are using a continuous scroll box now
@@ -12,7 +13,7 @@ export default function SystemLogsPanel({ onClose }) {
 
   const load = async (opts = {}) => {
     setLoading(true)
-    setError(null)
+    setToast(null)
     try {
       // Pull directly from offset 0 to feed the continuous scrolling grid view
       const offset = 0 
@@ -26,7 +27,7 @@ export default function SystemLogsPanel({ onClose }) {
       // record that the current user viewed logs
       try { await recordLogRead({ query: query || null, count: res.count || (res.data || []).length }) } catch (e) { }
     } catch (err) {
-      setError('We could not load the system logs. Please try again.')
+      setToast({ message: 'We could not load the system logs. Please try again.', type: 'error' })
     } finally {
       setLoading(false)
     }
@@ -59,9 +60,9 @@ export default function SystemLogsPanel({ onClose }) {
       </div>
 
       {loading && <div>Loading...</div>}
-      {error && <div className="error">{error}</div>}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      {!loading && !error && (
+      {!loading && !toast && (
         /* ── 📱 SAFE CONTAINED WRAPPER WINDOW ── */
         <div className="logs-table iso-table-wrap">
           <table className="iso-table system-logs-table">

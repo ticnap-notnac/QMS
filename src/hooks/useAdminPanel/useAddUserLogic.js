@@ -12,8 +12,7 @@ export default function useAddUserLogic() {
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
-  const [pageMessage, setPageMessage] = useState('')
-  const [pageError, setPageError] = useState('')
+  const [toast, setToast] = useState(null)
   const [userToDelete, setUserToDelete] = useState(null)
   
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false)
@@ -94,8 +93,7 @@ export default function useAddUserLogic() {
       })
 
       setFormMessage(`Created ${result.authUser.email} successfully.`)
-      setPageMessage(`Created user "${result.authUser.email}" successfully.`)
-      setPageError('')
+      setToast({ message: `Created user "${result.authUser.email}" successfully.`, type: 'success' })
       setNewUser({
         firstName: '',
         lastName: '',
@@ -124,12 +122,12 @@ export default function useAddUserLogic() {
     if (!userToDelete) return
     const displayName = `${userToDelete.first_name || ''} ${userToDelete.last_name || ''}`.trim() || userToDelete.user_name || userToDelete.email
     try {
-      setPageError('')
+      setToast(null)
       await deleteItem(userToDelete.id)
-      setPageMessage(`Deleted user "${displayName}" successfully.`)
+      setToast({ message: `Deleted user "${displayName}" successfully.`, type: 'success' })
     } catch (err) {
       console.error('Delete user error:', err)
-      setPageError('This user could not be deleted. Please try again.')
+      setToast({ message: 'This user could not be deleted. Please try again.', type: 'error' })
     } finally {
       setUserToDelete(null)
     }
@@ -189,8 +187,8 @@ export default function useAddUserLogic() {
 
       await updateUser(editingUser.id, payload)
       setEditFormMessage('User updated successfully.')
-      setPageMessage(`Updated user "${editingUser.firstName} ${editingUser.lastName}" successfully.`)
-      setPageError('')
+      const displayName = `${editingUser.firstName || ''} ${editingUser.lastName || ''}`.trim()
+      setToast({ message: `Updated user "${displayName}" successfully.`, type: 'success' })
       await reloadUsers()
 
       try {
@@ -306,7 +304,9 @@ export default function useAddUserLogic() {
       addUserModalProps,
       editUserModalProps,
       confirmDialogProps,
-      pageMessage,
-      pageError
+      isEditUserModalOpen,
+      closeEditUserModal,
+      toast,
+      setToast,
     }
 }

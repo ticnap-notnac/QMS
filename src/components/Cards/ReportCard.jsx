@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { formatDate, getStatusStyle, getSeverityStyle, formatAssignedUser } from '@/utils/themeHelpers'
 import { getReportRating, rateReport } from '@/services/ncrService'
 import StarRating from '../UI/StarRating'
+import Toast from '../UI/Toast'
 import { REPORT_STATUS } from '../../../shared/constants'
 
 function ReportCard({ report, departmentNameById, userNameById, canAssignReports, canUpdateReport, canDeleteReport, onUpdate, onAssign, onDelete }) {
@@ -21,7 +22,7 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
 
   const [ratingStats, setRatingStats] = useState({ average: 0, count: 0, userRating: null })
   const [isRatingLoading, setIsRatingLoading] = useState(false)
-  const [ratingError, setRatingError] = useState(null)
+  const [toast, setToast] = useState(null)
 
   useEffect(() => {
     if (isClosed) {
@@ -38,7 +39,7 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
   const handleRatingChange = async (newRating) => {
     if (ratingStats.userRating !== null) return // already rated
     try {
-      setRatingError(null)
+      setToast(null)
       const res = await rateReport(report.id, newRating)
       // Optimistically update
       setRatingStats(prev => {
@@ -46,9 +47,9 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
         const newAvg = ((prev.average * prev.count) + newRating) / newCount
         return { average: newAvg, count: newCount, userRating: newRating }
       })
-      alert('Rating submitted successfully!')
+      setToast({ message: 'Rating submitted successfully!', type: 'success' })
     } catch (err) {
-      setRatingError('We could not submit your rating. Please try again.')
+      setToast({ message: 'We could not submit your rating. Please try again.', type: 'error' })
       console.error(err)
     }
   }
@@ -205,7 +206,7 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
             {ratingStats.userRating !== null && (
               <span style={{ fontSize: '12px', color: 'var(--muted)' }}>You rated this report {ratingStats.userRating} stars.</span>
             )}
-            {ratingError && <span style={{ fontSize: '12px', color: 'var(--error, #ef4444)' }}>{ratingError}</span>}
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
           </div>
         </>
       )}

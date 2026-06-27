@@ -21,7 +21,6 @@ export default function useISOStandardsLogic({ userName }) {
   
   const [standards, setStandards] = useState([])
   const [loadingStandards, setLoadingStandards] = useState(true)
-  const [standardsError, setStandardsError] = useState('')
   
   const [standardForm, setStandardForm] = useState(initialStandardForm)
   const [clauseForm, setClauseForm] = useState(initialClauseForm)
@@ -79,7 +78,6 @@ export default function useISOStandardsLogic({ userName }) {
   useEffect(() => {
     const loadStandards = async () => {
       setLoadingStandards(true)
-      setStandardsError('')
       try {
         const { data, error } = await supabase
           .from('iso_standards')
@@ -89,7 +87,7 @@ export default function useISOStandardsLogic({ userName }) {
         setStandards(data || [])
         setSelectedStandardId((current) => current || data?.[0]?.id || '')
       } catch (error) {
-        setStandardsError('We could not load the ISO standards. Please refresh the page.')
+        setToast({ message: 'We could not load the ISO standards. Please refresh the page.', type: 'error' })
       } finally {
         setLoadingStandards(false)
       }
@@ -505,7 +503,6 @@ export default function useISOStandardsLogic({ userName }) {
     setToast,
     activeSection,
     setActiveSection,
-    standardsError,
     addStandardSectionProps,
     addClausesSectionProps,
     manageClausesSectionProps,

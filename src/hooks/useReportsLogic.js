@@ -31,7 +31,6 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
   // ── Async / UI state ────────────────────────────────────────────────────────
   const [isReviewSubmitting, setIsReviewSubmitting] = useState(false)
   const [isNcrSubmitting, setIsNcrSubmitting] = useState(false)
-  const [error, setError] = useState(null)
   const [toast, setToast] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
   const [reportToDelete, setReportToDelete] = useState(null)
@@ -68,7 +67,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     currentUserId,
     currentAuthId,
     reportFilters: formState.reportFilters,
-    setError,
+    setToast,
     userRole,
     userDepartmentId
   })
@@ -77,7 +76,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     clearEvidenceState: formState.clearEvidenceState,
     resetCreateForm: formState.resetCreateForm,
     setRejectReason,
-    setError
+    setToast
   })
 
   const updateFormState = useReportsUpdateForm({
@@ -175,13 +174,12 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       }
       setQddrReports(filteredQddrs)
     } catch (err) {
-      console.error('Failed to load CAR/QDDR lists:', err)
-      setError('We could not load the CAR/QDDR lists. Please refresh the page.')
+      setToast({ message: 'We could not load the CAR/QDDR lists. Please refresh the page.', type: 'error' })
     } finally {
       setLoadingCar(false)
       setLoadingQddr(false)
     }
-  }, [setError, userRole, userDepartmentId, formState.reportFilters.departmentId, dataState.departmentNameById])
+  }, [setToast, userRole, userDepartmentId, formState.reportFilters.departmentId, dataState.departmentNameById])
 
   useEffect(() => {
     if (currentAuthId) {
@@ -331,18 +329,15 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
   const confirmDeleteReport = useCallback(async () => {
     if (!reportToDelete) return
     try {
-      setError(null)
       await deleteReport(reportToDelete.id)
       setToast({ message: `Report ${reportToDelete.reference_no || ''} deleted successfully.`, type: 'success' })
       await dataState.refreshReportsList(formState.reportFilters)
     } catch (err) {
-      console.error('Delete report error:', err)
-      setError('The report could not be deleted. It may be in use elsewhere.')
       setToast({ message: 'Failed to delete report.', type: 'error' })
     } finally {
       setReportToDelete(null)
     }
-  }, [reportToDelete, dataState, formState.reportFilters])
+  }, [reportToDelete, dataState, formState.reportFilters, setToast])
 
   const cancelDeleteReport = useCallback(() => {
     setReportToDelete(null)
@@ -386,7 +381,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       return { success: false }
     }
 
-    if (!updateFormState.validate()) {
+    if (modalsState.selectedReport.status === 'Closed') {
       return { success: false }
     }
 
@@ -438,7 +433,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       modalsState.setIsPreventiveActionModalOpen(false)
       await dataState.refreshReportsList()
     } catch (err) {
-      setError(err?.message || 'Failed to submit rating and resolution.')
+      setToast({ message: err?.message || 'Failed to submit rating and resolution.', type: 'error' })
     } finally {
       setIsSubmittingRating(false)
     }
@@ -454,7 +449,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
 
   const handleReviewReport = async (report, decision, reason = '') => {
     if (!report?.id) return
-    setError(null)
+    setToast(null)
     const normalized = String(decision || '').trim().toLowerCase()
     const trimmedReason = String(reason || '').trim()
 
@@ -471,7 +466,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       if (normalized === 'reject') modalsState.closeRejectModal()
       await dataState.refreshReportsList()
     } catch (err) {
-      setError(err?.message || 'Failed to review report.')
+      setToast({ message: err?.message || 'Failed to review report.', type: 'error' })
     } finally {
       setIsReviewSubmitting(false)
     }
@@ -479,14 +474,10 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
 
   // ─── Submit report ─────────────────────────────────────────────────────────
 
-
-
   const handleSubmitReport = async (event) => {
     event.preventDefault()
     setIsNcrSubmitting(true)
     try {
-      setError(null)
-
       const resolvedProductType = await resolveCatalogSelection({
         inputValue: formState.createFormState.productType,
         selectedId: formState.createFormState.productTypeId,
@@ -552,7 +543,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       await dataState.loadLookupData()
       await dataState.refreshReportsList()
     } catch (err) {
-      setError(err?.message || 'Failed to submit NCR report.')
+      setToast({ message: err?.message || 'Failed to submit NCR report.', type: 'error' })
     } finally {
       setIsNcrSubmitting(false)
     }
@@ -567,7 +558,6 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
 
     carFormState.setIsSubmitting(true)
     carFormState.setError(null)
-    setError(null)
 
     try {
       // Build payload including confirmed ISO clause links and attached NCR ID
@@ -609,7 +599,6 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
 
     qddrFormState.setIsSubmitting(true)
     qddrFormState.setError(null)
-    setError(null)
 
     try {
       // Build payload including NCR ID
@@ -650,7 +639,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       setToast({ message: 'CAPA plan submitted successfully', type: 'success' })
       return res
     } catch (err) {
-      console.error('[useReportsLogic] handleCapaSubmit error:', err)
+      setToast({ message: err?.message || 'Failed to submit CAPA plan.', type: 'error' })
       throw err
     }
   }
@@ -663,7 +652,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       setToast({ message: 'Verification recorded successfully', type: 'success' })
       return res
     } catch (err) {
-      console.error('[useReportsLogic] handleCarVerify error:', err)
+      setToast({ message: err?.message || 'Failed to verify CAR.', type: 'error' })
       throw err
     }
   }
@@ -686,7 +675,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       setToast({ message: 'QDDR report updated successfully', type: 'success' })
       return res
     } catch (err) {
-      console.error('[useReportsLogic] handleUpdateQddr error:', err)
+      setToast({ message: err?.message || 'Failed to update QDDR.', type: 'error' })
       throw err
     }
   }
@@ -735,7 +724,6 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     isLoading: dataState.isLoading,
     isReviewSubmitting,
     isNcrSubmitting,
-    error,
     toast,
     setToast,
 

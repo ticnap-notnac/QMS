@@ -11,6 +11,7 @@ import MainLayout from './components/Layout/MainLayout.jsx'
 import { logAction } from '@/services/logService'
 import { useIdleTimeout } from './hooks/useIdleTimeout'
 import ConfirmDialog from './components/Modals/ConfirmDialog.jsx'
+import Toast from './components/UI/Toast.jsx'
 import { friendlyError } from './utils/friendlyError.js'
 
 function normalizeRoleValue(value) {
@@ -24,7 +25,7 @@ function AppInner() {
   const [showIntro, setShowIntro] = useState(false)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [toast, setToast] = useState(null)
 
   const [userRole, setUserRole] = useState('user')
   const [currentUserId, setCurrentUserId] = useState(null)
@@ -38,7 +39,6 @@ function AppInner() {
   const canViewNotifications = Boolean(user)
   const navigate = useNavigate()
   const isLoggingOutRef = useRef(false)
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
 
   // Pull site context from LookupContext (loaded on auth state change)
   const { userSiteId, userSiteName } = useLookup()
@@ -194,11 +194,17 @@ function AppInner() {
   }
 
   const handleLogoutClick = () => {
-    setIsLogoutModalOpen(true)
+    setToast({
+      message: 'Are you sure you want to log out of your account?',
+      type: 'info',
+      onConfirm: handleLogout,
+      confirmText: 'Log Out',
+      cancelText: 'Cancel'
+    })
   }
 
   const handleLogout = async () => {
-    setIsLogoutModalOpen(false)
+    setToast(null)
     if (isLoggingOutRef.current) return
     isLoggingOutRef.current = true
     try {
@@ -221,8 +227,9 @@ function AppInner() {
 
       // Perform actual network signout
       await supabase.auth.signOut()
+      setToast({ message: 'You have been successfully logged out.', type: 'success' })
     } catch (err) {
-      setError(friendlyError(err, 'Sign-out failed. Please refresh the page and try again.'))
+      setToast({ message: friendlyError(err, 'Sign-out failed. Please refresh the page and try again.'), type: 'error' })
       console.error('Logout error:', err)
 
       await logAction({
@@ -322,15 +329,16 @@ function AppInner() {
 
       <IntroModal isOpen={showIntro} onClose={() => setShowIntro(false)} />
       
-      <ConfirmDialog
-        isOpen={isLogoutModalOpen}
-        title="Sign Out"
-        message="Are you sure you want to log out of your account?"
-        confirmText="Log Out"
-        cancelText="Cancel"
-        onConfirm={handleLogout}
-        onCancel={() => setIsLogoutModalOpen(false)}
-      />
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onConfirm={toast.onConfirm}
+          confirmText={toast.confirmText}
+          cancelText={toast.cancelText}
+          onClose={() => setToast(null)} 
+        />
+      )}
     </div>
   )
 }

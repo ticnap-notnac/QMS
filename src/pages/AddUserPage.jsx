@@ -7,6 +7,7 @@ import UsersTable from '@/components/UsersTable/UsersTable'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import { useAddUserLogic } from '@/hooks/useAdminPanel.js'
 import SubmissionLoadingOverlay from '@/components/UI/SubmissionLoadingOverlay.jsx'
+import Toast from '@/components/UI/Toast.jsx'
 import './AdminPanel.css'
 
 export default function AddUserPage({ userRole }) {
@@ -22,8 +23,9 @@ export default function AddUserPage({ userRole }) {
     addUserModalProps,
     editUserModalProps,
     confirmDialogProps,
-    pageMessage,
-    pageError
+    toast,
+    setToast,
+    usersError
   } = useAddUserLogic()
 
   const isOverlayLoading = addUserModalProps.loading || editUserModalProps.loading
@@ -55,8 +57,6 @@ export default function AddUserPage({ userRole }) {
 
               <div className="glass-card-content">
                 <div className="admin-users-section">
-                  {pageMessage && <div className="user-info-success">{pageMessage}</div>}
-                  {(pageError || usersError) && <div className="user-info-error">{pageError || usersError}</div>}
                   <div className="admin-users-header">
                     <div>
                       <h3 className="glass-card-heading">Manage Users</h3>
@@ -84,6 +84,8 @@ export default function AddUserPage({ userRole }) {
           <EditUserModal {...editUserModalProps} />
           <ConfirmDialog {...confirmDialogProps} />
           <SubmissionLoadingOverlay isOpen={isOverlayLoading} message={overlayMessage} />
+          {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+          {usersError && !toast && <Toast message={usersError} type="error" onClose={() => {}} />}
         </main>
       ) : (
         <main className="page-main-centered">

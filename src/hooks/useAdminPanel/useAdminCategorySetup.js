@@ -16,8 +16,7 @@ export default function useAdminCategorySetup({
   const [categoryInput, setCategoryInput] = useState('')
   const [formError, setFormError] = useState('')
   const [formMessage, setFormMessage] = useState('')
-  const [pageMessage, setPageMessage] = useState('')
-  const [pageError, setPageError] = useState('')
+  const [toast, setToast] = useState(null)
   const [itemToDelete, setItemToDelete] = useState(null)
 
   const { items, loading, deletingId, creating, reload, createItem, deleteItem, error } = useCategoryManager({
@@ -57,8 +56,7 @@ export default function useAdminCategorySetup({
       setFormError('')
       await createItem(nextValue)
       await reloadLookups()
-      setPageMessage(`Added ${entityName.toLowerCase()} "${nextValue}" successfully.`)
-      setPageError('')
+      setToast({ message: `Added ${entityName.toLowerCase()} "${nextValue}" successfully.`, type: 'success' })
       closeCategoryModal()
     } catch (err) {
       setFormError('This item could not be added. Please try again.')
@@ -72,12 +70,12 @@ export default function useAdminCategorySetup({
   const confirmDeleteCategory = async () => {
     if (!itemToDelete) return
     try {
-      setPageError('')
+      setToast(null)
       await deleteItem(itemToDelete.id)
       await reloadLookups()
-      setPageMessage(`Deleted ${entityName.toLowerCase()} "${itemToDelete[labelKey]}" successfully.`)
+      setToast({ message: `Deleted ${entityName.toLowerCase()} "${itemToDelete[labelKey]}" successfully.`, type: 'success' })
     } catch (err) {
-      setPageError('This item could not be deleted. It may be in use elsewhere in the system.')
+      setToast({ message: 'This item could not be deleted. It may be in use elsewhere in the system.', type: 'error' })
     } finally {
       setItemToDelete(null)
     }
@@ -130,8 +128,8 @@ export default function useAdminCategorySetup({
     reload,
     openCategoryModal,
     error,
-    pageMessage,
-    pageError,
+    toast,
+    setToast,
     listPanelProps,
     categoryModalProps,
     confirmDialogProps

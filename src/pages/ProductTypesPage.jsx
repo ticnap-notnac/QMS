@@ -5,6 +5,7 @@ import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import { useProductTypesLogic } from '@/hooks/useAdminPanel.js'
+import Toast from '@/components/UI/Toast.jsx'
 import './AdminPanel.css'
 
 export default function ProductTypesPage({ userRole }) {
@@ -14,8 +15,8 @@ export default function ProductTypesPage({ userRole }) {
     reload,
     openCategoryModal,
     error,
-    pageMessage,
-    pageError,
+    toast,
+    setToast,
     listPanelProps,
     categoryModalProps,
     confirmDialogProps
@@ -49,8 +50,6 @@ export default function ProductTypesPage({ userRole }) {
 
               <div className="glass-card-content">
                 <div className="panel-narrow">
-                  {pageMessage && <div className="user-info-success">{pageMessage}</div>}
-                  {(pageError || error) && <div className="user-info-error">{pageError || error}</div>}
                   <p className="glass-card-subtext">Use the add button above to create a new product type.</p>
                   <AdminListPanel {...listPanelProps} />
                 </div>
@@ -60,6 +59,8 @@ export default function ProductTypesPage({ userRole }) {
 
           <AddCategoryModal {...categoryModalProps} />
           <ConfirmDialog {...confirmDialogProps} />
+          {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+          {error && !toast && <Toast message={error} type="error" onClose={() => {}} />}
         </main>
       ) : (
         <main className="page-main-centered">
