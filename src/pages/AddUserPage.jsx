@@ -24,8 +24,7 @@ export default function AddUserPage({ userRole }) {
     editUserModalProps,
     confirmDialogProps,
     toast,
-    setToast,
-    usersError
+    setToast
   } = useAddUserLogic()
 
   const isOverlayLoading = addUserModalProps.loading || editUserModalProps.loading

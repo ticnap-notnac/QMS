@@ -54,8 +54,6 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
       setPageError('')
       closeCategoryModal()
     } catch (err) {
-      closeCategoryModal()
-    } catch (err) {
       setFormError('This role could not be added. Please try again.')
     }
   }

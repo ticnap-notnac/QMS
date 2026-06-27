@@ -138,8 +138,31 @@ function AppInner() {
 
     checkUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const newUser = session?.user || null
+      setUser(newUser)
+
+      if (newUser) {
+        try {
+          const { data } = await supabase
+            .from('users')
+            .select('id, first_name, last_name, user_name, role_id, department_id')
+            .eq('auth_id', newUser.id)
+            .maybeSingle()
+
+          if (data) {
+            setCurrentUserId(data.id || null)
+            await applyUserRoleData(data)
+          }
+        } catch (err) {
+          console.error('Error fetching user data on auth state change:', err)
+        }
+      } else {
+        setCurrentUserId(null)
+        setUserName('Name of the User')
+        setUserPosition('Position')
+        setUserRole('user')
+      }
     })
 
     return () => {
@@ -158,6 +181,21 @@ function AppInner() {
       if (authData && authData.user) {
         setUser(authData.user)
         setError('')
+        
+        try {
+          const { data } = await supabase
+            .from('users')
+            .select('id, first_name, last_name, user_name, role_id, department_id')
+            .eq('auth_id', authData.user.id)
+            .maybeSingle()
+
+          if (data) {
+            setCurrentUserId(data.id || null)
+            await applyUserRoleData(data)
+          }
+        } catch (err) {
+          console.error('Error fetching user data on login:', err)
+        }
 
         const { data, error } = await supabase
           .from('users')

@@ -32,6 +32,9 @@ export function createPostHandler({ serviceCreateFn, bodyKey }) {
 
       return res.status(201).json(result.data)
     } catch (err) {
+      if (err?.code === '23505' || (err?.message && err.message.includes('duplicate key value'))) {
+        return res.status(400).json({ error: 'An item with this name already exists.' })
+      }
       next(err)
     }
   }
