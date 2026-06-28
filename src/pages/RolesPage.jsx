@@ -72,7 +72,7 @@ export default function RolesPage({
                 <div className="panel-narrow">
                   {pageMessage ? <div className="user-info-success">{pageMessage}</div> : null}
                   {(pageError || categoryError) ? <p className="user-info-error">{pageError || categoryError}</p> : null}
-                  <p className="glass-card-subtext">Use the add button above to create a new role.</p>
+                  <p className="glass-card-subtext">Please click the "+ Add Role" button to add a new Role.</p>
                   <AdminListPanel title="Available Roles" items={filtered} loading={loading} labelKey="role_name" onDelete={handleDeleteRole} deletingId={deletingId} noMatchesText="No matches found." />
                 </div>
               </div>

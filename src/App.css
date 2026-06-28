@@ -19,7 +19,8 @@
 .admin-page-container-narrow, 
 .reports-main-wrap, 
 .dcc-main-wrapper,
-.iso-page-main {
+.iso-page-main,
+.audit-main {
   margin-left: 240px !important;
   margin-top: 0px !important;
   width: calc(100% - 240px) !important;
@@ -40,7 +41,8 @@
 .admin-page-container-narrow::-webkit-scrollbar,
 .reports-main-wrap::-webkit-scrollbar,
 .dcc-main-wrapper::-webkit-scrollbar,
-.iso-page-main::-webkit-scrollbar {
+.iso-page-main::-webkit-scrollbar,
+.audit-main::-webkit-scrollbar {
   display: none !important;
 }
 
@@ -52,7 +54,8 @@
   .admin-page-container-narrow, 
   .reports-main-wrap, 
   .dcc-main-wrapper,
-  .iso-page-main {
+  .iso-page-main,
+  .audit-main {
     margin: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -92,7 +95,7 @@
 }
 
 .logo-img {
-  height: 90px;
+  height: 120px;
   width: auto;
   max-width: 100%;
   object-fit: contain;

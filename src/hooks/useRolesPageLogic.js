@@ -52,7 +52,6 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
       await reloadLookups()
       setPageMessage(`Added role "${nextValue}" successfully.`)
       setPageError('')
-      closeCategoryModal()
     } catch (err) {
       setFormError('This role could not be added. Please try again.')
     }

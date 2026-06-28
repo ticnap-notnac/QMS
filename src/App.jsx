@@ -63,48 +63,28 @@ function AppInner() {
     }
   }, [currentUserId, user])
 
-  const applyUserRoleData = async (profile) => {
+  const applyUserRoleData = (profile) => {
     const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
     // Prefer full name for display (first + last). Fall back to username, then email.
     const displayName = fullName || profile.user_name || profile.email || 'Name of the User'
     setUserName(displayName)
     setUserDepartmentId(profile.department_id || null)
 
-    let resolvedRoleName = null
+    let resolvedRoleName = profile.roles?.role_name || null
 
-    if (profile.role_id) {
-      try {
-        const { data: roleData, error: roleError } = await supabase
-          .from('roles')
-          .select('role_name')
-          .eq('id', profile.role_id)
-          .maybeSingle()
-
-        if (roleError) {
-          console.error('Role query error:', roleError)
-        } else if (roleData && roleData.role_name) {
-          resolvedRoleName = roleData.role_name
-          // Display the role name as-is (capitalization preserved) for the UI
-          setUserPosition(resolvedRoleName)
-          const normalized = resolvedRoleName.toLowerCase()
-          setUserRole(normalized === 'admin' ? 'admin' : normalized)
-        }
-      } catch (err) {
-        console.error('Role fetch error:', err)
-      }
-    }
-
-    if (profile.role && !resolvedRoleName) {
+    if (resolvedRoleName) {
+      setUserPosition(resolvedRoleName)
+      const normalized = resolvedRoleName.toLowerCase()
+      setUserRole(normalized === 'admin' ? 'admin' : normalized)
+    } else if (profile.role) {
       resolvedRoleName = profile.role
       setUserPosition(profile.role)
       setUserRole(normalizeRoleValue(profile.role))
     }
 
-    // Fallbacks when role couldn't be resolved from roles table
+    // Fallbacks when role couldn't be resolved
     if (!resolvedRoleName) {
-      // use profile.user_name or a generic Position label
       setUserPosition(profile.user_name || 'Position')
-      // detect admin heuristically from username if needed
       if (profile.user_name && profile.user_name.toLowerCase().includes('admin')) {
         setUserRole('admin')
       }
@@ -112,60 +92,67 @@ function AppInner() {
   }
 
   useEffect(() => {
+    let active = true
     const checkUser = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
+        if (!active) return
         setUser(user)
 
         if (user) {
           const { data } = await supabase
             .from('users')
-            .select('id, first_name, last_name, user_name, role_id, department_id')
+            .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name)')
             .eq('auth_id', user.id)
             .maybeSingle()
 
-          if (data) {
+          if (active && data) {
             setCurrentUserId(data.id || null)
-            await applyUserRoleData(data)
+            applyUserRoleData(data)
           }
         }
       } catch (err) {
         console.error('Error checking user:', err)
       } finally {
-        setLoading(false)
+        if (active) setLoading(false)
       }
     }
 
     checkUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!active) return
       const newUser = session?.user || null
-      setUser(newUser)
-
-      if (newUser) {
-        try {
-          const { data } = await supabase
+      
+      // Only trigger logic if user ID actually changed to prevent loops
+      setUser(prevUser => {
+        if (prevUser?.id === newUser?.id) return prevUser
+        
+        if (newUser) {
+          supabase
             .from('users')
-            .select('id, first_name, last_name, user_name, role_id, department_id')
+            .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name)')
             .eq('auth_id', newUser.id)
             .maybeSingle()
-
-          if (data) {
-            setCurrentUserId(data.id || null)
-            await applyUserRoleData(data)
-          }
-        } catch (err) {
-          console.error('Error fetching user data on auth state change:', err)
+            .then(({ data }) => {
+              if (active && data) {
+                setCurrentUserId(data.id || null)
+                applyUserRoleData(data)
+              }
+            })
+            .catch(err => console.error('Error fetching user data on auth state change:', err))
+        } else {
+          setCurrentUserId(null)
+          setUserName('Name of the User')
+          setUserPosition('Position')
+          setUserRole('user')
         }
-      } else {
-        setCurrentUserId(null)
-        setUserName('Name of the User')
-        setUserPosition('Position')
-        setUserRole('user')
-      }
+        return newUser
+      })
     })
 
     return () => {
+      active = false
       subscription?.unsubscribe()
     }
   }, [])
@@ -185,28 +172,18 @@ function AppInner() {
         try {
           const { data } = await supabase
             .from('users')
-            .select('id, first_name, last_name, user_name, role_id, department_id')
+            .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name)')
             .eq('auth_id', authData.user.id)
             .maybeSingle()
 
           if (data) {
             setCurrentUserId(data.id || null)
-            await applyUserRoleData(data)
+            applyUserRoleData(data)
           }
         } catch (err) {
           console.error('Error fetching user data on login:', err)
         }
 
-        const { data, error } = await supabase
-          .from('users')
-          .select('id, first_name, last_name, user_name, role_id, department_id')
-          .eq('auth_id', authData.user.id)
-          .maybeSingle()
-
-        if (data) {
-          setCurrentUserId(data.id || null)
-          await applyUserRoleData(data)
-        }
         navigate('/')
       }
     } catch (err) {
@@ -220,13 +197,13 @@ function AppInner() {
     if (user) {
       const { data } = await supabase
         .from('users')
-        .select('id, first_name, last_name, user_name, role_id, department_id')
+        .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name)')
         .eq('auth_id', user.id)
         .maybeSingle()
 
       if (data) {
         setCurrentUserId(data.id || null)
-        await applyUserRoleData(data)
+        applyUserRoleData(data)
       }
     }
   }

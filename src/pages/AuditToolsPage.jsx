@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
+import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import useAuditToolsLogic from '../hooks/useAuditToolsLogic'
 import { AuditLogsTab, AuditReportsTab, AuditSchedulesTab, AuditTemplatesTab } from '../components/AuditTools/AuditToolsTabs'
 import { AuditChecklistSection, AuditRunDetailsModal } from '../components/AuditTools/AuditToolsModals'
@@ -8,7 +9,7 @@ import SubmissionLoadingOverlay from '../components/UI/SubmissionLoadingOverlay.
 import './SettingsPage.css'
 
 
-export default function AuditToolsPage({ authUserId }) {
+export default function AuditToolsPage({ authUserId, userRole }) {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const isInsideSettings = location.pathname.startsWith('/settings')
@@ -68,11 +69,16 @@ export default function AuditToolsPage({ authUserId }) {
 
   return (
     <div className={isInsideSettings ? "settings-content-inner" : "audit-main"} style={{ width: '100%' }}>
+      {!isInsideSettings && (
+        <>
+          <h1>Audit Tools</h1>
+          <SettingsNavbar userRole={userRole} />
+        </>
+      )}
       {activeRun ? (
         <AuditChecklistSection {...logic} />
       ) : (
         <>
-          {!isInsideSettings && <h1>Audit Tools</h1>}
           {isInsideSettings && <h2 className="settings-section-title">Audit Tools</h2>}
           {renderTabs()}
           {renderTabContent()}

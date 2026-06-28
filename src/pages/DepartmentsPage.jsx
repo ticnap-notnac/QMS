@@ -49,7 +49,7 @@ export default function DepartmentsPage({ userRole }) {
 
               <div className="glass-card-content">
                 <div className="panel-narrow">
-                  <p className="glass-card-subtext">Use the add button above to create a new department.</p>
+                  <p className="glass-card-subtext">Please click the "+ Add Department" button to add a new Department.</p>
                   <AdminListPanel {...listPanelProps} />
                 </div>
               </div>

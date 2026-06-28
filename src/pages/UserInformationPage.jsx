@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
-
+import { useNavigate } from 'react-router-dom'
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import useUserInformationPageLogic from '@/hooks/useUserInformationPageLogic'
 import ProfileCard from '@/components/Cards/ProfileCard'
 import './SettingsPage.css'
 
 export default function UserInformationPage(props) {
+  const navigate = useNavigate()
   const {
     userRole,
     userPosition,
@@ -41,10 +41,23 @@ export default function UserInformationPage(props) {
 
         <SettingsNavbar userRole={userRole} />
 
-        <div className="settings-container user-info-container--profile">
+        <div className="settings-container settings-container--profile">
+          <div className="settings-sidebar settings-sidebar--profile">
+            <button 
+              className="sidebar-button active"
+            >
+              User Information
+            </button>
+            <button 
+              onClick={() => navigate('/settings')} 
+              className="sidebar-button"
+            >
+              Profile & Account
+            </button>
+          </div>
 
-          <div className="settings-main user-info-main--profile">
-            <div className="settings-content user-info-content--profile">
+          <div className="settings-main settings-main--profile">
+            <div className="settings-content settings-content--profile">
               <ProfileCard {...profileProps} />
             </div>
           </div>

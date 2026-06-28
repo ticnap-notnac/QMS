@@ -50,7 +50,7 @@ export default function ProductTypesPage({ userRole }) {
 
               <div className="glass-card-content">
                 <div className="panel-narrow">
-                  <p className="glass-card-subtext">Use the add button above to create a new product type.</p>
+                  <p className="glass-card-subtext">Please click the "+ Add Product Type" button to add a new Product Type.</p>
                   <AdminListPanel {...listPanelProps} />
                 </div>
               </div>

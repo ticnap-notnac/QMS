@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 
+import { useNavigate } from 'react-router-dom'
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import Toast from '@/components/UI/Toast'
 import useSettingsPageLogic from '@/hooks/useSettingsPageLogic'
@@ -10,6 +11,7 @@ import SubmissionLoadingOverlay from '@/components/UI/SubmissionLoadingOverlay.j
 import './SettingsPage.css'
 
 export default function SettingsPage(props) {
+  const navigate = useNavigate()
   const {
     userRole,
     authUserId,
@@ -53,14 +55,15 @@ export default function SettingsPage(props) {
           style={activeSection === 'Audit Tools' ? { maxWidth: '1220px', width: '100%' } : {}}
         >
           <div className="settings-sidebar settings-sidebar--profile">
+            <button 
+              onClick={() => navigate('/settings/profile')} 
+              className="sidebar-button"
+            >
+              User Information
+            </button>
             <button onClick={() => setActiveSection('Profile & Account')} className={`sidebar-button ${activeSection === 'Profile & Account' ? 'active' : ''}`}>
               Profile & Account
             </button>
-            {(userRole === 'admin' || userRole === 'auditor') && (
-              <button onClick={() => setActiveSection('Audit Tools')} className={`sidebar-button ${activeSection === 'Audit Tools' ? 'active' : ''}`}>
-                Audit Tools
-              </button>
-            )}
           </div>
 
           <div className="settings-main settings-main--profile">

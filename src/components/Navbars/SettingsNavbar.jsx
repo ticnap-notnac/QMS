@@ -1,5 +1,5 @@
 import {
-  User,
+  ClipboardCheck,
   Settings,
   ShieldCheck,
 } from 'lucide-react'
@@ -10,6 +10,11 @@ function SettingsNavbar({ userRole }) {
   const location = useLocation()
   const navItem = (label, path, Icon) => {
     let isActive = location.pathname === path
+
+    if (path === '/settings') {
+      const settingsPaths = ['/settings', '/settings/profile']
+      isActive = settingsPaths.includes(location.pathname)
+    }
 
     if (path === '/admin') {
       const adminPaths = ['/admin', '/settings/departments', '/settings/roles', '/settings/locations', '/settings/product-types', '/settings/users', '/settings/iso-standards']
@@ -30,8 +35,8 @@ function SettingsNavbar({ userRole }) {
 
   return (
     <div className="settings-top-nav">
-      {navItem('User Information', '/settings/profile', User)}
       {navItem('Settings', '/settings', Settings)}
+      {navItem('Audit Tools', '/audit-tools', ClipboardCheck)}
       
       {/* 🔒 Top-level Protection Lock */}
       {userRole === 'admin' && navItem('Admin Panel', '/admin', ShieldCheck)}

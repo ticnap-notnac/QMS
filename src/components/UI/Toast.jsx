@@ -40,8 +40,8 @@ export default function Toast({
               </button>
               <button 
                 onClick={onClose}
-                className="btn btn--ghost"
-                style={{ padding: '4px 12px', fontSize: '12px', minHeight: 'auto' }}
+                className="btn-secondary-light"
+                style={{ padding: '4px 12px', fontSize: '12px', minHeight: 'auto', borderRadius: '8px' }}
               >
                 {cancelText}
               </button>

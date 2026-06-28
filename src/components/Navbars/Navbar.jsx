@@ -8,7 +8,8 @@ import {
   Settings, 
   LogOut,
   User,
-  ShieldAlert
+  Shield,
+  ClipboardCheck
 } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import NotificationsModal from '../Modals/NotificationsModal.jsx'
@@ -108,12 +109,18 @@ export default function Navbar({
       >
         <User size={16} /> User Information
       </button>
+      <button 
+        onClick={() => { navigate('/audit-tools'); onToggleMenu(); }} 
+        className="user-menu-item admin"
+      >
+        <ClipboardCheck size={16} /> Audit Tools
+      </button>
       {normalizedRole === 'admin' && (
         <button 
           onClick={() => { navigate('/admin'); onToggleMenu(); }} 
           className="user-menu-item admin"
         >
-          <ShieldAlert size={16} /> Admin Panel
+          <Shield size={16} /> Admin Panel
         </button>
       )}
 

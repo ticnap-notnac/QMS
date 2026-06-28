@@ -63,10 +63,13 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
   // ── Sub-hooks ───────────────────────────────────────────────────────────────
   const formState = useReportsForm()
   
+  const [error, setError] = useState(null)
+
   const dataState = useReportsData({
     currentUserId,
     currentAuthId,
     reportFilters: formState.reportFilters,
+    setError,
     setToast,
     userRole,
     userDepartmentId
@@ -76,7 +79,8 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     clearEvidenceState: formState.clearEvidenceState,
     resetCreateForm: formState.resetCreateForm,
     setRejectReason,
-    setToast
+    setToast,
+    setError: () => {} // Or we can pass a no-op or another setter. We don't have direct setError here, but logic has toast. Let's pass a no-op so it doesn't crash on undefined.
   })
 
   const updateFormState = useReportsUpdateForm({
@@ -196,6 +200,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
   const [suggestingClause, setSuggestingClause] = useState(false)
 
   useEffect(() => {
+    if (!currentAuthId) return
     let active = true
     const fetchClauses = async () => {
       setClausesLoading(true)
@@ -216,7 +221,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     }
     fetchClauses()
     return () => { active = false }
-  }, [])
+  }, [currentAuthId])
 
   const handleSuggestClause = async () => {
     const desc = formState.createFormState.description
@@ -726,6 +731,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     isNcrSubmitting,
     toast,
     setToast,
+    error,
 
     activeTab,
     setActiveTab,

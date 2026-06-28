@@ -26,22 +26,25 @@ export default function ConfirmDialog({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content confirm-modal">
-        <h2 className="modal-title">{title}</h2>
-        <div className="modal-body">
-          <p>{message}</p>
+      <div className="modal-card" style={{ maxWidth: '440px' }}>
+        <div className="modal-header">
+          <h3>{title}</h3>
         </div>
-        <div className="modal-actions">
+        <div className="modal-form-content" style={{ padding: '16px 28px 24px 28px' }}>
+          <p style={{ margin: 0, color: '#334155', fontSize: '14px', lineHeight: '1.6' }}>{message}</p>
+        </div>
+        <div className="modal-footer-actions">
           <button 
             type="button" 
-            className="btn btn-secondary" 
+            className="btn-secondary-light" 
             onClick={onCancel}
           >
             {cancelText}
           </button>
           <button 
             type="button" 
-            className={`btn ${isDestructive ? 'btn-danger' : 'btn-primary'}`} 
+            className="btn-primary" 
+            style={isDestructive ? { background: '#dc2626', borderColor: '#dc2626', color: '#ffffff' } : {}}
             onClick={onConfirm}
           >
             {confirmText}

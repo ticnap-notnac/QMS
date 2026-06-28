@@ -366,56 +366,58 @@ export async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, 
  * @param {'open'|'investigated'|'all'} scope
  */
 export async function fetchReports(scope = 'open', actorAuthId = null) {
-  // Dynamic cron-like check for verification dates that are reached
-  try {
-    const todayStr = getLocalDateString()
-    // Find reports with verification_date reached and no preventive_rating
-    const { data: dueReports } = await supabase
-      .from('ncr_reports')
-      .select('id, reference_no, verification_date, status, assigned_to')
-      .eq('status', REPORT_STATUS.CLOSED)
-      .lte('verification_date', todayStr)
-      .is('preventive_rating', null)
+  // Dynamic cron-like check for verification dates that are reached (Run in background asynchronously)
+  Promise.resolve().then(async () => {
+    try {
+      const todayStr = getLocalDateString()
+      // Find reports with verification_date reached and no preventive_rating
+      const { data: dueReports } = await supabase
+        .from('ncr_reports')
+        .select('id, reference_no, verification_date, status, assigned_to')
+        .eq('status', REPORT_STATUS.CLOSED)
+        .lte('verification_date', todayStr)
+        .is('preventive_rating', null)
 
-    if (dueReports && dueReports.length > 0) {
-      for (const report of dueReports) {
-        // Create notifications for admins, auditors, and the assigned user if they don't already exist
-        const notifTitle = `Verification Date Up: ${report.reference_no}`
-        const notifMessage = `The verification date (${report.verification_date}) for report ${report.reference_no} has been reached. Please submit the Preventive Action rating.`
+      if (dueReports && dueReports.length > 0) {
+        for (const report of dueReports) {
+          // Create notifications for admins, auditors, and the assigned user if they don't already exist
+          const notifTitle = `Verification Date Up: ${report.reference_no}`
+          const notifMessage = `The verification date (${report.verification_date}) for report ${report.reference_no} has been reached. Please submit the Preventive Action rating.`
 
-        // Check if a notification already exists for this report with this title to avoid duplicates
-        const { data: existingNotif } = await supabase
-          .from('notifications')
-          .select('id')
-          .eq('report_id', report.id)
-          .eq('title', notifTitle)
-          .limit(1)
+          // Check if a notification already exists for this report with this title to avoid duplicates
+          const { data: existingNotif } = await supabase
+            .from('notifications')
+            .select('id')
+            .eq('report_id', report.id)
+            .eq('title', notifTitle)
+            .limit(1)
 
-        if (!existingNotif || existingNotif.length === 0) {
-          // Send notification to the assigned investigator (if any)
-          if (report.assigned_to) {
-            await createNotification({
+          if (!existingNotif || existingNotif.length === 0) {
+            // Send notification to the assigned investigator (if any)
+            if (report.assigned_to) {
+              await createNotification({
+                title: notifTitle,
+                message: notifMessage,
+                type: 'warning',
+                reportId: report.id,
+                userId: report.assigned_to,
+              })
+            }
+            // Also send to auditors and admins
+            await createNotificationsForRoles({
+              roleNames: ['admin', 'auditor'],
               title: notifTitle,
               message: notifMessage,
               type: 'warning',
               reportId: report.id,
-              userId: report.assigned_to,
             })
           }
-          // Also send to auditors and admins
-          await createNotificationsForRoles({
-            roleNames: ['admin', 'auditor'],
-            title: notifTitle,
-            message: notifMessage,
-            type: 'warning',
-            reportId: report.id,
-          })
         }
       }
+    } catch (err) {
+      console.warn('Failed to process verification date notifications:', err.message)
     }
-  } catch (err) {
-    console.warn('Failed to process verification date notifications:', err.message)
-  }
+  })
 
   let query = supabase.from('ncr_reports').select('*')
 

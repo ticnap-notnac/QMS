@@ -155,7 +155,7 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
       )}
 
       {/* ── Evidence ────────────────────────────────────────────────────── */}
-      <div className="reports-details-title-wrap">
+      <div className="reports-details-title-wrap" style={{ marginTop: '16px' }}>
         <h4 className="reports-details-title">Evidence</h4>
       </div>
       <div className="evidence-box">

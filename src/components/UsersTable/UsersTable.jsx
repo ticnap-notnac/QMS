@@ -42,7 +42,7 @@ export default function UsersTable({
                 <td>{roleName}</td>
                 <td>{departmentLabel}</td>
                 <td>
-                  <span style={{ fontSize: '11px', background: 'rgba(34,211,238,0.08)', color: '#22d3ee', padding: '2px 7px', borderRadius: '4px', fontWeight: 600 }}>
+                  <span style={{ fontSize: '11.5px', background: '#f1f5f9', color: '#475569', padding: '2px 7px', borderRadius: '4px', fontWeight: 600 }}>
                     {siteLabel}
                   </span>
                 </td>

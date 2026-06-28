@@ -149,10 +149,12 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
   }, [setError])
 
   useEffect(() => {
-    Promise.resolve().then(() => {
-      loadLookupData()
-      refreshReportsList()
-    })
+    if (currentAuthId) {
+      Promise.resolve().then(() => {
+        loadLookupData()
+        refreshReportsList()
+      })
+    }
   }, [currentAuthId, loadLookupData, refreshReportsList])
 
   const locationOptions = useMemo(() => toOptionList(locations, 'location_name'), [locations])

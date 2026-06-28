@@ -50,7 +50,7 @@ export default function LocationsPage({ userRole }) {
 
               <div className="glass-card-content">
                 <div className="panel-narrow">
-                  <p className="glass-card-subtext">Use the add button above to create a new location.</p>
+                  <p className="glass-card-subtext">Please click the "+ Add Location" button to add a new Location.</p>
                   <AdminListPanel {...listPanelProps} />
                 </div>
               </div>
