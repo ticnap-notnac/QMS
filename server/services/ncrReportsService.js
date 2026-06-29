@@ -1189,6 +1189,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
     allRatings.forEach((r) => {
       const role = raterRoleMap[r.rated_by] || 'staff'
       const val = Number(r.rating)
+      
       if (role === 'admin' || role === 'auditor') bucketA.push(val)
       else if (role === 'department manager' || role === 'manager') bucketB.push(val)
       else bucketC.push(val)

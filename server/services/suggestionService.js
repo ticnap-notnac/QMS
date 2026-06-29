@@ -420,10 +420,23 @@ export async function generateAiSuggestionFromText({ description, issueType, dep
   const bestMatch = retrieveBestMatch(report, allCandidates)
   const fallback = generateFallbackHeuristicSuggestion({ report, deptName })
 
+  // ── CBR REUSE — use best match if score is above threshold ─
+  if (bestMatch && bestMatch.cbr_score >= 0.2 && bestMatch.corrective_action) {
+    const features = bestMatch.matched_features?.length > 0 ? bestMatch.matched_features : ['general similarity']
+    const sourceLabel = bestMatch.source === 'repository' ? 'case repository' : 'past report'
+    return {
+      suggestion: bestMatch.corrective_action,
+      preventive_suggestion: bestMatch.preventive_action || 'Implement standard verification and monitoring checks.',
+      confidence: Math.min(bestMatch.cbr_score, 1),
+      sourceDetails: `CBR Database (${sourceLabel})`,
+      matchedFeatures: features
+    }
+  }
+
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
     console.warn('GEMINI_API_KEY is not configured. Using rule-based fallback.')
-    return fallback
+    return { ...fallback, sourceDetails: 'System Heuristics', matchedFeatures: [] }
   }
 
   try {
@@ -473,10 +486,12 @@ Respond ONLY in this JSON format with no preamble or markdown:
     return {
       suggestion: parsed.suggestion,
       preventive_suggestion: parsed.preventive_suggestion,
-      confidence: parsed.confidence
+      confidence: parsed.confidence,
+      sourceDetails: 'Generative AI (Gemini)',
+      matchedFeatures: []
     }
   } catch (err) {
     console.error('Gemini API failed for text suggestion. Falling back to rules.', err)
-    return fallback
+    return { ...fallback, sourceDetails: 'System Heuristics', matchedFeatures: [] }
   }
 }

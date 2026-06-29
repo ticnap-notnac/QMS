@@ -209,6 +209,36 @@ export default function CARDetailsModal({
                     <Sparkles size={13} /> {suggesting ? 'Analyzing...' : 'Suggest Actions (CBR)'}
                   </button>
                 </div>
+
+                {suggestionMeta && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                    <span style={{
+                      fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                      background: 'rgba(59,130,246,0.1)', color: '#2563eb',
+                      border: '1px solid rgba(59,130,246,0.2)'
+                    }}>
+                      Source: {suggestionMeta.sourceDetails}
+                    </span>
+                    {suggestionMeta.matchedFeatures?.length > 0 && (
+                      <span style={{
+                        fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                        background: 'rgba(16,185,129,0.1)', color: '#059669',
+                        border: '1px solid rgba(16,185,129,0.2)'
+                      }}>
+                        ✓ {suggestionMeta.matchedFeatures.join(' · ')}
+                      </span>
+                    )}
+                    {suggestionMeta.confidence > 0 && (
+                      <span style={{
+                        fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                        background: 'rgba(16,185,129,0.1)', color: '#059669',
+                        border: '1px solid rgba(16,185,129,0.2)'
+                      }}>
+                        {Math.round(suggestionMeta.confidence * 100)}% match
+                      </span>
+                    )}
+                  </div>
+                )}
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label className="label-field">Root Cause Analysis (RCA)</label>

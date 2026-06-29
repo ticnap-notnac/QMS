@@ -20,6 +20,7 @@ import complianceRoutes from './routes/complianceRoutes.js'
 import siteRoutes from './routes/siteRoutes.js'
 import auditChecklistRoutes from './routes/auditChecklistRoutes.js'
 import notificationRoutes from './routes/notificationRoutes.js'
+import dashboardRoutes from './routes/dashboardRoutes.js'
 import { authMiddleware } from './middlewares/authMiddleware.js'
 import { errorHandler } from './middlewares/errorMiddleware.js'
 
@@ -82,6 +83,7 @@ app.use('/api/compliance', authMiddleware, complianceRoutes)
 app.use('/api', authMiddleware, siteRoutes)
 app.use('/api', authMiddleware, auditChecklistRoutes)
 app.use('/api/notifications', authMiddleware, notificationRoutes)
+app.use('/api/dashboard', authMiddleware, dashboardRoutes)
 
 app.use(errorHandler)
 

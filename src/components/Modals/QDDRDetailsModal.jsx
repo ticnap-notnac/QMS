@@ -41,6 +41,7 @@ export default function QDDRDetailsModal({
       setNotedBy(resolveName(qddr.noted_by))
       setLeader(resolveName(qddr.leader))
       setStatus(qddr.status || 'open')
+      setSuggestionMeta(null)
       setError('')
     }
   }, [qddr, users])
@@ -50,6 +51,7 @@ export default function QDDRDetailsModal({
   const handleSuggestActions = async () => {
     setSuggesting(true)
     setError('')
+    setSuggestionMeta(null)
     try {
       const res = await generateAiSuggestionFromText({
         description: qddr.reason_of_discrepancy,
@@ -61,6 +63,13 @@ export default function QDDRDetailsModal({
       }
       if (res?.preventive_suggestion) {
         setPreventiveAction(res.preventive_suggestion)
+      }
+      if (res?.sourceDetails) {
+        setSuggestionMeta({
+          sourceDetails: res.sourceDetails,
+          matchedFeatures: res.matchedFeatures || [],
+          confidence: res.confidence || 0
+        })
       }
     } catch (err) {
       console.error('Failed to get suggestions:', err)
@@ -307,6 +316,36 @@ export default function QDDRDetailsModal({
                   <Sparkles size={13} /> {suggesting ? 'Analyzing...' : 'Suggest Actions (CBR)'}
                 </button>
               </div>
+
+              {suggestionMeta && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                  <span style={{
+                    fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                    background: 'rgba(59,130,246,0.1)', color: '#2563eb',
+                    border: '1px solid rgba(59,130,246,0.2)'
+                  }}>
+                    Source: {suggestionMeta.sourceDetails}
+                  </span>
+                  {suggestionMeta.matchedFeatures?.length > 0 && (
+                    <span style={{
+                      fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                      background: 'rgba(16,185,129,0.1)', color: '#059669',
+                      border: '1px solid rgba(16,185,129,0.2)'
+                    }}>
+                      ✓ {suggestionMeta.matchedFeatures.join(' · ')}
+                    </span>
+                  )}
+                  {suggestionMeta.confidence > 0 && (
+                    <span style={{
+                      fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
+                      background: 'rgba(16,185,129,0.1)', color: '#059669',
+                      border: '1px solid rgba(16,185,129,0.2)'
+                    }}>
+                      {Math.round(suggestionMeta.confidence * 100)}% match
+                    </span>
+                  )}
+                </div>
+              )}
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

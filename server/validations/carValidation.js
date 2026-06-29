@@ -17,7 +17,7 @@ export const submitCapaSchema = z.object({
 
 export const verifyCarSchema = z.object({
   body: z.object({
-    status: z.enum(['Verified', 'Rejected']),
-    verification_notes: z.string().optional(),
+    outcome: z.enum(['effective', 'ineffective']),
+    notes: z.string().optional(),
   })
 })

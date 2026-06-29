@@ -13,6 +13,7 @@ export function useCARDetails() {
   const [verificationNotes, setVerificationNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
+  const [suggestionMeta, setSuggestionMeta] = useState(null)
   const [error, setError] = useState('')
 
   const [linkedClauses, setLinkedClauses] = useState([])
@@ -26,6 +27,7 @@ export function useCARDetails() {
       setCorrectiveAction(car.corrective_action || '')
       setPreventiveAction(car.preventive_action || '')
       setVerificationNotes(car.verification_notes || '')
+      setSuggestionMeta(null)
       setError('')
 
       setLoadingClauses(true)
@@ -49,12 +51,14 @@ export function useCARDetails() {
     setSelectedCar(null)
     setIsCarDetailsModalOpen(false)
     setLinkedClauses([])
+    setSuggestionMeta(null)
   }, [])
 
   const handleSuggestActions = async () => {
     if (!selectedCar) return
     setSuggesting(true)
     setError('')
+    setSuggestionMeta(null)
     try {
       const res = await generateAiSuggestionFromText({
         description: selectedCar.details_of_nonconformance,
@@ -66,6 +70,13 @@ export function useCARDetails() {
       }
       if (res?.preventive_suggestion) {
         setPreventiveAction(res.preventive_suggestion)
+      }
+      if (res?.sourceDetails) {
+        setSuggestionMeta({
+          sourceDetails: res.sourceDetails,
+          matchedFeatures: res.matchedFeatures || [],
+          confidence: res.confidence || 0
+        })
       }
       setRootCause('Based on historical matching cases, the root cause is being verified. Action plan suggested.')
     } catch (err) {
@@ -151,6 +162,7 @@ export function useCARDetails() {
     submitting,
     suggesting,
     error,
+    suggestionMeta,
     linkedClauses,
     loadingClauses,
     

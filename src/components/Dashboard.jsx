@@ -15,79 +15,6 @@ import {
 } from 'recharts'
 import { AlertCircle, Shield, TrendingUp, BarChart2, Clock } from 'lucide-react'
 
-// Helper to parse and calculate resolution time in hours
-const parseResolutionTimeToHours = (resTime, start, end) => {
-  if (resTime) {
-    const match = String(resTime).match(/(\d+)\s*(day|hour)/i)
-    if (match) {
-      const value = parseInt(match[1], 10)
-      const unit = match[2].toLowerCase()
-      if (unit.startsWith('day')) {
-        return value * 24
-      }
-      return value
-    }
-  }
-  if (start && end) {
-    const diff = new Date(end) - new Date(start)
-    if (diff > 0) {
-      return Number((diff / (1000 * 60 * 60)).toFixed(1))
-    }
-  }
-  return null
-}
-
-// Helper to aggregate resolution times monthly
-const groupResolutionTimesByMonth = (ncrs, cars, qddrs) => {
-  const months = {}
-
-  const addValue = (dateStr, val, type) => {
-    if (val === null || isNaN(val)) return
-    const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return
-    const monthKey = d.toLocaleString('default', { month: 'short' }) + ' ' + d.getFullYear()
-    if (!months[monthKey]) {
-      months[monthKey] = {
-        ncrSum: 0, ncrCount: 0,
-        carSum: 0, carCount: 0,
-        qddrSum: 0, qddrCount: 0,
-        rawDate: d
-      }
-    }
-    months[monthKey][`${type}Sum`] += val
-    months[monthKey][`${type}Count`] += 1
-  }
-
-  ncrs.forEach(item => {
-    const val = parseResolutionTimeToHours(item.resolution_time, item.created_at, null)
-    addValue(item.created_at, val, 'ncr')
-  })
-
-  cars.forEach(item => {
-    const val = parseResolutionTimeToHours(item.resolution_time, item.created_at || item.request_date, item.verification_date || item.updated_at)
-    addValue(item.created_at || item.request_date, val, 'car')
-  })
-
-  qddrs.forEach(item => {
-    const val = parseResolutionTimeToHours(null, item.created_at, item.updated_at)
-    addValue(item.created_at, val, 'qddr')
-  })
-
-  return Object.entries(months)
-    .map(([month, data]) => {
-      const ncrAvg = data.ncrCount > 0 ? Number((data.ncrSum / data.ncrCount).toFixed(1)) : null
-      const carAvg = data.carCount > 0 ? Number((data.carSum / data.carCount).toFixed(1)) : null
-      const qddrAvg = data.qddrCount > 0 ? Number((data.qddrSum / data.qddrCount).toFixed(1)) : null
-      return {
-        month,
-        NCR: ncrAvg,
-        CAR: carAvg,
-        QDDR: qddrAvg,
-        rawDate: data.rawDate
-      }
-    })
-    .sort((a, b) => a.rawDate - b.rawDate)
-}
 
 // Custom tooltips for nice monotone popup displays
 import PendingRatingsWidget from './Dashboard/PendingRatingsWidget'
@@ -170,28 +97,10 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
         const trendData = await request('/compliance/trends')
         setTrends(trendData || [])
 
-        // Fetch closed reports for resolution time analytics
-        const [closedNcrsRes, closedCarsRes, closedQddrsRes] = await Promise.all([
-          supabase
-            .from('ncr_reports')
-            .select('created_at, resolution_time')
-            .eq('status', 'CLOSED'),
-          supabase
-            .from('car_reports')
-            .select('created_at, request_date, resolution_time, verification_date, updated_at')
-            .eq('status', 'closed'),
-          supabase
-            .from('qddr_reports')
-            .select('created_at, updated_at')
-            .eq('status', 'closed')
-        ])
-
-        const parsedTrends = groupResolutionTimesByMonth(
-          closedNcrsRes.data || [],
-          closedCarsRes.data || [],
-          closedQddrsRes.data || []
-        )
-        setResolutionTrend(parsedTrends)
+        // Fetch aggregated resolution trend data directly from the backend
+        // (This protects against huge payload sizes if the database is flocked with data)
+        const trendPayload = await request('/dashboard/resolution-trends')
+        setResolutionTrend(trendPayload || [])
 
         // 4. Calculate average ISO compliance score
         let avgCompliance = 100

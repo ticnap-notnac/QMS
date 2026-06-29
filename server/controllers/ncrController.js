@@ -229,7 +229,8 @@ export async function rateReport(req, res) {
   }
 
   try {
-    const data = await submitReportRating({ reportId: id, rating, userAuthId: reportedByAuthId })
+    const roundedRating = Math.round(rating)
+    const data = await submitReportRating({ reportId: id, rating: roundedRating, userAuthId: reportedByAuthId })
     return res.status(200).json({ success: true, data })
   } catch (err) {
     import('fs').then(fs => fs.appendFileSync('backend-error.log', new Date().toISOString() + ' rateReport error: ' + (err.stack || err.message) + '\n'));

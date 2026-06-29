@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '@/utils/supabase'
+import { request } from '@/lib/api'
 import StarRating from '../UI/StarRating'
 import { rateReport } from '@/services/ncrService'
 import { CheckCircle } from 'lucide-react'
@@ -19,49 +19,8 @@ export default function PendingRatingsWidget({ currentUserId, userRole, userDepa
 
     const fetchPendingRatings = async () => {
       try {
-        const normalizedRole = String(userRole).toLowerCase().trim()
-        const isAuditorOrAdmin = normalizedRole === 'auditor' || normalizedRole === 'admin'
-        
-        let query = supabase
-          .from('ncr_reports')
-          .select('id, reference_no, description, corrective_action, department_id, reported_by')
-          .eq('status', 'CLOSED')
-
-        if (!isAuditorOrAdmin) {
-          // If not auditor/admin, must be in the same department
-          if (userDepartmentId) {
-            query = query.eq('department_id', userDepartmentId)
-          } else {
-            // Fallback just in case: only show their own reported ones if no dept
-            query = query.eq('reported_by', currentUserId)
-          }
-        }
-
-        const { data: reports, error: reportsErr } = await query
-
-        if (reportsErr) {
-          console.warn('Failed to fetch reports with reported_by', reportsErr)
-        }
-
-        if (!reports || reports.length === 0) {
-          setLoading(false)
-          return
-        }
-
-        const reportIds = reports.map(r => r.id)
-
-        // Find which of these reports the user has ALREADY rated
-        const { data: ratings, error: ratingsErr } = await supabase
-          .from('ncr_report_ratings')
-          .select('report_id')
-          .eq('rated_by', currentUserId)
-          .in('report_id', reportIds)
-
-        const ratedIds = new Set((ratings || []).map(r => r.report_id))
-
-        // The ones left are pending!
-        const pending = reports.filter(r => !ratedIds.has(r.id))
-        setPendingReports(pending)
+        const pending = await request('/dashboard/pending-ratings')
+        setPendingReports(pending || [])
       } catch (err) {
         console.error('Error fetching pending ratings for widget:', err)
       } finally {
