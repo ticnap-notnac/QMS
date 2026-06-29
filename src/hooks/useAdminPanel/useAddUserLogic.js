@@ -6,6 +6,7 @@ import { supabase } from '@/utils/supabase'
 
 export default function useAddUserLogic() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL') // 'ALL', 'ACTIVE', 'INACTIVE', 'DEACTIVATED'
   const { roles, departments, sites, loading: lookupsLoading } = useLookup()
   
   const [formMessage, setFormMessage] = useState('')
@@ -217,6 +218,13 @@ export default function useAddUserLogic() {
 
   const filteredUsers = useMemo(() => {
     return adminUsers.filter((user) => {
+      // 1. Status Filter
+      if (statusFilter !== 'ALL') {
+        const userStatus = (user.status || 'ACTIVE').toUpperCase()
+        if (userStatus !== statusFilter) return false
+      }
+
+      // 2. Search Query
       const search = searchQuery.trim().toLowerCase()
       if (!search) return true
       const roleName = roleNameById.get(String(user.role_id)) || ''
@@ -232,7 +240,7 @@ export default function useAddUserLogic() {
       ].join(' ').toLowerCase()
       return haystack.includes(search)
     })
-  }, [adminUsers, searchQuery, roleNameById, departmentNameById])
+  }, [adminUsers, searchQuery, statusFilter, roleNameById, departmentNameById])
 
   const usersTableProps = {
     filteredUsers,
@@ -294,6 +302,8 @@ export default function useAddUserLogic() {
     return {
       searchQuery,
       setSearchQuery,
+      statusFilter,
+      setStatusFilter,
       reloadUsers,
       openAddUserModal,
       usersLoading,

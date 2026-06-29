@@ -14,6 +14,8 @@ export default function AddUserPage({ userRole }) {
   const {
     searchQuery,
     setSearchQuery,
+    statusFilter,
+    setStatusFilter,
     reloadUsers,
     openAddUserModal,
     usersLoading,
@@ -45,8 +47,25 @@ export default function AddUserPage({ userRole }) {
                   </div>
                 </div>
                 <div className="admin-search-actions-row">
-                  <div className="admin-search-container">
+                  <div className="admin-search-container" style={{ display: 'flex', gap: '12px' }}>
                     <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reloadUsers} placeholder="Search..." />
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.4)',
+                        color: 'var(--text-color)',
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      <option value="ALL">All Status</option>
+                      <option value="ACTIVE">Active</option>
+                      <option value="INACTIVE">Inactive</option>
+                      <option value="DEACTIVATED">Deactivated</option>
+                    </select>
                   </div>
                   <div className="admin-actions-right">
                     <button onClick={openAddUserModal} className="btn-add-action"><span>+ Add User</span></button>

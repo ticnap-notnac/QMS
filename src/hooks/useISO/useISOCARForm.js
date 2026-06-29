@@ -57,7 +57,8 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
       const userData = await isoService.fetchUsers()
       
       setDepartments((deptData || []).map(d => ({ id: d.id, label: d.department_name })))
-      setUsers((userData || []).map(u => ({ 
+      const activeUserData = (userData || []).filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
+      setUsers(activeUserData.map(u => ({ 
         id: u.id, 
         label: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.user_name || 'Unnamed' 
       })))

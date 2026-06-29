@@ -344,7 +344,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
       const { data: auditorsData, error: audError } = await supabase
         .from('users')
-        .select('id, first_name, last_name, auth_id, role_id')
+        .select('id, first_name, last_name, auth_id, role_id, status')
         .in('role_id', [1, 2])
       
       if (audError) throw audError
@@ -497,7 +497,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
       const { data: auditorsData, error: audError } = await supabase
         .from('users')
-        .select('id, first_name, last_name, auth_id')
+        .select('id, first_name, last_name, auth_id, status')
 
       if (audError) throw audError
 

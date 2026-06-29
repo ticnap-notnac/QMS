@@ -39,7 +39,8 @@ export default function useAssignReportModal({ report, onSuccess, onClose }) {
       try {
         const data = await fetchUsers()
         if (!active) return
-        setUsers(Array.isArray(data) ? data : [])
+        const activeUsers = (Array.isArray(data) ? data : []).filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
+        setUsers(activeUsers)
       } catch (err) {
         if (active) {
           setError('We could not load the employee list. Please try again.')

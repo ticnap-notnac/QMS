@@ -283,10 +283,12 @@ export function AuditSchedulesTab({
   templates
 }) {
   const auditorOptions = useMemo(() => {
-    return auditors.map(aud => ({
-      id: aud.auth_id,
-      label: `${aud.first_name} ${aud.last_name} (${aud.role_id === 1 ? 'Admin' : 'Auditor'})`
-    }))
+    return auditors
+      .filter(aud => String(aud.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
+      .map(aud => ({
+        id: aud.auth_id,
+        label: `${aud.first_name} ${aud.last_name} (${aud.role_id === 1 ? 'Admin' : 'Auditor'})`
+      }))
   }, [auditors])
 
   const [auditorSearchValue, setAuditorSearchValue] = useState('')

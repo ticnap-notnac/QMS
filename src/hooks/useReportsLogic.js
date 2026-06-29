@@ -754,7 +754,9 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     openQddrDetails: handleOpenQddrDetails,
     closeQddrDetails: handleCloseQddrDetails,
     updateQddr: handleUpdateQddr,
-    users: dataState.users.map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
+    users: dataState.users
+      .filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
+      .map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
     usersLoading: dataState.usersLoading,
 
     openEditCarModal,
@@ -929,7 +931,9 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       onSubmit: handleSubmitCAR,
       departments: dataState.departments.map(d => ({ id: d.id, label: d.department_name })),
       departmentsLoading: dataState.departmentsLoading,
-      users: dataState.users.map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
+      users: dataState.users
+        .filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
+        .map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
       usersLoading: dataState.usersLoading,
       allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     },
@@ -944,7 +948,9 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       onSubmit: handleSubmitQDDR,
       locations: dataState.locationOptions,
       locationsLoading: dataState.locationsLoading,
-      users: dataState.users.map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
+      users: dataState.users
+        .filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
+        .map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
       usersLoading: dataState.usersLoading,
       allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
       suggesting: qddrFormState.suggesting,
