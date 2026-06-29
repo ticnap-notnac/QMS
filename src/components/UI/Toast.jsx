@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function Toast({ 
   message, 
@@ -9,15 +9,29 @@ export default function Toast({
   confirmText = 'Confirm',
   cancelText = 'Cancel'
 }) {
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    setVisible(true)
+  }, [message])
+
   useEffect(() => {
     // If it's a confirmation toast, do not auto-dismiss
     if (onConfirm) return
 
     const timer = setTimeout(() => {
-      onClose()
+      setVisible(false)
+      if (onClose) onClose()
     }, duration)
     return () => clearTimeout(timer)
-  }, [duration, onClose, onConfirm])
+  }, [duration, onClose, onConfirm, message])
+
+  if (!visible) return null
+
+  const handleDismiss = () => {
+    setVisible(false)
+    if (onClose) onClose()
+  }
 
   return (
     <div className={`toast-alert-card toast-status--${type}`}>
@@ -39,7 +53,7 @@ export default function Toast({
                 {confirmText}
               </button>
               <button 
-                onClick={onClose}
+                onClick={handleDismiss}
                 className="btn-secondary-light"
                 style={{ padding: '4px 12px', fontSize: '12px', minHeight: 'auto', borderRadius: '8px' }}
               >
@@ -50,7 +64,7 @@ export default function Toast({
         </div>
       </div>
       {!onConfirm && (
-        <button className="toast-dismiss-button" onClick={onClose} aria-label="Close notification">
+        <button className="toast-dismiss-button" onClick={handleDismiss} aria-label="Close notification">
           &times;
         </button>
       )}
