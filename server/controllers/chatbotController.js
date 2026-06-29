@@ -5,6 +5,10 @@ import { processChatbotRequest } from '../services/chatbotService.js'
 export async function handleChat(req, res) {
   const { message } = req.body
   const actorAuthId = getRequestActor(req)
+  
+  // Extract the raw JWT token
+  const authHeader = req.headers.authorization || ''
+  const jwt = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null
 
   if (!message || message.trim() === '') {
     return res.status(400).json({ error: 'Message cannot be empty.' })
@@ -12,7 +16,7 @@ export async function handleChat(req, res) {
 
   logger.info('Chatbot request received', { actorAuthId })
 
-  const { success, reply, error } = await processChatbotRequest(message, actorAuthId)
+  const { success, reply, error } = await processChatbotRequest(message, actorAuthId, jwt)
 
   if (!success) {
     logger.error('Chatbot processing error', { error })
