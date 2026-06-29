@@ -85,3 +85,43 @@ export async function deleteProductType({ id, actorAuthId }) {
 
   return { success: true, error: null }
 }
+
+export async function updateProductType({ id, product_type_name, actorAuthId }) {
+  if (!product_type_name?.trim()) {
+    return { data: null, error: null, validationError: 'Product type name is required.' }
+  }
+
+  const { data: existing, error: fetchError } = await supabase
+    .from('product_types')
+    .select('id, product_name')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (fetchError) return { success: false, error: fetchError }
+  if (!existing) return { notFound: true }
+
+  const { data, error } = await supabase
+    .from('product_types')
+    .update({ product_name: product_type_name.trim() })
+    .eq('id', id)
+    .select('id, product_name')
+    .maybeSingle()
+
+  if (error) return { data: null, error, validationError: null }
+
+  const mappedNew = { id: data.id, product_type_name: data.product_name }
+
+  try {
+    await writeAudit({
+      level: 'audit',
+      source: 'product_types',
+      action: 'product_type_update',
+      userAuthId: actorAuthId,
+      details: { id: data.id, product_type_name: data.product_name }
+    })
+  } catch (auditError) {
+    console.warn('Failed to record product_type_update audit:', auditError?.message || auditError)
+  }
+
+  return { data: mappedNew, error: null }
+}

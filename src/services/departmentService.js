@@ -17,3 +17,10 @@ export async function deleteDepartment(id) {
   })
   return true
 }
+
+export async function updateDepartment(id, department_name) {
+  return await request(`/departments/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ department_name }),
+  })
+}

@@ -25,6 +25,8 @@ import './ReportsPage.css'
 export default function ReportsPage({ userRole, currentUserId, authUserId, userDepartmentId }) {
   const logic = useReportsLogic({ currentUserId, userRole, authUserId, userDepartmentId })
   const canAccessCar = ['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
+  const canAccessQddr = String(userRole || '').trim().toLowerCase() !== 'warehouse staff'
+  const availableTabs = ['ncr', ...(canAccessCar ? ['car'] : []), ...(canAccessQddr ? ['qddr'] : [])]
 
   const [carToDelete, setCarToDelete] = useState(null)
   const [qddrToDelete, setQddrToDelete] = useState(null)
@@ -157,14 +159,16 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
                 Submit CAR
               </button>
             )}
-            <button 
-              type="button" 
-              onClick={() => logic.openQDDRModal()} 
-              className="btn-gradient-primary reports-submit-primary"
-              title="Submit Quality Defect & Disposal Report (QDDR) - Document product defects and handle product disposal processes."
-            >
-              Submit QDDR
-            </button>
+            {canAccessQddr && (
+              <button 
+                type="button" 
+                onClick={() => logic.openQDDRModal()} 
+                className="btn-gradient-primary reports-submit-primary"
+                title="Submit Quality Defect & Disposal Report (QDDR) - Document product defects and handle product disposal processes."
+              >
+                Submit QDDR
+              </button>
+            )}
             <button 
               type="button" 
               onClick={logic.openCreateModal} 
@@ -176,11 +180,13 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
           </div>
         </div>
 
-        <div className="reports-tab-nav reports-tab-nav-bar">
-          {['ncr', ...(canAccessCar ? ['car'] : []), 'qddr'].map(t => (
-            <button key={t} type="button" className={`btn-quick-toggle reports-tab-nav-btn ${logic.activeTab === t ? 'active' : ''}`} onClick={() => logic.setActiveTab(t)}>{t} Reports</button>
-          ))}
-        </div>
+        {availableTabs.length > 1 && (
+          <div className="reports-tab-nav reports-tab-nav-bar">
+            {availableTabs.map(t => (
+              <button key={t} type="button" className={`btn-quick-toggle reports-tab-nav-btn ${logic.activeTab === t ? 'active' : ''}`} onClick={() => logic.setActiveTab(t)}>{t.toUpperCase()} Reports</button>
+            ))}
+          </div>
+        )}
 
         {logic.error && <div className="user-info-error">{logic.error}</div>}
         <div className="facebook-feed-layout-wrapper">

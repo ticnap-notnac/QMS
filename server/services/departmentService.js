@@ -34,6 +34,38 @@ export async function createDepartment({ departmentName, actorAuthId }) {
   return { data: data ?? [], error: null, validationError: null }
 }
 
+// Update---------------------------------------------------------------------------
+export async function updateDepartment({ id, department_name, actorAuthId }) {
+  if (!department_name?.trim()) {
+    return { data: null, error: null, validationError: 'Department name is required.' }
+  }
+
+  const { data: existing, error: fetchError } = await supabase
+    .from('departments')
+    .select('id, department_name')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (fetchError) return { success: false, error: fetchError }
+  if (!existing) return { notFound: true }
+
+  const { data, error } = await supabase
+    .from('departments')
+    .update({ department_name })
+    .eq('id', id)
+    .select('id, department_name')
+
+  if (error) return { data: null, error, validationError: null }
+
+  await _auditSafe({
+    action: 'department_update',
+    actorAuthId,
+    details: _buildAuditDetails(data?.[0], null, department_name),
+  })
+
+  return { data: data ?? [], error: null, validationError: null }
+}
+
 
 // Delete---------------------------------------------------------------------------
 export async function deleteDepartment({ id, actorAuthId }) {

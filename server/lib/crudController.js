@@ -61,3 +61,35 @@ export function createDeleteHandler({ serviceDeleteFn }) {
     }
   }
 }
+
+export function createPutHandler({ serviceUpdateFn, bodyKey }) {
+  return async (req, res, next) => {
+    try {
+      const { id } = req.params
+      const rawValue = req.body?.[bodyKey] ?? req.body?.name ?? req.body?.value
+      const actorAuthId = getRequestActor(req)
+
+      const result = await serviceUpdateFn({ id, [bodyKey]: rawValue, actorAuthId })
+
+      if (result.validationError) {
+        return res.status(400).json({ error: result.validationError })
+      }
+      if (result.error) {
+        throw result.error
+      }
+      if (result.notFound) {
+        return res.status(404).json({ error: 'Item not found.' })
+      }
+      if (result.existed) {
+        return res.status(200).json(result.data)
+      }
+
+      return res.status(200).json(result.data)
+    } catch (err) {
+      if (err?.code === '23505' || (err?.message && err.message.includes('duplicate key value'))) {
+        return res.status(400).json({ error: 'An item with this name already exists.' })
+      }
+      next(err)
+    }
+  }
+}

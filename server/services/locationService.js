@@ -74,3 +74,41 @@ export async function deleteLocation({ id, actorAuthId }) {
 
   return { success: true, error: null }
 }
+
+export async function updateLocation({ id, location_name, actorAuthId }) {
+  if (!location_name?.trim()) {
+    return { data: null, error: null, validationError: 'Location name is required.' }
+  }
+
+  const { data: existing, error: fetchError } = await supabase
+    .from('locations')
+    .select('id, location_name')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (fetchError) return { success: false, error: fetchError }
+  if (!existing) return { notFound: true }
+
+  const { data, error } = await supabase
+    .from('locations')
+    .update({ location_name: location_name.trim() })
+    .eq('id', id)
+    .select('id, location_name')
+    .maybeSingle()
+
+  if (error) return { data: null, error, validationError: null }
+
+  try {
+    await writeAudit({
+      level: 'audit',
+      source: 'locations',
+      action: 'location_update',
+      userAuthId: actorAuthId,
+      details: { id: data?.id ?? null, location_name: location_name.trim() }
+    })
+  } catch (auditError) {
+    console.warn('Failed to record location_update audit:', auditError?.message || auditError)
+  }
+
+  return { data, error: null }
+}

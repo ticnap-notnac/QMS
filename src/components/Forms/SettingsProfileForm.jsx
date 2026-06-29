@@ -62,10 +62,6 @@ export default function SettingsProfileForm({ userProfile = {}, setUserProfile, 
               className="form-input"
             />
           </div>
-          <div className="form-group">
-            <label>Employee ID</label>
-            <input type="text" value={userProfile.employee_no} disabled className="form-input" />
-          </div>
         </div>
       </div>
     </div>

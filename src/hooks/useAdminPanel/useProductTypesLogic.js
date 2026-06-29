@@ -2,13 +2,15 @@ import useAdminCategorySetup from './useAdminCategorySetup'
 import {
   loadProductTypes as loadProductTypesController,
   createProductType as createProductTypeController,
-  deleteProductType as deleteProductTypeController
+  deleteProductType as deleteProductTypeController,
+  updateProductType as updateProductTypeController
 } from '@/services/productTypeService'
 
 export default function useProductTypesLogic() {
   return useAdminCategorySetup({
     loadFn: loadProductTypesController,
     createFn: createProductTypeController,
+    updateFn: updateProductTypeController,
     deleteFn: deleteProductTypeController,
     labelKey: 'product_type_name',
     entityName: 'Product Type',

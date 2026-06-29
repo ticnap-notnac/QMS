@@ -1,7 +1,8 @@
-import { createGetHandler, createPostHandler, createDeleteHandler } from '../lib/crudController.js'
+import { createGetHandler, createPostHandler, createDeleteHandler, createPutHandler } from '../lib/crudController.js'
 import {
   fetchAllDepartments,
   createDepartment,
+  updateDepartment,
   deleteDepartment
 } from '../services/departmentService.js'
 
@@ -14,4 +15,9 @@ export const postDepartment = createPostHandler({
 
 export const removeDepartment = createDeleteHandler({
   serviceDeleteFn: deleteDepartment
+})
+
+export const putDepartment = createPutHandler({
+  serviceUpdateFn: updateDepartment,
+  bodyKey: 'department_name'
 })

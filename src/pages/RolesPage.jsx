@@ -10,6 +10,7 @@ import useRolesPageLogic from '@/hooks/useRolesPageLogic'
 import {
   loadRoles as loadRolesController,
   createRole as createRoleController,
+  updateRole as updateRoleController,
   deleteRole as deleteRoleController,
 } from '@/services/roleService'
 
@@ -41,7 +42,7 @@ export default function RolesPage({
     categoryError,
     confirmDialogProps,
     editingItem,
-  } = useRolesPageLogic({ loadFn: loadRolesController, createFn: createRoleController, deleteFn: deleteRoleController })
+  } = useRolesPageLogic({ loadFn: loadRolesController, createFn: createRoleController, updateFn: updateRoleController, deleteFn: deleteRoleController })
 
   return (
     <div className="page-root">

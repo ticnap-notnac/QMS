@@ -227,7 +227,6 @@ export default function useAddUserLogic() {
         user.user_name,
         user.email,
         user.contact_number,
-        user.employee_no,
         roleName,
         departmentName,
       ].join(' ').toLowerCase()

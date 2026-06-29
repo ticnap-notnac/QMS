@@ -18,3 +18,7 @@ export async function deleteProductType(id) {
   await request(`/product-types/${id}`, { method: 'DELETE' })
   return true
 }
+
+export async function updateProductType(id, product_type_name) {
+  return await request(`/product-types/${id}`, { method: 'PUT', body: JSON.stringify({ product_type_name }) })
+}

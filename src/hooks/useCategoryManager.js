@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 
-export default function useCategoryManager({ loadFn, createFn, deleteFn }) {
+export default function useCategoryManager({ loadFn, createFn, updateFn, deleteFn }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -53,6 +53,17 @@ export default function useCategoryManager({ loadFn, createFn, deleteFn }) {
     }
   }, [deleteFn, reload])
 
+  const updateItem = useCallback(async (id, name) => {
+    setError('')
+    try {
+      await updateFn(id, name)
+      await reload()
+    } catch (err) {
+      setError('This item could not be updated. Please try again.')
+      throw err
+    }
+  }, [updateFn, reload])
+
   return {
     items,
     loading,
@@ -61,6 +72,7 @@ export default function useCategoryManager({ loadFn, createFn, deleteFn }) {
     creating,
     reload,
     createItem,
+    updateItem,
     deleteItem,
   }
 }

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import useCategoryManager from '@/hooks/useCategoryManager'
 import { useLookup } from '@/context/LookupContext'
 
-export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
+export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn } = {}) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [categoryInput, setCategoryInput] = useState('')
@@ -14,9 +14,10 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
   const [editingItem, setEditingItem] = useState(null)
   const [toast, setToast] = useState(null)
 
-  const { items, loading, deletingId, creating, reload, createItem, deleteItem, error: categoryError } = useCategoryManager({
+  const { items, loading, deletingId, creating, reload, createItem, updateItem, deleteItem, error: categoryError } = useCategoryManager({
     loadFn,
     createFn,
+    updateFn,
     deleteFn,
   })
 
@@ -57,8 +58,7 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
           closeCategoryModal()
           return
         }
-        await createItem(nextValue)
-        await deleteItem(editingItem.id)
+        await updateItem(editingItem.id, nextValue)
         await reloadLookups()
         setToast({ message: `Updated role successfully from "${originalValue}" to "${nextValue}".`, type: 'success' })
         setPageError('')

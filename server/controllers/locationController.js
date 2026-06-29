@@ -1,8 +1,9 @@
-import { createGetHandler, createPostHandler, createDeleteHandler } from '../lib/crudController.js'
+import { createGetHandler, createPostHandler, createDeleteHandler, createPutHandler } from '../lib/crudController.js'
 import {
   fetchAllLocations,
   createLocation as createLocationService,
-  deleteLocation as deleteLocationService
+  deleteLocation as deleteLocationService,
+  updateLocation as updateLocationService
 } from '../services/locationService.js'
 
 export const getLocations = createGetHandler(fetchAllLocations)
@@ -14,4 +15,9 @@ export const createLocation = createPostHandler({
 
 export const deleteLocation = createDeleteHandler({
   serviceDeleteFn: deleteLocationService
+})
+
+export const putLocation = createPutHandler({
+  serviceUpdateFn: updateLocationService,
+  bodyKey: 'location_name'
 })

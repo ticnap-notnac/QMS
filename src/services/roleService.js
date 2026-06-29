@@ -74,3 +74,12 @@ export async function deleteRole(id) {
     throw normalizeRoleError(err)
   }
 }
+
+export async function updateRole(id, roleName) {
+  try {
+    const data = await request(`/roles/${id}`, { method: 'PUT', body: JSON.stringify({ roleName }) })
+    return data
+  } catch (err) {
+    throw normalizeRoleError(err)
+  }
+}

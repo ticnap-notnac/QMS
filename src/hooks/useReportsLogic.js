@@ -292,7 +292,7 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
   // ─── Derived / memoised ────────────────────────────────────────────────────
 
   const canAssignReports = useMemo(
-    () => ['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase()),
+    () => ['admin', 'manager', 'department manager'].includes(String(userRole || '').trim().toLowerCase()),
     [userRole],
   )
 

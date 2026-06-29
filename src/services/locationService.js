@@ -14,3 +14,7 @@ export async function deleteLocation(id) {
   await request(`/locations/${id}`, { method: 'DELETE' })
   return true
 }
+
+export async function updateLocation(id, location_name) {
+  return await request(`/locations/${id}`, { method: 'PUT', body: JSON.stringify({ location_name }) })
+}

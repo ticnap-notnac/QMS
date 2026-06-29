@@ -10,7 +10,7 @@ export async function fetchAllUsers() {
   const [usersResult, rolesResult, departmentsResult] = await Promise.all([
     supabase
       .from('users')
-      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, created_at, status, site_id')
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, created_at, status, site_id')
       .order('created_at', { ascending: false })
       .limit(1000),
     supabase.from('roles').select('id, role_name'),
@@ -93,8 +93,8 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
 
   const { data: profileData, error: profileError } = await supabase
     .from('users')
-    .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, employee_no, site_id')
-    .eq('email', email)
+    .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id')
+    .eq('auth_id', authData.user.id)
     .maybeSingle()
 
   return {
@@ -204,7 +204,7 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
       .from('users')
       .update(updates)
       .eq('id', id)
-      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, employee_no, status, site_id')
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id')
       .maybeSingle()
 
     if (profileError) return { profile: null, error: profileError.message, status: 500 }
