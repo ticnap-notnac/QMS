@@ -31,7 +31,7 @@ function sortReportsForCurrentUser(reportList, currentUserId) {
     const aMine = isReportAssignedToCurrentUser(a, currentUserId)
     const bMine = isReportAssignedToCurrentUser(b, currentUserId)
     if (aMine !== bMine) return aMine ? -1 : 1
-    return toTimestamp(a?.created_at) - toTimestamp(b?.created_at)
+    return toTimestamp(b?.created_at) - toTimestamp(a?.created_at)
   })
 }
 
