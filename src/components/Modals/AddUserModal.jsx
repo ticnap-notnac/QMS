@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
+
 function AddUserModal({
   isOpen,
   onClose,
@@ -14,6 +17,7 @@ function AddUserModal({
   error,
   message,
 }) {
+  const [showPassword, setShowPassword] = useState(false)
   if (!isOpen) {
     return null
   }
@@ -71,15 +75,37 @@ function AddUserModal({
 
             <label className="panel-column">
               <span className="small-label">Password: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={onChange}
-                className="form-input-reports"
-                placeholder="Create a password"
-                autoComplete="new-password"
-              />
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={onChange}
+                  className="form-input-reports"
+                  placeholder="Create a password"
+                  autoComplete="new-password"
+                  style={{ width: '100%', paddingRight: '40px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    color: '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </label>
           </div>
 

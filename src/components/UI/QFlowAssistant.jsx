@@ -50,64 +50,64 @@ export default function QFlowAssistant() {
       {/* Chat Window */}
       {isOpen && (
         <div className="qflow-assistant-window">
-          <div className="qflow-assistant-header">
-            <div className="qflow-assistant-brand">
-              <img src="/qflow_logo_transparent.png" alt="QFLOW Logo" className="qflow-assistant-logo" />
-              <span>Ask Your QFLOW Assistant</span>
+            <div className="qflow-assistant-header">
+              <div className="qflow-assistant-brand">
+                <img src="/qflow_favicon.png" alt="QFLOW Logo" className="qflow-assistant-logo" />
+                <span>Ask Your QFLOW Assistant</span>
+              </div>
+              <button onClick={() => setIsOpen(false)} className="qflow-assistant-close">
+                <X size={18} />
+              </button>
             </div>
-            <button onClick={() => setIsOpen(false)} className="qflow-assistant-close">
-              <X size={18} />
-            </button>
+
+            <div className="qflow-assistant-messages">
+              {messages.map((msg, idx) => (
+                <div 
+                  key={idx}
+                  className={`qflow-message-bubble ${msg.role === 'user' ? 'user' : 'assistant'} ${msg.role === 'assistant' ? 'markdown-body text-sm' : ''}`}
+                >
+                  {msg.role === 'user' ? (
+                    msg.content
+                  ) : (
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  )}
+                </div>
+              ))}
+              {isLoading && (
+                <div className="qflow-message-bubble assistant loading">
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <form className="qflow-assistant-input-area" onSubmit={handleSend}>
+              <input
+                type="text"
+                placeholder="Type your question..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                disabled={isLoading}
+              />
+              <button type="submit" disabled={!input.trim() || isLoading}>
+                <Send size={18} />
+              </button>
+            </form>
           </div>
+        )}
 
-          <div className="qflow-assistant-messages">
-            {messages.map((msg, idx) => (
-              <div 
-                key={idx}
-                className={`qflow-message-bubble ${msg.role === 'user' ? 'user' : 'assistant'} ${msg.role === 'assistant' ? 'markdown-body text-sm' : ''}`}
-              >
-                {msg.role === 'user' ? (
-                  msg.content
-                ) : (
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
-                )}
-              </div>
-            ))}
-            {isLoading && (
-              <div className="qflow-message-bubble assistant loading">
-                <span className="dot"></span>
-                <span className="dot"></span>
-                <span className="dot"></span>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <form className="qflow-assistant-input-area" onSubmit={handleSend}>
-            <input
-              type="text"
-              placeholder="Type your question..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              disabled={isLoading}
-            />
-            <button type="submit" disabled={!input.trim() || isLoading}>
-              <Send size={18} />
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Floating Action Button */}
-      {!isOpen && (
-        <button
-          className="qflow-assistant-fab"
-          onClick={() => setIsOpen(true)}
-          title="Ask Your QFLOW Assistant"
-        >
-          <img src="/qflow_logo_transparent.png" alt="QFLOW Logo" className="fab-logo" />
-        </button>
-      )}
+        {/* Floating Action Button */}
+        {!isOpen && (
+          <button
+            className="qflow-assistant-fab"
+            onClick={() => setIsOpen(true)}
+            title="Ask Your QFLOW Assistant"
+          >
+            <img src="/qflow_favicon.png" alt="QFLOW Logo" className="fab-logo" />
+          </button>
+        )}
     </div>
   )
 }

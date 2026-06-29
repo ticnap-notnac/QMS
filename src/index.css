@@ -45,6 +45,12 @@ input {
   font-family: inherit;
 }
 
+/* 🔒 Strip native browser password visibility buttons to avoid conflicts with custom toggles */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+}
+
 /* ==========================================================================
    SHARED STRUCTURE & LAYOUT ENGINE (REDUNDANT CSS COMBINED FROM ALL PAGES)
    ========================================================================== */
@@ -209,7 +215,7 @@ input {
    ========================================================================== */
 .toast-alert-card {
   position: fixed;
-  bottom: 28px;
+  top: 28px;
   right: 28px;
   background: #ffffff;
   backdrop-filter: blur(12px);
