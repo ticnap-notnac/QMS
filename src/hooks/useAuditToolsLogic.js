@@ -846,6 +846,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     completedRuns,
     loadingReports,
     reportsError,
+    ...auditRunDetails,
     handleStartAudit,
     handleSaveResults,
     fetchData,

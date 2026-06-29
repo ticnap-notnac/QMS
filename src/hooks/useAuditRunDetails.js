@@ -62,7 +62,7 @@ export function useAuditRunDetails() {
           if (!linkErr && linksData) {
             clausesList = clausesList.map(c => {
               const cars = linksData
-                .filter(l => l.clause_id === c.id && l.car_reports && l.car_reports.audit_schedule_id === run.schedule_id)
+                .filter(l => l.clause_id === c.id && l.car_reports && String(l.car_reports.audit_schedule_id) === String(run.schedule_id))
                 .map(l => l.car_reports)
               return { ...c, linked_cars: cars }
             })
