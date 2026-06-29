@@ -1,6 +1,7 @@
 import Navbar from '@/components/Navbars/Navbar.jsx'
 import AppRouter from '@/routes/AppRouter.jsx'
 import ErrorBoundary from '@/components/ErrorBoundary.jsx'
+import QFlowAssistant from '@/components/UI/QFlowAssistant.jsx'
 
 export default function MainLayout({
   isUserMenuOpen,
@@ -47,6 +48,7 @@ export default function MainLayout({
       <ErrorBoundary>
         <AppRouter sharedProps={sharedProps} refreshUserData={refreshUserData} />
       </ErrorBoundary>
+      <QFlowAssistant />
     </>
   )
 }
