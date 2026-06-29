@@ -20,7 +20,8 @@ export default function ConfirmDialog({
   onCancel,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
-  isDestructive = false
+  isDestructive = false,
+  isLoading = false
 }) {
   if (!isOpen) return null
 
@@ -38,6 +39,7 @@ export default function ConfirmDialog({
             type="button" 
             className="btn-secondary-light" 
             onClick={onCancel}
+            disabled={isLoading}
           >
             {cancelText}
           </button>
@@ -46,8 +48,9 @@ export default function ConfirmDialog({
             className="btn-primary" 
             style={isDestructive ? { background: '#dc2626', borderColor: '#dc2626', color: '#ffffff' } : {}}
             onClick={onConfirm}
+            disabled={isLoading}
           >
-            {confirmText}
+            {isLoading ? 'Processing...' : confirmText}
           </button>
         </div>
       </div>

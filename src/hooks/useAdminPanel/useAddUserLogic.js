@@ -143,7 +143,7 @@ export default function useAddUserLogic() {
       setToast({ message: `Deleted user "${displayName}" successfully.`, type: 'success' })
     } catch (err) {
       console.error('Delete user error:', err)
-      setToast({ message: 'This user could not be deleted. Please try again.', type: 'error' })
+      setToast({ message: err?.message || 'This user could not be deleted. Please try again.', type: 'error' })
     } finally {
       setUserToDelete(null)
     }
@@ -249,30 +249,24 @@ export default function useAddUserLogic() {
   const siteNameById = useMemo(() => new Map((sites || []).map((site) => [String(site.id), site.site_name])), [sites])
 
   const filteredUsers = useMemo(() => {
-    return adminUsers.filter((user) => {
-      // 1. Status Filter
-      if (statusFilter !== 'ALL') {
-        const userStatus = (user.status || 'ACTIVE').toUpperCase()
-        if (userStatus !== statusFilter) return false
-      }
+    let result = adminUsers || []
 
-      // 2. Search Query
-      const search = searchQuery.trim().toLowerCase()
-      if (!search) return true
-      const roleName = roleNameById.get(String(user.role_id)) || ''
-      const departmentName = departmentNameById.get(String(user.department_id)) || ''
-      const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim()
-      const haystack = [
-        fullName,
-        user.user_name,
-        user.email,
-        user.contact_number,
-        roleName,
-        departmentName,
-      ].join(' ').toLowerCase()
-      return haystack.includes(search)
-    })
-  }, [adminUsers, searchQuery, statusFilter, roleNameById, departmentNameById])
+    const q = (searchQuery || '').trim().toLowerCase()
+    if (q) {
+      result = result.filter((u) => {
+        const full = `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase()
+        const un = (u.user_name || '').toLowerCase()
+        const em = (u.email || '').toLowerCase()
+        return full.includes(q) || un.includes(q) || em.includes(q)
+      })
+    }
+
+    if (statusFilter !== 'ALL') {
+      result = result.filter((u) => (u.status || 'ACTIVE') === statusFilter)
+    }
+
+    return result
+  }, [adminUsers, searchQuery, statusFilter])
 
   const usersTableProps = {
     filteredUsers,
@@ -327,6 +321,7 @@ export default function useAddUserLogic() {
       confirmText: 'Delete',
       cancelText: 'Cancel',
       isDestructive: true,
+      isLoading: !!deletingUserId,
       onConfirm: confirmDeleteUser,
       onCancel: cancelDeleteUser,
     }

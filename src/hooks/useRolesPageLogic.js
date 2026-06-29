@@ -86,7 +86,7 @@ export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn
       await reloadLookups()
       setPageMessage(`Deleted role "${roleToDelete.role_name}" successfully.`)
     } catch (err) {
-      setPageError('This role could not be deleted. It may be assigned to users.')
+      setPageError(err?.message || 'This role could not be deleted.')
     } finally {
       setRoleToDelete(null)
     }
@@ -101,6 +101,7 @@ export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn
     confirmText: 'Delete',
     cancelText: 'Cancel',
     isDestructive: true,
+    isLoading: !!deletingId,
     onConfirm: confirmDeleteRole,
     onCancel: cancelDeleteRole,
   }

@@ -90,7 +90,7 @@ export default function useAdminCategorySetup({
       await reloadLookups()
       setToast({ message: `Deleted ${entityName.toLowerCase()} "${itemToDelete[labelKey]}" successfully.`, type: 'success' })
     } catch (err) {
-      setToast({ message: 'This item could not be deleted. It may be in use elsewhere in the system.', type: 'error' })
+      setToast({ message: err?.message || 'This item could not be deleted. It may be in use elsewhere in the system.', type: 'error' })
     } finally {
       setItemToDelete(null)
     }
@@ -140,6 +140,7 @@ export default function useAdminCategorySetup({
     confirmText: 'Delete',
     cancelText: 'Cancel',
     isDestructive: true,
+    isLoading: !!deletingId,
     onConfirm: confirmDeleteCategory,
     onCancel: cancelDeleteCategory,
   }
