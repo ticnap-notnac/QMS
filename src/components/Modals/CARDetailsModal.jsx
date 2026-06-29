@@ -20,6 +20,7 @@ export default function CARDetailsModal({
   setVerificationNotes,
   submitting,
   suggesting,
+  suggestionMeta,
   error,
   linkedClauses = [],
   loadingClauses = false,

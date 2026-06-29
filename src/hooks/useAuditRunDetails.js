@@ -60,9 +60,17 @@ export function useAuditRunDetails() {
             .in('clause_id', clauseIds)
             
           if (!linkErr && linksData) {
+            console.log('Fetched linksData:', linksData)
             clausesList = clausesList.map(c => {
               const cars = linksData
-                .filter(l => l.clause_id === c.id && l.car_reports && String(l.car_reports.audit_schedule_id) === String(run.schedule_id))
+                .filter(l => {
+                  if (l.clause_id === c.id) {
+                    console.log(`Checking clause ${c.id} link:`, l)
+                    console.log(`Match? ${String(l.car_reports?.audit_schedule_id)} === ${String(run.schedule_id)}`)
+                  }
+                  // Temporarily remove the schedule_id filter to see if any show up
+                  return l.clause_id === c.id && l.car_reports
+                })
                 .map(l => l.car_reports)
               return { ...c, linked_cars: cars }
             })

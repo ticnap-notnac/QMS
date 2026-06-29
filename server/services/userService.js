@@ -76,7 +76,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
   })
 
   if (authError) {
-    return { authUser: null, profile: null, error: authError.message, status: 500 }
+    return { authUser: null, profile: null, error: authError.message, status: 400 }
   }
 
   // Force update the public.users record right after creation, because the DB trigger

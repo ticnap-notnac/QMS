@@ -20,9 +20,15 @@ export async function createUser(req, res) {
   // Basic input validation
   if (!firstName || !lastName || !email || !password || !userName || !departmentId) {
     return res.status(400).json({ error: 'First name, last name, email, password, username, and department are required.' })
-  }
-
   // Additional validation could be added here (e.g., email format, password strength)
+  const invalidNameRegex = /[^a-zA-Z\s\-']/
+  if (invalidNameRegex.test(firstName) || invalidNameRegex.test(lastName)) {
+    return res.status(400).json({ error: 'First and Last names cannot contain numbers or special characters.' })
+  }
+  
+  if (contactNumber && !/^\d{11}$/.test(contactNumber)) {
+    return res.status(400).json({ error: 'Contact number must be exactly 11 digits.' })
+  }
 
   const { authUser, profile, error, status } = await createUserWithAuth({
     firstName,
@@ -60,6 +66,19 @@ export async function updateUser(req, res) {
   // Basic validation: ensure body is not empty
   if (!req.body || Object.keys(req.body).length === 0) {
     return res.status(400).json({ error: 'Request body cannot be empty.' })
+  }
+
+  const { firstName, lastName, contactNumber } = req.body
+  const invalidNameRegex = /[^a-zA-Z\s\-']/
+  if (
+    (firstName && invalidNameRegex.test(firstName)) || 
+    (lastName && invalidNameRegex.test(lastName))
+  ) {
+    return res.status(400).json({ error: 'First and Last names cannot contain numbers or special characters.' })
+  }
+
+  if (contactNumber && !/^\d{11}$/.test(contactNumber)) {
+    return res.status(400).json({ error: 'Contact number must be exactly 11 digits.' })
   }
 
   const { profile, error, status } = await updateUserById(id, req.body, actorAuthId)

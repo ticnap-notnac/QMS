@@ -82,8 +82,16 @@ export default function useAddUserLogic() {
       setFormError('')
       setFormMessage('')
 
-      if (/\d/.test(newUser.firstName) || /\d/.test(newUser.lastName)) {
-        setFormError('Names cannot contain numbers.')
+      // Name validation: must only contain letters, spaces, hyphens, and apostrophes
+      const invalidNameRegex = /[^a-zA-Z\s\-']/
+      if (invalidNameRegex.test(newUser.firstName) || invalidNameRegex.test(newUser.lastName)) {
+        setFormError('Names cannot contain numbers or special characters.')
+        setSubmitting(false)
+        return
+      }
+
+      if (newUser.contactNumber && !/^\d{11}$/.test(newUser.contactNumber)) {
+        setFormError('Contact number must be exactly 11 digits.')
         setSubmitting(false)
         return
       }
@@ -116,7 +124,7 @@ export default function useAddUserLogic() {
       await reloadUsers()
       setIsAddUserModalOpen(false)
     } catch (err) {
-      setFormError('The user could not be added. Please try again.')
+      setFormError(err.message || err.error || 'The user could not be added. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -182,11 +190,19 @@ export default function useAddUserLogic() {
       setEditFormError('')
       setEditFormMessage('')
       
+      // Name validation: must only contain letters, spaces, hyphens, and apostrophes
+      const invalidNameRegex = /[^a-zA-Z\s\-']/
       if (
-        (editingUser.firstName && /\d/.test(editingUser.firstName)) ||
-        (editingUser.lastName && /\d/.test(editingUser.lastName))
+        (editingUser.firstName && invalidNameRegex.test(editingUser.firstName)) ||
+        (editingUser.lastName && invalidNameRegex.test(editingUser.lastName))
       ) {
-        setEditFormError('Names cannot contain numbers.')
+        setEditFormError('Names cannot contain numbers or special characters.')
+        setEditSubmitting(false)
+        return
+      }
+
+      if (editingUser.contactNumber && !/^\d{11}$/.test(editingUser.contactNumber)) {
+        setEditFormError('Contact number must be exactly 11 digits.')
         setEditSubmitting(false)
         return
       }
