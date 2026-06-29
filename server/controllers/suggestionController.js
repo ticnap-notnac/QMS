@@ -36,8 +36,8 @@ export async function saveSuggestion(req, res, next) {
 export async function generateSuggestion(req, res, next) {
   try {
     const { ncrId } = req.params
-    const { deptName } = req.body
-    const data = await generateAiSuggestion({ ncrId, deptName })
+    const { deptName, previousSuggestions } = req.body
+    const data = await generateAiSuggestion({ ncrId, deptName, previousSuggestions })
     return res.json(data)
   } catch (err) {
     next(err)

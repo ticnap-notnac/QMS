@@ -267,7 +267,7 @@ function generateFallbackHeuristicSuggestion({ report, deptName }) {
   };
 }
 
-export async function generateAiSuggestion({ ncrId, deptName }) {
+export async function generateAiSuggestion({ ncrId, deptName, previousSuggestions = [] }) {
   // 1. Fetch CBR similar cases context
   const context = await findSimilarCases(ncrId)
   const { report, caseRepo, ratedNcrs, carReports, qddrReports } = context
@@ -289,7 +289,7 @@ export async function generateAiSuggestion({ ncrId, deptName }) {
 
   try {
     // 2. Build Prompt
-    const prompt = `You are a quality control expert. Suggest a corrective action and a preventive action for this NCR report using all available context.
+    let prompt = `You are a quality control expert. Suggest a corrective action and a preventive action for this NCR report using all available context.
 
 NCR Report:
 - Description: ${report.description}
@@ -317,8 +317,13 @@ QDDR Reports:
 ${qddrReports.length > 0
     ? qddrReports.map((q, i) => `${i + 1}. Reason: ${q.reason_of_discrepancy || 'N/A'} | Corrective: ${q.corrective_action || 'N/A'} | Preventive: ${q.preventive_action || 'N/A'}`).join('\n')
     : 'None'}
+`
+    if (previousSuggestions && previousSuggestions.length > 0) {
+      prompt += `\nIMPORTANT: Do NOT suggest any of the following corrective/preventive actions, as they were previously rejected by the user:\n`
+      previousSuggestions.forEach(s => prompt += `- ${s}\n`)
+    }
 
-Provide a concise, actionable corrective action (for immediately addressing the current non-conformance) and a preventive action (to prevent recurrence in the future). Each action should be 2-4 sentences. Also provide a confidence score between 0.0 and 1.0 based on matches.
+    prompt += `\nProvide a concise, actionable corrective action (for immediately addressing the current non-conformance) and a preventive action (to prevent recurrence in the future). Each action should be 2-4 sentences. Also provide a confidence score between 0.0 and 1.0 based on matches.
 Respond ONLY in this JSON format with no preamble or markdown:
 {"suggestion": "your corrective action suggestion here", "preventive_suggestion": "your preventive action suggestion here", "confidence": 0.85}`
 

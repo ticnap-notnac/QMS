@@ -15,10 +15,10 @@ export async function saveAiSuggestion(ncrId, suggestion, preventiveSuggestion, 
     })
 }
 
-export async function generateAiSuggestion(ncrId, deptName) {
+export async function generateAiSuggestion(ncrId, deptName, previousSuggestions = []) {
     return await request(`/suggestions/generate/${ncrId}`, {
         method: 'POST',
-        body: JSON.stringify({ deptName }),
+        body: JSON.stringify({ deptName, previousSuggestions }),
     })
 }
 

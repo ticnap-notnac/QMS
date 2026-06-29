@@ -191,13 +191,13 @@ export default function UpdateReportModal({
                   </span>
                 )}
 
-                {!suggestion?.fromRepository && !suggestion?.cached && suggestion && (
+                {suggestion?.sourceDetails && (
                   <span style={{
                     fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
-                    background: 'rgba(245,158,11,0.15)', color: '#d97706',
-                    border: '1px solid rgba(245,158,11,0.25)'
+                    background: 'rgba(59,130,246,0.1)', color: '#2563eb',
+                    border: '1px solid rgba(59,130,246,0.2)'
                   }}>
-                    AI generated
+                    Source: {suggestion.sourceDetails}
                   </span>
                 )}
               </div>
@@ -252,7 +252,7 @@ export default function UpdateReportModal({
                 <button
                   type="button"
                   className="btn-quick-toggle"
-                  onClick={loadSuggestion}
+                  onClick={() => loadSuggestion(true)}
                   disabled={isSuggesting}
                   style={{ fontSize: '12px', padding: '6px 14px' }}
                 >
