@@ -663,7 +663,7 @@ function AuditSchedulesTable({ auditSchedules, loadingAuditSchedules, carReports
               <th>ISO Standard</th>
               <th>Assigned Auditor</th>
               <th>Scheduled Date</th>
-              <th>Linked CARs</th>
+              <th className="text-center-important">Linked CARs</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -671,6 +671,12 @@ function AuditSchedulesTable({ auditSchedules, loadingAuditSchedules, carReports
             {auditSchedules.map((schedule) => {
               const statusClean = String(schedule.status || '').trim().toLowerCase()
               const linkedCars = carReports.filter(c => c.audit_schedule_id === schedule.id)
+              
+              // Capitalize status correctly
+              let displayStatus = schedule.status
+              if (statusClean === 'completed') displayStatus = 'Completed'
+              else if (statusClean === 'pending') displayStatus = 'Pending'
+
               return (
                 <tr key={schedule.id}>
                   <td style={{ fontWeight: 600 }}>{schedule.title}</td>
@@ -679,10 +685,10 @@ function AuditSchedulesTable({ auditSchedules, loadingAuditSchedules, carReports
                   <td>
                     {schedule.scheduled_date ? new Date(schedule.scheduled_date).toLocaleDateString() : '—'}
                   </td>
-                  <td>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {linkedCars.length > 0 ? (
-                        linkedCars.map(car => (
+                  <td className="text-center-important" style={{ verticalAlign: 'middle' }}>
+                    {linkedCars.length > 0 ? (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+                        {linkedCars.map(car => (
                           <span
                             key={car.id}
                             onClick={() => onSelectCar && onSelectCar(car)}
@@ -699,17 +705,17 @@ function AuditSchedulesTable({ auditSchedules, loadingAuditSchedules, carReports
                           >
                             {car.reference_no || `CAR #${car.id}`}
                           </span>
-                        ))
-                      ) : (
-                        <span className="muted" style={{ fontSize: '12px' }}>—</span>
-                      )}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="muted" style={{ fontSize: '12px' }}>—</span>
+                    )}
                   </td>
                   <td>
                     <span className={`iso-status-pill ${
                       statusClean === 'completed' ? 'is-active' : statusClean === 'pending' ? 'is-inactive' : 'is-closed'
                     }`}>
-                      {schedule.status}
+                      {displayStatus}
                     </span>
                   </td>
                 </tr>
@@ -915,26 +921,28 @@ export default function DCCFolderContent({
           ))}
         </div>
 
-        <div className="text-left">
+        <div className="text-left" style={{ marginTop: '24px' }}>
           <h3 className="recently-viewed-heading">Recently Viewed</h3>
           {!filteredRecentlyViewed.length ? (
             <div className="recent-empty">No recently viewed items.</div>
           ) : (
-            filteredRecentlyViewed.map((rv) => (
-              <div
-                key={rv.id}
-                className="recent-document-card dcc-recent-document-card"
-                onClick={() => onOpenFolder({ id: rv.id, label: rv.label })}
-              >
-                <FileText size={18} className="icon-green" />
-                <div className="col-gap-2">
-                  <span className="recent-doc-title">{rv.label}</span>
-                  <span className="recent-doc-sub">
-                    {new Date(rv.when).toLocaleString()}
-                  </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+              {filteredRecentlyViewed.map((rv) => (
+                <div
+                  key={rv.id}
+                  className="recent-document-card dcc-recent-document-card"
+                  onClick={() => onOpenFolder({ id: rv.id, label: rv.label })}
+                >
+                  <FileText size={18} className="icon-green" />
+                  <div className="col-gap-2">
+                    <span className="recent-doc-title">{rv.label}</span>
+                    <span className="recent-doc-sub">
+                      {new Date(rv.when).toLocaleString()}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </div>

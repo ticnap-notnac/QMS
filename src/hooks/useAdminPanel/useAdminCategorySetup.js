@@ -18,6 +18,7 @@ export default function useAdminCategorySetup({
   const [formMessage, setFormMessage] = useState('')
   const [toast, setToast] = useState(null)
   const [itemToDelete, setItemToDelete] = useState(null)
+  const [editingItem, setEditingItem] = useState(null)
 
   const { items, loading, deletingId, creating, reload, createItem, deleteItem, error } = useCategoryManager({
     loadFn,
@@ -37,12 +38,14 @@ export default function useAdminCategorySetup({
     setFormError('')
     setFormMessage('')
     setCategoryInput('')
+    setEditingItem(null)
     setIsCategoryModalOpen(true)
   }
 
   const closeCategoryModal = () => {
     setIsCategoryModalOpen(false)
     setCategoryInput('')
+    setEditingItem(null)
   }
 
   const handleSubmitCategory = async (event) => {
@@ -54,12 +57,24 @@ export default function useAdminCategorySetup({
     }
     try {
       setFormError('')
-      await createItem(nextValue)
-      await reloadLookups()
-      setToast({ message: `Added ${entityName.toLowerCase()} "${nextValue}" successfully.`, type: 'success' })
+      if (editingItem) {
+        const originalValue = editingItem[labelKey] || ''
+        if (nextValue === originalValue) {
+          closeCategoryModal()
+          return
+        }
+        await createItem(nextValue)
+        await deleteItem(editingItem.id)
+        await reloadLookups()
+        setToast({ message: `Updated ${entityName.toLowerCase()} successfully from "${originalValue}" to "${nextValue}".`, type: 'success' })
+      } else {
+        await createItem(nextValue)
+        await reloadLookups()
+        setToast({ message: `Added ${entityName.toLowerCase()} "${nextValue}" successfully.`, type: 'success' })
+      }
       closeCategoryModal()
     } catch (err) {
-      setFormError('This item could not be added. Please try again.')
+      setFormError(editingItem ? `Could not update ${entityName.toLowerCase()}. Please try again.` : 'This item could not be added. Please try again.')
     }
   }
 
@@ -90,6 +105,13 @@ export default function useAdminCategorySetup({
     items: filtered,
     loading,
     labelKey,
+    onEdit: (item) => {
+      setFormError('')
+      setFormMessage('')
+      setCategoryInput(item[labelKey] || '')
+      setEditingItem(item)
+      setIsCategoryModalOpen(true)
+    },
     onDelete: handleDeleteCategory,
     deletingId,
     noMatchesText: 'No matches found.'
@@ -99,16 +121,16 @@ export default function useAdminCategorySetup({
     isOpen: isCategoryModalOpen,
     onClose: closeCategoryModal,
     onSubmit: handleSubmitCategory,
-    title: `Create New ${entityName}`,
+    title: editingItem ? `Edit ${entityName}` : `Create New ${entityName}`,
     label: `${entityName} Name`,
     value: categoryInput,
     onChange: (event) => setCategoryInput(event.target.value),
     placeholder: placeholderText,
-    loading: creating,
+    loading: creating || loading,
     error: formError,
     message: formMessage,
-    submitLabel: `Create ${entityName}`,
-    helperText: helperTextText
+    submitLabel: editingItem ? 'Save Changes' : `Create ${entityName}`,
+    helperText: editingItem ? `Modify the name of the selected ${entityName.toLowerCase()} entry.` : helperTextText
   }
 
   const confirmDialogProps = {

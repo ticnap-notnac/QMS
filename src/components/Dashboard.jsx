@@ -108,7 +108,7 @@ const CustomTooltip = ({ active, payload, label }) => {
           {payload[0].name}: {payload[0].value}%
         </p>
         {data.standard && (
-          <p style={{ margin: '4px 0 0 0', color: '#475569', fontSize: '11px' }}>
+          <p style={{ margin: '4px 0 0 0', color: '#475569', fontSize: '12px' }}>
             Standard: {data.standard}
           </p>
         )}
@@ -255,19 +255,22 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
 
       {/* Top Metrics Cards Row */}
       <section className="metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-        <div className="metric-card" style={{
-          background: '#ffffff',
-          border: '1px solid #e4e4e7',
-          borderRadius: '12px',
-          padding: '16px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          minHeight: '100px',
-          transition: 'transform 0.2s',
-          cursor: 'default',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-        }}>
+        <div className="metric-card" 
+          title="The total number of currently active, unresolved NCR (Non-Conformance Reports) and CAR (Corrective Action Requests) processes."
+          style={{
+            background: '#ffffff',
+            border: '1px solid #e4e4e7',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            minHeight: '100px',
+            transition: 'transform 0.2s',
+            cursor: 'help',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+          }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#475569' }}>
             <p style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: '#000000' }}>Open Complaints</p>
             <AlertCircle size={18} color="#0f172a" />
@@ -275,22 +278,25 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           <h3 style={{ margin: '8px 0 4px 0', fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
             {metrics?.openComplaints || 0}
           </h3>
-          <span style={{ fontSize: '11px', color: '#64748b' }}>Active NCR and CAR processes</span>
+          <span style={{ fontSize: '12px', color: '#64748b' }}>Active NCR and CAR processes</span>
         </div>
 
-        <div className="metric-card" style={{
-          background: '#ffffff',
-          border: '1px solid #e4e4e7',
-          borderRadius: '12px',
-          padding: '16px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          minHeight: '100px',
-          transition: 'transform 0.2s',
-          cursor: 'default',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-        }}>
+        <div className="metric-card" 
+          title="The average audit compliance score calculated across all active ISO standards and guidelines."
+          style={{
+            background: '#ffffff',
+            border: '1px solid #e4e4e7',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            minHeight: '100px',
+            transition: 'transform 0.2s',
+            cursor: 'help',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+          }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#475569' }}>
             <p style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: '#000000' }}>ISO Compliance Rate</p>
             <Shield size={18} color="#0f172a" />
@@ -298,22 +304,25 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           <h3 style={{ margin: '8px 0 4px 0', fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
             {metrics?.isoCompliance || 100}%
           </h3>
-          <span style={{ fontSize: '11px', color: '#64748b' }}>Average across all standards</span>
+          <span style={{ fontSize: '12px', color: '#64748b' }}>Average across all standards</span>
         </div>
 
-        <div className="metric-card" style={{
-          background: '#ffffff',
-          border: '1px solid #e4e4e7',
-          borderRadius: '12px',
-          padding: '16px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          minHeight: '100px',
-          transition: 'transform 0.2s',
-          cursor: 'default',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-        }}>
+        <div className="metric-card" 
+          title="The percentage rate of defective items identified in QDDR (Quality Defect & Disposal Reports) relative to total inspection lots."
+          style={{
+            background: '#ffffff',
+            border: '1px solid #e4e4e7',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            minHeight: '100px',
+            transition: 'transform 0.2s',
+            cursor: 'help',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+          }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#475569' }}>
             <p style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: '#000000' }}>QDDR Defect Rate</p>
             <TrendingUp size={18} color="#0f172a" />
@@ -321,7 +330,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           <h3 style={{ margin: '8px 0 4px 0', fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
             {metrics?.defectRate || 0.4}%
           </h3>
-          <span style={{ fontSize: '11px', color: '#64748b' }}>Well within compliance margins</span>
+          <span style={{ fontSize: '12px', color: '#64748b' }}>Well within compliance margins</span>
         </div>
       </section>
 
@@ -331,14 +340,18 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
           {/* Bar Chart - Compliance by ISO Standard */}
-          <div className="chart-wrapper" style={{
-            background: '#ffffff',
-            border: '1px solid #e4e4e7',
-            borderRadius: '12px',
-            padding: '16px',
-            boxSizing: 'border-box',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-          }}>
+          <div className="chart-wrapper" 
+            title="A breakdown showing the latest compliance score percentages for each distinct ISO standard currently audited."
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e4e4e7',
+              borderRadius: '12px',
+              padding: '16px',
+              boxSizing: 'border-box',
+              cursor: 'help',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <BarChart2 size={15} color="#0f172a" />
               <h4 style={{ margin: 0, color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>Standard Compliance Breakdown</h4>
@@ -363,14 +376,18 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           </div>
 
           {/* Line Chart - Compliance Trend */}
-          <div className="chart-wrapper" style={{
-            background: '#ffffff',
-            border: '1px solid #e4e4e7',
-            borderRadius: '12px',
-            padding: '16px',
-            boxSizing: 'border-box',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-          }}>
+          <div className="chart-wrapper" 
+            title="A chronological trend chart tracking overall audit compliance scores from oldest to newest."
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e4e4e7',
+              borderRadius: '12px',
+              padding: '16px',
+              boxSizing: 'border-box',
+              cursor: 'help',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <TrendingUp size={15} color="#0f172a" />
               <h4 style={{ margin: 0, color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>Audit Compliance Trend</h4>
@@ -395,14 +412,18 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           </div>
 
           {/* Line Chart - Resolution Time Trends */}
-          <div className="chart-wrapper" style={{
-            background: '#ffffff',
-            border: '1px solid #e4e4e7',
-            borderRadius: '12px',
-            padding: '16px',
-            boxSizing: 'border-box',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-          }}>
+          <div className="chart-wrapper" 
+            title="A monthly historical analysis monitoring the average number of hours taken to close NCR, CAR, and QDDR records."
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e4e4e7',
+              borderRadius: '12px',
+              padding: '16px',
+              boxSizing: 'border-box',
+              cursor: 'help',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <Clock size={15} color="#0f172a" />
               <h4 style={{ margin: 0, color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>Average Resolution Time Trend (Hours)</h4>

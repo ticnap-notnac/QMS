@@ -132,10 +132,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: transparent !important;
+  border: none !important;
   color: #334155;
-  padding: 6px; /* Squarish layout optimized for standard icons */
+  padding: 8px; /* Standardize padding layout to match the delete button */
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;

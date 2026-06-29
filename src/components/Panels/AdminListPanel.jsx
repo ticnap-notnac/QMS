@@ -72,19 +72,17 @@ export default function AdminListPanel({
 
                 {/* 🎯 Layout context cluster wrapper to securely house multiple side-by-side action points */}
                 <div className="admin-actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-
+                  
                   {/* ✏️ Pencil Icon Button for Modifying Entries */}
-                  {onEdit && (
-                    <button
-                      type="button"
-                      className="btn-edit-user"
-                      onClick={() => onEdit(item)}
-                      title={`Edit ${title || 'Item'}`}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <Pencil size={14} />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="btn-edit-user"
+                    onClick={() => onEdit && onEdit(item)}
+                    title={`Edit ${title || 'Item'}`}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <Pencil size={14} />
+                  </button>
 
                   {/* 🗑️ Trash Bin Icon Button for Deleting Entries */}
                   <button

@@ -4,6 +4,7 @@ import AddCategoryModal from '@/components/Modals/AddCategoryModal'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
+import Toast from '@/components/UI/Toast.jsx'
 import './AdminPanel.css'
 import useRolesPageLogic from '@/hooks/useRolesPageLogic'
 import {
@@ -30,13 +31,16 @@ export default function RolesPage({
     setCategoryInput,
     formError,
     formMessage,
-    pageMessage,
+    toast,
+    setToast,
     pageError,
     handleSubmitCategory,
     handleDeleteRole,
+    handleEditRole,
     creating,
     categoryError,
     confirmDialogProps,
+    editingItem,
   } = useRolesPageLogic({ loadFn: loadRolesController, createFn: createRoleController, deleteFn: deleteRoleController })
 
   return (
@@ -70,17 +74,41 @@ export default function RolesPage({
 
               <div className="glass-card-content">
                 <div className="panel-narrow">
-                  {pageMessage ? <div className="user-info-success">{pageMessage}</div> : null}
-                  {(pageError || categoryError) ? <p className="user-info-error">{pageError || categoryError}</p> : null}
                   <p className="glass-card-subtext">Please click the "+ Add Role" button to add a new Role.</p>
-                  <AdminListPanel title="Available Roles" items={filtered} loading={loading} labelKey="role_name" onDelete={handleDeleteRole} deletingId={deletingId} noMatchesText="No matches found." />
+                  <AdminListPanel
+                    title="Available Roles"
+                    items={filtered}
+                    loading={loading}
+                    labelKey="role_name"
+                    onEdit={handleEditRole}
+                    onDelete={handleDeleteRole}
+                    deletingId={deletingId}
+                    noMatchesText="No matches found."
+                  />
                 </div>
               </div>
             </div>
           </div>
 
-          <AddCategoryModal isOpen={isCategoryModalOpen} onClose={closeCategoryModal} onSubmit={handleSubmitCategory} title="Create New Role" label="Role Name" value={categoryInput} onChange={(event) => setCategoryInput(event.target.value)} placeholder="Enter role name" loading={creating} error={formError} message={formMessage} submitLabel="Create Role" helperText="Create a role entry that will be available in the user modal." />
+          <AddCategoryModal
+            isOpen={isCategoryModalOpen}
+            onClose={closeCategoryModal}
+            onSubmit={handleSubmitCategory}
+            title={editingItem ? 'Edit Role' : 'Create New Role'}
+            label="Role Name"
+            value={categoryInput}
+            onChange={(event) => setCategoryInput(event.target.value)}
+            placeholder="Enter role name"
+            loading={creating || loading}
+            error={formError}
+            message={formMessage}
+            submitLabel={editingItem ? 'Save Changes' : 'Create Role'}
+            helperText={editingItem ? 'Modify the name of the selected role entry.' : 'Create a role entry that will be available in the user modal.'}
+          />
           <ConfirmDialog {...confirmDialogProps} />
+          {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+          {pageError && !toast && <Toast message={pageError} type="error" onClose={() => {}} />}
+          {categoryError && !toast && <Toast message={categoryError} type="error" onClose={() => {}} />}
         </main>
       ) : (
         <main className="page-main-centered">

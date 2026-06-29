@@ -148,10 +148,31 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
           </div>
           <div className="reports-action-buttons-right">
             {canAccessCar && (
-              <button type="button" onClick={() => logic.openCARModal()} className="btn-gradient-primary reports-submit-primary">Submit CAR</button>
+              <button 
+                type="button" 
+                onClick={() => logic.openCARModal()} 
+                className="btn-gradient-primary reports-submit-primary"
+                title="Submit Corrective Action Request (CAR) - Request corrective actions for identified issues or system non-conformances."
+              >
+                Submit CAR
+              </button>
             )}
-            <button type="button" onClick={() => logic.openQDDRModal()} className="btn-gradient-primary reports-submit-primary">Submit QDDR</button>
-            <button type="button" onClick={logic.openCreateModal} className="btn-gradient-primary reports-submit-primary">Submit NCR</button>
+            <button 
+              type="button" 
+              onClick={() => logic.openQDDRModal()} 
+              className="btn-gradient-primary reports-submit-primary"
+              title="Submit Quality Defect & Disposal Report (QDDR) - Document product defects and handle product disposal processes."
+            >
+              Submit QDDR
+            </button>
+            <button 
+              type="button" 
+              onClick={logic.openCreateModal} 
+              className="btn-gradient-primary reports-submit-primary"
+              title="Submit Non-Conformance Report (NCR) - Record occurrences of processes, materials, or services that fail to meet specifications."
+            >
+              Submit NCR
+            </button>
           </div>
         </div>
 

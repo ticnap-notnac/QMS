@@ -9,9 +9,10 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
   const [formError, setFormError] = useState('')
   const [formMessage, setFormMessage] = useState('')
 
-  const [pageMessage, setPageMessage] = useState('')
   const [pageError, setPageError] = useState('')
   const [roleToDelete, setRoleToDelete] = useState(null)
+  const [editingItem, setEditingItem] = useState(null)
+  const [toast, setToast] = useState(null)
 
   const { items, loading, deletingId, creating, reload, createItem, deleteItem, error: categoryError } = useCategoryManager({
     loadFn,
@@ -31,12 +32,14 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
     setFormError('')
     setFormMessage('')
     setCategoryInput('')
+    setEditingItem(null)
     setIsCategoryModalOpen(true)
   }
 
   const closeCategoryModal = () => {
     setIsCategoryModalOpen(false)
     setCategoryInput('')
+    setEditingItem(null)
   }
 
   const handleSubmitCategory = async (event) => {
@@ -48,12 +51,26 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
     }
     try {
       setFormError('')
-      await createItem(nextValue)
-      await reloadLookups()
-      setPageMessage(`Added role "${nextValue}" successfully.`)
-      setPageError('')
+      if (editingItem) {
+        const originalValue = editingItem.role_name || ''
+        if (nextValue === originalValue) {
+          closeCategoryModal()
+          return
+        }
+        await createItem(nextValue)
+        await deleteItem(editingItem.id)
+        await reloadLookups()
+        setToast({ message: `Updated role successfully from "${originalValue}" to "${nextValue}".`, type: 'success' })
+        setPageError('')
+      } else {
+        await createItem(nextValue)
+        await reloadLookups()
+        setToast({ message: `Added role "${nextValue}" successfully.`, type: 'success' })
+        setPageError('')
+      }
+      closeCategoryModal()
     } catch (err) {
-      setFormError('This role could not be added. Please try again.')
+      setFormError(editingItem ? 'Could not update role. Please try again.' : 'This role could not be added. Please try again.')
     }
   }
 
@@ -88,6 +105,14 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
     onCancel: cancelDeleteRole,
   }
 
+  const handleEditRole = (role) => {
+    setFormError('')
+    setFormMessage('')
+    setCategoryInput(role.role_name || '')
+    setEditingItem(role)
+    setIsCategoryModalOpen(true)
+  }
+
   return {
     items,
     filtered,
@@ -106,13 +131,15 @@ export default function useRolesPageLogic({ loadFn, createFn, deleteFn } = {}) {
     setFormError,
     formMessage,
     setFormMessage,
-    pageMessage,
-    setPageMessage,
+    toast,
+    setToast,
     pageError,
     setPageError,
     handleSubmitCategory,
     handleDeleteRole,
+    handleEditRole,
     categoryError,
     confirmDialogProps,
+    editingItem,
   }
 }
