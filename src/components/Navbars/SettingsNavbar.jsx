@@ -36,7 +36,7 @@ function SettingsNavbar({ userRole }) {
   return (
     <div className="settings-top-nav">
       {navItem('Settings', '/settings', Settings)}
-      {navItem('Audit Tools', '/audit-tools', ClipboardCheck)}
+      {['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase()) && navItem('Audit Tools', '/audit-tools', ClipboardCheck)}
       
       {/* 🔒 Top-level Protection Lock */}
       {userRole === 'admin' && navItem('Admin Panel', '/admin', ShieldCheck)}

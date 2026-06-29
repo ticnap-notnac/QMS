@@ -109,12 +109,14 @@ export default function Navbar({
       >
         <User size={16} /> User Information
       </button>
-      <button 
-        onClick={() => { navigate('/audit-tools'); onToggleMenu(); }} 
-        className="user-menu-item admin"
-      >
-        <ClipboardCheck size={16} /> Audit Tools
-      </button>
+      {['admin', 'auditor'].includes(normalizedRole) && (
+        <button 
+          onClick={() => { navigate('/audit-tools'); onToggleMenu(); }} 
+          className="user-menu-item admin"
+        >
+          <ClipboardCheck size={16} /> Audit Tools
+        </button>
+      )}
       {normalizedRole === 'admin' && (
         <button 
           onClick={() => { navigate('/admin'); onToggleMenu(); }} 

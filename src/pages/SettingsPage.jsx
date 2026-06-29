@@ -32,13 +32,7 @@ export default function SettingsPage(props) {
     handleUpdateChanges,
   } = useSettingsPageLogic({ authUserId, onProfileUpdate })
 
-  if (loading) {
-    return (
-      <>
-        <main className="page-padding">Loading...</main>
-      </>
-    )
-  }
+
 
   return (
     <>
@@ -67,21 +61,29 @@ export default function SettingsPage(props) {
           </div>
 
           <div className="settings-main settings-main--profile">
-            {activeSection === 'Profile & Account' && (
-              <div className="settings-content settings-content--profile">
-                <SettingsProfileForm {...{ userProfile, setUserProfile }} />
-                <PasswordSection {...{ passwords, setPasswords }} />
-                <button className="btn-primary mt-24 settings-save-button" onClick={handleUpdateChanges} disabled={saving}>
-                  {saving ? 'Saving...' : 'Update Changes'}
-                </button>
+            {loading ? (
+              <div className="settings-content settings-content--profile" style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                <span className="glass-card-subtext">Loading settings...</span>
               </div>
-            )}
+            ) : (
+              <>
+                {activeSection === 'Profile & Account' && (
+                  <div className="settings-content settings-content--profile">
+                    <SettingsProfileForm {...{ userProfile, setUserProfile }} />
+                    <PasswordSection {...{ passwords, setPasswords }} />
+                    <button className="btn-primary mt-24 settings-save-button" onClick={handleUpdateChanges} disabled={saving}>
+                      {saving ? 'Saving...' : 'Update Changes'}
+                    </button>
+                  </div>
+                )}
 
 
-            {activeSection === 'Audit Tools' && (userRole === 'admin' || userRole === 'auditor') && (
-              <div className="settings-content settings-content--profile" style={{ width: '100%' }}>
-                <AuditToolsPage {...props} />
-              </div>
+                {activeSection === 'Audit Tools' && (userRole === 'admin' || userRole === 'auditor') && (
+                  <div className="settings-content settings-content--profile" style={{ width: '100%' }}>
+                    <AuditToolsPage {...props} />
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

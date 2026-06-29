@@ -16,13 +16,7 @@ export default function UserInformationPage(props) {
   const { userProfile, loading, error, activeTab, setActiveTab } =
     useUserInformationPageLogic({ authUserId, profileTargetTab })
 
-  if (loading) {
-    return (
-      <div className="page-root">
-        <div className="page-main-centered">Loading...</div>
-      </div>
-    )
-  }
+
 
   if (error) {
     return (
@@ -58,7 +52,13 @@ export default function UserInformationPage(props) {
 
           <div className="settings-main settings-main--profile">
             <div className="settings-content settings-content--profile">
-              <ProfileCard {...profileProps} />
+              {loading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                  <span className="glass-card-subtext">Loading user information...</span>
+                </div>
+              ) : (
+                <ProfileCard {...profileProps} />
+              )}
             </div>
           </div>
         </div>
