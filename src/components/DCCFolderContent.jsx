@@ -984,7 +984,7 @@ export default function DCCFolderContent({
         userRole === 'admin' ? (
           <div className="row-gap-40">
             <div className="glass-card-dcc system-logs-wrapper">
-              <SystemLogsPanel onClose={onCloseFolder} />
+              <SystemLogsPanel onClose={onCloseFolder} searchQuery={searchQuery} />
             </div>
           </div>
         ) : (
