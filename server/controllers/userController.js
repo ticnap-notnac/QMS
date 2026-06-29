@@ -20,6 +20,8 @@ export async function createUser(req, res) {
   // Basic input validation
   if (!firstName || !lastName || !email || !password || !userName || !departmentId) {
     return res.status(400).json({ error: 'First name, last name, email, password, username, and department are required.' })
+  }
+
   // Additional validation could be added here (e.g., email format, password strength)
   const invalidNameRegex = /[^a-zA-Z\s\-']/
   if (invalidNameRegex.test(firstName) || invalidNameRegex.test(lastName)) {
