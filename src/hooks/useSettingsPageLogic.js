@@ -67,6 +67,13 @@ export function useSettingsPageLogic({ authUserId, onProfileUpdate } = {}) {
   const handleUpdateChanges = async () => {
     setSaving(true)
     try {
+      if (
+        (userProfile.first_name && /\d/.test(userProfile.first_name)) ||
+        (userProfile.last_name && /\d/.test(userProfile.last_name))
+      ) {
+        throw new Error('Names cannot contain numbers.')
+      }
+
       const { error: profileError } = await supabase
         .from('users')
         .update({

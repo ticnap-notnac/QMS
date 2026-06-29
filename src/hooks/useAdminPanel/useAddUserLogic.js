@@ -81,6 +81,13 @@ export default function useAddUserLogic() {
       setSubmitting(true)
       setFormError('')
       setFormMessage('')
+
+      if (/\d/.test(newUser.firstName) || /\d/.test(newUser.lastName)) {
+        setFormError('Names cannot contain numbers.')
+        setSubmitting(false)
+        return
+      }
+
       const result = await createUserItem({
         firstName: newUser.firstName,
         lastName: newUser.lastName,
@@ -175,6 +182,15 @@ export default function useAddUserLogic() {
       setEditFormError('')
       setEditFormMessage('')
       
+      if (
+        (editingUser.firstName && /\d/.test(editingUser.firstName)) ||
+        (editingUser.lastName && /\d/.test(editingUser.lastName))
+      ) {
+        setEditFormError('Names cannot contain numbers.')
+        setEditSubmitting(false)
+        return
+      }
+
       const payload = {}
       if (editingUser.firstName !== undefined) payload.firstName = editingUser.firstName
       if (editingUser.lastName !== undefined) payload.lastName = editingUser.lastName
