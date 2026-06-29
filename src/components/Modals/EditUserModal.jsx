@@ -30,17 +30,17 @@ function EditUserModal({
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">First Name:</span>
+              <span className="small-label">First Name: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <input type="text" name="firstName" value={formData.firstName} onChange={onChange} className="form-input-reports" placeholder="Enter first name" />
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Last Name:</span>
+              <span className="small-label">Last Name: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <input type="text" name="lastName" value={formData.lastName} onChange={onChange} className="form-input-reports" placeholder="Enter last name" />
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Status:</span>
+              <span className="small-label">Status: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <select name="status" value={formData.status ?? 'ACTIVE'} onChange={onChange} className="form-input-reports">
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
@@ -51,12 +51,12 @@ function EditUserModal({
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">Email Address:</span>
+              <span className="small-label">Email Address: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <input type="email" name="email" value={formData.email} onChange={onChange} className="form-input-reports" placeholder="Enter email address" />
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Username:</span>
+              <span className="small-label">Username: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <input type="text" name="userName" value={formData.userName} onChange={onChange} className="form-input-reports" placeholder="Enter username" />
             </label>
 
@@ -68,7 +68,7 @@ function EditUserModal({
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">Role:</span>
+              <span className="small-label">Role: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <select name="roleId" value={formData.roleId} onChange={onChange} className="form-input-reports" disabled={rolesLoading || availableRoles.length === 0}>
                 <option value="">{rolesLoading ? 'Loading roles...' : 'Select a role'}</option>
                 {availableRoles.map((role) => (
@@ -78,7 +78,7 @@ function EditUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Department:</span>
+              <span className="small-label">Department: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <select name="departmentId" value={formData.departmentId} onChange={onChange} className="form-input-reports" disabled={departmentsLoading || availableDepartments.length === 0}>
                 <option value="">{departmentsLoading ? 'Loading departments...' : 'Select a department'}</option>
                 {availableDepartments.map((d) => (
@@ -88,7 +88,7 @@ function EditUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Site:</span>
+              <span className="small-label">Site: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <select
                 name="siteId"
                 value={formData.siteId || ''}

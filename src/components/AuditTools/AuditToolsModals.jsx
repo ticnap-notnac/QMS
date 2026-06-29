@@ -124,11 +124,10 @@ export function AuditChecklistSection({
                 <div className="form-row-2" style={{ margin: 0, gap: '12px' }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Evidence / Observations</label>
-                    <input
-                      type="text"
+                    <textarea
                       placeholder="Enter evidence or observations found..."
                       className="form-input"
-                      style={{ padding: '8px 12px', fontSize: '13px' }}
+                      style={{ padding: '8px 12px', fontSize: '13px', minHeight: '60px', resize: 'vertical', fontFamily: 'inherit' }}
                       value={answer.evidence}
                       onChange={(e) => {
                         setResultsMap({
@@ -140,11 +139,10 @@ export function AuditChecklistSection({
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Findings / CAR Notes</label>
-                    <input
-                      type="text"
+                    <textarea
                       placeholder="Add findings notes or links to Corrective Actions..."
                       className="form-input"
-                      style={{ padding: '8px 12px', fontSize: '13px' }}
+                      style={{ padding: '8px 12px', fontSize: '13px', minHeight: '60px', resize: 'vertical', fontFamily: 'inherit' }}
                       value={answer.notes || ''}
                       onChange={(e) => {
                         setResultsMap({

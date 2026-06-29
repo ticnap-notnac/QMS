@@ -28,20 +28,20 @@
 .settings-container {
   display: grid;
   grid-template-columns: 200px 1fr;
-  gap: 20px;
-  max-width: 880px;
+  gap: 24px;
+  max-width: 100%;
   margin: 0 auto;
   transition: max-width 0.25s ease; /* Smoothly animates when expanding the viewport */
 }
 
 /* 🚀 DYNAMIC CANVAS EXPANSION: Widens the card box container so the dense logs layout fits perfectly */
 .settings-container:has(.system-logs-panel) {
-  max-width: 1200px !important; 
+  max-width: 100% !important; 
 }
 
 .settings-page-container {
   width: 95%;
-  max-width: 1250px; /* Increased from 1050px to provide side structural breathing room */
+  max-width: 1400px; /* Increased to match main pages and maximize space */
   margin: 40px auto;
   padding: 0 16px;
   box-sizing: border-box;

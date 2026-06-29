@@ -214,7 +214,7 @@ export default function NCRSubmitModal({
             
             {/* Severity input group */}
             <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Severity Level:</label>
+              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Severity Level: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
               <select value={form.severity} onChange={(e) => setField('severity', e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }}>
                 <option value="">Select severity...</option>
                 <option value="Low">Low</option>
@@ -227,7 +227,7 @@ export default function NCRSubmitModal({
 
             {/* Department input group */}
             <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Department:</label>
+              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Department: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
               <select value={form.departmentId} onChange={(e) => setField('departmentId', e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }}>
                 <option value="">Select department...</option>
                 {departments.map((dept) => (
@@ -251,13 +251,14 @@ export default function NCRSubmitModal({
                 setField('issueType', opt.label)
                 setField('issueTypeId', String(opt.id))
               }}
+              required={true}
             />
             {errors.issueType && <div style={{ color: '#f87171', fontSize: '0.75rem', marginTop: '2px' }}>{errors.issueType}</div>}
           </div>
 
           {/* 📝 WIREFRAME POSITION 4: Wide Description Textarea Input block */}
           <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
-            <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Description:</label>
+            <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Description: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
             <textarea 
               value={form.description} 
               onChange={(e) => setField('description', e.target.value)} 

@@ -11,7 +11,7 @@ import { useMemo, useState } from 'react'
  *   onSelectOption: (option: { id: string|number, label: string }) => void,
  * }} props
  */
-function SearchableDropdown({ label, value, onValueChange, options, loading = false, placeholder = '', onSelectOption }) {
+function SearchableDropdown({ label, value, onValueChange, options, loading = false, placeholder = '', onSelectOption, required = false }) {
   const [isOpen, setIsOpen] = useState(false)
 
   const filteredOptions = useMemo(() => {
@@ -22,7 +22,10 @@ function SearchableDropdown({ label, value, onValueChange, options, loading = fa
 
   return (
     <div>
-      <label className="label-field">{label}</label>
+      <label className="label-field">
+        {label}
+        {required && <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span>}
+      </label>
       <div style={{ position: 'relative' }}>
         <input
           type="text"

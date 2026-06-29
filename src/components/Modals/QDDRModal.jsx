@@ -178,6 +178,7 @@ function QDDRModal({
                     loading={locationsLoading}
                     placeholder="Search location..."
                     onSelectOption={(opt) => handleChange('location', opt.label)}
+                    required={true}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -271,7 +272,7 @@ function QDDRModal({
               {/* Row 4: Material Details */}
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 0.8fr', gap: '14px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label className="label-field">Material Description:</label>
+                  <label className="label-field">Material Description: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
                   <input
                     type="text"
                     value={form.material_description}
@@ -371,7 +372,7 @@ function QDDRModal({
               {/* Details: Reason, Corrective, Preventive */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label className="label-field">Reason of Discrepancy:</label>
+                  <label className="label-field">Reason of Discrepancy: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
                   <textarea
                     value={form.reason_of_discrepancy}
                     onChange={(e) => handleChange('reason_of_discrepancy', e.target.value)}

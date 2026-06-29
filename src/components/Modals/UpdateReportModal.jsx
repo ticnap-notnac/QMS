@@ -120,7 +120,7 @@ export default function UpdateReportModal({
             <FieldCard label="Investigation Details" value={report?.investigation_details} />
           ) : (
             <div>
-              <label className="label-field">Investigation Details</label>
+              <label className="label-field">Investigation Details <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
               <textarea
                 value={form.investigationDetails}
                 onChange={(event) => setField('investigationDetails', event.target.value)}
@@ -279,7 +279,7 @@ export default function UpdateReportModal({
             <FieldCard label="Resolution Details (Preventive Action)" value={report?.resolution_details} />
           ) : (
             <div>
-              <label className="label-field">Resolution Details (Preventive Action)</label>
+              <label className="label-field">Resolution Details (Preventive Action) <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
               <textarea
                 value={form.resolutionDetails}
                 onChange={(event) => setField('resolutionDetails', event.target.value)}
@@ -294,7 +294,7 @@ export default function UpdateReportModal({
             <FieldCard label="Verification Date" value={formatDate(report?.verification_date)} />
           ) : (
             <div>
-              <label className="label-field">Verification Date</label>
+              <label className="label-field">Verification Date <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
               <div className="relative">
                 <input
                   type="date"

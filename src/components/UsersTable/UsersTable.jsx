@@ -19,7 +19,7 @@ export default function UsersTable({
             <th>Email</th>
             <th>Role</th>
             <th>Department</th>
-            <th>Site</th>
+            <th className="text-center">Site</th>
             <th>Contact</th>
             <th style={{ width: '10%' }} className="text-center">STATUS</th>
             <th style={{ width: '12%' }} className="text-center">ACTION</th>
@@ -40,7 +40,7 @@ export default function UsersTable({
                 <td>{user.email || '-'}</td>
                 <td>{roleName}</td>
                 <td>{departmentLabel}</td>
-                <td>
+                <td className="text-center">
                   <span style={{ fontSize: '11.5px', background: '#f1f5f9', color: '#475569', padding: '2px 7px', borderRadius: '4px', fontWeight: 600 }}>
                     {siteLabel}
                   </span>

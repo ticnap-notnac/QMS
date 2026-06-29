@@ -52,14 +52,7 @@ export default function AddUserPage({ userRole }) {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-color)',
-                        backgroundColor: 'rgba(15, 23, 42, 0.4)',
-                        color: 'var(--text-color)',
-                        fontSize: '0.85rem'
-                      }}
+                      className="admin-status-select"
                     >
                       <option value="ALL">All Status</option>
                       <option value="ACTIVE">Active</option>

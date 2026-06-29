@@ -46,7 +46,7 @@ function AddUserModal({
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">First Name:</span>
+              <span className="small-label">First Name: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <input
                 type="text"
                 name="firstName"
@@ -58,7 +58,7 @@ function AddUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Last Name:</span>
+              <span className="small-label">Last Name: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <input
                 type="text"
                 name="lastName"
@@ -70,7 +70,7 @@ function AddUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Password:</span>
+              <span className="small-label">Password: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <input
                 type="password"
                 name="password"
@@ -85,7 +85,7 @@ function AddUserModal({
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">Email Address:</span>
+              <span className="small-label">Email Address: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <input
                 type="email"
                 name="email"
@@ -98,7 +98,7 @@ function AddUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Username:</span>
+              <span className="small-label">Username: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <input
                 type="text"
                 name="userName"
@@ -126,7 +126,7 @@ function AddUserModal({
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">Role:</span>
+              <span className="small-label">Role: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <select
                 name="roleId"
                 value={formData.roleId}
@@ -151,7 +151,7 @@ function AddUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Department:</span>
+              <span className="small-label">Department: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <select
                 name="departmentId"
                 value={formData.departmentId}
@@ -176,7 +176,7 @@ function AddUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Site:</span>
+              <span className="small-label">Site: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <select
                 name="siteId"
                 value={formData.siteId || ''}

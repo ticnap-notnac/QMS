@@ -267,6 +267,20 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
             className="btn-edit-user"
             onClick={() => onUpdate(report)}
             title="Update report"
+            style={{
+              width: '32px',
+              height: '32px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#f1f5f9',
+              border: '1px solid #cbd5e1',
+              color: '#0f172a',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              padding: 0
+            }}
           >
             <SquarePen size={16} />
           </button>
@@ -278,7 +292,8 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
             onClick={() => onDelete(report)}
             title="Delete report"
             style={{
-              padding: '6px 12px',
+              width: '32px',
+              height: '32px',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -287,7 +302,8 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
               color: '#dc2626',
               borderRadius: '6px',
               cursor: 'pointer',
-              transition: 'all 0.15s ease'
+              transition: 'all 0.15s ease',
+              padding: 0
             }}
           >
             <Trash2 size={16} />
