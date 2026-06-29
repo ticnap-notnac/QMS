@@ -310,11 +310,14 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     (report) => {
       if (!report) return false
       if (String(report.status || '').trim().toUpperCase() === 'CLOSED') return false
-      if (canAssignReports) return true
+      
+      const role = String(userRole || '').trim().toLowerCase()
+      if (role === 'admin' || role === 'manager') return true
+
       return String(report.assigned_to || '') !== '' &&
         String(report.assigned_to) === String(currentUserId)
     },
-    [canAssignReports, currentUserId],
+    [currentUserId, userRole],
   )
 
   const canDeleteReport = useCallback(

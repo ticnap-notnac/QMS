@@ -1,7 +1,7 @@
 export const ROLES = {
   ADMIN: 'admin',
   AUDITOR: 'auditor',
-  EMPLOYEE: 'employee',
+  WAREHOUSE_STAFF: 'warehouse staff',
 }
 
 export const NCR_STATUS = {
