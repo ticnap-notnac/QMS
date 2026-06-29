@@ -580,7 +580,7 @@ function QDDRClosedTable({ qddrReports, loadingQddr, onDownloadPDF }) {
 // Sub-view: Task Reports › Audit – completed reports table
 // ---------------------------------------------------------------------------
 
-function AuditReportsTable({ auditReports, loadingAudit }) {
+function AuditReportsTable({ auditReports, loadingAudit, onFetchRunDetails }) {
   if (loadingAudit) return <div>Loading Audit reports...</div>
 
   if (!auditReports.length) {
@@ -609,7 +609,12 @@ function AuditReportsTable({ auditReports, loadingAudit }) {
           </thead>
           <tbody>
             {auditReports.map((run) => (
-              <tr key={run.id}>
+              <tr 
+                key={run.id}
+                onClick={() => onFetchRunDetails && onFetchRunDetails(run)}
+                style={{ cursor: onFetchRunDetails ? 'pointer' : 'default' }}
+                className="iso-table-row-hover"
+              >
                 <td style={{ fontWeight: 600, fontSize: '12px' }}>
                   {run.id.slice(0, 8)}...
                 </td>
@@ -762,6 +767,7 @@ export default function DCCFolderContent({
   auditSchedules,
   loadingAuditSchedules,
   userRole,
+  onFetchRunDetails
 }) {
   const queryClean = (searchQuery || '').trim().toLowerCase()
 
@@ -1031,7 +1037,7 @@ export default function DCCFolderContent({
           ) : selectedTaskFolder.id === 'audit' ? (
             <div className="flex-column full-height">
               <div className="breadcrumb">Task Reports &gt; Audit Reports &gt; Completed</div>
-              <AuditReportsTable auditReports={filteredAuditReports} loadingAudit={loadingAudit} />
+              <AuditReportsTable auditReports={filteredAuditReports} loadingAudit={loadingAudit} onFetchRunDetails={onFetchRunDetails} />
             </div>
           ) : selectedTaskFolder.id === 'audit_schedules' ? (
             <div className="flex-column full-height">

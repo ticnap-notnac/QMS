@@ -3,6 +3,7 @@ import { useDCCFolderNav } from './useDCC/useDCCFolderNav'
 import { useDCCISO } from './useDCC/useDCCISO'
 import { useDCCTaskReports } from './useDCC/useDCCTaskReports'
 import { useCARDetails } from './useCARDetails'
+import { useAuditRunDetails } from './useAuditRunDetails'
 
 export function useDCCLogic() {
   // 1. Folder Navigation & Search Query state
@@ -13,8 +14,11 @@ export function useDCCLogic() {
   const iso = useDCCISO()
   const { loadActiveStandards, openStandard, closeStandard, setSelectedStandard, setClauses } = iso
 
-  // 3. CAR Modal details state (clean architecture)
+  // 3. CAR Modal details state
   const carDetails = useCARDetails()
+
+  // Audit Run Details modal logic
+  const auditRunDetails = useAuditRunDetails()
 
   // 4. Completed Task Reports logic
   const taskReports = useDCCTaskReports({ carDetails })
@@ -136,6 +140,9 @@ export function useDCCLogic() {
       handleSuggestActions: carDetails.handleSuggestActions,
       handleCapaSubmit: (e) => carDetails.handleCapaSubmit(e, taskReports.submitCapa, null),
       handleVerificationSubmit: (outcome) => carDetails.handleVerificationSubmit(outcome, taskReports.verifyCar, null)
-    }
+    },
+
+    // Audit Run Details props
+    ...auditRunDetails
   }
 }

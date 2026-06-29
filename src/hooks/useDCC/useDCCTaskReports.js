@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import * as dccService from '@/services/dccService'
 import { fetchAllReports } from '@/services/ncrService'
 import { submitCapaPlan, verifyCarPlan } from '@/services/carService'
+import { supabase } from '@/utils/supabase'
 
 export function useDCCTaskReports({ carDetails } = {}) {
   const [ncrReports, setNcrReports] = useState([])
@@ -99,19 +100,44 @@ export function useDCCTaskReports({ carDetails } = {}) {
 
       const standardsData = await dccService.fetchStandardsForAuditMapping()
       const auditorsData = await dccService.fetchAuditorsForAuditMapping()
+      
+      const runIds = runs.map(r => r.id)
+      const { data: resultsData } = await supabase
+        .from('audit_results')
+        .select('run_id, status')
+        .in('run_id', runIds)
 
       const mapped = runs.map(run => {
         const sched = filteredSchedules.find(s => s.id === run.schedule_id)
         const std = sched ? (standardsData || []).find(s => s.id === sched.standard_id) : null
         const aud = (auditorsData || []).find(a => a.auth_id === run.auditor_id)
 
+        const runRes = (resultsData || []).filter(r => r.run_id === run.id)
+        const totalClauses = runRes.length
+        const compliantClauses = runRes.filter(r => r.status === 'compliant').length
+        const partialClauses = runRes.filter(r => r.status === 'partial').length
+        const nonCompliantClauses = runRes.filter(r => r.status === 'non_compliant').length
+        const naClauses = runRes.filter(r => r.status === 'na').length
+
+        const applicableCount = totalClauses - naClauses
+        const score = applicableCount > 0 
+          ? Math.round((compliantClauses / applicableCount) * 100) 
+          : 100
+
         return {
           id: run.id,
+          schedule_id: run.schedule_id,
           title: sched?.title || 'Unnamed Audit',
           standard_name: std ? `${std.name} (${std.version})` : 'Unknown Standard',
           auditor_name: aud ? `${aud.first_name} ${aud.last_name}` : 'Unknown Auditor',
           started_at: run.started_at,
-          completed_at: run.completed_at
+          completed_at: run.completed_at,
+          score,
+          totalClauses,
+          compliantClauses,
+          partialClauses,
+          nonCompliantClauses,
+          naClauses
         }
       })
 

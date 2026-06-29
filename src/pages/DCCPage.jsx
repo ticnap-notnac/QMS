@@ -1,6 +1,7 @@
 import DCCFolderContent from '../components/DCCFolderContent.jsx'
 import { useDCCLogic } from '../hooks/useDCCLogic.js'
 import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
+import { AuditRunDetailsModal } from '../components/AuditTools/AuditToolsModals'
 import './DCCPage.css'
 
 const FOLDER_ITEMS = [
@@ -15,8 +16,15 @@ export default function DCCPage({ userRole, authUserId }) {
     loadingStandards, selectedStandard, clauses, loadingClauses, openStandard, selectedTaskFolder,
     openTaskFolder, closeTaskFolder, ncrReports, loadingNcr, carReports, loadingCar, qddrReports,
     loadingQddr, auditReports, loadingAudit, auditSchedules, loadingAuditSchedules, openCarDetails,
-    carDetailsModalProps
+    carDetailsModalProps,
+    isDetailsModalOpen, selectedRunDetails, setIsDetailsModalOpen,
+    loadingRunDetails, runClauses, runResults, fetchRunDetails, handlePrintReport
   } = useDCCLogic()
+
+  const auditModalProps = {
+    isDetailsModalOpen, selectedRunDetails, setIsDetailsModalOpen,
+    loadingRunDetails, runClauses, runResults, handlePrintReport
+  }
 
   return (
     <main className="dashboard page-root">
@@ -31,10 +39,12 @@ export default function DCCPage({ userRole, authUserId }) {
             loadingCar={loadingCar} onSelectCar={openCarDetails} qddrReports={qddrReports} loadingQddr={loadingQddr}
             auditReports={auditReports} loadingAudit={loadingAudit} auditSchedules={auditSchedules}
             loadingAuditSchedules={loadingAuditSchedules} userRole={userRole}
+            onFetchRunDetails={fetchRunDetails}
           />
         </div>
       </div>
       <CARDetailsModal {...carDetailsModalProps} userRole={userRole} authUserId={authUserId} readOnly={true} />
+      <AuditRunDetailsModal {...auditModalProps} />
     </main>
   )
 }
