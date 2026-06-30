@@ -13,6 +13,7 @@ import RejectReportModal from '../components/Modals/RejectReportModal.jsx'
 import PreventiveActionModal from '../components/Modals/PreventiveActionModal.jsx'
 import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
 import QDDRDetailsModal from '../components/Modals/QDDRDetailsModal.jsx'
+import RecurringIssuesAlert from '../components/Reports/RecurringIssuesAlert.jsx'
 import ReportsFeedList from '../components/Reports/ReportsFeedList.jsx'
 import CARReportsList from '../components/Reports/CARReportsList.jsx'
 import QDDRReportsList from '../components/Reports/QDDRReportsList.jsx'
@@ -30,6 +31,22 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
 
   const [carToDelete, setCarToDelete] = useState(null)
   const [qddrToDelete, setQddrToDelete] = useState(null)
+  const [trendClusters, setTrendClusters] = useState([])
+
+  // Fetch recurring trends for the alert
+  React.useEffect(() => {
+    if (canAccessCar) {
+      fetch('/api/ncr/recurring-trends?days=14', {
+        headers: { 'Authorization': `Bearer ${logic.authUserId}` } // Assuming logic holds token or it's handled by axios interceptor. Actually, QFlow uses standard fetch with token? Let's rely on standard fetch with localStorage token.
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch trends')
+        return res.json()
+      })
+      .then(data => setTrendClusters(data))
+      .catch(err => console.error('Error fetching recurring trends:', err))
+    }
+  }, [canAccessCar, logic.activeTab]) // Re-fetch occasionally
 
   // Aggregate loading states for premium overlay spinner feedback
   const isOverlayLoading = logic.isNcrSubmitting || 
@@ -190,6 +207,18 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
 
         {logic.error && <div className="user-info-error">{logic.error}</div>}
         <div className="facebook-feed-layout-wrapper">
+          {logic.activeTab === 'ncr' && canAccessCar && trendClusters.length > 0 && (
+            <RecurringIssuesAlert 
+              clusters={trendClusters} 
+              onGenerateCar={(cluster) => {
+                // Pre-fill the CAR modal with the clustered NCR IDs and descriptions
+                logic.openCARModal({
+                  prefillNcrIds: cluster.map(n => n.id),
+                  prefillDescription: `Recurring issue detected from ${cluster.length} recent NCRs: \n${cluster.map(n => '- ' + n.description).join('\n')}`
+                })
+              }} 
+            />
+          )}
           {logic.activeTab === 'ncr' && (
             <ReportsFeedList
               isApprovalQueueMode={logic.isApprovalQueueMode} isClosedMode={logic.isClosedMode} isLoading={logic.isLoading}

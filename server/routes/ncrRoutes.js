@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import multer from 'multer'
-import { assignReport, createReport, createReportSubmit, deleteReport, getReports, reviewReportApproval, updateReport, updateReportInvestigation, rateReport, getReportRating } from '../controllers/ncrController.js'
+import { assignReport, createReport, createReportSubmit, deleteReport, getReports, reviewReportApproval, updateReport, updateReportInvestigation, rateReport, getReportRating, getRecurringUnlinkedIssues } from '../controllers/ncrController.js'
 import { requireRoles } from '../middlewares/roleMiddleware.js'
 import { validateRequest } from '../middlewares/validateRequest.js'
 import { createReportSchema, assignReportSchema, reviewReportApprovalSchema, rateReportSchema } from '../validations/ncrValidation.js'
@@ -10,6 +10,7 @@ const router = Router()
 const upload = multer({ storage: multer.memoryStorage() })
 
 router.get('/ncr', getReports)
+router.get('/ncr/recurring-trends', requireRoles(['admin', 'auditor', 'manager', 'department manager']), getRecurringUnlinkedIssues)
 router.post('/ncr', validateRequest(createReportSchema), createReport)
 router.post('/ncr/submit', upload.array('evidence_files', 3), createReportSubmit)
 router.put('/ncr/:id', validateRequest(createReportSchema), updateReport)

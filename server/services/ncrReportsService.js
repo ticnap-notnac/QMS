@@ -3,7 +3,7 @@
 
 import { supabase, hasServiceRole } from '../lib/supabase.js'
 import { REPORT_STATUS } from '../../shared/constants.js'
-import { extractKeywordsAsString } from '../utils/cbr.js'
+import { extractKeywordsAsString, extractKeywords, jaccardSimilarity } from '../utils/cbr.js'
 import { writeAudit } from '../lib/audit.js'
 import { getLocalDateString } from '../utils/date.js'
 
@@ -1277,7 +1277,6 @@ export async function getReportRatingsStats({ reportId, userAuthId }) {
     .eq('report_id', normalizedReportId)
 
   if (allRatingsError) throw allRatingsError
-
   const userRating = allRatings && currentUser
     ? allRatings.find(r => String(r.rated_by) === String(currentUser.id))?.rating || null
     : null
@@ -1296,4 +1295,68 @@ export async function getReportRatingsStats({ reportId, userAuthId }) {
     count: validRatings.length,
     userRating
   }
+}
+
+export async function fetchRecurringUnlinkedIssues(days = 14) {
+  // 1. Calculate date window
+  const dateWindow = new Date()
+  dateWindow.setDate(dateWindow.getDate() - days)
+  const windowStr = dateWindow.toISOString()
+
+  // 2. Fetch recent NCRs that are NOT closed.
+  // Note: We only check OPEN/INVESTIGATING NCRs to see if they are piling up.
+  const { data: recentNcrs, error } = await supabase
+    .from('ncr_reports')
+    .select('id, reference_no, description, created_at, status')
+    .neq('status', 'CLOSED')
+    .gte('created_at', windowStr)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  if (!recentNcrs || recentNcrs.length < 2) return []
+
+  // 3. Extract keywords for all recent NCRs
+  const processedNcrs = recentNcrs.map(ncr => ({
+    ...ncr,
+    keywords: extractKeywords(ncr.description || '')
+  }))
+
+  const clusters = []
+  const visitedIds = new Set()
+
+  // 4. Cluster them based on Jaccard similarity
+  for (let i = 0; i < processedNcrs.length; i++) {
+    const ncrA = processedNcrs[i]
+    if (visitedIds.has(ncrA.id)) continue
+
+    const currentCluster = [ncrA]
+    visitedIds.add(ncrA.id)
+
+    for (let j = i + 1; j < processedNcrs.length; j++) {
+      const ncrB = processedNcrs[j]
+      if (visitedIds.has(ncrB.id)) continue
+
+      const similarity = jaccardSimilarity(ncrA.keywords, ncrB.keywords)
+      // If similarity > 20%, group them together
+      if (similarity >= 0.20) {
+        currentCluster.push(ncrB)
+        visitedIds.add(ncrB.id)
+      }
+    }
+
+    // Only return clusters that have at least 2 recurring issues
+    if (currentCluster.length > 1) {
+      // Remove the Set from the output to make it JSON serializable
+      const safeCluster = currentCluster.map(c => ({
+        id: c.id,
+        reference_no: c.reference_no,
+        description: c.description,
+        created_at: c.created_at,
+        status: c.status
+      }))
+      clusters.push(safeCluster)
+    }
+  }
+
+  return clusters
 }

@@ -12,6 +12,7 @@ import {
   assignReportToEmployee,
   submitReportRating,
   getReportRatingsStats,
+  fetchRecurringUnlinkedIssues,
 } from '../services/ncrReportsService.js'
 
 export async function getReports(req, res) {
@@ -19,6 +20,16 @@ export async function getReports(req, res) {
   const actorAuthId = getRequestActor(req)
   try {
     return res.json(await fetchReports(scope, actorAuthId))
+  } catch (err) {
+    return res.status(500).json({ error: err?.message || String(err) })
+  }
+}
+
+export async function getRecurringUnlinkedIssues(req, res) {
+  try {
+    const days = parseInt(req.query.days, 10) || 14
+    const clusters = await fetchRecurringUnlinkedIssues(days)
+    return res.json(clusters)
   } catch (err) {
     return res.status(500).json({ error: err?.message || String(err) })
   }
