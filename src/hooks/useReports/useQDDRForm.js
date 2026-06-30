@@ -52,12 +52,35 @@ export function useQDDRForm() {
     if (error) setError('')
   }
 
-  const selectNcr = (id, reference) => {
+  const selectNcr = async (id, reference, report = null) => {
     setForm(prev => ({
       ...prev,
       ncr_id: prev.ncr_id === id ? null : id,
       linked_ncr_reference: prev.ncr_id === id ? '' : reference
     }))
+
+    // AI Classification (if linking)
+    if (form.ncr_id !== id && report?.description) {
+      try {
+        const res = await fetch('/api/suggestions/classify-tags', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description: report.description, reportType: 'QDDR' })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tags && data.tags.length > 0) {
+            setForm(prev => {
+              const updates = {};
+              data.tags.forEach(t => updates[t] = true);
+              return { ...prev, ...updates };
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Auto classification failed', err);
+      }
+    }
   }
 
   const resetForm = () => {

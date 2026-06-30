@@ -76,7 +76,7 @@ export async function extractKeywordsWithLLM(text, apiKey) {
   try {
     const prompt = `Extract 5-10 core technical concepts from the following issue description. Return them ONLY as a comma-separated list of standardized keywords. No explanations.\n\nDescription: ${text}`;
     
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

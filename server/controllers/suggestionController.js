@@ -1,4 +1,4 @@
-import { findSimilarCases, getCachedSuggestion, storeSuggestion, generateAiSuggestion, generateAiSuggestionFromText } from '../services/suggestionService.js'
+import { findSimilarCases, getCachedSuggestion, storeSuggestion, generateAiSuggestion, generateAiSuggestionFromText, autoClassifyTags } from '../services/suggestionService.js'
 
 export async function getSimilarCases(req, res, next) {
   try {
@@ -49,6 +49,16 @@ export async function generateSuggestionFromText(req, res, next) {
     const { description, issueType, deptName } = req.body
     const data = await generateAiSuggestionFromText({ description, issueType, deptName })
     return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function classifyTags(req, res, next) {
+  try {
+    const { description, reportType } = req.body
+    const tags = await autoClassifyTags(description, reportType)
+    return res.json({ tags })
   } catch (err) {
     next(err)
   }

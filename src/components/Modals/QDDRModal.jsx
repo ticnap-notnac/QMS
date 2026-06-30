@@ -145,7 +145,7 @@ function QDDRModal({
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => selectNcr(report.id, report.reference_no || String(report.id))}
+                          onChange={() => selectNcr(report.id, report.reference_no || String(report.id), report)}
                           style={{ marginTop: '4px' }}
                         />
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '6px' }}>

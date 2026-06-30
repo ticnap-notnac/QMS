@@ -122,7 +122,7 @@ Shared Keywords Detected: ${sharedKeywords.join(', ')}
 Please write a single, concise sentence (maximum 20 words) summarizing what this recurring issue is about, so an auditor instantly understands the problem. Do not use generic words like "Report 1" or "Report 2". Write the summary directly.`
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

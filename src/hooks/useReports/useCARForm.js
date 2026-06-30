@@ -81,7 +81,7 @@ export function useCARForm(departments = []) {
     setError(null)
   }
 
-  const toggleNcrSelection = (id, reference, report = null) => {
+  const toggleNcrSelection = async (id, reference, report = null) => {
     setForm(prev => {
       const isSelected = prev.ncr_ids.includes(String(id));
       if (isSelected) {
@@ -137,7 +137,7 @@ export function useCARForm(departments = []) {
           details = report.description;
         }
 
-        // 5. Checkbox Issue Type mapping
+        // 5. Checkbox Issue Type mapping (legacy fallback)
         const issueTypeLower = String(report?.issue_type || '').toLowerCase();
         const qualitySafety = prev.quality_food_safety || issueTypeLower.includes('quality') || issueTypeLower.includes('food');
         const envSafety = prev.environment_health_safety || issueTypeLower.includes('env') || issueTypeLower.includes('health') || issueTypeLower.includes('safety');
@@ -167,6 +167,29 @@ export function useCARForm(departments = []) {
         };
       }
     });
+
+    // AI Classification (if linking)
+    if (!form.ncr_ids.includes(String(id)) && report?.description) {
+      try {
+        const res = await fetch('/api/suggestions/classify-tags', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description: report.description, reportType: 'CAR' })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tags && data.tags.length > 0) {
+            setForm(prev => {
+              const updates = {};
+              data.tags.forEach(t => updates[t] = true);
+              return { ...prev, ...updates };
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Auto classification failed', err);
+      }
+    }
   }
 
   /** Confirm or remove a clause from the linked set */

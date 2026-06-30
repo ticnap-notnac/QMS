@@ -319,7 +319,7 @@ Respond ONLY in this JSON format with no preamble or markdown:
 {"suggestion": "your corrective action suggestion here", "preventive_suggestion": "your preventive action suggestion here", "confidence": 0.85}`
 
     // 3. Make fetch request to Gemini API
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -452,7 +452,7 @@ Provide a concise, actionable corrective action (for immediately addressing the 
 Respond ONLY in this JSON format with no preamble or markdown:
 {"suggestion": "your corrective action suggestion here", "preventive_suggestion": "your preventive action suggestion here", "confidence": 0.85}`
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -490,4 +490,77 @@ Respond ONLY in this JSON format with no preamble or markdown:
     console.error('Gemini API failed for text suggestion. Falling back to rules.', err)
     return { ...fallback, sourceDetails: 'System Heuristics', matchedFeatures: [] }
   }
+}
+
+// ─── Auto-Classification for Tags ──────────────────────────────────────────────
+
+const CAR_TAGS = [
+  'quality_food_safety', 'environment_health_safety', 'security_issue',
+  'internal_audit', 'customer_complaint', 'government_agency_audit',
+  'customer_audit_nonconformance', 'vendor_nonconformance'
+]
+
+const QDDR_TAGS = [
+  'holes_punctures', 'crushed_or_dented', 'bulging', 'opened_seal',
+  'excess_shipment', 'deformed_or_torn', 'wet_or_leaked', 'improper_stretch_wrapping',
+  'no_label_broken_label', 'documentation_error', 'open_carton', 'stain_or_graffiti',
+  'wrong_no_batchcode', 'short_pack', 'picking_discrepancy'
+]
+
+export async function autoClassifyTags(description, reportType) {
+  const tagsList = reportType === 'CAR' ? CAR_TAGS : QDDR_TAGS
+  const apiKey = process.env.GEMINI_API_KEY
+  
+  if (apiKey && description) {
+    try {
+      const prompt = `You are a strict JSON classifier. Read this non-conformance issue and select all applicable tags from the allowed list. 
+Issue: "${description}"
+
+Allowed tags: ${JSON.stringify(tagsList)}
+
+Return ONLY a valid JSON array of the string keys that apply. Do not include markdown or explanations. E.g. ["wet_or_leaked", "open_carton"]`
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: 'application/json', temperature: 0.1 }
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
+        const clean = text.replace(/```json|```/g, '').trim()
+        const parsed = JSON.parse(clean)
+        
+        // Filter out any hallucinated tags
+        return parsed.filter(tag => tagsList.includes(tag))
+      }
+    } catch (err) {
+      console.warn('Gemini tag classification failed. Falling back to heuristic.', err)
+    }
+  }
+
+  // ── Heuristic Fallback ──
+  const desc = (description || '').toLowerCase()
+  const matched = []
+  
+  if (reportType === 'CAR') {
+    if (desc.includes('safety') || desc.includes('quality') || desc.includes('food')) matched.push('quality_food_safety')
+    if (desc.includes('environment') || desc.includes('hazard') || desc.includes('health')) matched.push('environment_health_safety')
+    if (desc.includes('security') || desc.includes('access') || desc.includes('door')) matched.push('security_issue')
+    if (desc.includes('audit')) matched.push('internal_audit')
+    if (desc.includes('customer')) matched.push('customer_complaint')
+    if (desc.includes('vendor') || desc.includes('supplier')) matched.push('vendor_nonconformance')
+  } else {
+    if (desc.includes('hole') || desc.includes('puncture') || desc.includes('pierce')) matched.push('holes_punctures')
+    if (desc.includes('crush') || desc.includes('dent')) matched.push('crushed_or_dented')
+    if (desc.includes('wet') || desc.includes('leak') || desc.includes('water') || desc.includes('spill') || desc.includes('soak')) matched.push('wet_or_leaked')
+    if (desc.includes('document') || desc.includes('paperwork')) matched.push('documentation_error')
+    if (desc.includes('open carton') || desc.includes('open box')) matched.push('open_carton')
+  }
+  
+  return matched
 }
