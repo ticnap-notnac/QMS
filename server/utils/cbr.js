@@ -63,6 +63,50 @@ export function extractKeywordsAsString(text) {
   return [...extractKeywords(text)].join(' ')
 }
 
+/**
+ * Extracts semantic keywords using the Gemini LLM.
+ * Acts as a query expansion step before Jaccard similarity.
+ * @param {string} text 
+ * @param {string} apiKey 
+ * @returns {Promise<Set<string>>}
+ */
+export async function extractKeywordsWithLLM(text, apiKey) {
+  if (!text || !apiKey) return extractKeywords(text);
+  
+  try {
+    const prompt = `Extract 5-10 core technical concepts from the following issue description. Return them ONLY as a comma-separated list of standardized keywords. No explanations.\n\nDescription: ${text}`;
+    
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.1 }
+      })
+    });
+
+    if (!response.ok) {
+      console.warn('Gemini extraction failed, falling back to lexical extraction.');
+      return extractKeywords(text);
+    }
+
+    const data = await response.json();
+    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    // Parse comma separated list and clean
+    const keywords = resultText
+      .split(',')
+      .map(k => k.trim().toLowerCase().replace(/[^a-z0-9]/g, ''))
+      .filter(k => k.length > 2);
+      
+    if (keywords.length === 0) return extractKeywords(text);
+    return new Set(keywords);
+  } catch (err) {
+    console.warn('Error during LLM keyword extraction, falling back:', err);
+    return extractKeywords(text);
+  }
+}
+
 // ─── Similarity Functions ─────────────────────────────────────────────────────
 
 /**
@@ -122,7 +166,7 @@ export function computeCBRScore(current, past) {
   }
 
   // ── Feature 2: Keyword Jaccard (weight 0.35) ─────────────────────────────
-  const currentKw = extractKeywords(current.description)
+  const currentKw = current.llm_keywords || extractKeywords(current.description)
   const pastKw = extractKeywords(past.problem_keywords || past.description || '')
   const keywordScore = jaccardSimilarity(currentKw, pastKw)
   if (keywordScore > 0.05) matchedFeatures.push('problem keywords')

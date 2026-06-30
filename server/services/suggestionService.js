@@ -1,21 +1,6 @@
-/**
- * server/services/suggestionService.js
- *
- * CBR-powered corrective action suggestion engine.
- *
- * CBR Steps:
- *   RETRIEVE  → Score ALL candidates (case_repository + rated NCRs) via computeCBRScore()
- *   REUSE     → Return the highest-scoring candidate's corrective_action
- *   REVISE    → Investigator edits via UpdateReportModal (no code needed here)
- *   RETAIN    → Handled in ncrReportsService.submitReportRating()
- *
- * If the best CBR match scores below the MIN_CBR_SCORE threshold, falls back to
- * Gemini AI which uses all mined data as context.
- */
-
 import { supabase } from '../lib/supabase.js'
 import { REPORT_STATUS, CAR_STATUS } from '../../shared/constants.js'
-import { extractKeywords, retrieveBestMatch } from '../utils/cbr.js'
+import { extractKeywordsWithLLM, retrieveBestMatch } from '../utils/cbr.js'
 
 /** Minimum CBR score to use a past case instead of falling back to AI */
 const MIN_CBR_SCORE = 0.2
@@ -155,11 +140,11 @@ export async function findSimilarCases(ncrId) {
   const ratedNcrAsCases = ratedNcrCandidates.map(ncr => ({
     corrective_action: ncr.corrective_action || ncr.investigation_details,
     preventive_action: ncr.resolution_details,
-    problem_keywords:  ncr.description,   // full description used as keyword source
-    issue_type:        ncr.issue_type,
-    severity:          ncr.severity,
-    department_id:     ncr.department_id,
-    product_type:      ncr.product_type,
+    problem_keywords: ncr.description,   // full description used as keyword source
+    issue_type: ncr.issue_type,
+    severity: ncr.severity,
+    department_id: ncr.department_id,
+    product_type: ncr.product_type,
     effectiveness_score: null,            // no explicit score; relies on rating qualification
     times_used: 1,
     source: 'ncr',
@@ -170,6 +155,12 @@ export async function findSimilarCases(ncrId) {
     ...ratedNcrAsCases,
   ]
 
+  // ── LLM QUERY EXPANSION (Semantic understanding before retrieval) ──
+  const apiKey = process.env.GEMINI_API_KEY
+  if (apiKey && report.description) {
+    report.llm_keywords = await extractKeywordsWithLLM(report.description, apiKey)
+  }
+
   // ── CBR RETRIEVE ──────────────────────────────────────────────────────────
   const bestMatch = retrieveBestMatch(report, allCandidates)
 
@@ -177,8 +168,8 @@ export async function findSimilarCases(ncrId) {
     report,
     bestMatch,               // top CBR result (includes cbr_score + matched_features)
     minCbrScore: MIN_CBR_SCORE,
-    caseRepo:   caseRepoCandidates,  // raw data kept for AI fallback context
-    ratedNcrs:  ratedNcrCandidates,
+    caseRepo: caseRepoCandidates,  // raw data kept for AI fallback context
+    ratedNcrs: ratedNcrCandidates,
     carReports,
     qddrReports,
   }
@@ -216,11 +207,11 @@ export async function storeSuggestion({ ncrId, suggestion, confidence, type = 'c
   const { error } = await supabase
     .from('ai_predictions')
     .insert({
-      ncr_id:          ncrId,
-      ai_suggestion:   suggestion,
+      ncr_id: ncrId,
+      ai_suggestion: suggestion,
       confidence_score: confidence,
       prediction_type: type,
-      predicted_risk:  'corrective',
+      predicted_risk: 'corrective',
     })
 
   if (error) throw error
@@ -300,23 +291,23 @@ NCR Report:
 
 Case Repository Matches (CBR candidates):
 ${caseRepo.length > 0
-    ? caseRepo.map((c, i) => `${i + 1}. Keywords: ${c.problem_keywords || 'N/A'} | Corrective Action: ${c.corrective_action} | Preventive Action: ${c.preventive_action || 'N/A'} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
-    : 'None'}
+        ? caseRepo.map((c, i) => `${i + 1}. Keywords: ${c.problem_keywords || 'N/A'} | Corrective Action: ${c.corrective_action} | Preventive Action: ${c.preventive_action || 'N/A'} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
+        : 'None'}
 
 Rated NCR Reports (rating >= 3):
 ${ratedNcrs.length > 0
-    ? ratedNcrs.map((r, i) => `${i + 1}. Description: ${r.description} | Corrective: ${r.corrective_action || 'N/A'} | Resolution/Preventive: ${r.resolution_details || 'N/A'}`).join('\n')
-    : 'None'}
+        ? ratedNcrs.map((r, i) => `${i + 1}. Description: ${r.description} | Corrective: ${r.corrective_action || 'N/A'} | Resolution/Preventive: ${r.resolution_details || 'N/A'}`).join('\n')
+        : 'None'}
 
 CAR Reports:
 ${carReports.length > 0
-    ? carReports.map((c, i) => `${i + 1}. Issue: ${c.details_of_nonconformance || 'N/A'} | Action: ${c.re_corrective_action || 'N/A'}`).join('\n')
-    : 'None'}
+        ? carReports.map((c, i) => `${i + 1}. Issue: ${c.details_of_nonconformance || 'N/A'} | Action: ${c.re_corrective_action || 'N/A'}`).join('\n')
+        : 'None'}
 
 QDDR Reports:
 ${qddrReports.length > 0
-    ? qddrReports.map((q, i) => `${i + 1}. Reason: ${q.reason_of_discrepancy || 'N/A'} | Corrective: ${q.corrective_action || 'N/A'} | Preventive: ${q.preventive_action || 'N/A'}`).join('\n')
-    : 'None'}
+        ? qddrReports.map((q, i) => `${i + 1}. Reason: ${q.reason_of_discrepancy || 'N/A'} | Corrective: ${q.corrective_action || 'N/A'} | Preventive: ${q.preventive_action || 'N/A'}`).join('\n')
+        : 'None'}
 `
     if (previousSuggestions && previousSuggestions.length > 0) {
       prompt += `\nIMPORTANT: Do NOT suggest any of the following corrective/preventive actions, as they were previously rejected by the user:\n`
@@ -396,11 +387,11 @@ export async function generateAiSuggestionFromText({ description, issueType, dep
   const ratedNcrAsCases = ratedNcrCandidates.map(ncr => ({
     corrective_action: ncr.corrective_action || ncr.investigation_details,
     preventive_action: ncr.resolution_details,
-    problem_keywords:  ncr.description,
-    issue_type:        ncr.issue_type,
-    severity:          ncr.severity,
-    department_id:     ncr.department_id,
-    product_type:      ncr.product_type,
+    problem_keywords: ncr.description,
+    issue_type: ncr.issue_type,
+    severity: ncr.severity,
+    department_id: ncr.department_id,
+    product_type: ncr.product_type,
     effectiveness_score: null,
     times_used: 1,
     source: 'ncr',
@@ -415,6 +406,12 @@ export async function generateAiSuggestionFromText({ description, issueType, dep
     description,
     issue_type: issueType,
     severity: 'Medium',
+  }
+
+  // ── LLM QUERY EXPANSION (Semantic understanding before retrieval) ──
+  const apiKey = process.env.GEMINI_API_KEY
+  if (apiKey && description) {
+    report.llm_keywords = await extractKeywordsWithLLM(description, apiKey)
   }
 
   const bestMatch = retrieveBestMatch(report, allCandidates)
@@ -433,7 +430,6 @@ export async function generateAiSuggestionFromText({ description, issueType, dep
     }
   }
 
-  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
     console.warn('GEMINI_API_KEY is not configured. Using rule-based fallback.')
     return { ...fallback, sourceDetails: 'System Heuristics', matchedFeatures: [] }
@@ -449,8 +445,8 @@ Issue:
 
 Case Repository Matches (CBR candidates):
 ${caseRepoCandidates.length > 0
-    ? caseRepoCandidates.slice(0, 10).map((c, i) => `${i + 1}. Keywords: ${c.problem_keywords || 'N/A'} | Corrective Action: ${c.corrective_action} | Preventive Action: ${c.preventive_action || 'N/A'} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
-    : 'None'}
+        ? caseRepoCandidates.slice(0, 10).map((c, i) => `${i + 1}. Keywords: ${c.problem_keywords || 'N/A'} | Corrective Action: ${c.corrective_action} | Preventive Action: ${c.preventive_action || 'N/A'} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
+        : 'None'}
 
 Provide a concise, actionable corrective action (for immediately addressing the current issue) and a preventive action (to prevent recurrence in the future). Each action should be 2-4 sentences. Also provide a confidence score between 0.0 and 1.0.
 Respond ONLY in this JSON format with no preamble or markdown:
