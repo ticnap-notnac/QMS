@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabaseClient.js'
+import { supabase } from '../lib/supabase.js'
 import { extractKeywords, jaccardSimilarity } from '../utils/cbr.js'
 import fetch from 'node-fetch'
 
