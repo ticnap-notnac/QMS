@@ -383,6 +383,7 @@ export default function useISOStandardsLogic({ userName }) {
         item.id === standard.id ? { ...item, is_active: nextValue } : item
       )))
       setUpdatedStandardId(standard.id)
+      setToast({ message: `${standard.name} is now ${nextValue ? 'Active' : 'Inactive'}`, type: 'success' })
     } catch (error) {
       setToggleError('The standard could not be updated. Please try again.')
     } finally {

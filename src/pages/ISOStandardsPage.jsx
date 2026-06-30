@@ -33,16 +33,21 @@ export default function ISOStandardsPage({ userRole, userName }) {
                   <div className="iso-section-tabs" role="tablist" aria-label="ISO standards sections" style={{ width: '100%', justifyContent: 'flex-start' }}>
                     <button type="button" className={`iso-section-tab ${activeSection === 'Add Standard' ? 'active' : ''}`} onClick={() => setActiveSection('Add Standard')}><PlusCircle size={16} />Add Standard</button>
                     <button type="button" className={`iso-section-tab ${activeSection === 'Add Clauses' ? 'active' : ''}`} onClick={() => setActiveSection('Add Clauses')}><Save size={16} />Add Clauses</button>
-                    <button type="button" className={`iso-section-tab ${activeSection === 'Toggle Standards' ? 'active' : ''}`} onClick={() => setActiveSection('Toggle Standards')}><CheckCircle2 size={16} />Toggle Standards</button>
                     <button type="button" className={`iso-section-tab ${activeSection === 'Manage Clauses' ? 'active' : ''}`} onClick={() => setActiveSection('Manage Clauses')}><List size={16} />Manage Clauses</button>
                   </div>
                 </div>
               </div>
               <div className="glass-card-content iso-standards-content">
-                {activeSection === 'Add Standard' && <AddStandardSection {...addStandardSectionProps} />}
+                {activeSection === 'Add Standard' && (
+                  <>
+                    <AddStandardSection {...addStandardSectionProps} />
+                    <div style={{ marginTop: '24px' }}>
+                      <ToggleStandardsSection {...toggleStandardsSectionProps} />
+                    </div>
+                  </>
+                )}
                 {activeSection === 'Add Clauses' && <AddClausesSection {...addClausesSectionProps} />}
                 {activeSection === 'Manage Clauses' && <ManageClausesSection {...manageClausesSectionProps} />}
-                {activeSection === 'Toggle Standards' && <ToggleStandardsSection {...toggleStandardsSectionProps} />}
               </div>
             </div>
           </div>

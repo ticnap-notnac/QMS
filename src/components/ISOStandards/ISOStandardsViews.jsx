@@ -292,8 +292,8 @@ export function ToggleStandardsSection({
     <section className="iso-section-card">
       <div className="iso-section-header iso-section-header--tight">
         <div>
-          <h2>Toggle Standards Active/Inactive</h2>
-          <p>Turn standards on or off without deleting the underlying record.</p>
+          <h2>Existing Standards</h2>
+          <p>Manage existing standards and turn them on or off.</p>
         </div>
       </div>
       {toggleError ? <div className="iso-inline-message iso-inline-message--error">{toggleError}</div> : null}
@@ -305,20 +305,19 @@ export function ToggleStandardsSection({
               <th>Version</th>
               <th>Status</th>
               <th>Toggle</th>
-              <th>Confirmation</th>
               <th className="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loadingStandards ? (
               <tr>
-                <td colSpan={6} className="iso-empty-state">
+                <td colSpan={5} className="iso-empty-state">
                   Loading standards...
                 </td>
               </tr>
             ) : standards.length === 0 ? (
               <tr>
-                <td colSpan={6} className="iso-empty-state">
+                <td colSpan={5} className="iso-empty-state">
                   No ISO standards have been created yet.
                 </td>
               </tr>
@@ -352,16 +351,6 @@ export function ToggleStandardsSection({
                         </span>
                         <span className="iso-toggle-text">{busy ? 'Saving...' : standard.is_active ? 'On' : 'Off'}</span>
                       </button>
-                    </td>
-                    <td>
-                      {updatedStandardId === standard.id ? (
-                        <span className="iso-updated-note">
-                          <CheckCircle2 size={14} />
-                          Updated
-                        </span>
-                      ) : (
-                        <span className="iso-updated-note iso-updated-note--muted">Idle</span>
-                      )}
                     </td>
                     <td className="text-center">
                       <div className="action-buttons-wrapper">
