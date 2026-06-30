@@ -77,3 +77,12 @@
     grid-template-columns: 1fr;
   }
 }
+
+.dashboard-clickable-row {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dashboard-clickable-row:hover {
+  background-color: #f1f5f9 !important;
+  transform: translateX(4px);
+}

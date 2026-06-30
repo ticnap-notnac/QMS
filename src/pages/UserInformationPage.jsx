@@ -48,6 +48,12 @@ export default function UserInformationPage(props) {
             >
               Profile & Account
             </button>
+            <button 
+              onClick={() => navigate('/settings', { state: { section: 'Accessibility' } })} 
+              className="sidebar-button"
+            >
+              Accessibility
+            </button>
           </div>
 
           <div className="settings-main settings-main--profile">

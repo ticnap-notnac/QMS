@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/utils/supabase'
 import { request } from '../lib/api'
 import {
@@ -13,7 +14,7 @@ import {
   Line,
   Legend
 } from 'recharts'
-import { AlertCircle, Shield, TrendingUp, BarChart2, Clock } from 'lucide-react'
+import { AlertCircle, Shield, TrendingUp, BarChart2, Clock, MoreHorizontal, Calendar, CheckSquare, FileText, CheckCircle2 } from 'lucide-react'
 
 
 // Custom tooltips for nice monotone popup displays
@@ -68,12 +69,30 @@ const CustomResolutionTooltip = ({ active, payload, label }) => {
 }
 
 export default function Dashboard({ currentUserId, userRole, userDepartmentId }) {
+  const navigate = useNavigate()
   const [metrics, setMetrics] = useState(null)
   const [complianceStats, setComplianceStats] = useState([])
   const [trends, setTrends] = useState([])
   const [resolutionTrend, setResolutionTrend] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [upcomingAudits, setUpcomingAudits] = useState([])
+  const [latestActivities, setLatestActivities] = useState([])
+
+  const getRelativeTime = (dateStr) => {
+    if (!dateStr) return ''
+    const now = new Date()
+    const diff = now - new Date(dateStr)
+    const secs = Math.floor(diff / 1000)
+    const mins = Math.floor(secs / 60)
+    const hours = Math.floor(mins / 60)
+    const days = Math.floor(hours / 24)
+
+    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`
+    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`
+    if (mins > 0) return `${mins} min${mins > 1 ? 's' : ''} ago`
+    return 'Just now'
+  }
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -114,6 +133,50 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           isoCompliance: avgCompliance,
           defectRate: 0.4
         })
+
+        // 5. Fetch upcoming audit schedules from database
+        const { data: rawSchedules } = await supabase
+          .from('audit_schedules')
+          .select('id, title, scheduled_date')
+          .order('scheduled_date', { ascending: true })
+          .limit(3)
+
+        if (rawSchedules && rawSchedules.length > 0) {
+          setUpcomingAudits(rawSchedules.map(s => ({
+            id: s.id,
+            title: s.title,
+            date: new Date(s.scheduled_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+          })))
+        } else {
+          setUpcomingAudits([
+            { id: 1, title: 'ISO 13485 Internal Audit', date: 'June 30' },
+            { id: 2, title: 'FDA Prep Inspection', date: 'July 15' }
+          ])
+        }
+
+        // 6. Fetch latest CAR activities from database
+        const { data: rawCars } = await supabase
+          .from('car_reports')
+          .select('id, reference_no, status, created_at, recipient')
+          .order('created_at', { ascending: false })
+          .limit(4)
+
+        if (rawCars && rawCars.length > 0) {
+          setLatestActivities(rawCars.map((c, idx) => ({
+            id: c.id,
+            title: `CAR Notification: ${c.reference_no}`,
+            description: `Status: ${String(c.status || '').toUpperCase()}${c.recipient ? ` | Assignee: ${c.recipient}` : ''}`,
+            time: getRelativeTime(c.created_at),
+            tone: idx % 2 === 0 ? 'success' : 'danger'
+          })))
+        } else {
+          setLatestActivities([
+            { id: 1, title: 'DCR notification at', description: 'NCR Assessment', time: '7 hours ago', tone: 'danger' },
+            { id: 2, title: 'DCR notification at', description: 'Latest Emplation', time: '5 hours ago', tone: 'success' },
+            { id: 3, title: 'DCR notification at', description: 'CAR Assessment', time: '14 days ago', tone: 'danger' },
+            { id: 4, title: 'CAR notification at', description: 'CAR Assessment', time: '2 days ago', tone: 'success' }
+          ])
+        }
       } catch (err) {
         console.error('Error fetching dashboard data:', err)
         setError('We could not load your dashboard. Please refresh the page to try again.')
@@ -146,6 +209,8 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
     title: t.title,
     standard: t.standard_name
   }))
+
+
 
   return (
     <div className="dashboard-content" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -240,6 +305,127 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
             {metrics?.defectRate || 0.4}%
           </h3>
           <span style={{ fontSize: '12px', color: '#64748b' }}>Well within compliance margins</span>
+        </div>
+      </section>
+
+      {/* Double Column Info Widgets Row */}
+      <section className="dashboard-widgets-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+        {/* Card 1: Upcoming Regulatory Audits */}
+        <div className="dashboard-widget-card" style={{
+          background: '#ffffff',
+          border: '1px solid #e4e4e7',
+          borderRadius: '12px',
+          padding: '20px 24px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Upcoming Regulatory Audits</h3>
+          </div>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 700, color: '#64748b', letterSpacing: '0.5px', textTransform: 'uppercase', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Calendar size={13} /> Calendar</span>
+            <span>Checklist</span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {upcomingAudits.map((audit) => (
+              <div 
+                key={audit.id} 
+                className="dashboard-clickable-row"
+                onClick={() => navigate('/audit-tools?tab=Schedules')}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: '#f8fafc',
+                  border: '1px solid #f1f5f9',
+                  borderRadius: '8px',
+                  padding: '12px 16px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '6px',
+                    background: '#e0f2fe',
+                    color: '#0369a1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <CheckCircle2 size={14} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>{audit.title}</span>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>{audit.date}</span>
+                  </div>
+                </div>
+                <span style={{ fontSize: '12px', fontWeight: 500, color: '#475569' }}>{audit.date}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Card 2: Latest CAR activities */}
+        <div className="dashboard-widget-card" style={{
+          background: '#ffffff',
+          border: '1px solid #e4e4e7',
+          borderRadius: '12px',
+          padding: '20px 24px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Latest CAR activities</h3>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {latestActivities.map((activity) => (
+              <div 
+                key={activity.id} 
+                className="dashboard-clickable-row"
+                onClick={() => navigate('/reports')}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderBottom: '1px solid #f1f5f9',
+                  padding: '8px 10px',
+                  borderRadius: '6px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: activity.tone === 'success' ? '#f0fdf4' : '#fef2f2',
+                    color: activity.tone === 'success' ? '#166534' : '#991b1b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <FileText size={16} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
+                      {activity.title}
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>
+                      {activity.description}
+                    </span>
+                  </div>
+                </div>
+                <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>{activity.time}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

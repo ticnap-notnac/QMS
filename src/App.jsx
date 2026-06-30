@@ -48,6 +48,17 @@ function AppInner() {
     console.log('user role:', user?.role)
   }, [user])
 
+  useEffect(() => {
+    const highContrast = localStorage.getItem('accessibility-high-contrast') === 'true'
+    document.body.classList.toggle('high-contrast-mode', highContrast)
+
+    const textScale = localStorage.getItem('accessibility-text-scale') || 'normal'
+    document.documentElement.setAttribute('data-text-scale', textScale)
+
+    const reduceMotion = localStorage.getItem('accessibility-reduce-motion') === 'true'
+    document.body.classList.toggle('reduce-motion-mode', reduceMotion)
+  }, [])
+
   const refreshUnreadNotificationCount = useCallback(async () => {
     if (!currentUserId || !user) {
       setUnreadNotificationCount(0)
