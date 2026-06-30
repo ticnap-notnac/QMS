@@ -5,13 +5,17 @@ import Toast from '@/components/UI/Toast'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import { useISOStandardsLogic } from '@/hooks/useAdminPanel.js'
 import { AddStandardSection, AddClausesSection, ManageClausesSection, ToggleStandardsSection } from '@/components/ISOStandards/ISOStandardsViews'
+import { EditStandardModal, EditClauseModal } from '@/components/ISOPage/ISOModals'
 import './AdminPanel.css'
+import './ISOPage.css'
 
 export default function ISOStandardsPage({ userRole, userName }) {
   const {
     toast, setToast, activeSection, setActiveSection, addStandardSectionProps,
     addClausesSectionProps, manageClausesSectionProps, toggleStandardsSectionProps,
-    confirmStandardDialogProps, confirmClauseDialogProps
+    confirmStandardDialogProps, confirmClauseDialogProps,
+    editingStandard, setEditingStandard, handleUpdateStandard,
+    editingClause, setEditingClause, handleUpdateClause, savingEdit
   } = useISOStandardsLogic({ userName })
 
   return (
@@ -53,6 +57,21 @@ export default function ISOStandardsPage({ userRole, userName }) {
           </div>
           <ConfirmDialog {...confirmStandardDialogProps} />
           <ConfirmDialog {...confirmClauseDialogProps} />
+          
+          <EditStandardModal 
+            isOpen={!!editingStandard} 
+            standard={editingStandard} 
+            onClose={() => setEditingStandard(null)} 
+            onSave={handleUpdateStandard} 
+            savingEdit={savingEdit} 
+          />
+          <EditClauseModal 
+            isOpen={!!editingClause} 
+            clause={editingClause} 
+            onClose={() => setEditingClause(null)} 
+            onSave={handleUpdateClause} 
+            savingEdit={savingEdit} 
+          />
         </main>
       ) : (
         <main className="page-main-centered">

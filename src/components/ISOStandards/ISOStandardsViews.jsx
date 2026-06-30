@@ -1,4 +1,4 @@
-import { LoaderCircle, Trash2, CheckCircle2 } from 'lucide-react'
+import { LoaderCircle, Trash2, CheckCircle2, Pencil } from 'lucide-react'
 
 export function AddStandardSection({
   standardForm,
@@ -206,7 +206,8 @@ export function ManageClausesSection({
   loadingClauses,
   clauses,
   deletingClauseIds,
-  handleDeleteClause
+  handleDeleteClause,
+  setEditingClause
 }) {
   return (
     <section className="iso-section-card">
@@ -258,6 +259,16 @@ export function ManageClausesSection({
                       <div className="action-buttons-wrapper">
                         <button
                           type="button"
+                          className="action-btn edit-btn"
+                          onClick={() => setEditingClause(clause)}
+                          disabled={deleting}
+                          title="Edit Clause"
+                          style={{ color: '#0ea5e9' }}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          type="button"
                           className="action-btn delete-btn"
                           onClick={() => handleDeleteClause(clause)}
                           disabled={deleting}
@@ -286,7 +297,8 @@ export function ToggleStandardsSection({
   deletingStandardIds,
   updatedStandardId,
   handleToggleStandard,
-  handleDeleteStandard
+  handleDeleteStandard,
+  setEditingStandard
 }) {
   return (
     <section className="iso-section-card">
@@ -354,6 +366,16 @@ export function ToggleStandardsSection({
                     </td>
                     <td className="text-center">
                       <div className="action-buttons-wrapper">
+                        <button
+                          type="button"
+                          className="action-btn edit-btn"
+                          onClick={() => setEditingStandard(standard)}
+                          disabled={busy || deleting}
+                          title="Edit Standard"
+                          style={{ color: '#0ea5e9' }}
+                        >
+                          <Pencil size={14} />
+                        </button>
                         <button
                           type="button"
                           className="action-btn delete-btn"

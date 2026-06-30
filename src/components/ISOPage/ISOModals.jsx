@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react'
 import { X, ClipboardCheck, AlertTriangle, FileText, GraduationCap } from 'lucide-react'
 
 export function ISOModulesModal({
@@ -301,6 +302,154 @@ export function ISOTemplatesModal({
             </div>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+export function EditStandardModal({ standard, isOpen, onClose, onSave, savingEdit }) {
+  const [formData, setFormData] = useState({ name: '', version: '', description: '' })
+
+  useEffect(() => {
+    if (standard) {
+      setFormData({
+        name: standard.name || '',
+        version: standard.version || '',
+        description: standard.description || ''
+      })
+    }
+  }, [standard])
+
+  if (!isOpen || !standard) return null
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onSave(standard.id, formData)
+  }
+
+  return (
+    <div className="iso-modal-overlay" onClick={onClose}>
+      <div className="iso-modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', width: '90%' }}>
+        <div className="iso-modal-header" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>Edit ISO Standard</h3>
+          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+            <X size={18} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#334155' }}>Name</label>
+            <input 
+              required
+              type="text" 
+              value={formData.name} 
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#334155' }}>Version</label>
+            <input 
+              required
+              type="text" 
+              value={formData.version} 
+              onChange={e => setFormData({ ...formData, version: e.target.value })}
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#334155' }}>Description</label>
+            <textarea 
+              rows={3}
+              value={formData.description} 
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', resize: 'vertical' }}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+            <button type="button" onClick={onClose} style={{ padding: '8px 16px', background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', color: '#475569' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={savingEdit} style={{ padding: '8px 16px', background: '#0891b2', border: 'none', borderRadius: '6px', color: 'white', cursor: savingEdit ? 'not-allowed' : 'pointer', fontWeight: '500' }}>
+              {savingEdit ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+export function EditClauseModal({ clause, isOpen, onClose, onSave, savingEdit }) {
+  const [formData, setFormData] = useState({ clause_number: '', title: '', description: '' })
+
+  useEffect(() => {
+    if (clause) {
+      setFormData({
+        clause_number: clause.clause_number || '',
+        title: clause.title || '',
+        description: clause.description || ''
+      })
+    }
+  }, [clause])
+
+  if (!isOpen || !clause) return null
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onSave(clause.id, formData)
+  }
+
+  return (
+    <div className="iso-modal-overlay" onClick={onClose}>
+      <div className="iso-modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', width: '90%' }}>
+        <div className="iso-modal-header" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>Edit Clause</h3>
+          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+            <X size={18} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div style={{ flex: '0 0 100px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#334155' }}>Clause No.</label>
+              <input 
+                required
+                type="text" 
+                value={formData.clause_number} 
+                onChange={e => setFormData({ ...formData, clause_number: e.target.value })}
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#334155' }}>Title</label>
+              <input 
+                required
+                type="text" 
+                value={formData.title} 
+                onChange={e => setFormData({ ...formData, title: e.target.value })}
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
+              />
+            </div>
+          </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#334155' }}>Description</label>
+            <textarea 
+              rows={5}
+              value={formData.description} 
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', resize: 'vertical' }}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+            <button type="button" onClick={onClose} style={{ padding: '8px 16px', background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', color: '#475569' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={savingEdit} style={{ padding: '8px 16px', background: '#0891b2', border: 'none', borderRadius: '6px', color: 'white', cursor: savingEdit ? 'not-allowed' : 'pointer', fontWeight: '500' }}>
+              {savingEdit ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )

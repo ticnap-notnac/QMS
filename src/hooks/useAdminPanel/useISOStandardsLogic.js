@@ -44,6 +44,10 @@ export default function useISOStandardsLogic({ userName }) {
   
   const [standardToDelete, setStandardToDelete] = useState(null)
   const [clauseToDelete, setClauseToDelete] = useState(null)
+  
+  const [editingStandard, setEditingStandard] = useState(null)
+  const [editingClause, setEditingClause] = useState(null)
+  const [savingEdit, setSavingEdit] = useState(false)
 
   const getCurrentAuthId = async () => {
     try {
@@ -176,6 +180,50 @@ export default function useISOStandardsLogic({ userName }) {
   }
 
   const cancelDeleteClause = () => setClauseToDelete(null)
+
+  const handleUpdateStandard = async (id, updates) => {
+    setSavingEdit(true)
+    try {
+      const { error } = await supabase
+        .from('iso_standards')
+        .update(updates)
+        .eq('id', id)
+      
+      if (error) throw new Error(error.message)
+      
+      setStandards(current => current.map(s => s.id === id ? { ...s, ...updates } : s))
+      setToast({ message: 'ISO Standard updated successfully.', type: 'success' })
+      setEditingStandard(null)
+      await logIsoActivity('UPDATE_ISO_STANDARD', { id, updates })
+    } catch (err) {
+      console.error(err)
+      setToast({ message: 'Failed to update ISO standard. Please try again.', type: 'error' })
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  const handleUpdateClause = async (id, updates) => {
+    setSavingEdit(true)
+    try {
+      const { error } = await supabase
+        .from('iso_clauses')
+        .update(updates)
+        .eq('id', id)
+      
+      if (error) throw new Error(error.message)
+      
+      setClauses(current => current.map(c => c.id === id ? { ...c, ...updates } : c))
+      setToast({ message: 'Clause updated successfully.', type: 'success' })
+      setEditingClause(null)
+      await logIsoActivity('UPDATE_ISO_CLAUSE', { id, updates })
+    } catch (err) {
+      console.error(err)
+      setToast({ message: 'Failed to update clause. Please try again.', type: 'error' })
+    } finally {
+      setSavingEdit(false)
+    }
+  }
 
   const ensureClauseGroup = async (standardId) => {
     const { data: existingGroup, error: groupError } = await supabase
@@ -463,7 +511,8 @@ export default function useISOStandardsLogic({ userName }) {
     loadingClauses,
     clauses,
     deletingClauseIds,
-    handleDeleteClause
+    handleDeleteClause,
+    setEditingClause
   }
 
   const toggleStandardsSectionProps = {
@@ -474,7 +523,8 @@ export default function useISOStandardsLogic({ userName }) {
     deletingStandardIds,
     updatedStandardId,
     handleToggleStandard,
-    handleDeleteStandard
+    handleDeleteStandard,
+    setEditingStandard
   }
 
   const confirmStandardDialogProps = {
@@ -509,6 +559,13 @@ export default function useISOStandardsLogic({ userName }) {
     manageClausesSectionProps,
     toggleStandardsSectionProps,
     confirmStandardDialogProps,
-    confirmClauseDialogProps
+    confirmClauseDialogProps,
+    editingStandard,
+    setEditingStandard,
+    handleUpdateStandard,
+    editingClause,
+    setEditingClause,
+    handleUpdateClause,
+    savingEdit
   }
 }
