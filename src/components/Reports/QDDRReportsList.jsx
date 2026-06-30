@@ -19,8 +19,8 @@ export default function QDDRReportsList({
 
   if (!qddrReports || qddrReports.length === 0) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '80px 20px', width: '100%' }}>
-        <span style={{ fontSize: '15px', color: '#64748b', fontWeight: 500 }}>No QDDR reports found.</span>
+      <div className="empty-state-container">
+        <span className="empty-state-text">No QDDR reports found.</span>
       </div>
     )
   }
@@ -101,18 +101,16 @@ export default function QDDRReportsList({
                   </td>
                   {canEdit && (
                     <td className="text-center-important" onClick={(e) => e.stopPropagation()}>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                      <div className="action-btn-row" style={{ marginTop: 0 }}>
                         <button
-                          className="btn-icon"
-                          style={{ color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer' }}
+                          className="btn-action-icon"
                           title="Edit Report"
                           onClick={() => onEditQddr && onEditQddr(qddr)}
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
-                          className="btn-icon"
-                          style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}
+                          className="btn-action-icon-danger"
                           title="Delete Report"
                           onClick={() => onDeleteQddr && onDeleteQddr(qddr.id)}
                         >

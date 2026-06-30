@@ -13,7 +13,6 @@ import RejectReportModal from '../components/Modals/RejectReportModal.jsx'
 import PreventiveActionModal from '../components/Modals/PreventiveActionModal.jsx'
 import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
 import QDDRDetailsModal from '../components/Modals/QDDRDetailsModal.jsx'
-import RecurringIssuesAlert from '../components/Reports/RecurringIssuesAlert.jsx'
 import ReportsFeedList from '../components/Reports/ReportsFeedList.jsx'
 import CARReportsList from '../components/Reports/CARReportsList.jsx'
 import QDDRReportsList from '../components/Reports/QDDRReportsList.jsx'
@@ -21,6 +20,7 @@ import { deleteCarReport } from '../services/carService.js'
 import { deleteQddrReport } from '../services/qddrService.js'
 import { CAR_STATUS } from '../../shared/constants'
 import { useReportsLogic } from '@/hooks/useReportsLogic'
+import { fetchRecurringTrends } from '@/services/ncrService'
 import './ReportsPage.css'
 
 export default function ReportsPage({ userRole, currentUserId, authUserId, userDepartmentId }) {
@@ -32,19 +32,18 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
   const [carToDelete, setCarToDelete] = useState(null)
   const [qddrToDelete, setQddrToDelete] = useState(null)
   const [trendClusters, setTrendClusters] = useState([])
+  const [isRecurringMode, setIsRecurringMode] = useState(false)
+  
+  const allRecurringReportIds = React.useMemo(() => {
+    if (!trendClusters || trendClusters.length === 0) return []
+    return Array.from(new Set(trendClusters.flat().map(r => r.id)))
+  }, [trendClusters])
 
-  // Fetch recurring trends for the alert
   useEffect(() => {
     if (canAccessCar) {
-      fetch('/api/ncr/recurring-trends?days=14', {
-        headers: { 'Authorization': `Bearer ${logic.authUserId}` } // Assuming logic holds token or it's handled by axios interceptor. Actually, QFlow uses standard fetch with token? Let's rely on standard fetch with localStorage token.
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch trends')
-        return res.json()
-      })
-      .then(data => setTrendClusters(data))
-      .catch(err => console.error('Error fetching recurring trends:', err))
+      fetchRecurringTrends(14)
+        .then(data => setTrendClusters(data))
+        .catch(err => console.error('Error fetching recurring trends:', err))
     }
   }, [canAccessCar, logic.activeTab]) // Re-fetch occasionally
 
@@ -73,6 +72,20 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
   const displayedQddrs = logic.isClosedMode
     ? logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed')
     : logic.qddrReports.filter(q => String(q.status).toLowerCase() !== 'closed')
+
+  const clusterReportIds = isRecurringMode ? allRecurringReportIds : null
+
+  const filteredReports = clusterReportIds 
+    ? logic.reports.filter(r => clusterReportIds.includes(r.id))
+    : logic.reports
+
+  const filteredInvestigated = clusterReportIds
+    ? logic.displayedInvestigatedReports.filter(r => clusterReportIds.includes(r.id))
+    : logic.displayedInvestigatedReports
+
+  const filteredClosed = clusterReportIds
+    ? logic.closedReports.filter(r => clusterReportIds.includes(r.id))
+    : logic.closedReports
 
   const handleDeleteCar = (id) => setCarToDelete(id)
 
@@ -142,9 +155,25 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
           <div className="reports-header-controls-left">
             <button type="button" onClick={() => logic.setIsFilterModalOpen(true)} className="btn-glass-action" title="Open Filters"><SlidersHorizontal size={18} /></button>
             {logic.activeTab === 'ncr' && logic.canAssignReports && (
-              <button type="button" className="btn-quick-toggle" onClick={() => logic.setIsApprovalQueueMode((c) => !c)}>{logic.isApprovalQueueMode ? 'Show All' : `Needs Approval (${logic.approvalQueueReports.length})`}</button>
+              <button type="button" className={`btn-quick-toggle ${logic.isApprovalQueueMode ? 'active' : ''}`} onClick={() => logic.setIsApprovalQueueMode((c) => !c)}>{logic.isApprovalQueueMode ? 'Show All' : `Needs Approval (${logic.approvalQueueReports.length})`}</button>
             )}
             <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>{logic.isClosedMode ? 'Show Open' : `Closed (${logic.activeTab === 'ncr' ? logic.closedReports.length : logic.carReports.filter(c => c.status === CAR_STATUS.CLOSED).length})`}</button>
+            {logic.activeTab === 'ncr' && trendClusters.length > 0 && (
+              <button 
+                type="button" 
+                className={`btn-quick-toggle ${isRecurringMode ? 'active recurring-active' : 'recurring-inactive'}`} 
+                onClick={() => {
+                  setIsRecurringMode(!isRecurringMode)
+                  // Turn off other modes
+                  if (!isRecurringMode) {
+                    logic.setIsApprovalQueueMode(false)
+                    logic.setIsClosedMode(false)
+                  }
+                }}
+              >
+                Recurring Issues ({allRecurringReportIds.length})
+              </button>
+            )}
             {['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase()) && (
               <select
                 className="form-input reports-dept-select"
@@ -207,22 +236,11 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
 
         {logic.error && <div className="user-info-error">{logic.error}</div>}
         <div className="facebook-feed-layout-wrapper">
-          {logic.activeTab === 'ncr' && canAccessCar && trendClusters.length > 0 && (
-            <RecurringIssuesAlert 
-              clusters={trendClusters} 
-              onGenerateCar={(cluster) => {
-                // Pre-fill the CAR modal with the clustered NCR IDs and descriptions
-                logic.openCARModal({
-                  prefillNcrIds: cluster.map(n => n.id),
-                  prefillDescription: `Recurring issue detected from ${cluster.length} recent NCRs: \n${cluster.map(n => '- ' + n.description).join('\n')}`
-                })
-              }} 
-            />
-          )}
           {logic.activeTab === 'ncr' && (
             <ReportsFeedList
-              isApprovalQueueMode={logic.isApprovalQueueMode} isClosedMode={logic.isClosedMode} isLoading={logic.isLoading}
-              displayedInvestigatedReports={logic.displayedInvestigatedReports} closedReports={logic.closedReports} reports={logic.reports}
+              isRecurringMode={isRecurringMode} isApprovalQueueMode={logic.isApprovalQueueMode} isClosedMode={logic.isClosedMode} isLoading={logic.isLoading}
+              displayedInvestigatedReports={filteredInvestigated} closedReports={filteredClosed} reports={filteredReports}
+              trendClusters={trendClusters}
               departmentNameById={logic.departmentNameById} userNameById={logic.userNameById} canAssignReports={logic.canAssignReports} canApproveReport={logic.canApproveReport} canUpdateReport={logic.canUpdateReport}
               canDeleteReport={logic.canDeleteReport} onApprove={(r) => logic.handleReviewReport(r, 'approve')} onReject={logic.openRejectModal}
               onUpdate={logic.openUpdateModal} onAssign={logic.openAssignModal} onDelete={logic.handleDeleteReport}

@@ -74,24 +74,24 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
         <h4 className="reports-details-title">Details</h4>
       </div>
       
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '0 20px', marginTop: '12px', marginBottom: '12px' }}>
+      <div className="reports-grid-2-col">
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Product Type</div>
-          <div style={{ fontSize: '14px', color: 'var(--text-color)' }}>{report.product_type_name || report.product_type || '—'}</div>
+          <div className="reports-label-small">Product Type</div>
+          <div className="reports-value-text">{report.product_type_name || report.product_type || '—'}</div>
         </div>
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Batch Number</div>
-          <div style={{ fontSize: '14px', color: 'var(--text-color)' }}>{report.batch_number || '—'}</div>
+          <div className="reports-label-small">Batch Number</div>
+          <div className="reports-value-text">{report.batch_number || '—'}</div>
         </div>
-        <div style={{ gridColumn: 'span 2' }}>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Issue Category</div>
-          <div style={{ fontSize: '14px', color: 'var(--text-color)' }}>{report.issue_type_name || report.issue_type || report.issue_category || '—'}</div>
+        <div className="grid-col-span-2">
+          <div className="reports-label-small">Issue Category</div>
+          <div className="reports-value-text">{report.issue_type_name || report.issue_type || report.issue_category || '—'}</div>
         </div>
       </div>
 
       {/* ── Investigation details ───────────────────────────────────────── */}
-      <div style={{ padding: '0 20px', marginTop: '14px', marginBottom: '4px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase' }}>Investigation Details</div>
+      <div className="reports-section-label">
+        <div className="reports-label-small">Investigation Details</div>
       </div>
       <div className="reports-details-box">
         <span className="reports-workspace-text">
@@ -100,8 +100,8 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
       </div>
 
       {/* ── Resolution details ──────────────────────────────────────────── */}
-      <div style={{ padding: '0 20px', marginTop: '14px', marginBottom: '4px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase' }}>Resolution Details</div>
+      <div className="reports-section-label">
+        <div className="reports-label-small">Resolution Details</div>
       </div>
       <div className="reports-details-box">
         <span className="reports-workspace-text">
@@ -139,15 +139,15 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
       </div>
       <div className="evidence-box">
         {(report.investigation_evidence_files && report.investigation_evidence_files.length > 0) ? (
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <div className="evidence-list-container">
             {report.investigation_evidence_files.map((fileUrl, idx) => {
               const isImage = fileUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)
               return (
-                <div key={idx} style={{ width: '60px', height: '60px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-color)', cursor: 'pointer' }} onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}>
+                <div key={idx} className="evidence-thumb-small" onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}>
                   {isImage ? (
-                    <img src={fileUrl} alt={`Evidence ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={fileUrl} alt={`Evidence ${idx + 1}`} className="evidence-img" />
                   ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-card-secondary)', fontSize: '20px' }} title="Document">📄</div>
+                    <div className="evidence-placeholder-small" title="Document">📄</div>
                   )}
                 </div>
               )
@@ -161,7 +161,7 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
             onClick={() => window.open(report.investigation_evidence_url, '_blank', 'noopener,noreferrer')}
           />
         ) : (
-          <p style={{ color: 'var(--muted)', textAlign: 'center' }}>No investigation evidence image attached</p>
+          <p className="evidence-empty-text">No investigation evidence image attached</p>
         )}
       </div>
 
@@ -206,18 +206,6 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
             className="btn-delete-user"
             onClick={() => onDelete(report)}
             title="Delete report"
-            style={{
-              padding: '6px 12px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#fef2f2',
-              border: '1px solid rgba(220, 38, 38, 0.25)',
-              color: '#dc2626',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
           >
             <Trash2 size={16} />
           </button>

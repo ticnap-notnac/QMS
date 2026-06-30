@@ -123,23 +123,23 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
         <h4 className="reports-details-title">Details</h4>
       </div>
       
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '0 20px', marginTop: '12px', marginBottom: '12px' }}>
+      <div className="reports-grid-2-col">
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Product Type</div>
-          <div style={{ fontSize: '14px', color: 'var(--text-color)' }}>{report.product_type_name || report.product_type || '—'}</div>
+          <div className="reports-label-small">Product Type</div>
+          <div className="reports-value-text">{report.product_type_name || report.product_type || '—'}</div>
         </div>
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Batch Number</div>
-          <div style={{ fontSize: '14px', color: 'var(--text-color)' }}>{report.batch_number || '—'}</div>
+          <div className="reports-label-small">Batch Number</div>
+          <div className="reports-value-text">{report.batch_number || '—'}</div>
         </div>
-        <div style={{ gridColumn: 'span 2' }}>
-          <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Issue Category</div>
-          <div style={{ fontSize: '14px', color: 'var(--text-color)' }}>{report.issue_type_name || report.issue_type || report.issue_category || '—'}</div>
+        <div className="grid-col-span-2">
+          <div className="reports-label-small">Issue Category</div>
+          <div className="reports-value-text">{report.issue_type_name || report.issue_type || report.issue_category || '—'}</div>
         </div>
       </div>
 
-      <div style={{ padding: '0 20px', marginTop: '14px', marginBottom: '4px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase' }}>Description</div>
+      <div className="reports-section-label">
+        <div className="reports-label-small">Description</div>
       </div>
       <div className="reports-details-box">
         <span className="reports-workspace-text">
@@ -150,8 +150,8 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
       {/* ── Assignment label ────────────────────────────────────────────── */}
       {assignmentLabel && (
         <div style={{ marginTop: '14px' }}>
-          <div style={{ padding: '0 20px', marginBottom: '4px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--muted)', textTransform: 'uppercase' }}>Assignment</div>
+          <div className="reports-section-label">
+            <div className="reports-label-small">Assignment</div>
           </div>
           <div className="reports-details-box">
             <span className="reports-workspace-text">{assignmentLabel}</span>
@@ -169,11 +169,11 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
             {report.evidence_files.map((fileUrl, idx) => {
               const isImage = fileUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)
               return (
-                <div key={idx} style={{ width: '120px', height: '120px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border-color)', cursor: 'pointer' }} onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}>
+                <div key={idx} className="evidence-thumb" onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}>
                   {isImage ? (
-                    <img src={fileUrl} alt={`Evidence ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={fileUrl} alt={`Evidence ${idx + 1}`} className="evidence-img" />
                   ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-card-secondary)', fontSize: '32px' }} title="Document">📄</div>
+                    <div className="evidence-placeholder" title="Document">📄</div>
                   )}
                 </div>
               )
@@ -217,28 +217,13 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
       )}
 
       {/* ── Action row ──────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>
+      <div className="action-btn-row">
         {canAssignReports && !isClosed && (
           <button
             type="button"
-            className="btn-edit-user"
+            className="btn-assign-report"
             onClick={() => onAssign(report)}
             title="Assign report"
-            style={{
-              padding: '6px 12px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #cbd5e1',
-              color: '#334155',
-              borderRadius: '6px',
-              fontWeight: 600,
-              fontSize: '12px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user-plus"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
             {isAssigned ? 'Re-assign' : 'Assign'}
@@ -247,21 +232,9 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
         {isClosed && (
           <button
             type="button"
-            className="btn-edit-user"
+            className="btn-assign-report"
             onClick={() => onUpdate(report)}
             title="View Details"
-            style={{
-              padding: '6px 12px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#f1f5f9',
-              border: '1px solid #cbd5e1',
-              color: '#0f172a',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
           >
             View Details
           </button>
@@ -269,23 +242,9 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
         {canUpdateReport && canUpdateReport(report) && (
           <button
             type="button"
-            className="btn-edit-user"
+            className="btn-action-icon"
             onClick={() => onUpdate(report)}
             title="Update report"
-            style={{
-              width: '32px',
-              height: '32px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#f1f5f9',
-              border: '1px solid #cbd5e1',
-              color: '#0f172a',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              padding: 0
-            }}
           >
             <SquarePen size={16} />
           </button>
@@ -293,23 +252,9 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
         {canDeleteReport && canDeleteReport(report) && (
           <button
             type="button"
-            className="btn-delete-user"
+            className="btn-action-icon-danger"
             onClick={() => onDelete(report)}
             title="Delete report"
-            style={{
-              width: '32px',
-              height: '32px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#fef2f2',
-              border: '1px solid rgba(220, 38, 38, 0.25)',
-              color: '#dc2626',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              padding: 0
-            }}
           >
             <Trash2 size={16} />
           </button>

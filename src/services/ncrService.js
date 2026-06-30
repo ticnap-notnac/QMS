@@ -74,3 +74,7 @@ export async function submitNcrMultipart(formData) {
     body: formData,
   })
 }
+
+export async function fetchRecurringTrends(days = 14) {
+  return await request(`/ncr/recurring-trends?days=${days}`)
+}
