@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase.js'
 import { extractKeywords, jaccardSimilarity } from '../utils/cbr.js'
-import fetch from 'node-fetch'
+
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 
