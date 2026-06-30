@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye } from 'lucide-react'
 import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
 import html2pdf from 'html2pdf.js'
@@ -15,135 +15,12 @@ const TASK_REPORT_SUBFOLDERS = [
   { id: 'audit_schedules', label: 'Audit Schedules' },
 ]
 
-
 const SEVERITY_COLORS = {
   Critical: 'severity-critical',
   High: 'severity-high',
   Medium: 'severity-medium',
   Low: 'severity-low',
 }
-
-// ---------------------------------------------------------------------------
-// Sub-view: ISO Modules – standard list
-// ---------------------------------------------------------------------------
-
-function ISOStandardsList({ standards, loadingStandards, onSelectStandard }) {
-  if (loadingStandards) return <div>Loading standards...</div>
-  if (!standards.length) return <div className="empty-state">No active ISO standards found.</div>
-
-  return (
-    <div>
-      <h3 className="recently-viewed-heading">ISO Modules</h3>
-      <div className="folder-grid">
-        {standards.map((s) => (
-          <div
-            key={s.id}
-            className="folder-item folder-item-iso"
-            onClick={() => onSelectStandard(s)}
-          >
-            <div className="folder-square-block">
-              <Folder size={22} className="icon-fill-soft" />
-            </div>
-            <div>
-              <div className="folder-item-label">
-                {s.name}
-                {s.version ? ` - ${s.version}` : ''}
-              </div>
-              <div className="recent-doc-sub">{s.clauseCount ?? 0} clauses</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Sub-view: ISO Modules – clauses table
-// ---------------------------------------------------------------------------
-
-function ISOClausesTable({ selectedStandard, clauses, loadingClauses }) {
-  return (
-    <div className="flex-column full-height">
-      <div className="row-gap-20">
-        <div className="breadcrumb">
-          ISO Modules &gt; {selectedStandard.name} -{' '}
-          {selectedStandard.version || '-'}
-        </div>
-
-        {loadingClauses ? (
-          <div>Loading clauses...</div>
-        ) : !clauses.length ? (
-          <div className="empty-state">No clauses found for this standard.</div>
-        ) : (
-          <div className="glass-card-dcc">
-            <div className="dcc-scrollable-table-box">
-              <table className="iso-table iso-clauses-table" style={{ width: '100%' }}>
-                <thead>
-                  <tr>
-                    <th>Clause</th>
-                    <th>Title</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {clauses.map((cl) => (
-                    <tr key={cl.id} className={cl.is_active ? '' : 'muted-row'}>
-                      <td style={{ width: '120px' }}>{cl.clause_number}</td>
-                      <td>
-                        <div>{cl.title}</div>
-                        <div className="clause-description">
-                          {cl.description ?? (
-                            <span className="muted">No description added</span>
-                          )}
-                        </div>
-                      </td>
-                      <td style={{ width: '120px' }}>
-                        {!cl.is_active && (
-                          <span className="iso-status-pill is-inactive">Inactive</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Sub-view: Task Reports – sub-folder grid (CAR / QDDR / NCR)
-// ---------------------------------------------------------------------------
-
-function TaskReportsFolderList({ folders = TASK_REPORT_SUBFOLDERS, onOpenTaskFolder }) {
-  return (
-    <div>
-      <h3 className="recently-viewed-heading">Task Reports</h3>
-      <div className="folder-grid">
-        {folders.map((item) => (
-          <div
-            key={item.id}
-            className="folder-item"
-            onClick={() => onOpenTaskFolder(item)}
-          >
-            <div className="folder-square-block">
-              <Folder size={22} className="icon-fill-soft" />
-            </div>
-            <span className="folder-item-label">{item.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Sub-view: Task Reports › NCR – 1×1 evidence thumbnail
-// ---------------------------------------------------------------------------
 
 const NCR_EVIDENCE_BUCKET = 'ncr-evidence'
 
@@ -153,590 +30,6 @@ function resolveStorageUrl(path) {
   const { data } = supabase.storage.from(NCR_EVIDENCE_BUCKET).getPublicUrl(path)
   return data?.publicUrl ?? null
 }
-
-function EvidenceThumbnail({ path, files, label }) {
-  if (!path && (!files || files.length === 0)) return <span className="muted">—</span>
-  
-  let publicUrl = resolveStorageUrl(path)
-  if (!publicUrl && files && files.length > 0) {
-    publicUrl = resolveStorageUrl(files[0])
-  }
-
-  if (!publicUrl) return <span className="muted">—</span>
-
-  const isImage = publicUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)
-
-  return (
-    <div
-      onClick={() => window.open(publicUrl, '_blank', 'noopener,noreferrer')}
-      style={{
-        width: '36px', height: '36px', borderRadius: '4px', overflow: 'hidden',
-        cursor: 'pointer', border: '1px solid rgba(255,255,255,0.12)', display: 'inline-block',
-        background: 'rgba(255,255,255,0.05)', verticalAlign: 'middle', transition: 'opacity 0.15s'
-      }}
-      title={`View ${label} ${files?.length > 1 ? `(+${files.length - 1} more)` : ''}`}
-      onMouseOver={(e) => (e.currentTarget.style.opacity = '0.75')}
-      onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
-    >
-      {isImage ? (
-        <img src={publicUrl} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-      ) : (
-        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
-          📄
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Sub-view: Task Reports › NCR – closed reports table
-// ---------------------------------------------------------------------------
-
-function NCRClosedTable({ ncrReports, loadingNcr, onDownloadPDF }) {
-  if (loadingNcr) return <div>Loading NCR reports...</div>
-
-  if (!ncrReports.length) {
-    return (
-      <div className="empty-state">
-        <AlertCircle size={20} style={{ marginBottom: 6 }} />
-        <div>No closed NCR reports found.</div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="glass-card-dcc">
-      <div className="dcc-scrollable-table-box">
-        <table className="iso-table">
-          <thead>
-            <tr>
-              <th>Ref No.</th>
-              <th>Issue Type</th>
-              <th>Description</th>
-              <th>Severity</th>
-              <th>Department</th>
-              <th>Product Type</th>
-              <th>Batch No.</th>
-              <th>Location</th>
-              <th>Occurrence Date</th>
-              <th>Created At</th>
-              <th className="text-center-important">Evidence</th>
-              <th className="text-center-important">Inv. Evidence</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ncrReports.map((ncr) => {
-              const statusClean = String(ncr.status || '').trim().toLowerCase()
-
-              return (
-                <tr key={ncr.id}>
-                  <td style={{ fontWeight: 600 }}>{ncr.reference_no ?? '—'}</td>
-                  <td>{ncr.issue_type ?? '—'}</td>
-                  <td>
-                    <div className="clause-description">
-                      {ncr.description ?? <span className="muted">No description</span>}
-                    </div>
-                  </td>
-                  <td>
-                    {ncr.severity ? (
-                      <span className={`iso-status-pill ${SEVERITY_COLORS[ncr.severity] ?? ''}`}>
-                        {ncr.severity}
-                      </span>
-                    ) : (
-                      '—'
-                    )}
-                  </td>
-                  <td>{ncr.department_id ?? '—'}</td>
-                  <td>{ncr.product_type_name ?? ncr.product_type ?? '—'}</td>
-                  <td>{ncr.batch_number ?? '—'}</td>
-                  <td>{ncr.location_name ?? ncr.complaint_location ?? '—'}</td>
-                  <td>
-                    {ncr.occurrence_date ? new Date(ncr.occurrence_date).toLocaleDateString() : '—'}
-                  </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
-                    {ncr.created_at ? new Date(ncr.created_at).toLocaleString() : '—'}
-                  </td>
-                  <td className="text-center-important" style={{ width: 48 }}>
-                    <EvidenceThumbnail path={ncr.evidence_url} files={ncr.evidence_files} label="Evidence" />
-                  </td>
-                  <td className="text-center-important" style={{ width: 48 }}>
-                    <EvidenceThumbnail path={ncr.investigation_evidence_url} files={ncr.investigation_evidence_files} label="Inv. Evidence" />
-                  </td>
-                  <td>
-                    {/* 🚀 Dynamic Gray vs Green Theme Route Switcher */}
-                    <span className={`iso-status-pill ${
-                      statusClean === 'completed' ? 'is-active' : statusClean === 'closed' ? 'is-closed' : 'is-open'
-                    }`}>
-                      {ncr.status}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <button
-                      className="btn btn-outline"
-                      style={{ padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px' }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDownloadPDF && onDownloadPDF(ncr)
-                      }}
-                      title="Download PDF"
-                    >
-                      <Download size={14} /> PDF
-                    </button>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Sub-view: Task Reports › CAR – closed reports table
-// ---------------------------------------------------------------------------
-
-function CARClosedTable({ carReports, loadingCar, onSelectCar, onDownloadPDF }) {
-  const [collapsedGroups, setCollapsedGroups] = useState({})
-
-  if (loadingCar) return <div>Loading CAR reports...</div>
-
-  if (!carReports.length) {
-    return (
-      <div className="empty-state">
-        <AlertCircle size={20} style={{ marginBottom: 6 }} />
-        <div>No CAR reports found.</div>
-      </div>
-    )
-  }
-
-  // Group CARs by creation month and year in descending order
-  const grouped = carReports.reduce((acc, car) => {
-    const dateVal = car.created_at || car.request_date || new Date().toISOString()
-    const d = new Date(dateVal)
-    const monthName = d.toLocaleString('default', { month: 'long' })
-    const groupKey = `${monthName} ${d.getFullYear()}`
-    if (!acc[groupKey]) acc[groupKey] = []
-    acc[groupKey].push(car)
-    return acc
-  }, {})
-
-  const sortedGroups = Object.entries(grouped).sort((a, b) => {
-    const dateA = new Date(a[1][0]?.created_at || a[1][0]?.request_date || 0)
-    const dateB = new Date(b[1][0]?.created_at || b[1][0]?.request_date || 0)
-    return dateB - dateA
-  })
-
-  const toggleGroup = (groupKey) => {
-    setCollapsedGroups(prev => ({
-      ...prev,
-      [groupKey]: !prev[groupKey]
-    }))
-  }
-
-  return (
-    <div className="flex-column car-workflow-container" style={{ gap: '20px' }}>
-      {sortedGroups.map(([groupKey, cars]) => {
-        const isCollapsed = collapsedGroups[groupKey]
-        return (
-          <div key={groupKey} className="glass-card-dcc car-group-card">
-            {/* Group Header */}
-            <div
-              onClick={() => toggleGroup(groupKey)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '14px 20px',
-                background: 'rgba(15, 23, 42, 0.02)',
-                borderBottom: isCollapsed ? 'none' : '1px solid rgba(15, 23, 42, 0.06)',
-                cursor: 'pointer',
-                userSelect: 'none',
-                fontWeight: 600,
-                fontSize: '14px',
-                color: '#334155'
-              }}
-            >
-              {isCollapsed ? <ChevronRight size={18} color="#475569" /> : <ChevronDown size={18} color="#475569" />}
-              <span>{groupKey}</span>
-              <span
-                style={{
-                  marginLeft: 'auto',
-                  fontSize: '11px',
-                  background: '#f1f5f9',
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  color: '#475569'
-                }}
-              >
-                {cars.length} {cars.length === 1 ? 'CAR' : 'CARs'}
-              </span>
-            </div>
-
-            {/* Group Content */}
-            {!isCollapsed && (
-              <div className="dcc-scrollable-table-box">
-                <table className="iso-table">
-                  <thead>
-                    <tr>
-                      <th>Ref No.</th>
-                      <th>Issue Type</th>
-                      <th>Requestor</th>
-                      <th>Recipient</th>
-                      <th>Requesting Dept</th>
-                      <th>Responsible Dept</th>
-                      <th className="text-center-important">Product&nbsp;/<br />Material</th>
-                      <th className="text-center-important">Model&nbsp;/<br />Type</th>
-                      <th className="text-center-important">Control No.</th>
-                      <th className="text-center-important">Affected Qty</th>
-                      <th>Nonconformance Details</th>
-                      <th>Request Date</th>
-                      <th className="text-center-important">Resolution Time</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cars.map((car) => {
-                      const statusClean = String(car.status || '').trim().toLowerCase()
-                      const issueTypes = []
-                      if (car.quality_food_safety) issueTypes.push('Quality/Food Safety')
-                      if (car.environment_health_safety) issueTypes.push('EHS')
-                      if (car.security_issue) issueTypes.push('Security')
-                      if (car.internal_audit) issueTypes.push('Internal Audit')
-                      if (car.customer_complaint) issueTypes.push('Customer Complaint')
-                      if (car.government_agency_audit) issueTypes.push('Gov Audit')
-                      if (car.customer_audit_nonconformance) issueTypes.push('Customer Audit')
-                      if (car.vendor_nonconformance) issueTypes.push('Vendor')
-                      if (car.others) issueTypes.push(`Others: ${car.others}`)
-                      const issueTypeStr = issueTypes.join(', ') || '—'
-
-                      return (
-                        <tr
-                          key={car.id}
-                          onClick={() => onSelectCar && onSelectCar(car)}
-                          style={{ cursor: 'pointer' }}
-                          title="Click to view details and CAPA/VoE actions"
-                        >
-                          <td style={{ fontWeight: 600 }}>{car.reference_no ?? '—'}</td>
-                          <td>{issueTypeStr}</td>
-                          <td>{car.requestor ?? '—'}</td>
-                          <td>{car.recipient ?? '—'}</td>
-                          <td>{car.requesting_department ?? '—'}</td>
-                          <td>{car.responsible_department ?? '—'}</td>
-                          <td className="text-center-important">{car.product_material_name && car.product_material_name.trim() !== '' ? car.product_material_name : '—'}</td>
-                          <td className="text-center-important">{car.model_type && car.model_type.trim() !== '' ? car.model_type : '—'}</td>
-                          <td className="text-center-important">{car.control_no && car.control_no.trim() !== '' ? car.control_no : '—'}</td>
-                          <td className="text-center-important">{car.affected_quantity && String(car.affected_quantity).trim() !== '' ? car.affected_quantity : '—'}</td>
-                          <td>
-                            <div className="clause-description" title={car.details_of_nonconformance}>
-                              {car.details_of_nonconformance ?? <span className="muted">No details</span>}
-                            </div>
-                          </td>
-                          <td>
-                            {car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}
-                          </td>
-                          <td className="text-center-important">{car.resolution_time && String(car.resolution_time).trim() !== '' ? car.resolution_time : '—'}</td>
-                          <td>
-                            <span className={`iso-status-pill ${
-                              statusClean === 'closed' ? 'is-closed' : statusClean === 'under_verification' ? 'is-active' : 'is-open'
-                            }`}>
-                              {statusClean === 'under_verification' ? 'Under Verification' : statusClean === 'closed' ? 'Closed' : 'Open'}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            <button
-                              className="btn btn-outline"
-                              style={{ padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px' }}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onDownloadPDF && onDownloadPDF(car)
-                              }}
-                              title="Download PDF"
-                            >
-                              <Download size={14} /> PDF
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Sub-view: Task Reports › QDDR – closed reports table
-// ---------------------------------------------------------------------------
-
-function QDDRClosedTable({ qddrReports, loadingQddr, onDownloadPDF }) {
-  if (loadingQddr) return <div>Loading QDDR reports...</div>
-
-  if (!qddrReports.length) {
-    return (
-      <div className="empty-state">
-        <AlertCircle size={20} style={{ marginBottom: 6 }} />
-        <div>No QDDR reports found.</div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="glass-card-dcc">
-      <div className="dcc-scrollable-table-box">
-        <table className="iso-table">
-          <thead>
-            <tr>
-              <th>Ref No.</th>
-              <th>Location</th>
-              <th>Date & Time</th>
-              <th>Trucker / Broker</th>
-              <th>Plate No.</th>
-              <th>PO Reference</th>
-              <th>Material Description</th>
-              <th>Material Code</th>
-              <th>Qty</th>
-              <th>Reason of Discrepancy</th>
-              <th>Corrective Action</th>
-              <th>Preventive Action</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {qddrReports.map((qddr) => {
-              const statusClean = String(qddr.status || '').trim().toLowerCase()
-
-              return (
-                <tr key={qddr.id}>
-                  <td style={{ fontWeight: 600 }}>{qddr.reference_no ?? '—'}</td>
-                  <td>{qddr.location ?? '—'}</td>
-                  <td>
-                    {qddr.date ? new Date(qddr.date).toLocaleDateString() : '—'}
-                    {qddr.time ? ` ${qddr.time.slice(0, 5)}` : ''}
-                  </td>
-                  <td>{qddr.trucker_broker ?? '—'}</td>
-                  <td>{qddr.plate_number ?? '—'}</td>
-                  <td>{qddr.po_reference ?? '—'}</td>
-                  <td>{qddr.material_description ?? '—'}</td>
-                  <td>{qddr.material_code ?? '—'}</td>
-                  <td>{qddr.qty ?? '—'}</td>
-                  <td>
-                    <div className="clause-description" title={qddr.reason_of_discrepancy}>
-                      {qddr.reason_of_discrepancy ?? <span className="muted">No reason</span>}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="clause-description" title={qddr.corrective_action}>
-                      {qddr.corrective_action ?? <span className="muted">—</span>}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="clause-description" title={qddr.preventive_action}>
-                      {qddr.preventive_action ?? <span className="muted">—</span>}
-                    </div>
-                  </td>
-                  <td>
-                    {/* 🚀 Dynamic Gray vs Green Theme Route Switcher */}
-                    <span className={`iso-status-pill ${
-                      statusClean === 'completed' ? 'is-active' : statusClean === 'closed' ? 'is-closed' : 'is-open'
-                    }`}>
-                      {qddr.status}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <button
-                      className="btn btn-outline"
-                      style={{ padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px' }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDownloadPDF && onDownloadPDF(qddr)
-                      }}
-                      title="Download PDF"
-                    >
-                      <Download size={14} /> PDF
-                    </button>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Sub-view: Task Reports › Audit – completed reports table
-// ---------------------------------------------------------------------------
-
-function AuditReportsTable({ auditReports, loadingAudit, onFetchRunDetails }) {
-  if (loadingAudit) return <div>Loading Audit reports...</div>
-
-  if (!auditReports.length) {
-    return (
-      <div className="empty-state">
-        <AlertCircle size={20} style={{ marginBottom: 6 }} />
-        <div>No completed audit reports found.</div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="glass-card-dcc">
-      <div className="dcc-scrollable-table-box">
-        <table className="iso-table" style={{ width: '100%' }}>
-          <thead>
-            <tr>
-              <th>Audit Run ID</th>
-              <th>Audit Title</th>
-              <th>ISO Standard</th>
-              <th>Assigned Auditor</th>
-              <th>Start Date / Time</th>
-              <th>Completion Date / Time</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {auditReports.map((run) => (
-              <tr 
-                key={run.id}
-                onClick={() => onFetchRunDetails && onFetchRunDetails(run)}
-                style={{ cursor: onFetchRunDetails ? 'pointer' : 'default' }}
-                className="iso-table-row-hover"
-              >
-                <td style={{ fontWeight: 600, fontSize: '12px' }}>
-                  {run.id.slice(0, 8)}...
-                </td>
-                <td>{run.title}</td>
-                <td>{run.standard_name}</td>
-                <td>{run.auditor_name}</td>
-                <td>
-                  {run.started_at ? new Date(run.started_at).toLocaleString() : '—'}
-                </td>
-                <td>
-                  {run.completed_at ? new Date(run.completed_at).toLocaleString() : '—'}
-                </td>
-                <td>
-                  {/* 🟢 Keeping "Completed" as vibrant active green */}
-                  <span className="iso-status-pill is-active">
-                    Completed
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Sub-view: Task Reports › Audit Schedules – scheduled list table
-// ---------------------------------------------------------------------------
-
-function AuditSchedulesTable({ auditSchedules, loadingAuditSchedules, carReports = [], onSelectCar }) {
-  if (loadingAuditSchedules) return <div>Loading audit schedules...</div>
-
-  if (!auditSchedules.length) {
-    return (
-      <div className="empty-state">
-        <AlertCircle size={20} style={{ marginBottom: 6 }} />
-        <div>No scheduled audits found.</div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="glass-card-dcc">
-      <div className="dcc-scrollable-table-box">
-        <table className="iso-table" style={{ width: '100%' }}>
-          <thead>
-            <tr>
-              <th>Schedule Title</th>
-              <th>ISO Standard</th>
-              <th>Assigned Auditor</th>
-              <th>Scheduled Date</th>
-              <th className="text-center-important">Linked CARs</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {auditSchedules.map((schedule) => {
-              const statusClean = String(schedule.status || '').trim().toLowerCase()
-              const linkedCars = carReports.filter(c => c.audit_schedule_id === schedule.id)
-              
-              // Capitalize status correctly
-              let displayStatus = schedule.status
-              if (statusClean === 'completed') displayStatus = 'Completed'
-              else if (statusClean === 'pending') displayStatus = 'Pending'
-
-              return (
-                <tr key={schedule.id}>
-                  <td style={{ fontWeight: 600 }}>{schedule.title}</td>
-                  <td>{schedule.standard_name}</td>
-                  <td>{schedule.auditor_name}</td>
-                  <td>
-                    {schedule.scheduled_date ? new Date(schedule.scheduled_date).toLocaleDateString() : '—'}
-                  </td>
-                  <td className="text-center-important" style={{ verticalAlign: 'middle' }}>
-                    {linkedCars.length > 0 ? (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-                        {linkedCars.map(car => (
-                          <span
-                            key={car.id}
-                            onClick={() => onSelectCar && onSelectCar(car)}
-                            className="iso-status-pill is-active"
-                            style={{
-                              cursor: 'pointer',
-                              background: 'rgba(34, 211, 238, 0.12)',
-                              border: '1px solid rgba(34, 211, 238, 0.3)',
-                              color: '#22d3ee',
-                              fontSize: '11px',
-                              padding: '2px 8px'
-                            }}
-                            title="Click to view CAR details"
-                          >
-                            {car.reference_no || `CAR #${car.id}`}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="muted" style={{ fontSize: '12px' }}>—</span>
-                    )}
-                  </td>
-                  <td>
-                    <span className={`iso-status-pill ${
-                      statusClean === 'completed' ? 'is-active' : statusClean === 'pending' ? 'is-inactive' : 'is-closed'
-                    }`}>
-                      {displayStatus}
-                    </span>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Main export
-
-// ---------------------------------------------------------------------------
 
 export default function DCCFolderContent({
   selectedFolder,
@@ -769,8 +62,9 @@ export default function DCCFolderContent({
   userRole,
   onFetchRunDetails
 }) {
-  const queryClean = (searchQuery || '').trim().toLowerCase()
-
+  const [selectedDocument, setSelectedDocument] = useState(null)
+  const [shareSuccess, setShareSuccess] = useState(false)
+  
   // PDF Download State & Refs
   const [downloadingReport, setDownloadingReport] = useState(null)
   const [downloadingType, setDownloadingType] = useState(null)
@@ -778,6 +72,19 @@ export default function DCCFolderContent({
   const carPrintRef = useRef(null)
   const ncrPrintRef = useRef(null)
   const qddrPrintRef = useRef(null)
+
+  // Reset selected document whenever directories change
+  useEffect(() => {
+    setSelectedDocument(null)
+  }, [selectedFolder, selectedTaskFolder, selectedStandard])
+
+  const handleShareClick = () => {
+    if (!selectedDocument) return
+    const textToCopy = `${selectedDocument.reference_no || selectedDocument.title} (${selectedDocument._type})`
+    navigator.clipboard.writeText(textToCopy)
+    setShareSuccess(true)
+    setTimeout(() => setShareSuccess(false), 2000)
+  }
 
   const handleDownloadPDF = async (report, type) => {
     setDownloadingReport(report)
@@ -823,6 +130,8 @@ export default function DCCFolderContent({
       }
     }, 100)
   }
+
+  const queryClean = (searchQuery || '').trim().toLowerCase()
 
   // 1. Root level filtering
   const filteredFolderItems = folderItems.filter((item) =>
@@ -902,151 +211,491 @@ export default function DCCFolderContent({
     (sched.status && sched.status.toLowerCase().includes(queryClean))
   )
 
-  if (!selectedFolder) {
-    return (
-      <div className="flex-column">
-        <div className="search-container-centered">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search documents or folders..."
-            className="search-bar-field"
-          />
-          <Search size={16} className="search-icon-absolute" />
-        </div>
+  // Navigation click helpers
+  const handleNavFolderClick = (item) => {
+    if (selectedFolder?.id === item.id) {
+      onCloseFolder()
+    } else {
+      onOpenFolder(item)
+    }
+  }
 
-        <div className="folder-grid">
-          {filteredFolderItems.map((item) => (
-            <div key={item.id} onClick={() => onOpenFolder(item)} className="folder-item">
-              <div className="folder-square-block">
-                <Folder size={22} className="icon-fill-soft" />
-              </div>
-              <span className="folder-item-label">{item.label}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="text-left" style={{ marginTop: '24px' }}>
-          <h3 className="recently-viewed-heading">Recently Viewed</h3>
-          {!filteredRecentlyViewed.length ? (
-            <div className="recent-empty">No recently viewed items.</div>
-          ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
-              {filteredRecentlyViewed.map((rv) => (
-                <div
-                  key={rv.id}
-                  className="recent-document-card dcc-recent-document-card"
-                  onClick={() => onOpenFolder({ id: rv.id, label: rv.label })}
-                >
-                  <FileText size={18} className="icon-green" />
-                  <div className="col-gap-2">
-                    <span className="recent-doc-title">{rv.label}</span>
-                    <span className="recent-doc-sub">
-                      {new Date(rv.when).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    )
+  const handleNavTaskSubfolderClick = (sub) => {
+    if (selectedTaskFolder?.id === sub.id) {
+      onCloseTaskFolder()
+    } else {
+      onOpenTaskFolder(sub)
+    }
   }
 
   const subFolderLabel = selectedTaskFolder ? ` > ${selectedTaskFolder.label}` : ''
   const backHandler =
-    selectedFolder.id === 'task_reports' && selectedTaskFolder
+    selectedFolder?.id === 'task_reports' && selectedTaskFolder
       ? onCloseTaskFolder
       : onCloseFolder
 
+  // Calculate file properties for the mockup design
+  const getFileProperties = (doc) => {
+    if (!doc) return {}
+    const createdDate = doc.created_at || doc.occurrence_date || doc.scheduled_date || 'N/A'
+    const formattedDate = createdDate !== 'N/A' ? new Date(createdDate).toLocaleDateString() : 'N/A'
+    
+    return {
+      type: doc._type + ' File',
+      location: `/DCC/Task Reports/${doc._type}`,
+      modified: formattedDate,
+      size: '42 KB'
+    }
+  }
+
+  const fileProps = getFileProperties(selectedDocument)
+
   return (
-    <div className="flex-column full-height">
-      <div className="top-row">
-        <button onClick={backHandler} className="back-button">
-          <ArrowLeft size={18} />
-        </button>
-        <div className="search-container-centered">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={`Search ${selectedFolder.label}${subFolderLabel}...`}
-            className="search-bar-field"
-          />
-          <Search size={16} className="search-icon-absolute" />
+    <div className="dcc-layout-container">
+      {/* ── COLUMN 1: LEFT NAVIGATION PANE ────────────────────────────────── */}
+      <div className="dcc-left-pane">
+        <h3 className="dcc-left-pane-title">Directories</h3>
+        
+        {folderItems.map((item) => {
+          const isActive = selectedFolder?.id === item.id
+          return (
+            <div key={item.id}>
+              <button 
+                onClick={() => handleNavFolderClick(item)} 
+                className={`dcc-nav-item ${isActive ? 'active' : ''}`}
+              >
+                {item.id === 'system_logs' ? <Terminal size={16} /> : <Folder size={16} />}
+                <span>{item.label}</span>
+              </button>
+
+              {/* Nested submenu for Task Reports */}
+              {item.id === 'task_reports' && isActive && (
+                <div className="dcc-nav-sub-list">
+                  {TASK_REPORT_SUBFOLDERS.map((sub) => {
+                    const isSubActive = selectedTaskFolder?.id === sub.id
+                    return (
+                      <button
+                        key={sub.id}
+                        onClick={() => handleNavTaskSubfolderClick(sub)}
+                        className={`dcc-nav-sub-item ${isSubActive ? 'active' : ''}`}
+                      >
+                        <ChevronRight size={12} />
+                        <span>{sub.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* ── COLUMN 2: CENTER MAIN CONTENT EXPLORER ────────────────────────── */}
+      <div className="dcc-center-pane">
+        {selectedFolder && (
+          <div className="dcc-breadcrumbs-header">
+            <button onClick={backHandler} className="back-button-mini">
+              <ArrowLeft size={16} />
+            </button>
+            <span className="dcc-breadcrumb-text">
+              DCC &gt; {selectedFolder.label}{subFolderLabel}
+              {selectedStandard ? ` > ${selectedStandard.name}` : ''}
+            </span>
+          </div>
+        )}
+
+        <div className="dcc-search-area">
+          <div className="search-container-centered">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder={
+                selectedFolder
+                  ? `Search ${selectedFolder.label}${subFolderLabel}...`
+                  : 'Search documents or folders...'
+              }
+              className="search-bar-field"
+            />
+            <Search size={16} className="search-icon-absolute" />
+          </div>
+        </div>
+
+        <div className="dcc-explorer-viewport">
+          {/* ROOT VIEW */}
+          {!selectedFolder && (
+            <div className="flex-column" style={{ gap: '24px' }}>
+              <div>
+                <h3 className="recently-viewed-heading">Workspace Folders</h3>
+                <div className="dcc-document-grid">
+                  {filteredFolderItems.map((item) => (
+                    <div 
+                      key={item.id} 
+                      onClick={() => onOpenFolder(item)} 
+                      className="dcc-document-card"
+                    >
+                      <div className="document-card-icon-wrap folder">
+                        <Folder size={24} />
+                      </div>
+                      <span className="document-card-label">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="recently-viewed-heading">Recently Viewed</h3>
+                {!filteredRecentlyViewed.length ? (
+                  <div className="recent-empty">No recently viewed items.</div>
+                ) : (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+                    {filteredRecentlyViewed.map((rv) => (
+                      <div
+                        key={rv.id}
+                        className="recent-document-card dcc-recent-document-card"
+                        onClick={() => onOpenFolder({ id: rv.id, label: rv.label })}
+                      >
+                        <FileText size={18} className="icon-green" />
+                        <div className="col-gap-2">
+                          <span className="recent-doc-title">{rv.label}</span>
+                          <span className="recent-doc-sub">
+                            {new Date(rv.when).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* SYSTEM LOGS TABLE */}
+          {selectedFolder?.id === 'system_logs' && (
+            userRole === 'admin' ? (
+              <SystemLogsPanel onClose={onCloseFolder} searchQuery={searchQuery} />
+            ) : (
+              <div className="empty-state">
+                <ShieldAlert size={40} style={{ marginBottom: '12px', color: '#dc2626' }} />
+                <p>You do not have permission to view System Logs.</p>
+              </div>
+            )
+          )}
+
+          {/* ISO MODULES */}
+          {selectedFolder?.id === 'iso_modules' && (
+            <div className="flex-column full-height" style={{ gap: '20px' }}>
+              {!selectedStandard ? (
+                <div>
+                  <h3 className="recently-viewed-heading">ISO Standards</h3>
+                  {loadingStandards ? (
+                    <div>Loading standards...</div>
+                  ) : !filteredStandards.length ? (
+                    <div className="empty-state">No active ISO standards found.</div>
+                  ) : (
+                    <div className="dcc-document-grid">
+                      {filteredStandards.map((s) => (
+                        <div
+                          key={s.id}
+                          className="dcc-document-card"
+                          onClick={() => onSelectStandard(s)}
+                        >
+                          <div className="document-card-icon-wrap iso">
+                            <Folder size={24} />
+                          </div>
+                          <span className="document-card-label" title={s.name}>
+                            {s.name}
+                            {s.version ? ` - ${s.version}` : ''}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <ISOClausesTable 
+                  selectedStandard={selectedStandard} 
+                  clauses={filteredClauses} 
+                  loadingClauses={loadingClauses} 
+                />
+              )}
+            </div>
+          )}
+
+          {/* TASK REPORTS SUBFOLDERS GRID */}
+          {selectedFolder?.id === 'task_reports' && !selectedTaskFolder && (
+            <div>
+              <h3 className="recently-viewed-heading">Report Folders</h3>
+              <div className="dcc-document-grid">
+                {filteredTaskSubfolders.map((item) => (
+                  <div
+                    key={item.id}
+                    className="dcc-document-card"
+                    onClick={() => onOpenTaskFolder(item)}
+                  >
+                    <div className="document-card-icon-wrap folder">
+                      <Folder size={24} />
+                    </div>
+                    <span className="document-card-label">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* DOCUMENT CARDS GRID FOR REPORTS */}
+          {selectedFolder?.id === 'task_reports' && selectedTaskFolder && (
+            <div className="flex-column full-height" style={{ gap: '16px' }}>
+              {selectedTaskFolder.id === 'ncr' && (
+                loadingNcr ? <div>Loading NCR reports...</div> :
+                !filteredNcrReports.length ? <div className="empty-state">No NCR reports found.</div> : (
+                  <div className="dcc-document-grid">
+                    {filteredNcrReports.map((ncr) => (
+                      <div
+                        key={ncr.id}
+                        className={`dcc-document-card ${selectedDocument?.id === ncr.id ? 'active' : ''}`}
+                        onClick={() => setSelectedDocument({ ...ncr, _type: 'NCR' })}
+                      >
+                        <div className="document-card-icon-wrap doc">
+                          <FileText size={24} />
+                        </div>
+                        <span className="document-card-label">{ncr.reference_no || `NCR-${ncr.id.slice(0,6)}`}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+
+              {selectedTaskFolder.id === 'car' && (
+                loadingCar ? <div>Loading CAR reports...</div> :
+                !filteredCarReports.length ? <div className="empty-state">No CAR reports found.</div> : (
+                  <div className="dcc-document-grid">
+                    {filteredCarReports.map((car) => (
+                      <div
+                        key={car.id}
+                        className={`dcc-document-card ${selectedDocument?.id === car.id ? 'active' : ''}`}
+                        onClick={() => setSelectedDocument({ ...car, _type: 'CAR' })}
+                      >
+                        <div className="document-card-icon-wrap doc">
+                          <FileText size={24} />
+                        </div>
+                        <span className="document-card-label">{car.reference_no || `CAR-${car.id.slice(0,6)}`}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+
+              {selectedTaskFolder.id === 'qddr' && (
+                loadingQddr ? <div>Loading QDDR reports...</div> :
+                !filteredQddrReports.length ? <div className="empty-state">No QDDR reports found.</div> : (
+                  <div className="dcc-document-grid">
+                    {filteredQddrReports.map((q) => (
+                      <div
+                        key={q.id}
+                        className={`dcc-document-card ${selectedDocument?.id === q.id ? 'active' : ''}`}
+                        onClick={() => setSelectedDocument({ ...q, _type: 'QDDR' })}
+                      >
+                        <div className="document-card-icon-wrap doc">
+                          <FileText size={24} />
+                        </div>
+                        <span className="document-card-label">{q.reference_no || `QDDR-${q.id.slice(0,6)}`}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+
+              {selectedTaskFolder.id === 'audit' && (
+                loadingAudit ? <div>Loading Audit reports...</div> :
+                !filteredAuditReports.length ? <div className="empty-state">No Completed Audit reports found.</div> : (
+                  <div className="dcc-document-grid">
+                    {filteredAuditReports.map((audit) => (
+                      <div
+                        key={audit.id}
+                        className={`dcc-document-card ${selectedDocument?.id === audit.id ? 'active' : ''}`}
+                        onClick={() => setSelectedDocument({ ...audit, _type: 'AUDIT_RUN' })}
+                      >
+                        <div className="document-card-icon-wrap doc">
+                          <FileText size={24} />
+                        </div>
+                        <span className="document-card-label">{audit.title || `Audit-${audit.id.slice(0,6)}`}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+
+              {selectedTaskFolder.id === 'audit_schedules' && (
+                loadingAuditSchedules ? <div>Loading Schedules...</div> :
+                !filteredAuditSchedules.length ? <div className="empty-state">No Scheduled Audits found.</div> : (
+                  <div className="dcc-document-grid">
+                    {filteredAuditSchedules.map((sched) => (
+                      <div
+                        key={sched.id}
+                        className={`dcc-document-card ${selectedDocument?.id === sched.id ? 'active' : ''}`}
+                        onClick={() => setSelectedDocument({ ...sched, _type: 'AUDIT_SCHED' })}
+                      >
+                        <div className="document-card-icon-wrap doc">
+                          <FileText size={24} />
+                        </div>
+                        <span className="document-card-label">{sched.title || `Sched-${sched.id.slice(0,6)}`}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── System Logs ─────────────────────────────────────────────────── */}
-      {selectedFolder.id === 'system_logs' && (
-        userRole === 'admin' ? (
-          <div className="row-gap-40">
-            <div className="glass-card-dcc system-logs-wrapper">
-              <SystemLogsPanel onClose={onCloseFolder} searchQuery={searchQuery} />
-            </div>
-          </div>
-        ) : (
-          <div className="empty-state">
-            You do not have permission to view System Logs.
-          </div>
-        )
-      )}
+      {/* ── COLUMN 3: RIGHT DETAILS PANE (CONDITIONAL) ────────────────────── */}
+      {selectedFolder && selectedDocument && (
+        <div className="dcc-right-pane">
+          {selectedDocument ? (
+            <div className="dcc-details-container">
+              {/* Mockup Top Preview Box */}
+              <div className="dcc-details-preview-box">
+                <File size={48} className="preview-icon-svg" />
+                <span className="preview-extension-text">.{selectedDocument._type.toLowerCase()}</span>
+              </div>
 
-      {/* ── ISO Modules ─────────────────────────────────────────────────── */}
-      {selectedFolder.id === 'iso_modules' && (
-        <div className="row-gap-40">
-          {!selectedStandard ? (
-            <ISOStandardsList
-              standards={filteredStandards}
-              loadingStandards={loadingStandards}
-              onSelectStandard={onSelectStandard}
-            />
+              {/* Title & Share Button */}
+              <div className="dcc-details-header-row">
+                <div style={{ flex: 1 }}>
+                  <h3 className="dcc-details-title">
+                    {selectedDocument.reference_no || selectedDocument.title || 'Document'}
+                  </h3>
+                  <span className="dcc-details-subtitle">TYPE: {selectedDocument._type}</span>
+                </div>
+              </div>
+
+              {/* Details Key-Value List */}
+              <div className="dcc-details-block">
+                <h4 className="dcc-details-section-heading">Details</h4>
+                
+                <table className="dcc-details-table-grid">
+                  <tbody>
+                    <tr>
+                      <td className="dcc-details-label-col">Type</td>
+                      <td className="dcc-details-value-col">{fileProps.type}</td>
+                    </tr>
+                    <tr>
+                      <td className="dcc-details-label-col">Size</td>
+                      <td className="dcc-details-value-col">{fileProps.size}</td>
+                    </tr>
+                    <tr>
+                      <td className="dcc-details-label-col">File location</td>
+                      <td className="dcc-details-value-col text-wrap">{fileProps.location}</td>
+                    </tr>
+                    <tr>
+                      <td className="dcc-details-label-col">Date modified</td>
+                      <td className="dcc-details-value-col">{fileProps.modified}</td>
+                    </tr>
+                    
+                    {/* Dynamic Details based on type */}
+                    {selectedDocument._type === 'CAR' && (
+                      <>
+                        <tr>
+                          <td className="dcc-details-label-col">Requestor</td>
+                          <td className="dcc-details-value-col">{selectedDocument.requestor || '—'}</td>
+                        </tr>
+                        <tr>
+                          <td className="dcc-details-label-col">Recipient</td>
+                          <td className="dcc-details-value-col">{selectedDocument.recipient || '—'}</td>
+                        </tr>
+                        <tr>
+                          <td className="dcc-details-label-col">Responsible Dept</td>
+                          <td className="dcc-details-value-col">{selectedDocument.responsible_department || '—'}</td>
+                        </tr>
+                      </>
+                    )}
+
+                    {selectedDocument._type === 'NCR' && (
+                      <>
+                        <tr>
+                          <td className="dcc-details-label-col">Category</td>
+                          <td className="dcc-details-value-col">{selectedDocument.issue_type || '—'}</td>
+                        </tr>
+                        <tr>
+                          <td className="dcc-details-label-col">Severity</td>
+                          <td className="dcc-details-value-col">
+                            <span className={`iso-status-pill ${SEVERITY_COLORS[selectedDocument.severity] || ''}`}>
+                              {selectedDocument.severity || '—'}
+                            </span>
+                          </td>
+                        </tr>
+                      </>
+                    )}
+
+                    {selectedDocument._type === 'QDDR' && (
+                      <>
+                        <tr>
+                          <td className="dcc-details-label-col">PO Ref</td>
+                          <td className="dcc-details-value-col">{selectedDocument.po_reference || '—'}</td>
+                        </tr>
+                        <tr>
+                          <td className="dcc-details-label-col">Plate No</td>
+                          <td className="dcc-details-value-col">{selectedDocument.plate_number || '—'}</td>
+                        </tr>
+                      </>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Action Buttons Section */}
+              <div className="dcc-details-actions">
+                <div className="dcc-details-status-box">
+                  <span className="dcc-details-label">Status</span>
+                  <span className={`iso-status-pill ${
+                    String(selectedDocument.status || '').toLowerCase() === 'closed' ? 'is-closed' : 
+                    String(selectedDocument.status || '').toLowerCase() === 'completed' ? 'is-active' :
+                    String(selectedDocument.status || '').toLowerCase() === 'under_verification' ? 'is-active' : 'is-open'
+                  }`}>
+                    {selectedDocument.status || 'Active'}
+                  </span>
+                </div>
+
+                {/* Open CAPA Details */}
+                {selectedDocument._type === 'CAR' && (
+                  <button 
+                    onClick={() => onSelectCar(selectedDocument)} 
+                    className="btn btn-outline dcc-details-action-btn"
+                  >
+                    <Eye size={13} style={{ marginRight: '6px' }} />
+                    View Details
+                  </button>
+                )}
+
+                {/* View Checklist */}
+                {selectedDocument._type === 'AUDIT_RUN' && (
+                  <button 
+                    onClick={() => onFetchRunDetails(selectedDocument)} 
+                    className="btn btn-outline dcc-details-action-btn"
+                  >
+                    <Eye size={13} style={{ marginRight: '6px' }} />
+                    View Details
+                  </button>
+                )}
+
+                {/* PDF download trigger */}
+                {['CAR', 'NCR', 'QDDR'].includes(selectedDocument._type) && (
+                  <button
+                    onClick={() => handleDownloadPDF(selectedDocument, selectedDocument._type)}
+                    className="btn btn-outline dcc-details-action-btn"
+                  >
+                    <Download size={13} style={{ marginRight: '6px' }} /> PDF
+                  </button>
+                )}
+              </div>
+            </div>
           ) : (
-            <ISOClausesTable
-              selectedStandard={selectedStandard}
-              clauses={filteredClauses}
-              loadingClauses={loadingClauses}
-            />
-          )}
-        </div>
-      )}
-
-      {/* ── Task Reports ────────────────────────────────────────────────── */}
-      {selectedFolder.id === 'task_reports' && (
-        <div className="row-gap-40">
-          {!selectedTaskFolder ? (
-            <TaskReportsFolderList folders={filteredTaskSubfolders} onOpenTaskFolder={onOpenTaskFolder} />
-          ) : selectedTaskFolder.id === 'ncr' ? (
-            <div className="flex-column full-height">
-              <div className="breadcrumb">Task Reports &gt; NCR &gt; Closed</div>
-              <NCRClosedTable ncrReports={filteredNcrReports} loadingNcr={loadingNcr} onDownloadPDF={(report) => handleDownloadPDF(report, 'NCR')} />
-            </div>
-          ) : selectedTaskFolder.id === 'car' ? (
-            <div className="flex-column full-height">
-              <div className="breadcrumb">Task Reports &gt; CAR &gt; Workflow</div>
-              <CARClosedTable carReports={filteredCarReports} loadingCar={loadingCar} onSelectCar={onSelectCar} onDownloadPDF={(report) => handleDownloadPDF(report, 'CAR')} />
-            </div>
-
-          ) : selectedTaskFolder.id === 'qddr' ? (
-            <div className="flex-column full-height">
-              <div className="breadcrumb">Task Reports &gt; QDDR &gt; Closed</div>
-              <QDDRClosedTable qddrReports={filteredQddrReports} loadingQddr={loadingQddr} onDownloadPDF={(report) => handleDownloadPDF(report, 'QDDR')} />
-            </div>
-          ) : selectedTaskFolder.id === 'audit' ? (
-            <div className="flex-column full-height">
-              <div className="breadcrumb">Task Reports &gt; Audit Reports &gt; Completed</div>
-              <AuditReportsTable auditReports={filteredAuditReports} loadingAudit={loadingAudit} onFetchRunDetails={onFetchRunDetails} />
-            </div>
-          ) : selectedTaskFolder.id === 'audit_schedules' ? (
-            <div className="flex-column full-height">
-              <div className="breadcrumb">Task Reports &gt; Audit Schedules &gt; Scheduled</div>
-              <AuditSchedulesTable auditSchedules={filteredAuditSchedules} loadingAuditSchedules={loadingAuditSchedules} carReports={carReports} onSelectCar={onSelectCar} />
-            </div>
-          ) : (
-            <div className="empty-state">
-              {selectedTaskFolder.label} reports are not yet implemented.
+            <div className="dcc-details-placeholder">
+              <FileText size={48} strokeWidth={1} />
+              <p>Select a document card from the grid explorer to view its full details.</p>
             </div>
           )}
         </div>
@@ -1061,4 +710,71 @@ export default function DCCFolderContent({
     </div>
   )
 }
-
+
+function ISOStandardsList({ standards, loadingStandards, onSelectStandard }) {
+  if (loadingStandards) return <div>Loading standards...</div>
+  if (!standards.length) return <div className="empty-state">No active ISO standards found.</div>
+
+  return (
+    <div>
+      <h3 className="recently-viewed-heading">ISO Modules</h3>
+      <div className="dcc-document-grid">
+        {standards.map((s) => (
+          <div
+            key={s.id}
+            className="dcc-document-card"
+            onClick={() => onSelectStandard(s)}
+          >
+            <div className="document-card-icon-wrap iso">
+              <Folder size={22} className="icon-fill-soft" />
+            </div>
+            <div>
+              <div className="document-card-label">
+                {s.name}
+                {s.version ? ` - ${s.version}` : ''}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ISOClausesTable({ selectedStandard, clauses, loadingClauses }) {
+  return (
+    <div className="flex-column full-height" style={{ width: '100%', height: '100%' }}>
+      <div className="dcc-scrollable-table-box" style={{ flex: 1, margin: 0, background: '#ffffff' }}>
+        <table className="iso-table iso-clauses-table" style={{ width: '100%' }}>
+          <thead>
+            <tr>
+              <th>Clause</th>
+              <th>Title</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {clauses.map((cl) => (
+              <tr key={cl.id} className={cl.is_active ? '' : 'muted-row'}>
+                <td style={{ width: '120px', fontWeight: 600 }}>{cl.clause_number}</td>
+                <td>
+                  <div style={{ fontWeight: 600, color: '#0f172a' }}>{cl.title}</div>
+                  <div className="clause-description">
+                    {cl.description ?? (
+                      <span className="muted">No description added</span>
+                    )}
+                  </div>
+                </td>
+                <td style={{ width: '120px' }}>
+                  {!cl.is_active && (
+                    <span className="iso-status-pill is-inactive">Inactive</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}

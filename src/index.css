@@ -251,3 +251,38 @@ input::-ms-clear {
   from { transform: translateX(120%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+
+/* Accessibility Styles */
+body.high-contrast-mode {
+  --ink: #000000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+body.high-contrast-mode * {
+  border-color: #000000 !important;
+}
+body.high-contrast-mode .sidebar-button, 
+body.high-contrast-mode .btn-primary,
+body.high-contrast-mode .dashboard-widget-card,
+body.high-contrast-mode .settings-content {
+  border: 2px solid #000000 !important;
+  box-shadow: none !important;
+}
+
+/* Text Scaling */
+html[data-text-scale="large"] {
+  font-size: 18px !important;
+}
+html[data-text-scale="xlarge"] {
+  font-size: 20px !important;
+}
+
+/* Reduce Motion */
+body.reduce-motion-mode *,
+body.reduce-motion-mode *::before,
+body.reduce-motion-mode *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
