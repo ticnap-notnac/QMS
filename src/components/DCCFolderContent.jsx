@@ -296,7 +296,7 @@ export default function DCCFolderContent({
         {selectedFolder && (
           <div className="dcc-breadcrumbs-header">
             <button onClick={backHandler} className="back-button-mini">
-              <ArrowLeft size={16} />
+              <ArrowLeft size={20} />
             </button>
             <span className="dcc-breadcrumb-text">
               DCC &gt; {selectedFolder.label}{subFolderLabel}

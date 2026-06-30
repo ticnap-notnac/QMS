@@ -327,7 +327,6 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 700, color: '#64748b', letterSpacing: '0.5px', textTransform: 'uppercase', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Calendar size={13} /> Calendar</span>
-            <span>Checklist</span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

@@ -115,7 +115,7 @@ export default function SettingsPage(props) {
                       Configure display and navigation helper options to fit your preference.
                     </p>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingLeft: '20px' }}>
                       {/* Contrast Setting */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
                         <div>

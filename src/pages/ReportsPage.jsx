@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
 import Toast from '@/components/UI/Toast'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
@@ -34,7 +34,7 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
   const [trendClusters, setTrendClusters] = useState([])
 
   // Fetch recurring trends for the alert
-  React.useEffect(() => {
+  useEffect(() => {
     if (canAccessCar) {
       fetch('/api/ncr/recurring-trends?days=14', {
         headers: { 'Authorization': `Bearer ${logic.authUserId}` } // Assuming logic holds token or it's handled by axios interceptor. Actually, QFlow uses standard fetch with token? Let's rely on standard fetch with localStorage token.
