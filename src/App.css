@@ -18,7 +18,6 @@
 .user-info-page-container, 
 .admin-page-container-narrow, 
 .reports-main-wrap, 
-.dcc-main-wrapper,
 .iso-page-main,
 .audit-main {
   margin-left: 240px !important;
@@ -31,6 +30,20 @@
   overflow-y: auto !important;
   scrollbar-width: none; /* Hide scrollbar for Firefox */
   -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+}
+
+.dcc-main-wrapper {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 240px !important;
+  right: 0 !important;
+  width: calc(100% - 240px) !important;
+  max-width: none !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  height: 100vh !important;
+  overflow: hidden !important;
 }
 
 /* Hide scrollbars for Chrome, Safari, Opera */

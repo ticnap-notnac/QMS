@@ -660,7 +660,9 @@ export default function DCCFolderContent({
                     String(selectedDocument.status || '').toLowerCase() === 'completed' ? 'is-active' :
                     String(selectedDocument.status || '').toLowerCase() === 'under_verification' ? 'is-active' : 'is-open'
                   }`}>
-                    {selectedDocument.status || 'Active'}
+                    {selectedDocument.status 
+                      ? (String(selectedDocument.status).charAt(0).toUpperCase() + String(selectedDocument.status).slice(1).replace(/_/g, ' '))
+                      : 'Active'}
                   </span>
                 </div>
 

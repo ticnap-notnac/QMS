@@ -10,16 +10,20 @@
 }
 
 .dcc-main-wrapper {
-  flex: 1;
-  width: 95%;
-  max-width: 100%;
-  margin: 32px auto;
-  padding: 0 16px;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  position: relative;
-  z-index: 10;
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 240px !important;
+  right: 0 !important;
+  width: calc(100% - 240px) !important;
+  max-width: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .glass-card-dcc {
@@ -290,7 +294,7 @@
 .dcc-glass-main-card {
   width: 100% !important;
   min-height: 75vh !important;
-  padding: 32px !important;
+  padding: 0 !important;
   box-sizing: border-box !important;
 }
 
@@ -300,11 +304,15 @@
    ────────────────────────────────────────────────────────────────────────── */
 /* Increase specificity to override any global App.css settings, ensuring flex layout stretches perfectly */
 main.page-root .dcc-main-wrapper {
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 240px !important;
+  right: 0 !important;
   height: 100vh !important;
   max-height: 100vh !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 !important;
+  width: calc(100% - 240px) !important;
+  max-width: calc(100% - 240px) !important;
   padding: 0 !important;
   overflow: hidden !important;
   display: flex !important;
@@ -641,7 +649,8 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
 
 /* ── 💻 DCC PREMIUM WORKSPACE LAYOUT (THREE PANEL VIEWPORT) ── */
 .dcc-layout-container {
-  display: flex;
+  display: flex !important;
+  align-items: stretch !important;
   height: 100vh !important;
   width: 100% !important;
   box-sizing: border-box !important;
@@ -650,19 +659,13 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
   overflow: hidden !important;
   box-shadow: none !important;
   border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Left Sidebar Panel */
 .dcc-left-pane {
-  width: 240px !important;
-  min-width: 240px !important;
-  background: #f8fafc !important;
-  border-right: 1px solid #cbd5e1 !important;
-  padding: 20px 16px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 12px !important;
-  overflow-y: auto !important;
+  display: none !important;
 }
 
 .dcc-left-pane-title {
@@ -743,6 +746,7 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
 /* Center Explorer Panel */
 .dcc-center-pane {
   flex: 1 !important;
+  height: 100% !important;
   padding: 24px !important;
   display: flex !important;
   flex-direction: column !important;
@@ -884,6 +888,7 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
 .dcc-right-pane {
   width: 320px !important;
   min-width: 320px !important;
+  height: 100% !important;
   background: #f8fafc !important;
   border-left: 1px solid #cbd5e1 !important;
   padding: 24px !important;
@@ -1063,6 +1068,14 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
 .dcc-details-placeholder p {
   margin: 0 !important;
   line-height: 1.5 !important;
+}
+
+main.dcc-page-root {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
 }
 
 

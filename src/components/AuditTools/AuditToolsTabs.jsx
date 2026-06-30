@@ -66,7 +66,7 @@ export function AuditLogsTab({
                           {new Date(log.created_at).toLocaleString()}
                         </td>
                         <td>
-                          <span style={{ fontSize: '11px', background: 'rgba(34, 211, 238, 0.1)', color: '#22d3ee', padding: '2px 6px', borderRadius: '4px', fontWeight: '600', textTransform: 'uppercase' }}>
+                          <span style={{ fontSize: '11px', background: '#e2e8f0', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: '600', textTransform: 'uppercase' }}>
                             {log.source || 'system'}
                           </span>
                         </td>

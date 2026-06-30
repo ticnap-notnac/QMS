@@ -217,12 +217,13 @@
 .tab-button:hover { background: #f1f5f9; }
 
 .tab-button.active {
-  background: #cbd5e1;
-  color: #0f172a;
+  background: #090d16 !important;
+  color: #f1f5f9 !important;
 }
 
 .tab-button.active:hover {
-  background: #cbd5e1;
+  background: #111827 !important;
+  color: #ffffff !important;
 }
 
 .tab-content {

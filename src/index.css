@@ -121,16 +121,16 @@ input::-ms-clear {
 .btn-primary:active { background: #0f172a; }
 
 .btn-gradient-primary {
-  background: #0f172a;
-  color: #ffffff;
+  background: #090d16;
+  color: #f1f5f9;
   padding: 10px 16px;
   border-radius: 10px;
   border: none;
   cursor: pointer;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
-.btn-gradient-primary:hover { transform: translateY(-1px); background: #1e293b; }
+.btn-gradient-primary:hover { transform: translateY(-1px); background: #111827; color: #ffffff; }
 
 .btn-secondary-light {
   background: #ffffff;
@@ -273,8 +273,14 @@ body.high-contrast-mode .settings-content {
 html[data-text-scale="large"] {
   font-size: 18px !important;
 }
+html[data-text-scale="large"] body {
+  zoom: 1.15;
+}
 html[data-text-scale="xlarge"] {
   font-size: 20px !important;
+}
+html[data-text-scale="xlarge"] body {
+  zoom: 1.30;
 }
 
 /* Reduce Motion */

@@ -28,7 +28,7 @@ export default function DCCPage({ userRole, authUserId }) {
   }
 
   return (
-    <main className="dashboard page-root">
+    <main className="dcc-page-root page-root">
       <div className="dcc-main-wrapper">
         <div className="dcc-glass-main-card">
           <DCCFolderContent
