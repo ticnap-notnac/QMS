@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchUnreadNotifications, markNotificationAsRead } from '@/services/notificationService'
+import { fetchUserNotifications, markNotificationAsRead } from '@/services/notificationService'
 
 export default function useNotifications({
   isOpen,
@@ -21,7 +21,7 @@ export default function useNotifications({
     setError(null)
 
     try {
-      const data = await fetchUnreadNotifications(currentUserId)
+      const data = await fetchUserNotifications(currentUserId)
       setNotifications(Array.isArray(data) ? data : [])
 
       if (onRefreshUnreadCount) {
@@ -42,7 +42,11 @@ export default function useNotifications({
   const markOneAsRead = useCallback(async (notificationId) => {
     try {
       await markNotificationAsRead(notificationId)
-      setNotifications((current) => current.filter((notification) => notification.id !== notificationId))
+      setNotifications((current) => 
+        current.map((notification) => 
+          notification.id === notificationId ? { ...notification, is_read: true } : notification
+        )
+      )
 
       if (onUnreadCountChange) {
         onUnreadCountChange((current) => Math.max(Number(current || 0) - 1, 0))
@@ -57,8 +61,10 @@ export default function useNotifications({
 
   const markAllAsRead = useCallback(async () => {
     try {
-      await Promise.all(notifications.map((notification) => markNotificationAsRead(notification.id)))
-      setNotifications([])
+      await Promise.all(notifications.filter(n => !n.is_read).map((notification) => markNotificationAsRead(notification.id)))
+      setNotifications((current) => 
+        current.map((notification) => ({ ...notification, is_read: true }))
+      )
 
       if (onUnreadCountChange) {
         onUnreadCountChange(0)

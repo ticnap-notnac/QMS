@@ -84,9 +84,9 @@ export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn
       setPageError('')
       await deleteItem(roleToDelete.id)
       await reloadLookups()
-      setPageMessage(`Deleted role "${roleToDelete.role_name}" successfully.`)
+      setToast({ message: `Deleted role "${roleToDelete.role_name}" successfully.`, type: 'success' })
     } catch (err) {
-      setPageError(err?.message || 'This role could not be deleted.')
+      setToast({ message: err?.message || 'This role could not be deleted.', type: 'error' })
     } finally {
       setRoleToDelete(null)
     }

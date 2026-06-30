@@ -67,12 +67,12 @@ export default function NotificationPanel({
               Notifications
             </h2>
             <p className="notifications-modal-subtitle">
-              {list.length} unread item{list.length === 1 ? '' : 's'}
+              {list.filter(n => !n.is_read).length} unread item{list.filter(n => !n.is_read).length === 1 ? '' : 's'}
             </p>
           </div>
         </div>
         <div className="notifications-header-actions">
-          {list.length > 0 ? (
+          {list.filter(n => !n.is_read).length > 0 ? (
             <button className="notifications-mark-all" type="button" onClick={onMarkAllAsRead}>
               <CheckCheck size={16} />
               Mark all as read
@@ -91,7 +91,7 @@ export default function NotificationPanel({
         {!loading && !error && list.length === 0 ? (
           <div className="notifications-empty-state">
             <Clock3 size={22} />
-            <p>No unread notifications right now.</p>
+            <p>No notifications right now.</p>
           </div>
         ) : null}
 
@@ -118,8 +118,8 @@ export default function NotificationPanel({
               {typeLabel(notification.type)}
             </div>
             <div className="notification-card-body">
-              <h3 className="notification-card-title">{notification.title}</h3>
-              <p className="notification-card-message">{notification.message}</p>
+              <h3 className="notification-card-title" style={{ fontWeight: notification.is_read ? 400 : 700 }}>{notification.title}</h3>
+              <p className="notification-card-message" style={{ fontWeight: notification.is_read ? 400 : 600, color: notification.is_read ? '#64748b' : '#334155' }}>{notification.message}</p>
               
               {String(notification.title || '').startsWith('Report Approved:') && (
                 <div className="notification-inline-rating" style={{ marginTop: '8px' }} onClick={(e) => e.stopPropagation()}>
@@ -141,16 +141,18 @@ export default function NotificationPanel({
                 {notification.report_id ? <span>Report #{notification.report_id}</span> : null}
               </div>
             </div>
-            <button
-              type="button"
-              className="notification-mark-read"
-              onClick={(event) => {
-                event.stopPropagation()
-                onMarkOneAsRead(notification.id)
-              }}
-            >
-              Mark as read
-            </button>
+            {!notification.is_read && (
+              <button
+                type="button"
+                className="notification-mark-read"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onMarkOneAsRead(notification.id)
+                }}
+              >
+                Mark as read
+              </button>
+            )}
           </article>
         ))}
       </div>

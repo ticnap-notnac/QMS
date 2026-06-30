@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { createReport, reviewReportApproval, submitNcrMultipart, updateReport, deleteReport } from '@/services/ncrService'
 import { createLocation } from '@/services/locationService'
@@ -43,9 +44,12 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
   const [isSubmittingRating, setIsSubmittingRating] = useState(false)
 
   // ── View mode ───────────────────────────────────────────────────────────────
+  const location = useLocation()
+  const initialTab = location?.pathname?.includes('reports') && location?.state?.tab ? location.state.tab : 'ncr'
+
   const [isApprovalQueueMode, setIsApprovalQueueMode] = useState(false)
   const [isClosedMode, setIsClosedMode] = useState(false)
-  const [activeTab, setActiveTab] = useState('ncr')
+  const [activeTab, setActiveTab] = useState(initialTab)
 
   // ── CAR & QDDR Reports lists state ───────────────────────────────────────────
   const [carReports, setCarReports] = useState([])

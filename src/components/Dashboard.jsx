@@ -389,7 +389,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
               <div 
                 key={activity.id} 
                 className="dashboard-clickable-row"
-                onClick={() => navigate('/reports')}
+                onClick={() => navigate('/reports', { state: { tab: 'car' } })}
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',

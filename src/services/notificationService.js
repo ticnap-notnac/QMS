@@ -1,13 +1,12 @@
 import { supabase } from '@/utils/supabase'
 
-export async function fetchUnreadNotifications(currentUserId) {
+export async function fetchUserNotifications(currentUserId) {
   if (!currentUserId) return []
 
   const { data, error } = await supabase
     .from('notifications')
     .select('*')
     .eq('user_id', currentUserId)
-    .eq('is_read', false)
     .order('created_at', { ascending: false })
 
   if (error) {
