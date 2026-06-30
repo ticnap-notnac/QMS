@@ -18,25 +18,20 @@ import { AlertCircle, Shield, TrendingUp, BarChart2, Clock, MoreHorizontal, Cale
 
 
 // Custom tooltips for nice monotone popup displays
+import './Dashboard.css'
 import PendingRatingsWidget from './Dashboard/PendingRatingsWidget'
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload
     return (
-      <div className="custom-chart-tooltip" style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #cbd5e1',
-        padding: '12px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-      }}>
-        <p style={{ margin: 0, fontWeight: 600, color: '#0f172a', fontSize: '13px' }}>{label || data.title}</p>
-        <p style={{ margin: '4px 0 0 0', color: '#0f172a', fontSize: '14px', fontWeight: 700 }}>
+      <div className="custom-chart-tooltip">
+        <p className="tooltip-title">{label || data.title}</p>
+        <p className="tooltip-value">
           {payload[0].name}: {payload[0].value}%
         </p>
         {data.standard && (
-          <p style={{ margin: '4px 0 0 0', color: '#475569', fontSize: '12px' }}>
+          <p className="tooltip-standard">
             Standard: {data.standard}
           </p>
         )}
@@ -49,16 +44,10 @@ const CustomTooltip = ({ active, payload, label }) => {
 const CustomResolutionTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="custom-chart-tooltip" style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #cbd5e1',
-        padding: '12px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-      }}>
-        <p style={{ margin: 0, fontWeight: 600, color: '#0f172a', fontSize: '13px' }}>{label}</p>
+      <div className="custom-chart-tooltip">
+        <p className="tooltip-title">{label}</p>
         {payload.map((entry, idx) => (
-          <p key={idx} style={{ margin: '4px 0 0 0', color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>
+          <p key={idx} className="tooltip-resolution">
             {entry.name}: {entry.value !== null && entry.value !== undefined ? `${entry.value} hours` : '—'}
           </p>
         ))}
@@ -122,7 +111,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
         setResolutionTrend(trendPayload || [])
 
         // 4. Calculate average ISO compliance score
-        let avgCompliance = 100
+        let avgCompliance = 0
         if (stats && stats.length > 0) {
           const total = stats.reduce((sum, s) => sum + (s.compliance || 0), 0)
           avgCompliance = Math.round(total / stats.length)
@@ -131,7 +120,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
         setMetrics({
           openComplaints: (ncrCount || 0) + (carCount || 0),
           isoCompliance: avgCompliance,
-          defectRate: 0.4
+          defectRate: 0
         })
 
         // 5. Fetch upcoming audit schedules from database
@@ -148,10 +137,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
             date: new Date(s.scheduled_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
           })))
         } else {
-          setUpcomingAudits([
-            { id: 1, title: 'ISO 13485 Internal Audit', date: 'June 30' },
-            { id: 2, title: 'FDA Prep Inspection', date: 'July 15' }
-          ])
+          setUpcomingAudits([])
         }
 
         // 6. Fetch latest CAR activities from database
@@ -170,12 +156,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
             tone: idx % 2 === 0 ? 'success' : 'danger'
           })))
         } else {
-          setLatestActivities([
-            { id: 1, title: 'DCR notification at', description: 'NCR Assessment', time: '7 hours ago', tone: 'danger' },
-            { id: 2, title: 'DCR notification at', description: 'Latest Emplation', time: '5 hours ago', tone: 'success' },
-            { id: 3, title: 'DCR notification at', description: 'CAR Assessment', time: '14 days ago', tone: 'danger' },
-            { id: 4, title: 'CAR notification at', description: 'CAR Assessment', time: '2 days ago', tone: 'success' }
-          ])
+          setLatestActivities([])
         }
       } catch (err) {
         console.error('Error fetching dashboard data:', err)
@@ -190,7 +171,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
 
   if (loading) {
     return (
-      <div className="flex-column justify-center align-center" style={{ height: '50vh', color: '#94a3b8' }}>
+      <div className="flex-column justify-center align-center dashboard-loading-container">
         <div>Loading dashboard metrics...</div>
       </div>
     )
@@ -213,7 +194,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
 
 
   return (
-    <div className="dashboard-content" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="dashboard-content">
       {error && (
         <div className="iso-banner iso-banner--error" style={{ marginBottom: '12px' }}>
           <span>{error}</span>
@@ -228,229 +209,140 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
       />
 
       {/* Top Metrics Cards Row */}
-      <section className="metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+      <section className="metrics-section">
         <div className="metric-card" 
           title="The total number of currently active, unresolved NCR (Non-Conformance Reports) and CAR (Corrective Action Requests) processes."
-          style={{
-            background: '#ffffff',
-            border: '1px solid #e4e4e7',
-            borderRadius: '12px',
-            padding: '16px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            minHeight: '100px',
-            transition: 'transform 0.2s',
-            cursor: 'help',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-          }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#475569' }}>
-            <p style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: '#000000' }}>Open Complaints</p>
+          <div className="metric-card-header">
+            <p className="metric-card-title">Open Complaints</p>
             <AlertCircle size={18} color="#0f172a" />
           </div>
-          <h3 style={{ margin: '8px 0 4px 0', fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
+          <h3 className="metric-card-value">
             {metrics?.openComplaints || 0}
           </h3>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Active NCR and CAR processes</span>
+          <span className="metric-card-subtitle">Active NCR and CAR processes</span>
         </div>
 
         <div className="metric-card" 
           title="The average audit compliance score calculated across all active ISO standards and guidelines."
-          style={{
-            background: '#ffffff',
-            border: '1px solid #e4e4e7',
-            borderRadius: '12px',
-            padding: '16px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            minHeight: '100px',
-            transition: 'transform 0.2s',
-            cursor: 'help',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-          }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#475569' }}>
-            <p style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: '#000000' }}>ISO Compliance Rate</p>
+          <div className="metric-card-header">
+            <p className="metric-card-title">ISO Compliance Rate</p>
             <Shield size={18} color="#0f172a" />
           </div>
-          <h3 style={{ margin: '8px 0 4px 0', fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
-            {metrics?.isoCompliance || 100}%
+          <h3 className="metric-card-value">
+            {metrics?.isoCompliance ?? 0}%
           </h3>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Average across all standards</span>
+          <span className="metric-card-subtitle">Average across all standards</span>
         </div>
 
         <div className="metric-card" 
           title="The percentage rate of defective items identified in QDDR (Quality Defect & Disposal Reports) relative to total inspection lots."
-          style={{
-            background: '#ffffff',
-            border: '1px solid #e4e4e7',
-            borderRadius: '12px',
-            padding: '16px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            minHeight: '100px',
-            transition: 'transform 0.2s',
-            cursor: 'help',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-          }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#475569' }}>
-            <p style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: '#000000' }}>QDDR Defect Rate</p>
+          <div className="metric-card-header">
+            <p className="metric-card-title">QDDR Defect Rate</p>
             <TrendingUp size={18} color="#0f172a" />
           </div>
-          <h3 style={{ margin: '8px 0 4px 0', fontSize: '28px', fontWeight: 700, color: '#0f172a' }}>
-            {metrics?.defectRate || 0.4}%
+          <h3 className="metric-card-value">
+            {metrics?.defectRate ?? 0}%
           </h3>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>Well within compliance margins</span>
+          <span className="metric-card-subtitle">Well within compliance margins</span>
         </div>
       </section>
 
       {/* Double Column Info Widgets Row */}
-      <section className="dashboard-widgets-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+      <section className="dashboard-widgets-grid">
         {/* Card 1: Upcoming Regulatory Audits */}
-        <div className="dashboard-widget-card" style={{
-          background: '#ffffff',
-          border: '1px solid #e4e4e7',
-          borderRadius: '12px',
-          padding: '20px 24px',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Upcoming Regulatory Audits</h3>
+        <div className="dashboard-widget-card">
+          <div className="widget-card-header">
+            <h3 className="widget-card-title">Upcoming Regulatory Audits</h3>
           </div>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 700, color: '#64748b', letterSpacing: '0.5px', textTransform: 'uppercase', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Calendar size={13} /> Calendar</span>
+          <div className="widget-calendar-header">
+            <span className="widget-calendar-header-inner"><Calendar size={13} /> Calendar</span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {upcomingAudits.map((audit) => (
-              <div 
-                key={audit.id} 
-                className="dashboard-clickable-row"
-                onClick={() => navigate('/audit-tools?tab=Schedules')}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  background: '#f8fafc',
-                  border: '1px solid #f1f5f9',
-                  borderRadius: '8px',
-                  padding: '12px 16px'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '6px',
-                    background: '#e0f2fe',
-                    color: '#0369a1',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <CheckCircle2 size={14} />
+          <div className="widget-list">
+            {upcomingAudits.length > 0 ? (
+              upcomingAudits.map((audit) => (
+                <div 
+                  key={audit.id} 
+                  className="dashboard-clickable-row audit-row"
+                  onClick={() => navigate('/audit-tools?tab=Schedules')}
+                >
+                  <div className="row-left">
+                    <div className="row-icon-audit">
+                      <CheckCircle2 size={14} />
+                    </div>
+                    <div className="row-text-container">
+                      <span className="row-title">{audit.title}</span>
+                      <span className="row-subtitle">{audit.date}</span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>{audit.title}</span>
-                    <span style={{ fontSize: '11px', color: '#64748b' }}>{audit.date}</span>
-                  </div>
+                  <span className="row-date-audit">{audit.date}</span>
                 </div>
-                <span style={{ fontSize: '12px', fontWeight: 500, color: '#475569' }}>{audit.date}</span>
+              ))
+            ) : (
+              <div className="chart-empty" style={{ height: '60px' }}>
+                No upcoming audits scheduled.
               </div>
-            ))}
+            )}
           </div>
         </div>
 
         {/* Card 2: Latest CAR activities */}
-        <div className="dashboard-widget-card" style={{
-          background: '#ffffff',
-          border: '1px solid #e4e4e7',
-          borderRadius: '12px',
-          padding: '20px 24px',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Latest CAR activities</h3>
+        <div className="dashboard-widget-card">
+          <div className="widget-card-header">
+            <h3 className="widget-card-title">Latest CAR activities</h3>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {latestActivities.map((activity) => (
-              <div 
-                key={activity.id} 
-                className="dashboard-clickable-row"
-                onClick={() => navigate('/reports', { state: { tab: 'car' } })}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  borderBottom: '1px solid #f1f5f9',
-                  padding: '8px 10px',
-                  borderRadius: '6px'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: activity.tone === 'success' ? '#f0fdf4' : '#fef2f2',
-                    color: activity.tone === 'success' ? '#166534' : '#991b1b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <FileText size={16} />
+          <div className="widget-list">
+            {latestActivities.length > 0 ? (
+              latestActivities.map((activity) => (
+                <div 
+                  key={activity.id} 
+                  className="dashboard-clickable-row car-row"
+                  onClick={() => navigate('/reports', { state: { tab: 'car' } })}
+                >
+                  <div className="row-left">
+                    <div className={`row-icon-car car-${activity.tone}`}>
+                      <FileText size={16} />
+                    </div>
+                    <div className="row-text-container">
+                      <span className="row-title">
+                        {activity.title}
+                      </span>
+                      <span className="row-subtitle">
+                        {activity.description}
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
-                      {activity.title}
-                    </span>
-                    <span style={{ fontSize: '11px', color: '#64748b' }}>
-                      {activity.description}
-                    </span>
-                  </div>
+                  <span className="row-date-car">{activity.time}</span>
                 </div>
-                <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 500 }}>{activity.time}</span>
+              ))
+            ) : (
+              <div className="chart-empty" style={{ height: '60px' }}>
+                No CAR activities recently.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
 
       {/* Visual Analytics Section */}
-      <section className="charts" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a', margin: '4px 0 0 0' }}>Quality Analytics & Compliance</h2>
+      <section className="charts-section">
+        <h2 className="charts-section-title">Quality Analytics & Compliance</h2>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+        <div className="charts-grid">
           {/* Bar Chart - Compliance by ISO Standard */}
           <div className="chart-wrapper" 
             title="A breakdown showing the latest compliance score percentages for each distinct ISO standard currently audited."
-            style={{
-              background: '#ffffff',
-              border: '1px solid #e4e4e7',
-              borderRadius: '12px',
-              padding: '16px',
-              boxSizing: 'border-box',
-              cursor: 'help',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-            }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <div className="chart-header">
               <BarChart2 size={15} color="#0f172a" />
-              <h4 style={{ margin: 0, color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>Standard Compliance Breakdown</h4>
+              <h4 className="chart-title">Standard Compliance Breakdown</h4>
             </div>
-            <div style={{ width: '100%', height: '400px' }}>
+            <div className="chart-container">
               {barChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -462,7 +354,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', fontSize: '13px' }}>
+                <div className="chart-empty">
                   No compliance data available.
                 </div>
               )}
@@ -472,21 +364,12 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           {/* Line Chart - Compliance Trend */}
           <div className="chart-wrapper" 
             title="A chronological trend chart tracking overall audit compliance scores from oldest to newest."
-            style={{
-              background: '#ffffff',
-              border: '1px solid #e4e4e7',
-              borderRadius: '12px',
-              padding: '16px',
-              boxSizing: 'border-box',
-              cursor: 'help',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-            }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <div className="chart-header">
               <TrendingUp size={15} color="#0f172a" />
-              <h4 style={{ margin: 0, color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>Audit Compliance Trend</h4>
+              <h4 className="chart-title">Audit Compliance Trend</h4>
             </div>
-            <div style={{ width: '100%', height: '400px' }}>
+            <div className="chart-container">
               {lineChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={lineChartData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
@@ -498,7 +381,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', fontSize: '13px' }}>
+                <div className="chart-empty">
                   No historical trend audits recorded.
                 </div>
               )}
@@ -508,21 +391,12 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           {/* Line Chart - Resolution Time Trends */}
           <div className="chart-wrapper" 
             title="A monthly historical analysis monitoring the average number of hours taken to close NCR, CAR, and QDDR records."
-            style={{
-              background: '#ffffff',
-              border: '1px solid #e4e4e7',
-              borderRadius: '12px',
-              padding: '16px',
-              boxSizing: 'border-box',
-              cursor: 'help',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-            }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <div className="chart-header">
               <Clock size={15} color="#0f172a" />
-              <h4 style={{ margin: 0, color: '#0f172a', fontSize: '13px', fontWeight: 600 }}>Average Resolution Time Trend (Hours)</h4>
+              <h4 className="chart-title">Average Resolution Time Trend (Hours)</h4>
             </div>
-            <div style={{ width: '100%', height: '400px' }}>
+            <div className="chart-container">
               {resolutionTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={resolutionTrend} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
@@ -537,7 +411,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', fontSize: '13px' }}>
+                <div className="chart-empty">
                   No closed reports data available.
                 </div>
               )}

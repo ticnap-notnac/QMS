@@ -66,7 +66,7 @@ export async function dismissVerificationNotification(reportId, userId) {
 }
 
 export default {
-  fetchUnreadNotifications,
+  fetchUserNotifications,
   fetchUnreadNotificationCount,
   markNotificationAsRead,
   dismissVerificationNotification,
