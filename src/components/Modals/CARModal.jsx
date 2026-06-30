@@ -38,6 +38,11 @@ function CARModal({
     { key: 'vendor_nonconformance', label: 'VENDOR NON-CONFORMANCE' }
   ]
 
+  const filteredUsers = users?.filter((user) => {
+    const userRole = String(user.label || '').toUpperCase()
+    return !userRole.includes('WAREHOUSE STAFF') && !userRole.includes('DEPARTMENT MANAGER')
+  }) || []
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
@@ -177,7 +182,7 @@ function CARModal({
                     label="Requestor:"
                     value={form.requestor}
                     onValueChange={(val) => handleChange('requestor', val)}
-                    options={users}
+                    options={filteredUsers}
                     loading={usersLoading}
                     placeholder="Search user..."
                     onSelectOption={(opt) => handleChange('requestor', opt.label)}
@@ -214,7 +219,7 @@ function CARModal({
                     label="Recipient:"
                     value={form.recipient}
                     onValueChange={(val) => handleChange('recipient', val)}
-                    options={users}
+                    options={filteredUsers}
                     loading={usersLoading}
                     placeholder="Search user..."
                     onSelectOption={(opt) => handleChange('recipient', opt.label)}
