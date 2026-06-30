@@ -4,13 +4,14 @@ import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
 import { AuditRunDetailsModal } from '../components/AuditTools/AuditToolsModals'
 import './DCCPage.css'
 
-const FOLDER_ITEMS = [
-  { id: 'system_logs', label: 'System Logs' },
-  { id: 'iso_modules', label: 'ISO Modules' },
-  { id: 'task_reports', label: 'Task Reports' },
-]
-
 export default function DCCPage({ userRole, authUserId }) {
+  const normRole = String(userRole || '').trim().toLowerCase()
+  const FOLDER_ITEMS = [
+    ...(normRole === 'admin' ? [{ id: 'system_logs', label: 'System Logs' }] : []),
+    ...(['admin', 'auditor'].includes(normRole) ? [{ id: 'iso_modules', label: 'ISO Modules' }] : []),
+    { id: 'task_reports', label: 'Task Reports' },
+  ]
+
   const {
     searchQuery, setSearchQuery, selectedFolder, openFolder, closeFolder, recentlyViewed, standards,
     loadingStandards, selectedStandard, clauses, loadingClauses, openStandard, selectedTaskFolder,

@@ -7,13 +7,6 @@ import CARPrintTemplate from './Print/CARPrintTemplate.jsx'
 import NCRPrintTemplate from './Print/NCRPrintTemplate.jsx'
 import QDDRPrintTemplate from './Print/QDDRPrintTemplate.jsx'
 
-const TASK_REPORT_SUBFOLDERS = [
-  { id: 'car', label: 'CAR' },
-  { id: 'qddr', label: 'QDDR' },
-  { id: 'ncr', label: 'NCR' },
-  { id: 'audit', label: 'Audit Reports' },
-  { id: 'audit_schedules', label: 'Audit Schedules' },
-]
 
 const SEVERITY_COLORS = {
   Critical: 'severity-critical',
@@ -62,6 +55,18 @@ export default function DCCFolderContent({
   userRole,
   onFetchRunDetails
 }) {
+  const normRole = String(userRole || '').trim().toLowerCase()
+  const TASK_REPORT_SUBFOLDERS = [
+    { id: 'ncr', label: 'NCR' },
+    ...(normRole !== 'warehouse staff' ? [{ id: 'qddr', label: 'QDDR' }] : []),
+    ...(['admin', 'auditor'].includes(normRole) ? [
+      { id: 'car', label: 'CAR' },
+      { id: 'audit', label: 'Audit Reports' },
+      { id: 'audit_schedules', label: 'Audit Schedules' },
+    ] : [])
+  ]
+
+  const [localSearch, setLocalSearch] = useState('')
   const [selectedDocument, setSelectedDocument] = useState(null)
   const [shareSuccess, setShareSuccess] = useState(false)
   
@@ -743,7 +748,6 @@ function ISOStandardsList({ standards, loadingStandards, onSelectStandard }) {
 
 function ExpandableText({ text }) {
   const [expanded, setExpanded] = useState(false)
-  if (!text) return null
 
   const isLong = text.length > 250
   

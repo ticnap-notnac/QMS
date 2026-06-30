@@ -251,7 +251,8 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
       </section>
 
       {/* Double Column Info Widgets Row */}
-      <section className="dashboard-widgets-grid">
+      {(userRole === 'ADMIN' || userRole === 'AUDITOR') && (
+        <section className="dashboard-widgets-grid">
         {/* Card 1: Upcoming Regulatory Audits */}
         <div className="dashboard-widget-card">
           <div className="widget-card-header">
@@ -328,6 +329,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           </div>
         </div>
       </section>
+      )}
 
       {/* Visual Analytics Section */}
       <section className="charts-section">
