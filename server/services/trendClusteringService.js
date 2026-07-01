@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase.js'
-import { extractKeywords, jaccardSimilarity } from '../utils/cbr.js'
+import { extractKeywords, extractKeywordsWithLLM, jaccardSimilarity } from '../utils/cbr.js'
 
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
@@ -43,16 +43,17 @@ export async function analyzeAndClusterReportInBackground(reportId) {
     if (candidateErr || !candidates || candidates.length === 0) return
     
     // 3. Calculate semantic similarity
-    const newKeywords = extractKeywords(newReport.description || '')
+    const newKeywords = await extractKeywordsWithLLM(newReport.description || '', GEMINI_API_KEY)
     let bestMatch = null
     let highestSim = 0
     
     for (const candidate of candidates) {
+      // Use Lexical extraction for candidates to save API calls, but compare against Semantic newKeywords
       const candidateKeywords = extractKeywords(candidate.description || '')
       const sim = jaccardSimilarity(newKeywords, candidateKeywords)
       if (sim >= 0.20 && sim > highestSim) {
         highestSim = sim
-        bestMatch = { ...candidate, keywords: candidateKeywords }
+        bestMatch = { ...candidate, keywords: [...candidateKeywords] } // convert Set to array for sharedKeywords
       }
     }
     
