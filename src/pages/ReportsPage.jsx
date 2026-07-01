@@ -174,25 +174,7 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
                 Recurring Issues ({allRecurringReportIds.length})
               </button>
             )}
-            {['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase()) && (
-              <select
-                className="form-input reports-dept-select"
-                value={logic.reportFilters?.departmentId || ''}
-                onChange={(e) => {
-                  logic.setReportFilters(prev => ({
-                    ...prev,
-                    departmentId: e.target.value
-                  }))
-                }}
-              >
-                <option value="" className="reports-dept-option">All Departments</option>
-                {logic.departments?.map(dept => (
-                  <option key={dept.id} value={dept.id} className="reports-dept-option">
-                    {dept.department_name}
-                  </option>
-                ))}
-              </select>
-            )}
+
           </div>
           <div className="reports-action-buttons-right">
             {canAccessCar && (

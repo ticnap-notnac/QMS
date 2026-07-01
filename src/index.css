@@ -263,10 +263,33 @@ body.high-contrast-mode * {
 }
 body.high-contrast-mode .sidebar-button, 
 body.high-contrast-mode .btn-primary,
-body.high-contrast-mode .dashboard-widget-card,
+body.high-contrast-mode .dashboard-widget-card {
+  border: 2px solid #000000 !important;
+  box-shadow: none !important;
+}
 body.high-contrast-mode .settings-content {
   border: 2px solid #000000 !important;
   box-shadow: none !important;
+  padding: 24px !important;
+  box-sizing: border-box !important;
+}
+body.high-contrast-mode .reports-dept-select {
+  border: 2px solid #000000 !important;
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+/* Remove edge outlines on layout/page wrapper containers */
+body.high-contrast-mode .page-main,
+body.high-contrast-mode .page-main-wide,
+body.high-contrast-mode .settings-page-container,
+body.high-contrast-mode .reports-main-wrap,
+body.high-contrast-mode .iso-page-main,
+body.high-contrast-mode .audit-main,
+body.high-contrast-mode .dashboard,
+body.high-contrast-mode .page-root {
+  border: none !important;
+  outline: none !important;
 }
 
 /* Text Scaling */
