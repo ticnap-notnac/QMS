@@ -221,8 +221,22 @@ export function retrieveBestMatch(currentReport, candidates) {
     .filter(c => c.corrective_action) // only cases that have an actual solution
     .map(candidate => {
       const { score, matchedFeatures } = computeCBRScore(currentReport, candidate)
+      
       // Normalise effectiveness_score (0-5 scale) to 0-1, default 0 if absent
-      const effectivenessNorm = Math.min((candidate.effectiveness_score || 0) / 5, 1)
+      let effectivenessNorm = Math.min((candidate.effectiveness_score || 0) / 5, 1)
+      
+      // Apply Role-Based Rating Hierarchy (Admin/Auditor/Manager ratings carry more weight)
+      const role = String(candidate.rater_role || '').toLowerCase().trim();
+      let roleMultiplier = 1.0; // default for warehouse staff
+      if (role.includes('auditor') || role.includes('admin')) {
+        roleMultiplier = 1.2;
+      } else if (role.includes('manager')) {
+        roleMultiplier = 1.1;
+      }
+      
+      // Apply multiplier, capping the maximum normalized effectiveness at 1.0
+      effectivenessNorm = Math.min(effectivenessNorm * roleMultiplier, 1.0)
+
       const finalScore = score * 0.85 + effectivenessNorm * 0.15
       return { ...candidate, cbr_score: finalScore, matched_features: matchedFeatures }
     })
