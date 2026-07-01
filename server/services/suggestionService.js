@@ -275,7 +275,7 @@ export async function generateAiSuggestion({ ncrId, deptName, previousSuggestion
     } catch (dbErr) {
       console.error('Failed to store fallback suggestion in database:', dbErr)
     }
-    return fallback
+    return { ...fallback, sourceDetails: 'System Heuristics' }
   }
 
   try {
@@ -333,10 +333,7 @@ Respond ONLY in this JSON format with no preamble or markdown:
               }
             ]
           }
-        ],
-        generationConfig: {
-          responseMimeType: 'application/json'
-        }
+        ]
       })
     })
 
@@ -359,7 +356,8 @@ Respond ONLY in this JSON format with no preamble or markdown:
     return {
       suggestion: parsed.suggestion,
       preventive_suggestion: parsed.preventive_suggestion,
-      confidence: parsed.confidence
+      confidence: parsed.confidence,
+      sourceDetails: 'Generative AI (Gemini)'
     }
   } catch (err) {
     console.error('Gemini API or parsing failed. Falling back to rule-based suggestion. Error:', err)
@@ -372,7 +370,7 @@ Respond ONLY in this JSON format with no preamble or markdown:
     } catch (dbErr) {
       console.error('Failed to store fallback suggestion in database:', dbErr)
     }
-    return fallback
+    return { ...fallback, sourceDetails: 'System Heuristics' }
   }
 }
 

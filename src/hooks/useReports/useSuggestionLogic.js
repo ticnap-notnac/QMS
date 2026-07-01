@@ -84,7 +84,7 @@ export function useSuggestionLogic({ report, deptName }) {
                 confidence: result.confidence,
                 cached: false,
                 matchedFeatures: [],
-                sourceDetails: 'Generative AI (Gemini)',
+                sourceDetails: result.sourceDetails || 'Generative AI (Gemini)',
             })
 
         } catch (err) {
