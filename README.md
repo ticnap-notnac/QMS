@@ -82,11 +82,25 @@ If you or a groupmate run into `401 (Unauthorized)` errors:
 
 ## What's implemented (high-level)
 
+### System & Core Features
 - Centralized system logging: backend endpoints under `/api/logs` write to `system_logs` and `system_log_reads`. System logs are intended for admin viewing only.
 - Audit helpers consolidated on the server for consistent, single-source logging of create/delete operations.
 - Login/Logout audit events are recorded, but login is now recorded only once per browser session (prevents duplicates when switching tabs).
-- Inactivity auto-logout: the client implements an inactivity timer (default 30 minutes) with a pre-timeout warning. The timer and warning are implemented in the frontend; see [src/App.jsx](src/App.jsx) to adjust durations or UI behavior.
-- ISO Clause association and AI-based clause suggestions are available on **CAR reports** (via `CARModal`). The NCR submission modal (`CreateReportModal`) does **not** include clause selection or auto-suggest — those fields were intentionally removed to keep the NCR form focused.
+- Inactivity auto-logout: the client implements an inactivity timer (default 30 minutes) with a pre-timeout warning. 
+- Comprehensive Role-Based Access Controls (RBAC) securely restricting routes and data visibility across the Dashboard, DCC panel, and CAR reports.
+
+### Advanced AI Integration
+- **Semantic Recurring Detection Alerts:** Background jobs analyze new reports against the database using Asymmetric Semantic Search, automatically generating Gemini-backed summaries for recurring trends.
+- **Semantic Auto-Classification:** Automated mapping of unstructured defect descriptions into exact checkbox categories for CAR and QDDR forms.
+
+### Lexical & Rule-Based Engines
+- **Lexical Clause Mapping:** High-speed Jaccard similarity engine that maps defect descriptions strictly to ISO Standard Clauses via keyword proximity (available on CAR reports via `CARModal`).
+- **Heuristic Rule Engine:** Built-in local offline engine that guarantees 100% system uptime by providing rule-based CAPA suggestions if external AI APIs ever fail.
+
+### User Interface & Accessibility
+- **Live Dashboard Analytics:** Dashboard widgets directly bound to live database metrics with clickable row navigation.
+- **Accessibility Preferences:** Fully functional Accessibility settings page featuring scalable text contrast, uniform tabbing, and persistent outline shapes for visually impaired users.
+- **ISO Standards Management:** Full edit functionality and responsive layout toggles for managing internal ISO clauses.
 
 ## Industry Standards Readiness
 
@@ -105,10 +119,14 @@ During our Industry Standards Readiness sprints, we heavily optimized and secure
 ### 3. Automated Testing Pipeline
 - **Vitest & Supertest:** A dedicated backend test suite isolates the database and runs automated health checks against our Express routes and Zod validation middleware. The backend test environment is correctly isolated from the React frontend test environment.
 
-## Case-Based Reasoning (CBR) Algorithm
+## Neuro-Symbolic Case-Based Reasoning (CBR) Algorithm
 
-The system features a highly intelligent **Case-Based Reasoning** engine (`server/utils/cbr.js`) to automatically suggest the most historically effective corrective and preventive actions. 
+The system features a highly intelligent **LLM-Augmented Case-Based Reasoning** engine (`server/utils/cbr.js`) to automatically suggest the most historically effective corrective and preventive actions. 
 
+### Step 1: Semantic Feature Extraction
+Before any logic is run, the system uses Semantic AI to read the raw defect description and extract its core technical concepts. This ensures the CBR engine is comparing meaning, not just exact spelling.
+
+### Step 2: Deterministic Scoring (Symbolic)
 Instead of just fetching the "newest" reports, the engine dynamically scores all past cases based on a custom mathematical weight formula:
 - **Issue Type Match:** 35%
 - **Keyword Jaccard Similarity:** 35%
@@ -118,6 +136,26 @@ Instead of just fetching the "newest" reports, the engine dynamically scores all
 
 The resulting raw similarity score is then dynamically blended with the past case's historical **Effectiveness Rating** (a 0-5 scale). The system calculates: `(Similarity Score * 85%) + (Effectiveness Rating * 15%)`. This guarantees that the AI always recommends the past solution that is both mathematically similar to the current issue AND proven to be highly effective.
 
+### Step 3: Generative AI Fallback (RAG)
+If the CBR engine fails to find a historically similar case (meaning the defect is entirely unique), the system automatically triggers a **Retrieval-Augmented Generation (RAG) Fallback**. It bundles the closest partial matches and the current defect details into a prompt, and uses the Gemini AI to generate a brand new, highly contextualized CAPA suggestion from scratch.
+
+## Advanced AI Architecture & Optimization
+
+To ensure enterprise-grade scalability and strict cost management on zero-cost free tiers, QFlow utilizes a highly advanced **Hybrid Neuro-Symbolic** approach.
+
+### 1. Model Routing Optimization
+Instead of relying on a single heavy LLM for all tasks, workloads are decoupled based on frequency and reasoning requirements:
+- **Background Tasks (Gemini 2.5 Flash-Lite):** High-frequency, low-reasoning tasks like Semantic Auto-Classification of discrepancy tags and initial CAPA suggestions are routed to Google's fastest model. This maximizes throughput (up to 1,000 API requests per day) and minimizes latency.
+- **Conversational Chatbot (OpenRouter / GPT-4o-mini):** Low-frequency, high-reasoning tasks involving RAG, context memory, and data summarization are reserved for heavy reasoning models via the OpenRouter API.
+
+### 2. Asymmetric Semantic Search (Query Expansion)
+To prevent API rate-limiting during Case-Based Reasoning, the system employs **Asymmetric Semantic Search**:
+1. **Semantic Expansion:** When a new defect is logged, exactly *one* request is sent to Gemini to semantically extract its core concepts (e.g., expanding "leak" to "water, fluid, spill").
+2. **Lexical Matching:** These expanded keywords are then matched offline against the entire database using the deterministic Jaccard Lexical engine.
+This guarantees that the system gains the deep context understanding of an LLM while maintaining the extreme speed, offline capability, and $0 cost of a traditional SQL lexical search.
+
+### 3. Graceful Degradation (Heuristic Fallback)
+In the event of API outages, missing keys, or rate limits, the system features a built-in **Heuristic Rule Engine**. If an LLM call fails, the system instantly degrades gracefully by running local offline keyword rules to suggest backup CAPA actions and checkbox classifications—ensuring 100% uninterrupted system uptime.
 
 ## How to test the auth/session & logging fixes
 
