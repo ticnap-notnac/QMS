@@ -9,7 +9,7 @@ const router = Router()
 
 router.post('/car', requireRoles(['admin', 'auditor']), validateRequest(createCarSchema), createCar)
 router.post('/car/suggest-clauses', requireRoles(['admin', 'auditor']), suggestClauses)
-router.put('/car/:id/capa', requireRoles(['admin', 'auditor', 'department_head']), validateRequest(submitCapaSchema), submitCapa)
+router.put('/car/:id/capa', requireRoles(['admin', 'auditor']), validateRequest(submitCapaSchema), submitCapa)
 router.put('/car/:id/verify', requireRoles(['admin', 'auditor']), validateRequest(verifyCarSchema), verifyCar)
 router.get('/car/clause/:clauseId/cars', getCarsForClause)
 

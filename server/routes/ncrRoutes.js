@@ -16,7 +16,7 @@ router.post('/ncr/submit', upload.array('evidence_files', 3), createReportSubmit
 router.put('/ncr/:id', validateRequest(createReportSchema), updateReport)
 router.put('/ncr/:id/investigation', upload.array('investigation_evidence_files', 3), updateReportInvestigation)
 router.put('/ncr/:id/assign', requireRoles(['admin', 'auditor']), validateRequest(assignReportSchema), assignReport)
-router.put('/ncr/:id/approval', requireRoles(['admin', 'auditor']), validateRequest(reviewReportApprovalSchema), reviewReportApproval)
+router.put('/ncr/:id/approval', requireRoles(['admin', 'manager', 'department manager']), validateRequest(reviewReportApprovalSchema), reviewReportApproval)
 router.post('/ncr/:id/rate', validateRequest(rateReportSchema), rateReport)
 router.get('/ncr/:id/rating', getReportRating)
 router.delete('/ncr/:id', deleteReport)
