@@ -168,7 +168,7 @@ function QDDRModal({
             <form className="modal-form" onSubmit={onSubmit} style={{ gap: '16px', display: 'flex', flexDirection: 'column' }}>
 
               {/* Row 1: Location, Date, Time */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '14px' }}>
+              <div className="qddr-form-row-3-col">
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <SearchableDropdown
                     label="Location:"
@@ -203,7 +203,7 @@ function QDDRModal({
               </div>
 
               {/* Row 2: Trucker/Broker, Plate Number, Container Number */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+              <div className="qddr-form-row-3-col">
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label className="label-field">Trucker / Broker:</label>
                   <input
@@ -237,7 +237,7 @@ function QDDRModal({
               </div>
 
               {/* Row 3: PO Reference, DR/WB Number, Brand/Supplier */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+              <div className="qddr-form-row-3-col">
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label className="label-field">PO Reference:</label>
                   <input
@@ -270,7 +270,7 @@ function QDDRModal({
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
 
               {/* Row 4: Material Details */}
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 0.8fr', gap: '14px' }}>
+              <div className="qddr-form-row-material-grid">
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label className="label-field">Material Description: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
                   <input
@@ -370,7 +370,7 @@ function QDDRModal({
               </div>
 
               {/* Details: Reason, Corrective, Preventive */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+              <div className="qddr-form-row-3-col">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label className="label-field">Reason of Discrepancy: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
                   <textarea
@@ -402,7 +402,7 @@ function QDDRModal({
               </div>
 
               {/* Signature / Approval Roles: Leader, Approved By, Noted By */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginTop: '4px' }}>
+              <div className="qddr-form-row-3-col" style={{ marginTop: '4px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <SearchableDropdown
                     label="Leader / Supervisor:"

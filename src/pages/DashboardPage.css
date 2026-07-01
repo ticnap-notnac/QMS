@@ -86,3 +86,13 @@
   background-color: #f1f5f9 !important;
   transform: translateX(4px);
 }
+
+@media (max-width: 768px) {
+  .dashboard {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+}

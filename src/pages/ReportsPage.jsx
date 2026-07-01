@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
 import Toast from '@/components/UI/Toast'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
@@ -33,6 +33,21 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
   const [qddrToDelete, setQddrToDelete] = useState(null)
   const [trendClusters, setTrendClusters] = useState([])
   const [isRecurringMode, setIsRecurringMode] = useState(false)
+  const [isSubmitDropdownOpen, setIsSubmitDropdownOpen] = useState(false)
+  const submitDropdownRef = useRef(null)
+
+  useEffect(() => {
+    if (!isSubmitDropdownOpen) return
+    const handleClickOutside = (e) => {
+      if (submitDropdownRef.current && !submitDropdownRef.current.contains(e.target)) {
+        setIsSubmitDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isSubmitDropdownOpen])
   
   const allRecurringReportIds = React.useMemo(() => {
     if (!trendClusters || trendClusters.length === 0) return []
@@ -176,42 +191,54 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
             )}
 
           </div>
-          <div className="reports-action-buttons-right">
-            {canAccessCar && (
-              <button 
-                type="button" 
-                onClick={() => logic.openCARModal()} 
-                className="btn-gradient-primary reports-submit-primary"
-                title="Submit Corrective Action Request (CAR) - Request corrective actions for identified issues or system non-conformances."
-              >
-                Submit CAR
-              </button>
-            )}
-            {canAccessQddr && (
-              <button 
-                type="button" 
-                onClick={() => logic.openQDDRModal()} 
-                className="btn-gradient-primary reports-submit-primary"
-                title="Submit Quality Defect & Disposal Report (QDDR) - Document product defects and handle product disposal processes."
-              >
-                Submit QDDR
-              </button>
-            )}
+          <div className="reports-action-buttons-right" ref={submitDropdownRef} style={{ position: 'relative' }}>
             <button 
               type="button" 
-              onClick={logic.openCreateModal} 
+              onClick={() => setIsSubmitDropdownOpen(!isSubmitDropdownOpen)} 
               className="btn-gradient-primary reports-submit-primary"
-              title="Submit Non-Conformance Report (NCR) - Record occurrences of processes, materials, or services that fail to meet specifications."
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              title="Submit a new report (NCR, CAR, or QDDR)"
             >
-              Submit NCR
+              Submit
+              <span style={{ fontSize: '9px', display: 'inline-block', transition: 'transform 0.2s', transform: isSubmitDropdownOpen ? 'rotate(180deg)' : 'none' }}>▼</span>
             </button>
+            
+            {isSubmitDropdownOpen && (
+              <div className="reports-submit-dropdown-menu">
+                <button 
+                  type="button" 
+                  onClick={() => { logic.openCreateModal(); setIsSubmitDropdownOpen(false); }}
+                  className="reports-submit-dropdown-item"
+                >
+                  Submit NCR
+                </button>
+                {canAccessCar && (
+                  <button 
+                    type="button" 
+                    onClick={() => { logic.openCARModal(); setIsSubmitDropdownOpen(false); }}
+                    className="reports-submit-dropdown-item"
+                  >
+                    Submit CAR
+                  </button>
+                )}
+                {canAccessQddr && (
+                  <button 
+                    type="button" 
+                    onClick={() => { logic.openQDDRModal(); setIsSubmitDropdownOpen(false); }}
+                    className="reports-submit-dropdown-item"
+                  >
+                    Submit QDDR
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {availableTabs.length > 1 && (
           <div className="reports-tab-nav reports-tab-nav-bar">
             {availableTabs.map(t => (
-              <button key={t} type="button" className={`btn-quick-toggle reports-tab-nav-btn ${logic.activeTab === t ? 'active' : ''}`} onClick={() => logic.setActiveTab(t)}>{t.toUpperCase()} Reports</button>
+              <button key={t} type="button" className={`btn-quick-toggle reports-tab-nav-btn ${logic.activeTab === t ? 'active' : ''}`} onClick={() => logic.setActiveTab(t)}>{t.toUpperCase()}</button>
             ))}
           </div>
         )}

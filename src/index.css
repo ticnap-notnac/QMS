@@ -292,6 +292,32 @@ body.high-contrast-mode .page-root {
   outline: none !important;
 }
 
+body.high-contrast-mode .reports-submit-dropdown-menu {
+  border: 2px solid #000000 !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+body.high-contrast-mode .reports-submit-dropdown-item {
+  color: #000000 !important;
+}
+body.high-contrast-mode .reports-submit-dropdown-item:hover {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Mobile Proportional Viewport Scale-down & Native Scroll */
+@media (max-width: 768px) {
+  html, body, #root, .page {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+  body {
+    zoom: 0.9 !important;
+  }
+}
+
 /* Text Scaling */
 html[data-text-scale="large"] {
   font-size: 18px !important;

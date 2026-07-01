@@ -25,7 +25,7 @@ export default function CARReportsList({
   }
 
   return (
-    <div className="glass-card-dcc" style={{ padding: '20px' }}>
+    <div className="glass-card-dcc reports-list-card-container">
       {/* 🎯 THE FIX: Changed from dcc-scrollable-table-box to harness your reports width parameters */}
       <div className="reports-table-scroll-wrap">
         <table className="iso-table">

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye } from 'lucide-react'
+import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X } from 'lucide-react'
 import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
 import html2pdf from 'html2pdf.js'
@@ -559,6 +559,14 @@ export default function DCCFolderContent({
       {/* ── COLUMN 3: RIGHT DETAILS PANE (CONDITIONAL) ────────────────────── */}
       {selectedFolder && selectedDocument && (
         <div className="dcc-right-pane">
+          <button 
+            type="button" 
+            onClick={() => setSelectedDocument(null)} 
+            className="dcc-details-close-btn"
+            title="Close details"
+          >
+            <X size={18} />
+          </button>
           {selectedDocument ? (
             <div className="dcc-details-container">
               {/* Mockup Top Preview Box */}
