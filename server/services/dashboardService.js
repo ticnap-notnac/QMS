@@ -30,7 +30,7 @@ export async function fetchResolutionTrends() {
   const [ncrsRes, carsRes, qddrsRes] = await Promise.all([
     supabase
       .from('ncr_reports')
-      .select('created_at, resolution_time')
+      .select('created_at, updated_at, resolution_time')
       .eq('status', 'CLOSED')
       .gte('created_at', oneYearAgoStr),
     supabase
@@ -69,7 +69,7 @@ export async function fetchResolutionTrends() {
   }
 
   ncrs.forEach(item => {
-    const val = parseResolutionTimeToHours(item.resolution_time, item.created_at, null)
+    const val = parseResolutionTimeToHours(item.resolution_time, item.created_at, item.updated_at)
     addValue(item.created_at, val, 'ncr')
   })
 
