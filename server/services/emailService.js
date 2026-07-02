@@ -84,3 +84,47 @@ export async function sendNotificationEmail(userId, title, message) {
     logger.error(`Failed to send notification email: ${error.message}`)
   }
 }
+
+/**
+ * Sends the initial credentials for a newly created user.
+ * @param {object} params
+ * @param {string} params.toEmail
+ * @param {string} params.password
+ * @param {string} params.frontendUrl
+ * @param {string} [params.displayName]
+ */
+export async function sendNewUserCredentialsEmail({ toEmail, password, frontendUrl, displayName }) {
+  try {
+    if (!toEmail) {
+      logger.warn('Could not send new user credentials email. No recipient email was provided.')
+      return
+    }
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || `"QFlow Automated Alerts" <${process.env.SMTP_USER}>`,
+      to: toEmail,
+      subject: 'Your QFlow account credentials',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 10px; background: #ffffff;">
+          <h2 style="color: #0f172a; margin-top: 0;">Your QFlow account is ready</h2>
+          <p style="font-size: 15px; color: #334155; line-height: 1.6;">${displayName ? `Hello ${displayName},` : 'Hello,'} your account has been created. Use the credentials below to sign in.</p>
+          <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin: 20px 0;">
+            <p style="margin: 0 0 10px; color: #0f172a; font-size: 14px;"><strong>Email:</strong> ${toEmail}</p>
+            <p style="margin: 0; color: #0f172a; font-size: 14px;"><strong>Password:</strong> ${password}</p>
+          </div>
+          <p style="font-size: 15px; color: #334155; line-height: 1.6;">Sign in here: <a href="${frontendUrl}" style="color: #2563eb; text-decoration: none;">${frontendUrl}</a></p>
+          <p style="font-size: 14px; color: #64748b; margin-top: 24px;">Please keep these details secure.</p>
+        </div>
+      `,
+    }
+
+    if (transporter) {
+      const info = await transporter.sendMail(mailOptions)
+      logger.info(`New user credentials email sent successfully to ${toEmail} [MessageId: ${info.messageId}]`)
+    } else {
+      logger.info(`[MOCK EMAIL] To: ${toEmail} | Subject: ${mailOptions.subject} | Credential email skipped because SMTP is not configured.`)
+    }
+  } catch (error) {
+    logger.error(`Failed to send new user credentials email: ${error.message}`)
+  }
+}

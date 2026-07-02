@@ -96,10 +96,16 @@ export default function useAddUserLogic() {
         return
       }
 
+      if (!/@gmail\.com$/i.test(String(newUser.email || '').trim())) {
+        setFormError('Only Gmail addresses are allowed.')
+        setSubmitting(false)
+        return
+      }
+
       const result = await createUserItem({
         firstName: newUser.firstName,
         lastName: newUser.lastName,
-        email: newUser.email,
+        email: newUser.email.trim(),
         password: newUser.password,
         userName: newUser.userName,
         contactNumber: newUser.contactNumber,

@@ -121,6 +121,9 @@ function AddUserModal({
                 placeholder="Enter email address"
                 autoComplete="new-password"
               />
+              <span className="small-label" style={{ marginTop: '6px', color: '#64748b' }}>
+                Gmail addresses only.
+              </span>
             </label>
 
             <label className="panel-column">

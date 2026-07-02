@@ -1,5 +1,6 @@
 import { getRequestActor } from '../lib/requestUtils.js'
 import logger from '../utils/logger.js'
+import { sendNewUserCredentialsEmail } from '../services/emailService.js'
 import {
   fetchAllUsers,
   createUserWithAuth,
@@ -32,6 +33,10 @@ export async function createUser(req, res) {
     return res.status(400).json({ error: 'Contact number must be exactly 11 digits.' })
   }
 
+  if (!/@gmail\.com$/i.test(String(email || '').trim())) {
+    return res.status(400).json({ error: 'Only Gmail addresses are allowed.' })
+  }
+
   const { authUser, profile, error, status } = await createUserWithAuth({
     firstName,
     lastName,
@@ -49,6 +54,14 @@ export async function createUser(req, res) {
     return res.status(status).json({ error })
   }
   logger.info('User created', { userId: authUser?.id })
+
+  void sendNewUserCredentialsEmail({
+    toEmail: email,
+    password,
+    frontendUrl: 'https://qms-jade-vercel.app',
+    displayName: `${firstName || ''} ${lastName || ''}`.trim() || userName || 'there',
+  })
+
   return res.json({ authUser, profile })
 }
 
