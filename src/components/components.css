@@ -1460,7 +1460,9 @@ textarea.input-field {
   .mobile-brand {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     cursor: pointer;
+    margin-left: -10px;
   }
 
   .brand-logo-img-mobile {
@@ -1685,6 +1687,78 @@ textarea.input-field {
     padding: 6px 12px !important;
     font-size: 12px !important;
     margin-top: 4px !important;
+  }
+
+  /* NCR submit modal: fit entire form on phone screens without affecting desktop */
+  .qflow-modal-overlay {
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding: 8px !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  .qflow-ncr-modal-card {
+    width: calc(100vw - 16px) !important;
+    max-width: 560px !important;
+    max-height: calc(100vh - 16px) !important;
+    border-radius: 14px !important;
+    transform: scale(0.92) !important;
+    transform-origin: top center !important;
+    margin: 0 auto !important;
+  }
+
+  .qflow-modal-header {
+    padding: 14px 16px 10px 16px !important;
+  }
+
+  .qflow-modal-header h3 {
+    font-size: 1rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .qflow-modal-body-scroll {
+    padding: 14px 16px !important;
+    gap: 12px !important;
+  }
+
+  .qflow-modal-body-scroll > div[style*="grid-template-columns: '1fr 1fr 1fr'"],
+  .qflow-modal-body-scroll > div[style*="grid-template-columns: 1fr 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .qflow-modal-body-scroll > div[style*="grid-template-columns: '1fr 1fr'"],
+  .qflow-modal-body-scroll > div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .qflow-modal-body-scroll label {
+    font-size: 0.72rem !important;
+  }
+
+  .qflow-modal-body-scroll input,
+  .qflow-modal-body-scroll select,
+  .qflow-modal-body-scroll textarea {
+    font-size: 12px !important;
+    min-height: 38px !important;
+  }
+
+  .qflow-upload-box-container {
+    min-height: 44px !important;
+  }
+
+  .qflow-modal-footer {
+    padding: 12px 16px !important;
+    gap: 8px !important;
+  }
+
+  .qflow-btn-cancel,
+  .qflow-btn-submit {
+    min-height: 36px !important;
+    padding: 0 14px !important;
+    font-size: 12px !important;
   }
 }
 

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { Upload as UploadIcon, X } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
@@ -12,6 +12,97 @@ export default function NCRSubmitModal({
   const { user } = useAuth()
 
   const fileInputRef = useRef(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  const modalCardStyle = isMobile
+    ? {
+        width: 'calc(100vw - 18px)',
+        maxWidth: '520px',
+        maxHeight: 'calc(100vh - 18px)',
+        transform: 'scale(0.84)',
+        transformOrigin: 'top center',
+      }
+    : {
+        width: '100%',
+        maxWidth: '680px',
+        maxHeight: '88vh',
+      }
+
+  const headerStyle = isMobile
+    ? {
+        flexShrink: 0,
+        padding: '14px 16px 10px 16px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+        boxSizing: 'border-box',
+      }
+    : {
+        flexShrink: 0,
+        padding: '22px 28px 14px 28px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+        boxSizing: 'border-box',
+      }
+
+  const bodyStyle = isMobile
+    ? {
+        flex: 1,
+        overflowY: 'auto',
+        padding: '12px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        boxSizing: 'border-box',
+      }
+    : {
+        flex: 1,
+        overflowY: 'auto',
+        padding: '24px 28px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+        boxSizing: 'border-box',
+      }
+
+  const footerStyle = isMobile
+    ? {
+        flexShrink: 0,
+        display: 'flex',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '10px 14px',
+        background: '#0d172a',
+        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+        boxSizing: 'border-box',
+      }
+    : {
+        flexShrink: 0,
+        display: 'flex',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '16px 28px',
+        background: '#0d172a',
+        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+        boxSizing: 'border-box',
+      }
+
+  const titleStyle = isMobile
+    ? { margin: 0, fontSize: '0.92rem', color: '#ffffff', fontWeight: 600, letterSpacing: '0.3px' }
+    : { margin: 0, fontSize: '1.2rem', color: '#ffffff', fontWeight: 600, letterSpacing: '0.3px' }
 
   if (!isOpen) return null
 
@@ -38,9 +129,6 @@ export default function NCRSubmitModal({
         className="qflow-ncr-modal-card" 
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: '100%',
-          maxWidth: '680px',
-          maxHeight: '88vh',
           background: '#111e38',
           borderRadius: '16px',
           display: 'flex',
@@ -48,24 +136,17 @@ export default function NCRSubmitModal({
           overflow: 'hidden',
           border: '1px solid rgba(255, 255, 255, 0.08)',
           boxShadow: '0 24px 48px rgba(0, 0, 0, 0.6)',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          ...modalCardStyle
         }}
       >
         
         {/* ── HEADER LAYOUT (Fixed at top) ────────────────────────────────── */}
         <div 
           className="qflow-modal-header"
-          style={{
-            flexShrink: 0,
-            padding: '22px 28px 14px 28px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-            boxSizing: 'border-box'
-          }}
+          style={headerStyle}
         >
-          <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#ffffff', fontWeight: 600, letterSpacing: '0.3px' }}>
+          <h3 style={titleStyle}>
             Submit Non-Conformance Report
           </h3>
           <button 
@@ -81,15 +162,7 @@ export default function NCRSubmitModal({
         {/* 📜 LAYER 1: SCROLLABLE INTERNAL FIELD LOGIC CANVAS 🚀 */}
         <div 
           className="qflow-modal-body-scroll"
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '24px 28px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            boxSizing: 'border-box'
-          }}
+          style={bodyStyle}
         >
           
           {/* 📸 WIREFRAME POSITION 1: Evidence Image Uploader Box (Top Position) */}
@@ -155,7 +228,7 @@ export default function NCRSubmitModal({
           </div>
 
           {/* 📐 WIREFRAME POSITION 2: 3-Column Balanced Component Matrix Layout Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', width: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '16px', width: '100%' }}>
             
             {/* Product Type select field */}
             <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -210,7 +283,7 @@ export default function NCRSubmitModal({
           </div>
 
           {/* 📐 WIREFRAME POSITION 3: 2-Column Selection Grid Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', width: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '10px' : '16px', width: '100%' }}>
             
             {/* Severity input group */}
             <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -273,17 +346,7 @@ export default function NCRSubmitModal({
         {/* ⚓ LAYER 2: STATIC CONTROL FOOTER ACTIONS (Fixed at the base) ───────── */}
         <div 
           className="qflow-modal-footer"
-          style={{
-            flexShrink: 0,
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '16px 28px',
-            background: '#0d172a',
-            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-            boxSizing: 'border-box'
-          }}
+          style={footerStyle}
         >
           <button 
             type="button" 

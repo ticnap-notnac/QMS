@@ -783,7 +783,10 @@ function ISOClausesTable({ selectedStandard, clauses, loadingClauses }) {
               <tr key={cl.id} className={cl.is_active ? '' : 'muted-row'}>
                 <td style={{ width: '120px', fontWeight: 600 }}>{cl.clause_number}</td>
                 <td>
-                  <div style={{ fontWeight: 600, color: '#0f172a' }}>{cl.title}</div>
+                  <div style={{ fontWeight: 600, color: '#0f172a' }}>
+                    <span className="mobile-only-clause-num">Clause {cl.clause_number}: </span>
+                    {cl.title}
+                  </div>
                   <div className="clause-description">
                     {cl.description ? (
                       <ExpandableText text={cl.description} />

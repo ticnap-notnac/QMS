@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X as CloseIcon, Sparkles } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 
@@ -21,6 +21,15 @@ function QDDRModal({
 }) {
   const [isLinkingMode, setIsLinkingMode] = useState(false)
   const [ncrSearchQuery, setNcrSearchQuery] = useState('')
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
 
   if (!isOpen) return null
 
@@ -52,13 +61,15 @@ function QDDRModal({
         className="modal-card" 
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxHeight: '90vh',
-          width: isLinkingMode ? '600px' : '900px',
+          maxHeight: isMobile ? 'calc(100vh - 16px)' : '90vh',
+          width: isMobile ? 'calc(100vw - 16px)' : (isLinkingMode ? '600px' : '900px'),
           maxWidth: '95vw',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          position: 'relative' // Maintained stability for child absolute layouts
+          position: 'relative',
+          transform: isMobile ? 'scale(0.84)' : 'none',
+          transformOrigin: 'top center'
         }}
       >
         {/* ── ✕ ABSOLUTE CLOSE BUTTON (Safely isolated in the upper right) ── */}
@@ -85,13 +96,13 @@ function QDDRModal({
           className="modal-header-row" 
           style={{ 
             flexShrink: 0, 
-            marginBottom: '16px', 
+            marginBottom: isMobile ? '10px' : '16px', 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            paddingLeft: '28px',
-            paddingRight: '48px',
-            paddingTop: '24px'
+            paddingLeft: isMobile ? '16px' : '28px',
+            paddingRight: isMobile ? '40px' : '48px',
+            paddingTop: isMobile ? '14px' : '24px'
           }}
         >
           <h3 className="reports-update-title" style={{ margin: 0 }}>
@@ -110,9 +121,9 @@ function QDDRModal({
           )}
         </div>
 
-        {error && !isLinkingMode && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: '28px', marginRight: '28px' }}>{error}</div>}
+{error && !isLinkingMode && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: isMobile ? '16px' : '28px', marginRight: isMobile ? '16px' : '28px' }}>{error}</div>}
 
-        <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', paddingLeft: '28px', paddingRight: '28px', paddingBottom: '24px' }}>
+        <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', paddingLeft: isMobile ? '14px' : '28px', paddingRight: isMobile ? '14px' : '28px', paddingBottom: isMobile ? '14px' : '24px' }}>
           {isLinkingMode ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input
@@ -165,7 +176,7 @@ function QDDRModal({
               </div>
             </div>
           ) : (
-            <form className="modal-form" onSubmit={onSubmit} style={{ gap: '16px', display: 'flex', flexDirection: 'column' }}>
+            <form className="modal-form" onSubmit={onSubmit} style={{ gap: isMobile ? '10px' : '16px', display: 'flex', flexDirection: 'column' }}>
 
               {/* Row 1: Location, Date, Time */}
               <div className="qddr-form-row-3-col">
@@ -320,7 +331,7 @@ function QDDRModal({
               <h4 style={{ color: '#0f172a', fontSize: '13px', margin: '0 0 4px 0', textAlign: 'center', letterSpacing: '0.05em' }}>TYPE OF DISCREPANCY</h4>
               
               {/* Discrepancies Grid & Others */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '12px' }}>
                 {checkboxFields.map(field => (
                   <label key={field.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#334155', cursor: 'pointer' }}>
                     <input
@@ -370,7 +381,7 @@ function QDDRModal({
               </div>
 
               {/* Details: Reason, Corrective, Preventive */}
-              <div className="qddr-form-row-3-col">
+              <div className="qddr-form-row-3-col" style={isMobile ? { gridTemplateColumns: '1fr', gap: '10px' } : undefined}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label className="label-field">Reason of Discrepancy: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
                   <textarea
@@ -402,7 +413,7 @@ function QDDRModal({
               </div>
 
               {/* Signature / Approval Roles: Leader, Approved By, Noted By */}
-              <div className="qddr-form-row-3-col" style={{ marginTop: '4px' }}>
+              <div className="qddr-form-row-3-col" style={isMobile ? { marginTop: '4px', gridTemplateColumns: '1fr', gap: '10px' } : { marginTop: '4px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <SearchableDropdown
                     label="Leader / Supervisor:"
@@ -450,8 +461,8 @@ function QDDRModal({
             display: 'flex',
             justifyContent: 'flex-end',
             alignItems: 'center',
-            gap: '12px',
-            padding: '18px 28px 24px 28px',
+            gap: isMobile ? '8px' : '12px',
+            padding: isMobile ? '12px 14px 14px 14px' : '18px 28px 24px 28px',
             background: 'transparent',
             borderTop: '1px solid #cbd5e1',
             marginTop: '12px'

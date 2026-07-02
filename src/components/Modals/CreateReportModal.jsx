@@ -10,7 +10,7 @@
  * - No internal state — fully controlled by useReportsLogic via createFormState
  */
 
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X as CloseIcon, Upload as UploadIcon } from 'lucide-react'
 import SearchableDropdown from '@/components/Forms/SearchableDropdown'
 
@@ -51,6 +51,16 @@ function CreateReportModal({
   setEvidenceError,
 }) {
   if (!isOpen) return null
+
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
 
   const {
     productType, setProductType,
@@ -105,22 +115,26 @@ function CreateReportModal({
         className="modal-card" 
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxHeight: '90vh',
+          width: isMobile ? 'calc(100vw - 16px)' : '100%',
+          maxWidth: isMobile ? '520px' : '580px',
+          maxHeight: isMobile ? 'calc(100vh - 16px)' : '90vh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          position: 'relative'
+          position: 'relative',
+          transform: isMobile ? 'scale(0.88)' : 'none',
+          transformOrigin: 'top center'
         }}
       >
         {/* ── HEADER (Fixed at top) ── */}
         <button type="button" onClick={onClose} className="modal-close-button">
           <CloseIcon size={18} />
         </button>
-        <div className="modal-header-row" style={{ flexShrink: 0, marginBottom: '16px', paddingLeft: '28px', paddingRight: '48px', paddingTop: '24px' }}>
+        <div className="modal-header-row" style={{ flexShrink: 0, marginBottom: isMobile ? '10px' : '16px', paddingLeft: isMobile ? '16px' : '28px', paddingRight: isMobile ? '40px' : '48px', paddingTop: isMobile ? '14px' : '24px' }}>
           <h3 className="reports-update-title" style={{ margin: 0 }}>Submit NCR Report</h3>
         </div>
 
-        {error && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: '28px', marginRight: '28px' }}>{error}</div>}
+        {error && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: isMobile ? '16px' : '28px', marginRight: isMobile ? '16px' : '28px' }}>{error}</div>}
 
         {/* 📜 SCROLLABLE CANVAS BODY TRACK ── */}
         <div 
@@ -128,12 +142,12 @@ function CreateReportModal({
           style={{ 
             flex: 1, 
             overflowY: 'auto', 
-            paddingLeft: '28px',
-            paddingRight: '28px',
-            paddingBottom: '24px'
+            paddingLeft: isMobile ? '14px' : '28px',
+            paddingRight: isMobile ? '14px' : '28px',
+            paddingBottom: isMobile ? '14px' : '24px'
           }}
         >
-          <form className="modal-form reports-form-compact" onSubmit={onSubmit} style={{ gap: '16px' }}>
+          <form className="modal-form reports-form-compact" onSubmit={onSubmit} style={{ gap: isMobile ? '10px' : '16px' }}>
 
             {/* 📸 WIREFRAME ROW 1: Evidence / Image Upload Box at the Top */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -183,7 +197,7 @@ function CreateReportModal({
             </div>
 
             {/* 📐 WIREFRAME ROW 2: 3-Column Compact Selection Rows (Product, Batch, Location) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '14px' }}>
               {/* Product Type Search Dropdown */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <SearchableDropdown
@@ -225,7 +239,7 @@ function CreateReportModal({
             </div>
 
             {/* 📐 WIREFRAME ROW 3: 3-Column — Severity, Department, Issue Category */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '14px' }}>
               {/* Severity Dropdown Select */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <label className="label-field">Severity Level:</label>
@@ -299,8 +313,8 @@ function CreateReportModal({
             display: 'flex',
             justifyContent: 'flex-end',
             alignItems: 'center',
-            gap: '12px',
-            padding: '18px 28px 24px 28px',
+            gap: isMobile ? '8px' : '12px',
+            padding: isMobile ? '12px 14px 14px 14px' : '18px 28px 24px 28px',
             background: 'transparent',
             borderTop: '1px solid #cbd5e1',
             marginTop: '12px'

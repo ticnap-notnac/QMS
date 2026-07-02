@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X as CloseIcon, Link, LoaderCircle, CheckCircle2, XCircle } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 
@@ -24,6 +24,15 @@ function CARModal({
 }) {
   const [isLinkingMode, setIsLinkingMode] = useState(false)
   const [ncrSearchQuery, setNcrSearchQuery] = useState('')
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
 
   if (!isOpen) return null
 
@@ -49,13 +58,15 @@ function CARModal({
         className="modal-card" 
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxHeight: '90vh',
-          width: isLinkingMode ? '600px' : '800px',
+          maxHeight: isMobile ? 'calc(100vh - 16px)' : '90vh',
+          width: isMobile ? 'calc(100vw - 16px)' : (isLinkingMode ? '600px' : '800px'),
           maxWidth: '95vw',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          position: 'relative' // Keeps close button tracking stable
+          position: 'relative',
+          transform: isMobile ? 'scale(0.86)' : 'none',
+          transformOrigin: 'top center'
         }}
       >
         {/* ── ✕ ABSOLUTE CLOSE HANDLE WITH PROPER CORNER CLEARANCE BOUNDS ── */}
@@ -82,13 +93,13 @@ function CARModal({
           className="modal-header-row" 
           style={{ 
             flexShrink: 0, 
-            marginBottom: '16px', 
+            marginBottom: isMobile ? '10px' : '16px', 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            paddingLeft: '28px',
-            paddingRight: '48px',
-            paddingTop: '24px'
+            paddingLeft: isMobile ? '16px' : '28px',
+            paddingRight: isMobile ? '40px' : '48px',
+            paddingTop: isMobile ? '14px' : '24px'
           }}
         >
           <h3 className="reports-update-title" style={{ margin: 0 }}>
@@ -107,9 +118,9 @@ function CARModal({
           )}
         </div>
 
-        {error && !isLinkingMode && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: '28px', marginRight: '28px' }}>{error}</div>}
+        {error && !isLinkingMode && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: isMobile ? '16px' : '28px', marginRight: isMobile ? '16px' : '28px' }}>{error}</div>}
 
-        <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', paddingLeft: '28px', paddingRight: '28px', paddingBottom: '24px' }}>
+        <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', paddingLeft: isMobile ? '14px' : '28px', paddingRight: isMobile ? '14px' : '28px', paddingBottom: isMobile ? '14px' : '24px' }}>
           {isLinkingMode ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input
@@ -162,9 +173,9 @@ function CARModal({
               </div>
             </div>
           ) : (
-            <form className="modal-form" onSubmit={onSubmit} style={{ gap: '16px', display: 'flex', flexDirection: 'column' }}>
+            <form className="modal-form" onSubmit={onSubmit} style={{ gap: isMobile ? '10px' : '16px', display: 'flex', flexDirection: 'column' }}>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '14px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <SearchableDropdown
                     label="Requesting Department:"
@@ -201,7 +212,7 @@ function CARModal({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '14px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <SearchableDropdown
                     label="Responsible Department:"
@@ -228,7 +239,7 @@ function CARModal({
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginTop: '8px' }}>
+              <div style={{ display: 'flex', gap: isMobile ? '10px' : '20px', alignItems: isMobile ? 'flex-start' : 'center', marginTop: '8px', flexDirection: isMobile ? 'column' : 'row' }}>
                 <label className="label-field" style={{ margin: 0 }}>Reason for Re-issue:</label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#334155', cursor: 'pointer' }}>
                   <input
@@ -250,7 +261,7 @@ function CARModal({
 
               <h4 style={{ color: '#0f172a', fontSize: '14px', margin: '0 0 8px 0', textAlign: 'center' }}>TYPE OF NON-CONFORMANCE</h4>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: isMobile ? '12px' : '20px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {checkboxFields.map(field => (
                     <label key={field.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#334155', cursor: 'pointer' }}>
@@ -454,8 +465,8 @@ function CARModal({
             display: 'flex',
             justifyContent: 'flex-end',
             alignItems: 'center',
-            gap: '12px',
-            padding: '18px 28px 24px 28px',
+            gap: isMobile ? '8px' : '12px',
+            padding: isMobile ? '12px 14px 14px 14px' : '18px 28px 24px 28px',
             background: 'transparent',
             borderTop: '1px solid #cbd5e1',
             marginTop: '12px'
