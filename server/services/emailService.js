@@ -106,7 +106,7 @@ export async function sendNewUserCredentialsEmail({ toEmail, password, frontendU
       subject: 'Your QFlow account credentials',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 10px; background: #ffffff;">
-          <h2 style="color: #0f172a; margin-top: 0;">Your QFlow account is ready</h2>
+          <h2 style="color: #0f172a; margin-top: 0;">Welcome to QFlow! Where Quality meets Velocity!</h2>
           <p style="font-size: 15px; color: #334155; line-height: 1.6;">${displayName ? `Hello ${displayName},` : 'Hello,'} your account has been created. Use the credentials below to sign in.</p>
           <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin: 20px 0;">
             <p style="margin: 0 0 10px; color: #0f172a; font-size: 14px;"><strong>Email:</strong> ${toEmail}</p>
