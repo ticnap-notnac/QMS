@@ -640,7 +640,8 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
 /* Add premium typography for ISO clause descriptions */
 .dcc-scrollable-table-box .iso-clauses-table .clause-description,
 .dcc-scrollable-table-box td .iso-clauses-table .clause-description,
-.iso-clauses-table .clause-description {
+.iso-clauses-table .clause-description,
+.iso-clauses-table .clause-description div {
   line-height: 1.6 !important;
   color: #475569 !important;
   margin-top: 6px !important;
