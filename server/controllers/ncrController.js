@@ -99,7 +99,7 @@ export async function updateReportInvestigation(req, res) {
       details: { id, updates: req.body }
     })
     await safeCreateNotificationsForRoles({
-      roleNames: ['admin', 'auditor'],
+      roleNames: ['admin', 'manager', 'department manager'],
       title: `Report Ready for Approval: ${existing.reference_no}`,
       message: `Report ${existing.reference_no} investigation was submitted and is ready for approval.`,
       type: 'info',
