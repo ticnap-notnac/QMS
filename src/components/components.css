@@ -1198,7 +1198,7 @@ div[class*="table-wrap"]::-webkit-scrollbar-thumb:hover,
 /* 2. Lock down the table grid layout calculation mechanics */
 .system-logs-table {
   width: 100% !important;
-  table-layout: fixed !important; /* 🎯 Forces columns to strictly respect the % widths assigned in the file */
+  table-layout: auto !important; /* 🎯 Allows columns to adjust dynamically to content size */
   border-collapse: collapse !important;
 }
 

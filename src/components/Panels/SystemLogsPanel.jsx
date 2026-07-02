@@ -68,11 +68,11 @@ export default function SystemLogsPanel({ onClose, searchQuery = '' }) {
           <table className="iso-table system-logs-table">
             <thead>
               <tr>
-                <th style={{ width: '18%' }}>When</th>
-                <th style={{ width: '10%' }}>Level</th>
-                <th style={{ width: '12%' }}>Source</th>
-                <th style={{ width: '45%' }}>Action / Details</th>
-                <th style={{ width: '15%' }}>User</th>
+                <th>When</th>
+                <th>Level</th>
+                <th>Source</th>
+                <th>Action / Details</th>
+                <th>User</th>
               </tr>
             </thead>
             <tbody>
