@@ -130,7 +130,20 @@ export default function useAddUserLogic() {
       await reloadUsers()
       setIsAddUserModalOpen(false)
     } catch (err) {
-      setFormError(err.message || err.error || 'The user could not be added. Please try again.')
+      const rawMessage = err?.message || err?.error || 'We could not create this user. Please try again.'
+      const plainMessage = /only gmail addresses are allowed/i.test(rawMessage)
+        ? 'Please use a Gmail address.'
+        : /validation failed/i.test(rawMessage)
+          ? 'Please check the form and try again.'
+          : /could not create the user account/i.test(rawMessage)
+            ? 'We could not create this user. Please check the details and try again.'
+            : /profile record/i.test(rawMessage)
+              ? 'The account was created, but something went wrong while saving the user details. Please refresh and try again.'
+              : /database error/i.test(rawMessage)
+                ? 'We could not create this user. Please check the details and try again.'
+                : rawMessage
+
+      setFormError(plainMessage)
     } finally {
       setSubmitting(false)
     }

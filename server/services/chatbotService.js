@@ -175,7 +175,6 @@ ${contextData ? '\n### SYSTEM DATA CONTEXT ###\n' + contextData + '\n' : ''}
       const data = await response.json()
       text = data.candidates?.[0]?.content?.parts?.[0]?.text || text
     }
-
     return { success: true, reply: text }
   } catch (error) {
     fs.writeFileSync('chatbot_error_log.txt', String(error.stack || error))

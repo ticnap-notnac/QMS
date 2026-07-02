@@ -51,6 +51,88 @@ export async function fetchAllUsers() {
  * @returns {{ authUser: object|null, profile: object|null, error: string|null, status: number }}
  */
 export async function createUserWithAuth({ firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId }) {
+  const describeAuthCreateError = (authError) => {
+    const message = String(authError?.message || '').toLowerCase()
+    const code = String(authError?.code || '').toLowerCase()
+
+    if (
+      code === 'user_already_exists' ||
+      authError?.status === 409 ||
+      message.includes('already registered') ||
+      message.includes('already exists') ||
+      message.includes('duplicate')
+    ) {
+      return {
+        status: 409,
+        error: 'This email is already tied to another account. Please use a different Gmail address.',
+      }
+    }
+
+    if (message.includes('password') && message.includes('least')) {
+      return {
+        status: 400,
+        error: 'The password is too short. Please use at least 6 characters.',
+      }
+    }
+
+    if (message.includes('email') && message.includes('invalid')) {
+      return {
+        status: 400,
+        error: 'Please enter a valid Gmail address.',
+      }
+    }
+
+    if (message.includes('user metadata') || message.includes('metadata')) {
+      return {
+        status: 400,
+        error: 'We could not save the user details. Please check the name, role, department, and site values.',
+      }
+    }
+
+    return {
+      status: authError?.status || 400,
+      error: 'We could not create this user. Please check the entered details and try again.',
+    }
+  }
+
+  const describeProfileError = (profileError) => {
+    const message = String(profileError?.message || '').toLowerCase()
+    const code = String(profileError?.code || '').toLowerCase()
+
+    if (code === '23502' || message.includes('not-null')) {
+      if (message.includes('contact_number')) {
+        return {
+          status: 422,
+          error: 'The contact number field is still required in the database. It should be optional, so please apply the contact-number update.',
+        }
+      }
+
+      return {
+        status: 422,
+        error: 'One of the required user details is missing in the database setup. Please check the user table fields.',
+      }
+    }
+
+    if (code === '23503' || message.includes('foreign key')) {
+      return {
+        status: 422,
+        error: 'One of the selected values is not available in the database. Please choose a valid role, department, or site.',
+      }
+    }
+
+    if (code === '42501' || message.includes('permission denied') || message.includes('rls')) {
+      return {
+        status: 403,
+        error: 'The system is not allowed to save this user details right now. Please contact support.',
+      }
+    }
+
+    return {
+      status: 500,
+      error: 'The account was created, but we could not save the user details. Please refresh and try again.',
+    }
+  }
+
   if (!hasServiceRole) {
     return {
       authUser: null,
@@ -76,7 +158,8 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
   })
 
   if (authError) {
-    return { authUser: null, profile: null, error: authError.message, status: 400 }
+    const normalized = describeAuthCreateError(authError)
+    return { authUser: null, profile: null, error: normalized.error, status: normalized.status }
   }
 
   // Force update the public.users record right after creation, because the DB trigger
@@ -97,9 +180,28 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
     .eq('auth_id', authData.user.id)
     .maybeSingle()
 
+  if (profileError) {
+    const normalized = describeProfileError(profileError)
+    return {
+      authUser: authData?.user || null,
+      profile: null,
+      error: normalized.error,
+      status: normalized.status,
+    }
+  }
+
+  if (!profileData) {
+    return {
+      authUser: authData?.user || null,
+      profile: null,
+      error: 'The account was created, but the user details were not saved. Please check the users table setup.',
+      status: 500,
+    }
+  }
+
   return {
     authUser: authData?.user || null,
-    profile: profileError ? null : profileData || null,
+    profile: profileData,
     error: null,
     status: 200,
   }

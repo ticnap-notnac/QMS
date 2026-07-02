@@ -2,6 +2,32 @@ import { supabase } from '@/utils/supabase'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
+function toPlainLanguageError(message) {
+  const text = String(message || '').trim()
+
+  if (!text) {
+    return 'We could not complete this action. Please try again.'
+  }
+
+  if (/only gmail addresses are allowed/i.test(text)) {
+    return 'Please use a Gmail address.'
+  }
+
+  if (/could not create the user account/i.test(text)) {
+    return 'We could not create this user. Please check the details and try again.'
+  }
+
+  if (/profile record/i.test(text)) {
+    return 'The account was created, but something went wrong while saving the user details. Please refresh and try again.'
+  }
+
+  if (/database error/i.test(text) || /supabase/i.test(text) || /invalid json/i.test(text)) {
+    return 'We could not complete this action. Please check the entered details and try again.'
+  }
+
+  return text
+}
+
 async function request(path, options = {}) {
   const { headers: requestHeaders, ...restOptions } = options
   
@@ -40,7 +66,7 @@ async function request(path, options = {}) {
       const detailStr = payload.details.map(d => d.message).join('\n• ')
       throw new Error(`Please check the following:\n• ${detailStr}`)
     } else {
-      throw new Error(payload?.error || 'A server error occurred while processing your request. Please try again.')
+      throw new Error(toPlainLanguageError(payload?.error || 'We could not complete this action. Please try again.'))
     }
   }
 

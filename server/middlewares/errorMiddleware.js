@@ -9,14 +9,10 @@ export function errorHandler(err, req, res, next) {
   logger.error(`Express Request Handler Exception: ${err.message}`, err)
 
   const status = err?.status || err?.statusCode || 500
-  
-  // Sanitize 500 errors to prevent leaking stack traces or internal DB info
-  const isInternalError = status === 500
-  const message = isInternalError 
-    ? 'An unexpected system error occurred. Our technical team has been notified. Please try again.' 
-    : (err?.message || String(err) || 'An unexpected system error occurred. Our technical team has been notified. Please try again.')
-    
-  const details = isInternalError ? undefined : (err?.details || undefined)
+
+  const message = err?.message || String(err) || 'An unexpected system error occurred. Our technical team has been notified. Please try again.'
+
+  const details = status >= 500 ? undefined : (err?.details || undefined)
 
   return res.status(status).json({
     error: message,
