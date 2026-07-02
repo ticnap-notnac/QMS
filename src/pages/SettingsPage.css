@@ -166,9 +166,9 @@
 
 /* Enforce strict grid layout proportions for the column sizing percentages */
 .system-logs-table {
-  width: fit-content !important;
+  width: 100% !important;
   max-width: 100% !important;
-  table-layout: auto !important;
+  table-layout: fixed !important;
   border-collapse: collapse !important;
 }
 
