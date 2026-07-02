@@ -46,7 +46,7 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
           <div className="reports-user-text">
             <span className="reports-user-name">
               {reporterName}
-              <span style={{ marginLeft: '8px', color: 'var(--muted)', fontSize: '13px', fontWeight: '600' }}>
+              <span style={{ marginLeft: '24px', color: 'var(--muted)', fontSize: '13px', fontWeight: '600' }}>
                 {report.reference_no || `NCR-${report.id}`}
               </span>
             </span>

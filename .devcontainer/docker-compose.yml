@@ -1,0 +1,46 @@
+services:
+  workspace:
+    image: node:22-bookworm
+    working_dir: /workspaces/QMS
+    volumes:
+      - ..:/workspaces/QMS:cached
+    command: sleep infinity
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "5173:5173"
+      - "3000:3000"
+
+  frontend:
+    image: node:22-bookworm
+    working_dir: /workspaces/QMS
+    env_file:
+      - ../.env
+    volumes:
+      - ..:/workspaces/QMS:cached
+      - qms-root-node-modules:/workspaces/QMS/node_modules
+    command: sh -lc "npm install && npm run dev -- --host 0.0.0.0"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+
+  backend:
+    image: node:22-bookworm
+    working_dir: /workspaces/QMS/server
+    env_file:
+      - ../server/.env
+    volumes:
+      - ..:/workspaces/QMS:cached
+      - qms-server-node-modules:/workspaces/QMS/server/node_modules
+    command: sh -lc "npm install && npm start"
+    environment:
+      - PORT=3000
+    ports:
+      - "3000:3000"
+
+volumes:
+  qms-root-node-modules:
+  qms-server-node-modules:

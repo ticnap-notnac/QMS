@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye } from 'lucide-react'
+import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X } from 'lucide-react'
 import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
 import html2pdf from 'html2pdf.js'
@@ -559,6 +559,14 @@ export default function DCCFolderContent({
       {/* ── COLUMN 3: RIGHT DETAILS PANE (CONDITIONAL) ────────────────────── */}
       {selectedFolder && selectedDocument && (
         <div className="dcc-right-pane">
+          <button 
+            type="button" 
+            onClick={() => setSelectedDocument(null)} 
+            className="dcc-details-close-btn"
+            title="Close details"
+          >
+            <X size={18} />
+          </button>
           {selectedDocument ? (
             <div className="dcc-details-container">
               {/* Mockup Top Preview Box */}
@@ -749,57 +757,13 @@ function ISOStandardsList({ standards, loadingStandards, onSelectStandard }) {
 }
 
 function ExpandableText({ text }) {
-  const [expanded, setExpanded] = useState(false)
-
-  const isLong = text.length > 250
-  
   // Clean up single newlines from PDF copy-paste (replace with space) but keep double newlines
   let cleanText = text.replace(/([^\n])\n([^\n])/g, '$1 $2')
   
   // Simple parsing to add line breaks before "Note X to entry:" or similar bullet points if they exist
   const formattedText = cleanText.replace(/(Note \d+ to entry:)/g, '\n\n$1')
 
-  if (!isLong) {
-    return <div style={{ whiteSpace: 'pre-line' }}>{formattedText}</div>
-  }
-
-  return (
-    <div>
-      <div style={
-        expanded 
-          ? { whiteSpace: 'pre-line' } 
-          : {
-              whiteSpace: 'pre-line',
-              display: '-webkit-box',
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
-            }
-      }>
-        {formattedText}
-      </div>
-      <button
-        type="button"
-        onClick={() => setExpanded(!expanded)}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: '#3b82f6',
-          cursor: 'pointer',
-          padding: '4px 0 0 0',
-          marginTop: '4px',
-          fontWeight: 500,
-          fontSize: '13px',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px'
-        }}
-      >
-        {expanded ? 'Show Less' : 'Read More'}
-      </button>
-    </div>
-  )
+  return <div style={{ whiteSpace: 'pre-line', textAlign: 'justify' }}>{formattedText}</div>
 }
 
 function ISOClausesTable({ selectedStandard, clauses, loadingClauses }) {
@@ -819,7 +783,10 @@ function ISOClausesTable({ selectedStandard, clauses, loadingClauses }) {
               <tr key={cl.id} className={cl.is_active ? '' : 'muted-row'}>
                 <td style={{ width: '120px', fontWeight: 600 }}>{cl.clause_number}</td>
                 <td>
-                  <div style={{ fontWeight: 600, color: '#0f172a' }}>{cl.title}</div>
+                  <div style={{ fontWeight: 600, color: '#0f172a' }}>
+                    <span className="mobile-only-clause-num">Clause {cl.clause_number}: </span>
+                    {cl.title}
+                  </div>
                   <div className="clause-description">
                     {cl.description ? (
                       <ExpandableText text={cl.description} />

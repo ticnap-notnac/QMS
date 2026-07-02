@@ -98,8 +98,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  right: 0;
+  bottom: 0;
   background: rgba(15, 23, 42, 0.3);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -411,9 +411,116 @@
 }
 
 @media (max-width: 768px) {
-  .iso-top-grid,
-  .iso-metrics-grid {
-    grid-template-columns: 1fr !important;
+  .iso-page-main {
+    padding-top: 68px !important; /* Space for Top Header */
+    padding-bottom: 80px !important; /* Space for Bottom Nav */
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    gap: 12px !important;
+  }
+
+  .iso-page-main > * {
+    flex-shrink: 0 !important;
+  }
+
+  .metric-card {
+    padding: 16px 12px !important;
+  }
+
+  .iso-compliance-value {
+    font-size: 36px !important;
+    margin-top: 4px !important;
+  }
+
+  .iso-top-grid {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  
+  .iso-left-stack {
+    width: 100% !important;
+    flex-shrink: 1 !important;
+    gap: 12px !important;
+  }
+
+  .iso-button-grid {
+    gap: 8px !important;
+  }
+
+  .iso-metric-button {
+    font-size: 11px !important;
+    height: 32px !important;
+    padding: 6px 12px !important;
+  }
+
+  .iso-graph-card {
+    min-height: 120px !important;
+  }
+
+  .iso-review-card,
+  .iso-action-center-card {
+    padding: 16px 12px !important;
+  }
+
+  .iso-review-title {
+    font-size: 14px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .iso-progress-stack {
+    gap: 12px !important;
+  }
+
+  .iso-progress-row {
+    gap: 8px !important;
+  }
+
+  .iso-progress-label-container {
+    width: 100px !important;
+    gap: 4px !important;
+  }
+
+  .iso-progress-label-text {
+    font-size: 11px !important;
+  }
+
+  .iso-progress-row span {
+    font-size: 11px !important;
+  }
+
+  .iso-action-center-text {
+    font-size: 12px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .iso-finding-item {
+    padding: 12px !important;
+    gap: 12px !important;
+  }
+
+  .iso-finding-title-row {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .iso-finding-badge {
+    font-size: 10px !important;
+    padding: 1px 4px !important;
+  }
+
+  .iso-finding-title {
+    font-size: 12px !important;
+  }
+
+  .iso-btn-generate-car {
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+  }
+
+  .iso-car-generated {
+    padding: 6px 12px !important;
+    font-size: 11px !important;
   }
 }
 .iso-btn-generate-car {

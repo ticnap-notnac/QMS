@@ -168,7 +168,7 @@
 .system-logs-table {
   width: 100% !important;
   max-width: 100% !important;
-  table-layout: fixed !important;
+  table-layout: auto !important;
   border-collapse: collapse !important;
 }
 

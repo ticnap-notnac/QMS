@@ -26,7 +26,7 @@ export default function QDDRReportsList({
   }
 
   return (
-    <div className="glass-card-dcc" style={{ padding: '20px' }}>
+    <div className="glass-card-dcc reports-list-card-container">
       {/* 🚀 Fluid Full-Width Scroll Wrapper Shield */}
       <div className="reports-table-scroll-wrap">
         <table className="iso-table">

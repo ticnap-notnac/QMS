@@ -29,7 +29,7 @@ export default function ISOPage({ userRole, userName }) {
   }
 
   return (
-    <main className="dashboard page-root">
+    <main className="page-root">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div className="page-main iso-page-main">
         <div className="iso-top-grid">
