@@ -15,7 +15,7 @@ export default function DCCPage({ userRole, authUserId }) {
   const {
     searchQuery, setSearchQuery, selectedFolder, openFolder, closeFolder, recentlyViewed, standards,
     loadingStandards, selectedStandard, clauses, loadingClauses, openStandard, selectedTaskFolder,
-    openTaskFolder, closeTaskFolder, ncrReports, loadingNcr, carReports, loadingCar, qddrReports,
+    closeStandard, openTaskFolder, closeTaskFolder, ncrReports, loadingNcr, carReports, loadingCar, qddrReports,
     loadingQddr, auditReports, loadingAudit, auditSchedules, loadingAuditSchedules, openCarDetails,
     carDetailsModalProps,
     isDetailsModalOpen, selectedRunDetails, setIsDetailsModalOpen,
@@ -35,7 +35,7 @@ export default function DCCPage({ userRole, authUserId }) {
             selectedFolder={selectedFolder} onCloseFolder={closeFolder} onOpenFolder={openFolder} folderItems={FOLDER_ITEMS}
             searchQuery={searchQuery} onSearchChange={setSearchQuery} recentlyViewed={recentlyViewed} standards={standards}
             loadingStandards={loadingStandards} selectedStandard={selectedStandard} clauses={clauses} loadingClauses={loadingClauses}
-            onSelectStandard={openStandard} selectedTaskFolder={selectedTaskFolder} onOpenTaskFolder={openTaskFolder}
+            onSelectStandard={openStandard} onCloseStandard={closeStandard} selectedTaskFolder={selectedTaskFolder} onOpenTaskFolder={openTaskFolder}
             onCloseTaskFolder={closeTaskFolder} ncrReports={ncrReports} loadingNcr={loadingNcr} carReports={carReports}
             loadingCar={loadingCar} onSelectCar={openCarDetails} qddrReports={qddrReports} loadingQddr={loadingQddr}
             auditReports={auditReports} loadingAudit={loadingAudit} auditSchedules={auditSchedules}

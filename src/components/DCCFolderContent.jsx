@@ -38,6 +38,7 @@ export default function DCCFolderContent({
   clauses,
   loadingClauses,
   onSelectStandard,
+  onCloseStandard,
   selectedTaskFolder,
   onOpenTaskFolder,
   onCloseTaskFolder,
@@ -235,9 +236,11 @@ export default function DCCFolderContent({
 
   const subFolderLabel = selectedTaskFolder ? ` > ${selectedTaskFolder.label}` : ''
   const backHandler =
-    selectedFolder?.id === 'task_reports' && selectedTaskFolder
-      ? onCloseTaskFolder
-      : onCloseFolder
+    selectedStandard
+      ? onCloseStandard
+      : selectedFolder?.id === 'task_reports' && selectedTaskFolder
+        ? onCloseTaskFolder
+        : onCloseFolder
 
   // Calculate file properties for the mockup design
   const getFileProperties = (doc) => {
@@ -300,7 +303,7 @@ export default function DCCFolderContent({
       <div className="dcc-center-pane">
         {selectedFolder && (
           <div className="dcc-breadcrumbs-header">
-            <button onClick={backHandler} className="back-button-mini">
+            <button onClick={backHandler} className="back-button-mini" title={selectedStandard ? 'Back to ISO standards' : 'Back'}>
               <ArrowLeft size={20} />
             </button>
             <span className="dcc-breadcrumb-text">
@@ -423,6 +426,7 @@ export default function DCCFolderContent({
                   selectedStandard={selectedStandard} 
                   clauses={filteredClauses} 
                   loadingClauses={loadingClauses} 
+                  onBackToStandards={onCloseStandard}
                 />
               )}
             </div>
@@ -766,7 +770,7 @@ function ExpandableText({ text }) {
   return <div style={{ whiteSpace: 'pre-line', textAlign: 'justify' }}>{formattedText}</div>
 }
 
-function ISOClausesTable({ selectedStandard, clauses, loadingClauses }) {
+function ISOClausesTable({ selectedStandard, clauses, loadingClauses, onBackToStandards }) {
   return (
     <div className="flex-column full-height" style={{ width: '100%', height: '100%' }}>
       <div className="dcc-scrollable-table-box" style={{ flex: 1, margin: 0, background: '#ffffff' }}>
