@@ -38,6 +38,22 @@ export async function verifyCarPlan(carId, payload, userAuthId) {
 }
 
 /**
+ * Fetches a single CAR report by id.
+ *
+ * @param {number} carId
+ * @param {string} userAuthId
+ */
+export async function fetchCarReportById(carId, userAuthId) {
+  if (!userAuthId) throw new Error('Missing authentication. Please log in.')
+
+  return await request(`/car/${carId}`, {
+    headers: {
+      'x-user-auth-id': userAuthId
+    }
+  })
+}
+
+/**
  * Calls the AI clause-matching endpoint with the CAR description and
  * nonconformance flags. Returns ranked ISO clause suggestions.
  *

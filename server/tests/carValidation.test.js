@@ -31,6 +31,7 @@ describe('CAR Zod Validation', () => {
     const req = {
       body: {
         description: 'A valid CAR description',
+        details_of_nonconformance: 'Observed a valid nonconformance detail',
       }
     }
     const res = {

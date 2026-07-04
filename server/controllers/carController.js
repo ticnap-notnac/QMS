@@ -1,6 +1,6 @@
 import { getRequestActor } from '../lib/requestUtils.js'
 import { writeAudit } from '../lib/audit.js'
-import { createCarReport, submitCapaReport, verifyCarEffectiveness, fetchCarsForClause } from '../services/carService.js'
+import { createCarReport, submitCapaReport, verifyCarEffectiveness, fetchCarsForClause, fetchCarReportById } from '../services/carService.js'
 import { safeCreateNotificationsForRoles } from '../lib/notificationHelper.js'
 
 export async function createCar(req, res, next) {
@@ -53,16 +53,35 @@ export async function verifyCar(req, res, next) {
   const actorAuthId = getRequestActor(req)
   if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
   const { id } = req.params
-  const { outcome, notes } = req.body
+  const { outcome, notes, verificationRating } = req.body
 
   try {
     const { data } = await verifyCarEffectiveness({
       carId: parseInt(id, 10),
       outcome,
       notes,
+      verificationRating,
       actorAuthId
     })
     return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function getCarById(req, res, next) {
+  try {
+    const carId = Number.parseInt(req.params.id, 10)
+    if (!Number.isFinite(carId)) {
+      return res.status(400).json({ error: 'Invalid CAR ID.' })
+    }
+
+    const car = await fetchCarReportById(carId)
+    if (!car) {
+      return res.status(404).json({ error: 'CAR report not found.' })
+    }
+
+    return res.json(car)
   } catch (err) {
     next(err)
   }

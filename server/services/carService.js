@@ -1,5 +1,71 @@
 import { supabase } from '../lib/supabase.js'
 import { CAR_STATUS } from '../../shared/constants.js'
+import { safeCreateNotificationsForRolesAndDepartment } from '../lib/notificationHelper.js'
+
+function normalizeText(value) {
+  return String(value || '').trim()
+}
+
+function normalizeRole(value) {
+  return normalizeText(value).toLowerCase()
+}
+
+async function getUserProfileByAuthId(authId) {
+  if (!authId) return null
+
+  const { data: profile, error } = await supabase
+    .from('users')
+    .select('id, auth_id, role_id, department_id, user_name, first_name, last_name')
+    .eq('auth_id', authId)
+    .maybeSingle()
+
+  if (error) throw error
+  if (!profile) return null
+
+  let roleName = null
+  if (profile.role_id) {
+    const { data: roleData, error: roleError } = await supabase
+      .from('roles')
+      .select('role_name')
+      .eq('id', profile.role_id)
+      .maybeSingle()
+    if (roleError) throw roleError
+    roleName = roleData?.role_name || null
+  }
+
+  let departmentName = null
+  if (profile.department_id) {
+    const { data: departmentData, error: departmentError } = await supabase
+      .from('departments')
+      .select('department_name')
+      .eq('id', profile.department_id)
+      .maybeSingle()
+    if (departmentError) throw departmentError
+    departmentName = departmentData?.department_name || null
+  }
+
+  return { ...profile, role_name: roleName, department_name: departmentName }
+}
+
+async function resolveDepartmentIdByName(preferredNames = []) {
+  const normalizedNames = preferredNames
+    .map((name) => normalizeText(name).toLowerCase())
+    .filter(Boolean)
+
+  if (normalizedNames.length === 0) return null
+
+  const { data, error } = await supabase
+    .from('departments')
+    .select('id, department_name')
+
+  if (error) throw error
+
+  const match = (data || []).find((department) =>
+    normalizedNames.includes(normalizeText(department.department_name).toLowerCase())
+  )
+
+  return match?.id ?? null
+}
 
 function buildCarReferenceNumber(referenceNo) {
   const match = String(referenceNo || '').match(/^CAR-(\d{3,})$/i)
@@ -127,7 +193,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
 export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAction, preventiveAction, actorAuthId }) {
   const { data: existing, error: findError } = await supabase
     .from('car_reports')
-    .select('id, reference_no, status')
+    .select('id, reference_no, status, requesting_department, responsible_department')
     .eq('id', carId)
     .maybeSingle()
 
@@ -153,14 +219,21 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
 
   if (error) throw error
 
-  // Create notifications for admins and auditors to verify
+  // Create notifications for warehouse staff in the relevant department to verify effectiveness.
   try {
-    const { createNotificationsForRoles } = await import('./ncrReportsService.js')
-    await createNotificationsForRoles({
-      roleNames: ['admin', 'auditor'],
-      title: `CAR CAPA Submitted: ${existing.reference_no}`,
-      message: `A CAPA plan has been submitted for ${existing.reference_no} and is awaiting Verification of Effectiveness (VoE).`,
-      type: 'info'
+    const departmentId = await resolveDepartmentIdByName([
+      existing?.responsible_department,
+      existing?.requesting_department
+    ])
+
+    await safeCreateNotificationsForRolesAndDepartment({
+      globalRoleNames: departmentId ? [] : ['warehouse staff'],
+      departmentRoleNames: departmentId ? ['warehouse staff'] : [],
+      departmentId,
+      title: `CAR VoE Pending: ${existing.reference_no}`,
+      message: `A CAPA plan has been submitted for ${existing.reference_no}. Please verify the effectiveness in your department.`,
+      type: 'warning',
+      reportId: existing.id
     })
   } catch (err) {
     console.warn('Failed to send CAPA alerts:', err.message || err)
@@ -182,10 +255,10 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
   return { data }
 }
 
-export async function verifyCarEffectiveness({ carId, outcome, notes, actorAuthId }) {
+export async function verifyCarEffectiveness({ carId, outcome, notes, verificationRating, actorAuthId }) {
   const { data: existing, error: findError } = await supabase
     .from('car_reports')
-    .select('id, reference_no, status')
+    .select('id, reference_no, status, requesting_department, responsible_department')
     .eq('id', carId)
     .maybeSingle()
 
@@ -193,6 +266,30 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, actorAuthI
   if (!existing) {
     const err = new Error('CAR report not found')
     err.status = 404
+    throw err
+  }
+
+  const profile = await getUserProfileByAuthId(actorAuthId)
+  if (!profile) {
+    const err = new Error('Current user profile not found')
+    err.status = 403
+    throw err
+  }
+
+  if (normalizeRole(profile.role_name) !== 'warehouse staff') {
+    const err = new Error('Only warehouse staff may verify CAR effectiveness.')
+    err.status = 403
+    throw err
+  }
+
+  const userDepartmentName = normalizeText(profile.department_name).toLowerCase()
+  const allowedDepartmentNames = [existing.responsible_department, existing.requesting_department]
+    .map((name) => normalizeText(name).toLowerCase())
+    .filter(Boolean)
+
+  if (!userDepartmentName || allowedDepartmentNames.length === 0 || !allowedDepartmentNames.includes(userDepartmentName)) {
+    const err = new Error('You can only verify CARs in your own department.')
+    err.status = 403
     throw err
   }
 
@@ -204,6 +301,7 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, actorAuthI
       verification_notes: notes,
       verification_date: new Date().toISOString(),
       verified_by: actorAuthId,
+      verification_rating: verificationRating || null,
       status: status
     })
     .eq('id', carId)
@@ -251,6 +349,17 @@ export async function fetchCarsForClause(clauseId) {
   if (error) throw error
 
   return (data || []).map(row => row.car_reports).filter(Boolean)
+}
+
+export async function fetchCarReportById(carId) {
+  const { data, error } = await supabase
+    .from('car_reports')
+    .select('*')
+    .eq('id', carId)
+    .maybeSingle()
+
+  if (error) throw error
+  return data || null
 }
 
 /**

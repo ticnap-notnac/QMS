@@ -4,13 +4,11 @@ import { supabase } from './utils/supabase'
 import Login from './components/Auth/Login.jsx'
 import IntroModal from './components/Modals/IntroModal.jsx'
 import { fetchUnreadNotificationCount } from '@/services/notificationService'
-
 import { LookupProvider, useLookup } from './context/LookupContext'
 import { useNavigate } from 'react-router-dom'
 import MainLayout from './components/Layout/MainLayout.jsx'
 import { logAction } from '@/services/logService'
 import { useIdleTimeout } from './hooks/useIdleTimeout'
-import ConfirmDialog from './components/Modals/ConfirmDialog.jsx'
 import Toast from './components/UI/Toast.jsx'
 import { friendlyError } from './utils/friendlyError.js'
 
@@ -134,11 +132,11 @@ function AppInner() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!active) return
       const newUser = session?.user || null
-      
+
       // Only trigger logic if user ID actually changed to prevent loops
       setUser(prevUser => {
         if (prevUser?.id === newUser?.id) return prevUser
-        
+
         if (newUser) {
           supabase
             .from('users')
@@ -179,7 +177,7 @@ function AppInner() {
       if (authData && authData.user) {
         setUser(authData.user)
         setToast(null)
-        
+
         try {
           const { data } = await supabase
             .from('users')
@@ -290,11 +288,14 @@ function AppInner() {
     setIsNotificationsOpen(false)
     const isVerificationDateUp = notification?.title && String(notification.title).startsWith('Verification Date Up')
     const isAuditScheduled = notification?.title && String(notification.title).startsWith('Audit Scheduled')
-    
+    const isCarVoePending = notification?.title && String(notification.title).startsWith('CAR VoE Pending:')
+
     if (isVerificationDateUp) {
       navigate(`/reports?openRating=${reportId}`)
     } else if (isAuditScheduled) {
       navigate('/audit-tools?tab=Schedules')
+    } else if (isCarVoePending) {
+      navigate(`/reports?openCar=${reportId}`)
     } else {
       navigate('/reports')
       if (reportId) {
@@ -354,23 +355,20 @@ function AppInner() {
       )}
 
       <IntroModal isOpen={showIntro} onClose={() => setShowIntro(false)} />
-      
+
       {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
+        <Toast
+          message={toast.message}
+          type={toast.type}
           onConfirm={toast.onConfirm}
           confirmText={toast.confirmText}
           cancelText={toast.cancelText}
-          onClose={() => setToast(null)} 
+          onClose={() => setToast(null)}
         />
       )}
     </div>
   )
 }
-
-// ─── AppRoot ─────────────────────────────────────────────────────────────────
-// Wraps AppInner in LookupProvider so context is available to all children.
 
 export default function App() {
   return (

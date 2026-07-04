@@ -6,6 +6,7 @@ export default function CARDetailsModal({
   onClose,
   car,
   userRole,
+  userDepartmentName,
   userDepartmentId,
   readOnly = false,
 
@@ -18,6 +19,8 @@ export default function CARDetailsModal({
   setPreventiveAction,
   verificationNotes,
   setVerificationNotes,
+  verificationRating,
+  setVerificationRating,
   submitting,
   suggesting,
   suggestionMeta,
@@ -32,10 +35,10 @@ export default function CARDetailsModal({
 }) {
   if (!isOpen || !car) return null
 
-  const isUserRecipient = true // Allow processing. In production, can check if current user matches car.recipient.
-  const isAuditorOrAdmin = 
-    userRole === 'admin' || 
-    userRole === 'auditor'
+  const normalize = (value) => String(value || '').trim().toLowerCase()
+  const resolvedUserDepartmentName = normalize(userDepartmentName || userDepartmentId)
+  const carDepartmentName = normalize(car.responsible_department || car.requesting_department)
+  const isWarehouseVerifier = normalize(userRole) === 'warehouse staff' && Boolean(resolvedUserDepartmentName) && resolvedUserDepartmentName === carDepartmentName
 
   const getStatusBadgeClass = (status) => {
     const s = String(status || '').toLowerCase()
@@ -182,7 +185,7 @@ export default function CARDetailsModal({
 
           {/* CAPA SECTION */}
           {car.status === 'open' && !readOnly ? (
-            isUserRecipient ? (
+            true ? (
               <form onSubmit={handleCapaSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid #cbd5e1', paddingTop: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 4px 0' }}>
                   <h4 style={{ color: '#0891b2', fontSize: '14px', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -329,7 +332,7 @@ export default function CARDetailsModal({
 
           {/* VERIFICATION OF EFFECTIVENESS (VoE) SECTION */}
           {car.status === 'under_verification' && !readOnly ? (
-            isAuditorOrAdmin ? (
+            isWarehouseVerifier ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid #cbd5e1', paddingTop: '16px' }}>
                 <h4 style={{ color: '#f59e0b', fontSize: '14px', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <AlertTriangle size={16} /> Verification of Effectiveness (VoE)
@@ -345,6 +348,25 @@ export default function CARDetailsModal({
                     required
                     style={{ height: '90px', padding: '8px', fontSize: '13px', resize: 'none' }}
                   />
+                </div>
+
+                <div className="preventive-panel">
+                  <span className="label-field label-field--small">Effectiveness Rating:</span>
+                  <div className="preventive-options">
+                    {['Excellent', 'Good', 'Ok', 'Poor', 'Very Poor'].map((rating) => (
+                      <label key={rating} className="preventive-option">
+                        <input
+                          type="radio"
+                          name="verificationRating"
+                          value={rating}
+                          checked={verificationRating === rating}
+                          onChange={(e) => setVerificationRating(e.target.value)}
+                          className="radio-accent"
+                        />
+                        {rating}
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '6px' }}>
@@ -370,7 +392,7 @@ export default function CARDetailsModal({
               </div>
             ) : (
               <div className="empty-state" style={{ padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '6px', marginTop: '16px' }}>
-                Under verification. Waiting for an auditor or quality admin to review the action plan.
+                Under verification. Waiting for warehouse staff in the responsible department to review the action plan.
               </div>
             )
           ) : (
@@ -407,6 +429,11 @@ export default function CARDetailsModal({
                 gap: '8px'
               }}>
                 <div style={{ fontStyle: 'italic', color: '#0f5132' }}>"{car.verification_notes}"</div>
+                {car.verification_rating && (
+                  <div style={{ color: '#0f5132', fontWeight: 600 }}>
+                    Effectiveness Rating: {car.verification_rating}
+                  </div>
+                )}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', borderTop: '1px solid rgba(16, 185, 129, 0.15)', paddingTop: '8px', fontSize: '11px', color: '#0f5132' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Calendar size={12} />

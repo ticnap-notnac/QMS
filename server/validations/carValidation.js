@@ -19,5 +19,6 @@ export const verifyCarSchema = z.object({
   body: z.object({
     outcome: z.enum(['effective', 'ineffective']),
     notes: z.string().optional(),
+    verificationRating: z.string().min(1, 'Verification rating is required'),
   })
 })

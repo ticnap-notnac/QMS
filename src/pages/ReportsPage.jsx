@@ -25,7 +25,8 @@ import './ReportsPage.css'
 
 export default function ReportsPage({ userRole, currentUserId, authUserId, userDepartmentId }) {
   const logic = useReportsLogic({ currentUserId, userRole, authUserId, userDepartmentId })
-  const canAccessCar = ['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
+  const normalizedRole = String(userRole || '').trim().toLowerCase()
+  const canAccessCar = ['admin', 'auditor', 'department manager'].includes(normalizedRole)
   const canAccessQddr = String(userRole || '').trim().toLowerCase() !== 'warehouse staff'
   const availableTabs = ['ncr', ...(canAccessCar ? ['car'] : []), ...(canAccessQddr ? ['qddr'] : [])]
 
@@ -260,7 +261,7 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
               carReports={displayedCars} 
               isLoading={logic.loadingCar} 
               onSelectCar={logic.openCarDetails} 
-              canEdit={canAccessCar}
+              canEdit={['admin', 'auditor'].includes(normalizedRole)}
               onEditCar={logic.openEditCarModal}
               onDeleteCar={handleDeleteCar}
             />

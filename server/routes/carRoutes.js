@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { createCar, submitCapa, verifyCar, getCarsForClause } from '../controllers/carController.js'
+import { createCar, submitCapa, verifyCar, getCarsForClause, getCarById } from '../controllers/carController.js'
 import { suggestClauses } from '../controllers/clauseMatchController.js'
 import { requireRoles } from '../middlewares/roleMiddleware.js'
 import { validateRequest } from '../middlewares/validateRequest.js'
@@ -7,10 +7,11 @@ import { createCarSchema, submitCapaSchema, verifyCarSchema } from '../validatio
 
 const router = Router()
 
-router.post('/car', requireRoles(['admin', 'auditor']), validateRequest(createCarSchema), createCar)
+router.post('/car', requireRoles(['admin', 'auditor', 'department manager']), validateRequest(createCarSchema), createCar)
+router.get('/car/:id', requireRoles(['admin', 'auditor', 'department manager', 'warehouse staff']), getCarById)
 router.post('/car/suggest-clauses', requireRoles(['admin', 'auditor']), suggestClauses)
 router.put('/car/:id/capa', requireRoles(['admin', 'auditor']), validateRequest(submitCapaSchema), submitCapa)
-router.put('/car/:id/verify', requireRoles(['admin', 'auditor']), validateRequest(verifyCarSchema), verifyCar)
+router.put('/car/:id/verify', requireRoles(['warehouse staff']), validateRequest(verifyCarSchema), verifyCar)
 router.get('/car/clause/:clauseId/cars', getCarsForClause)
 
 import { editCar, deleteCar } from '../controllers/carController.js'

@@ -1,7 +1,3 @@
-// src/services/siteService.js
-// Frontend API wrapper for the sites endpoint.
-// All API calls go through src/lib/api.js — never call supabase directly from services.
-
 import { request } from '@/lib/api'
 
 /**

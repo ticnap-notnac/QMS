@@ -19,7 +19,7 @@ import { useSuggestionLogic } from './useReports/useSuggestionLogic'
 import { fetchExistingAiSuggestion } from '@/services/suggestionService'
 import { dismissVerificationNotification } from '@/services/notificationService'
 import { updateReportInvestigationMultipart } from '@/services/ncrService'
-import { submitCarReport, suggestClausesForCar, submitCapaPlan, verifyCarPlan, updateCarReport, fetchLinkedClausesForCar } from '@/services/carService'
+import { submitCarReport, suggestClausesForCar, submitCapaPlan, verifyCarPlan, updateCarReport, fetchLinkedClausesForCar, fetchCarReportById } from '@/services/carService'
 import { supabase } from '@/utils/supabase'
 import { submitQddrReport, updateQddrReport, editQddrReport } from '@/services/qddrService'
 import { useCARDetails } from './useCARDetails'
@@ -292,6 +292,32 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       return () => clearTimeout(t)
     }
   }, [dataState.reports, dataState.investigatedReports, dataState.closedReports, modalsState])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const openCarId = params.get('openCar')
+    if (!openCarId) return
+
+    const loadCar = async () => {
+      let carObj = (carReports || []).find((car) => String(car.id) === String(openCarId)) || null
+
+      if (!carObj && currentAuthId) {
+        try {
+          carObj = await fetchCarReportById(openCarId, currentAuthId)
+        } catch (err) {
+          console.warn('Failed to load CAR by ID from API:', err)
+        }
+      }
+
+      if (carObj) {
+        carDetails.openCarDetails(carObj)
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
+    }
+
+    const timer = setTimeout(loadCar, 300)
+    return () => clearTimeout(timer)
+  }, [carReports, carDetails, currentAuthId])
 
   // ─── Derived / memoised ────────────────────────────────────────────────────
 
@@ -977,6 +1003,9 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       setPreventiveAction: carDetails.setPreventiveAction,
       verificationNotes: carDetails.verificationNotes,
       setVerificationNotes: carDetails.setVerificationNotes,
+      verificationRating: carDetails.verificationRating,
+      setVerificationRating: carDetails.setVerificationRating,
+      userDepartmentName: dataState.departmentNameById.get(String(userDepartmentId)) || '',
       submitting: carDetails.submitting,
       suggesting: carDetails.suggesting,
       error: carDetails.error,

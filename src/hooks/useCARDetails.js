@@ -11,6 +11,7 @@ export function useCARDetails() {
   const [correctiveAction, setCorrectiveAction] = useState('')
   const [preventiveAction, setPreventiveAction] = useState('')
   const [verificationNotes, setVerificationNotes] = useState('')
+  const [verificationRating, setVerificationRating] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
   const [suggestionMeta, setSuggestionMeta] = useState(null)
@@ -27,6 +28,7 @@ export function useCARDetails() {
       setCorrectiveAction(car.corrective_action || '')
       setPreventiveAction(car.preventive_action || '')
       setVerificationNotes(car.verification_notes || '')
+      setVerificationRating(car.verification_rating || '')
       setSuggestionMeta(null)
       setError('')
 
@@ -52,6 +54,7 @@ export function useCARDetails() {
     setIsCarDetailsModalOpen(false)
     setLinkedClauses([])
     setSuggestionMeta(null)
+    setVerificationRating('')
   }, [])
 
   const handleSuggestActions = async () => {
@@ -122,13 +125,18 @@ export function useCARDetails() {
       setError('Verification notes are required to resolve this audit.')
       return
     }
+    if (!verificationRating.trim()) {
+      setError('Verification rating is required.')
+      return
+    }
 
     setSubmitting(true)
     setError('')
     try {
       const updated = await onVerify(selectedCar.id, {
         outcome,
-        notes: verificationNotes
+        notes: verificationNotes,
+        verificationRating
       }, authUserId)
       
       if (updated) {
@@ -159,6 +167,8 @@ export function useCARDetails() {
     setPreventiveAction,
     verificationNotes,
     setVerificationNotes,
+    verificationRating,
+    setVerificationRating,
     submitting,
     suggesting,
     error,
