@@ -1083,7 +1083,6 @@ export async function assignReportToEmployee({ reportId, assignedToId, currentUs
   if (String(report.status || '').trim().toUpperCase() === REPORT_STATUS.CLOSED) {
     throw new Error('Closed reports cannot be assigned.')
   }
-  if (report.assigned_to) throw new Error('This report is already assigned and cannot be reassigned.')
 
   const assignedAt = new Date().toISOString()
 
