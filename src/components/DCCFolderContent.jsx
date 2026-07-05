@@ -158,9 +158,9 @@ export default function DCCFolderContent({
   // 3. ISO Clauses filtering
   const filteredClauses = clauses.filter((cl) =>
     !queryClean ||
-    cl.clause_number.toLowerCase().includes(queryClean) ||
-    cl.title.toLowerCase().includes(queryClean) ||
-    (cl.description && cl.description.toLowerCase().includes(queryClean))
+    (cl.clause_number && String(cl.clause_number).toLowerCase().includes(queryClean)) ||
+    (cl.title && String(cl.title).toLowerCase().includes(queryClean)) ||
+    (cl.description && String(cl.description).toLowerCase().includes(queryClean))
   )
 
   // 4. Task Subfolders filtering
@@ -427,6 +427,7 @@ export default function DCCFolderContent({
                   clauses={filteredClauses} 
                   loadingClauses={loadingClauses} 
                   onBackToStandards={onCloseStandard}
+                  searchQuery={searchQuery}
                 />
               )}
             </div>
@@ -760,17 +761,36 @@ function ISOStandardsList({ standards, loadingStandards, onSelectStandard }) {
   )
 }
 
-function ExpandableText({ text }) {
+function highlightText(text, highlight) {
+  if (!text) return ''
+  if (!highlight || !highlight.trim()) return text
+  
+  const cleanHighlight = highlight.trim()
+  const regex = new RegExp(`(${cleanHighlight.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi')
+  const parts = String(text).split(regex)
+  
+  return parts.map((part, index) => 
+    regex.test(part) 
+      ? <mark key={index} style={{ backgroundColor: '#fef08a', color: '#0f172a', padding: '0 2px', borderRadius: '2px' }}>{part}</mark>
+      : part
+  )
+}
+
+function ExpandableText({ text, highlight }) {
   // Clean up single newlines from PDF copy-paste (replace with space) but keep double newlines
   let cleanText = text.replace(/([^\n])\n([^\n])/g, '$1 $2')
   
   // Simple parsing to add line breaks before "Note X to entry:" or similar bullet points if they exist
   const formattedText = cleanText.replace(/(Note \d+ to entry:)/g, '\n\n$1')
 
-  return <div style={{ whiteSpace: 'pre-line', textAlign: 'justify' }}>{formattedText}</div>
+  return (
+    <div style={{ whiteSpace: 'pre-line', textAlign: 'justify' }}>
+      {highlightText(formattedText, highlight)}
+    </div>
+  )
 }
 
-function ISOClausesTable({ selectedStandard, clauses, loadingClauses, onBackToStandards }) {
+function ISOClausesTable({ selectedStandard, clauses, loadingClauses, onBackToStandards, searchQuery }) {
   return (
     <div className="flex-column full-height" style={{ width: '100%', height: '100%' }}>
       <div className="dcc-scrollable-table-box" style={{ flex: 1, margin: 0, background: '#ffffff' }}>
@@ -789,11 +809,11 @@ function ISOClausesTable({ selectedStandard, clauses, loadingClauses, onBackToSt
                 <td>
                   <div style={{ fontWeight: 600, color: '#0f172a' }}>
                     <span className="mobile-only-clause-num">Clause {cl.clause_number}: </span>
-                    {cl.title}
+                    {highlightText(cl.title, searchQuery)}
                   </div>
                   <div className="clause-description">
                     {cl.description ? (
-                      <ExpandableText text={cl.description} />
+                      <ExpandableText text={cl.description} highlight={searchQuery} />
                     ) : (
                       <span className="muted">No description added</span>
                     )}

@@ -406,6 +406,10 @@ main.page-root .dcc-glass-main-card .dcc-scrollable-table-box {
   border-collapse: collapse !important;
 }
 
+.dcc-glass-main-card .iso-table td {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
 .dcc-glass-main-card .iso-table th {
   position: sticky !important;
   top: 0 !important;
@@ -957,8 +961,8 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
 }
 
 .dcc-details-preview-box {
-  width: 100% !important;
-  height: 140px !important;
+  width: 100px !important;
+  height: 100px !important;
   background: #f1f5f9 !important;
   border: 1px solid #e2e8f0 !important;
   border-radius: 8px !important;
@@ -966,7 +970,10 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
+  margin-top: 24px !important;
   margin-bottom: 20px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
   position: relative !important;
 }
 
@@ -1171,10 +1178,12 @@ main.dcc-page-root {
   }
 
   main.page-root .dcc-right-pane .dcc-details-preview-box {
+    width: 80px !important;
     height: 80px !important;
+    margin-top: 16px !important;
     margin-bottom: 12px !important;
-    margin-right: 0 !important;
-    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
 
   main.page-root .dcc-right-pane .preview-icon-svg {
