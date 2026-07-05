@@ -210,6 +210,7 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
                   type="button" 
                   onClick={() => { logic.openCreateModal(); setIsSubmitDropdownOpen(false); }}
                   className="reports-submit-dropdown-item"
+                  title="Submit a Non-Conformance Report (NCR) to document a process or product deviation"
                 >
                   Submit NCR
                 </button>
@@ -218,6 +219,7 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
                     type="button" 
                     onClick={() => { logic.openCARModal(); setIsSubmitDropdownOpen(false); }}
                     className="reports-submit-dropdown-item"
+                    title="Submit a Corrective Action Request (CAR) to investigate and resolve systemic issues"
                   >
                     Submit CAR
                   </button>
@@ -227,6 +229,7 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
                     type="button" 
                     onClick={() => { logic.openQDDRModal(); setIsSubmitDropdownOpen(false); }}
                     className="reports-submit-dropdown-item"
+                    title="Submit a Quality Defect Discovery Report (QDDR) to log material or part defects"
                   >
                     Submit QDDR
                   </button>

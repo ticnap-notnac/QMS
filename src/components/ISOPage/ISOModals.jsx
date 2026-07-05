@@ -74,7 +74,7 @@ export function ISOModulesModal({
                     </span>
                   </div>
                   {clause.description && (
-                    <p style={{ fontSize: '12.5px', color: '#475569', margin: '4px 0 0 0', lineHeight: '1.4' }}>
+                    <p style={{ fontSize: '12.5px', color: '#475569', margin: '4px 0 0 0', lineHeight: '1.4', textAlign: 'justify' }}>
                       {clause.description}
                     </p>
                   )}
