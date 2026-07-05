@@ -190,7 +190,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
   return { data }
 }
 
-export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAction, preventiveAction, actorAuthId }) {
+export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAction, preventiveAction, targetVerificationDate, actorAuthId }) {
   const { data: existing, error: findError } = await supabase
     .from('car_reports')
     .select('id, reference_no, status, requesting_department, responsible_department')
@@ -204,12 +204,26 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
     throw err
   }
 
+  // Security Check: Only Auditors can submit a CAPA Plan
+  const profile = await getUserProfileByAuthId(actorAuthId)
+  if (!profile) {
+    const err = new Error('Current user profile not found')
+    err.status = 403
+    throw err
+  }
+  if (normalizeRole(profile.role_name) !== 'auditor') {
+    const err = new Error('403 Forbidden: Only a Quality Auditor may submit a CAPA plan.')
+    err.status = 403
+    throw err
+  }
+
   const { data, error } = await supabase
     .from('car_reports')
     .update({
       root_cause_analysis: rootCauseAnalysis,
       corrective_action: correctiveAction,
       preventive_action: preventiveAction,
+      target_verification_date: targetVerificationDate || null,
       capa_submitted_at: new Date().toISOString(),
       status: CAR_STATUS.UNDER_VERIFICATION
     })

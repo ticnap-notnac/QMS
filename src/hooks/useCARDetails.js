@@ -10,6 +10,7 @@ export function useCARDetails() {
   const [rootCause, setRootCause] = useState('')
   const [correctiveAction, setCorrectiveAction] = useState('')
   const [preventiveAction, setPreventiveAction] = useState('')
+  const [targetVerificationDate, setTargetVerificationDate] = useState('')
   const [verificationNotes, setVerificationNotes] = useState('')
   const [verificationRating, setVerificationRating] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -27,6 +28,7 @@ export function useCARDetails() {
       setRootCause(car.root_cause_analysis || '')
       setCorrectiveAction(car.corrective_action || '')
       setPreventiveAction(car.preventive_action || '')
+      setTargetVerificationDate(car.target_verification_date ? car.target_verification_date.split('T')[0] : '')
       setVerificationNotes(car.verification_notes || '')
       setVerificationRating(car.verification_rating || '')
       setSuggestionMeta(null)
@@ -93,18 +95,20 @@ export function useCARDetails() {
   const handleCapaSubmit = async (e, onSubmitCapa, authUserId) => {
     if (e) e.preventDefault()
     if (!selectedCar) return
-    if (!rootCause.trim() || !correctiveAction.trim() || !preventiveAction.trim()) {
-      setError('All CAPA fields are required.')
+    if (!rootCause.trim() || !correctiveAction.trim() || !preventiveAction.trim() || !targetVerificationDate) {
+      setError('All CAPA fields, including the target verification date, are required.')
       return
     }
 
     setSubmitting(true)
     setError('')
+
     try {
       const updated = await onSubmitCapa(selectedCar.id, {
         rootCauseAnalysis: rootCause,
         correctiveAction,
-        preventiveAction
+        preventiveAction,
+        targetVerificationDate
       }, authUserId)
       
       // Update selected car details with updated data
@@ -165,6 +169,8 @@ export function useCARDetails() {
     setCorrectiveAction,
     preventiveAction,
     setPreventiveAction,
+    targetVerificationDate,
+    setTargetVerificationDate,
     verificationNotes,
     setVerificationNotes,
     verificationRating,

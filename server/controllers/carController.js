@@ -33,7 +33,7 @@ export async function submitCapa(req, res, next) {
   const actorAuthId = getRequestActor(req)
   if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
   const { id } = req.params
-  const { rootCauseAnalysis, correctiveAction, preventiveAction } = req.body
+  const { rootCauseAnalysis, correctiveAction, preventiveAction, targetVerificationDate } = req.body
 
   try {
     const { data } = await submitCapaReport({
@@ -41,6 +41,7 @@ export async function submitCapa(req, res, next) {
       rootCauseAnalysis,
       correctiveAction,
       preventiveAction,
+      targetVerificationDate,
       actorAuthId
     })
     return res.json(data)

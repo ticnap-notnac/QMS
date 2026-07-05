@@ -130,6 +130,8 @@ export function useDCCLogic() {
       setCorrectiveAction: carDetails.setCorrectiveAction,
       preventiveAction: carDetails.preventiveAction,
       setPreventiveAction: carDetails.setPreventiveAction,
+      targetVerificationDate: carDetails.targetVerificationDate,
+      setTargetVerificationDate: carDetails.setTargetVerificationDate,
       verificationNotes: carDetails.verificationNotes,
       setVerificationNotes: carDetails.setVerificationNotes,
       submitting: carDetails.submitting,

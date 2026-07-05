@@ -17,6 +17,8 @@ export default function CARDetailsModal({
   setCorrectiveAction,
   preventiveAction,
   setPreventiveAction,
+  targetVerificationDate,
+  setTargetVerificationDate,
   verificationNotes,
   setVerificationNotes,
   verificationRating,
@@ -279,6 +281,18 @@ export default function CARDetailsModal({
                   />
                 </div>
 
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label className="label-field">Target Verification Date (VoE Date)</label>
+                  <input
+                    type="date"
+                    value={targetVerificationDate}
+                    onChange={(e) => setTargetVerificationDate(e.target.value)}
+                    className="input-field"
+                    required
+                    style={{ padding: '8px', fontSize: '13px' }}
+                  />
+                </div>
+
                 <button
                   type="submit"
                   disabled={submitting}
@@ -370,24 +384,32 @@ export default function CARDetailsModal({
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '6px' }}>
-                  <button
-                    type="button"
-                    disabled={submitting}
-                    onClick={() => handleVerificationSubmit('ineffective')}
-                    className="btn-secondary-light"
-                    style={{ margin: 0, borderColor: 'rgba(239, 68, 68, 0.4)', color: '#ef4444', padding: '8px 20px', height: 'auto', fontSize: '13px' }}
-                  >
-                    Mark Ineffective (Re-open)
-                  </button>
-                  <button
-                    type="button"
-                    disabled={submitting}
-                    onClick={() => handleVerificationSubmit('effective')}
-                    className="btn-gradient-primary"
-                    style={{ margin: 0, padding: '8px 24px', height: 'auto', fontSize: '13px' }}
-                  >
-                    {submitting ? 'Verifying...' : 'Mark Effective (Close)'}
-                  </button>
+                  {car.target_verification_date && new Date().setHours(0,0,0,0) < new Date(car.target_verification_date).setHours(0,0,0,0) ? (
+                    <div style={{ color: '#ef4444', fontSize: '13px', fontStyle: 'italic', display: 'flex', alignItems: 'center' }}>
+                      Verification locked until {new Date(car.target_verification_date).toLocaleDateString()}
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        disabled={submitting}
+                        onClick={() => handleVerificationSubmit('ineffective')}
+                        className="btn-secondary-light"
+                        style={{ margin: 0, borderColor: 'rgba(239, 68, 68, 0.4)', color: '#ef4444', padding: '8px 20px', height: 'auto', fontSize: '13px' }}
+                      >
+                        Mark Ineffective (Re-open)
+                      </button>
+                      <button
+                        type="button"
+                        disabled={submitting}
+                        onClick={() => handleVerificationSubmit('effective')}
+                        className="btn-gradient-primary"
+                        style={{ margin: 0, padding: '8px 24px', height: 'auto', fontSize: '13px' }}
+                      >
+                        {submitting ? 'Verifying...' : 'Mark Effective (Close)'}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
