@@ -31,7 +31,7 @@ async function fetchCaseRepositoryCandidates(issueType) {
     .from('case_repository')
     .select(
       'id, corrective_action, preventive_action, effectiveness_score, ' +
-      'problem_keywords, issue_type, times_used, severity, department_id, product_type'
+      'issue_type, times_used, severity, department_id, product_type'
     )
     .not('corrective_action', 'is', null)
     .order('effectiveness_score', { ascending: false })
@@ -140,7 +140,7 @@ export async function findSimilarCases(ncrId) {
   const ratedNcrAsCases = ratedNcrCandidates.map(ncr => ({
     corrective_action: ncr.corrective_action || ncr.investigation_details,
     preventive_action: ncr.resolution_details,
-    problem_keywords: ncr.description,   // full description used as keyword source
+    // problem_keywords removed, using vector embeddings instead
     issue_type: ncr.issue_type,
     severity: ncr.severity,
     department_id: ncr.department_id,
@@ -291,7 +291,7 @@ NCR Report:
 
 Case Repository Matches (CBR candidates):
 ${caseRepo.length > 0
-        ? caseRepo.map((c, i) => `${i + 1}. Keywords: ${c.problem_keywords || 'N/A'} | Corrective Action: ${c.corrective_action} | Preventive Action: ${c.preventive_action || 'N/A'} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
+        ? caseRepo.map((c, i) => `${i + 1}. Corrective Action: ${c.corrective_action} | Preventive Action: ${c.preventive_action || 'N/A'} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
         : 'None'}
 
 Rated NCR Reports (rating >= 3):
@@ -385,7 +385,7 @@ export async function generateAiSuggestionFromText({ description, issueType, dep
   const ratedNcrAsCases = ratedNcrCandidates.map(ncr => ({
     corrective_action: ncr.corrective_action || ncr.investigation_details,
     preventive_action: ncr.resolution_details,
-    problem_keywords: ncr.description,
+    // problem_keywords removed, using vector embeddings instead
     issue_type: ncr.issue_type,
     severity: ncr.severity,
     department_id: ncr.department_id,
@@ -443,7 +443,7 @@ Issue:
 
 Case Repository Matches (CBR candidates):
 ${caseRepoCandidates.length > 0
-        ? caseRepoCandidates.slice(0, 10).map((c, i) => `${i + 1}. Keywords: ${c.problem_keywords || 'N/A'} | Corrective Action: ${c.corrective_action} | Preventive Action: ${c.preventive_action || 'N/A'} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
+        ? caseRepoCandidates.slice(0, 10).map((c, i) => `${i + 1}. Corrective Action: ${c.corrective_action} | Preventive Action: ${c.preventive_action || 'N/A'} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
         : 'None'}
 
 Provide a concise, actionable corrective action (for immediately addressing the current issue) and a preventive action (to prevent recurrence in the future). Each action should be 2-4 sentences. Also provide a confidence score between 0.0 and 1.0.

@@ -1250,7 +1250,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
           preventive_action: report.resolution_details || 'None provided',
           effectiveness_score: effectivenessScore,
           // CBR: store extracted keywords (not raw slice) + new feature columns
-          problem_keywords: extractKeywordsAsString(report.description),
+          // problem_keywords: extractKeywordsAsString(report.description), removed because we use vector embeddings
           severity: report.severity || null,
           department_id: report.department_id || null,
           product_type: report.product_type || null,
