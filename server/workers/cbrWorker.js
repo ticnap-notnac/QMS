@@ -3,6 +3,10 @@ import logger from '../utils/logger.js'
 import { generateAiSuggestion } from '../services/suggestionService.js'
 
 export const registerWorkers = async () => {
+  // Ensure queues exist before workers attach (required in newer pg-boss versions)
+  await boss.createQueue('cbr-suggestion')
+  await boss.createQueue('cbr-suggestion-text')
+
   // Worker for NCR CBR generation
   await boss.work('cbr-suggestion', async (job) => {
     const { ncrId, deptName, previousSuggestions } = job.data
