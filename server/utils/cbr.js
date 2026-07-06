@@ -107,6 +107,40 @@ export async function extractKeywordsWithLLM(text, apiKey) {
   }
 }
 
+/**
+ * Generates vector embeddings for a given text using Google's text-embedding-004 model.
+ * @param {string} text 
+ * @param {string} apiKey 
+ * @returns {Promise<number[]|null>} Array of floats (the embedding vector) or null
+ */
+export async function generateEmbedding(text, apiKey) {
+  if (!text || !apiKey) return null;
+  
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'models/text-embedding-004',
+        content: {
+          parts: [{ text: text }]
+        }
+      })
+    });
+
+    if (!response.ok) {
+      console.warn(`Gemini embedding failed: ${response.statusText}`);
+      return null;
+    }
+
+    const data = await response.json();
+    return data.embedding?.values || null;
+  } catch (err) {
+    console.warn('Error generating embeddings:', err);
+    return null;
+  }
+}
+
 // ─── Similarity Functions ─────────────────────────────────────────────────────
 
 /**
@@ -165,11 +199,20 @@ export function computeCBRScore(current, past) {
     matchedFeatures.push('issue type')
   }
 
-  // ── Feature 2: Keyword Jaccard (weight 0.35) ─────────────────────────────
-  const currentKw = current.llm_keywords || extractKeywords(current.description)
-  const pastKw = extractKeywords(past.problem_keywords || past.description || '')
-  const keywordScore = jaccardSimilarity(currentKw, pastKw)
-  if (keywordScore > 0.05) matchedFeatures.push('problem keywords')
+  // ── Feature 2: Semantic Similarity (weight 0.35) ───────────────────────
+  // If we have a pre-calculated vector_distance from the DB (0 = perfect match, 2 = opposite)
+  // we convert it to a similarity score (1 - distance). Cosine distance is usually 0 to 1 for positive vectors.
+  let semanticScore = 0;
+  if (typeof past.vector_distance === 'number') {
+    semanticScore = Math.max(0, 1 - past.vector_distance);
+    if (semanticScore > 0.6) matchedFeatures.push('semantic vector match');
+  } else {
+    // Fallback to Jaccard keyword matching if embeddings aren't available
+    const currentKw = current.llm_keywords || extractKeywords(current.description);
+    const pastKw = extractKeywords(past.problem_keywords || past.description || '');
+    semanticScore = jaccardSimilarity(currentKw, pastKw);
+    if (semanticScore > 0.05) matchedFeatures.push('problem keywords');
+  }
 
   // ── Feature 3: Severity (weight 0.15) ────────────────────────────────────
   const sevScore = severitySimilarity(current.severity, past.severity)
@@ -194,7 +237,7 @@ export function computeCBRScore(current, past) {
 
   const score =
     0.35 * issueTypeScore +
-    0.35 * keywordScore +
+    0.35 * semanticScore +
     0.15 * sevScore +
     0.10 * deptScore +
     0.05 * productScore

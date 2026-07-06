@@ -75,17 +75,55 @@ export function useSuggestionLogic({ report, deptName }) {
                 return
             }
 
-            // ── Step 4: AI fallback ──
+            // ── Step 4: AI fallback (Background Job) ──
             const result = await generateAiSuggestion(report.id, deptName, currentRejected)
 
-            setSuggestion({
-                text: result.suggestion,
-                preventiveAction: result.preventive_suggestion,
-                confidence: result.confidence,
-                cached: false,
-                matchedFeatures: [],
-                sourceDetails: result.sourceDetails || 'Generative AI (Gemini)',
-            })
+            if (result.jobId) {
+                // Poll for job completion
+                const { fetchJobStatus } = await import('@/services/suggestionService')
+                const pollResult = await new Promise((resolve, reject) => {
+                    const maxRetries = 20; // up to 60 seconds
+                    let retries = 0;
+                    const interval = setInterval(async () => {
+                        try {
+                            const status = await fetchJobStatus(result.jobId)
+                            if (status.state === 'completed') {
+                                clearInterval(interval)
+                                resolve(status.output)
+                            } else if (status.state === 'failed' || status.state === 'cancelled') {
+                                clearInterval(interval)
+                                reject(new Error('Background job failed'))
+                            }
+                            
+                            if (++retries >= maxRetries) {
+                                clearInterval(interval)
+                                reject(new Error('Background job timeout'))
+                            }
+                        } catch (e) {
+                            // keep polling on network error
+                        }
+                    }, 3000)
+                })
+
+                setSuggestion({
+                    text: pollResult.suggestion,
+                    preventiveAction: pollResult.preventive_suggestion,
+                    confidence: pollResult.confidence,
+                    cached: false,
+                    matchedFeatures: [],
+                    sourceDetails: pollResult.sourceDetails || 'Generative AI (Background Job)',
+                })
+            } else {
+                // Fallback if backend hasn't updated yet and returned sync response
+                setSuggestion({
+                    text: result.suggestion,
+                    preventiveAction: result.preventive_suggestion,
+                    confidence: result.confidence,
+                    cached: false,
+                    matchedFeatures: [],
+                    sourceDetails: result.sourceDetails || 'Generative AI (Gemini)',
+                })
+            }
 
         } catch (err) {
             setSuggestionError('Could not generate suggestion.')

@@ -8,6 +8,10 @@ export async function fetchExistingAiSuggestion(ncrId) {
     return await request(`/suggestions/cached/${ncrId}`)
 }
 
+export async function fetchJobStatus(jobId) {
+    return await request(`/suggestions/job/${jobId}`)
+}
+
 export async function saveAiSuggestion(ncrId, suggestion, preventiveSuggestion, confidence) {
     return await request('/suggestions', {
         method: 'POST',
