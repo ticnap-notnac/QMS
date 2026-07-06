@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase.js'
 import { REPORT_STATUS, CAR_STATUS } from '../../shared/constants.js'
-import { extractKeywordsWithLLM, retrieveBestMatch } from '../utils/cbr.js'
+import { extractKeywordsWithLLM, retrieveBestMatch, generateEmbedding } from '../utils/cbr.js'
 
 /** Minimum CBR score to use a past case instead of falling back to AI */
 const MIN_CBR_SCORE = 0.2
@@ -21,12 +21,23 @@ async function fetchReportById(ncrId) {
   return data
 }
 
-/**
- * Fetches candidates from case_repository.
- * Filters by issue_type if available (prioritise same category),
- * but fetches broadly (up to 50) so CBR can score them all.
- */
-async function fetchCaseRepositoryCandidates(issueType) {
+async function fetchCaseRepositoryCandidates(issueType, embedding = null) {
+  if (embedding) {
+    // Use the pgvector semantic search if we generated an embedding
+    const { data, error } = await supabase.rpc('match_cases', {
+      query_embedding: `[${embedding}]`,
+      match_threshold: 0.0, // Bring them all in so CBR can score them
+      match_count: 50
+    })
+    
+    if (!error && data) {
+      // The RPC returns 'similarity' (1 - distance). 
+      // We convert it to vector_distance so cbr.js can parse it properly.
+      return data.map(d => ({ ...d, vector_distance: 1 - d.similarity }))
+    }
+  }
+
+  // Fallback to standard fetch if no embedding or if RPC fails
   let query = supabase
     .from('case_repository')
     .select(
@@ -128,8 +139,14 @@ async function fetchQddrReports(departmentId) {
 export async function findSimilarCases(ncrId) {
   const report = await fetchReportById(ncrId)
 
+  const apiKey = process.env.GEMINI_API_KEY
+  let embedding = null;
+  if (apiKey && report.description) {
+    embedding = await generateEmbedding(report.description, apiKey)
+  }
+
   const [caseRepoCandidates, ratedNcrCandidates, carReports, qddrReports] = await Promise.all([
-    fetchCaseRepositoryCandidates(report.issue_type),
+    fetchCaseRepositoryCandidates(report.issue_type, embedding),
     fetchRatedNcrCandidates(),
     fetchCarReports(report.department_id),
     fetchQddrReports(report.department_id),
@@ -156,7 +173,6 @@ export async function findSimilarCases(ncrId) {
   ]
 
   // ── LLM QUERY EXPANSION (Semantic understanding before retrieval) ──
-  const apiKey = process.env.GEMINI_API_KEY
   if (apiKey && report.description) {
     report.llm_keywords = await extractKeywordsWithLLM(report.description, apiKey)
   }
@@ -375,8 +391,14 @@ Respond ONLY in this JSON format with no preamble or markdown:
 }
 
 export async function generateAiSuggestionFromText({ description, issueType, deptName }) {
+  const apiKey = process.env.GEMINI_API_KEY
+  let embedding = null;
+  if (apiKey && description) {
+    embedding = await generateEmbedding(description, apiKey)
+  }
+
   const [caseRepoCandidates, ratedNcrCandidates, carReportsList, qddrReportsList] = await Promise.all([
-    fetchCaseRepositoryCandidates(issueType),
+    fetchCaseRepositoryCandidates(issueType, embedding),
     fetchRatedNcrCandidates(),
     fetchCarReports(null),
     fetchQddrReports(null),
@@ -407,7 +429,6 @@ export async function generateAiSuggestionFromText({ description, issueType, dep
   }
 
   // ── LLM QUERY EXPANSION (Semantic understanding before retrieval) ──
-  const apiKey = process.env.GEMINI_API_KEY
   if (apiKey && description) {
     report.llm_keywords = await extractKeywordsWithLLM(description, apiKey)
   }
