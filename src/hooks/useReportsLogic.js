@@ -751,9 +751,22 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
     }
   }
 
-  const openEditQddrModal = (qddr) => {
-    qddrFormState.initForm(qddr)
-    modalsState.openQDDRModal(qddr) // Same here
+  const openEditQddrModal = async (qddr) => {
+    try {
+      const { fetchLinkedClausesForQddr } = await import('@/services/qddrService')
+      const linkedClauses = await fetchLinkedClausesForQddr(qddr.id)
+      const linkedClauseIds = linkedClauses.map(c => c.clause_id)
+      qddrFormState.initForm({
+        ...qddr,
+        linked_clause_ids: linkedClauseIds,
+        suggested_clauses: linkedClauses.map(c => ({ ...c, confidence: 1 }))
+      })
+      modalsState.openQDDRModal(qddr)
+    } catch (err) {
+      console.error('Failed to fetch linked clauses for QDDR edit:', err)
+      qddrFormState.initForm(qddr)
+      modalsState.openQDDRModal(qddr)
+    }
   }
 
   // ─── Returned API ──────────────────────────────────────────────────────────
@@ -985,6 +998,11 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
       allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
       suggesting: qddrFormState.suggesting,
       suggestActions: qddrFormState.suggestActions,
+      toggleClauseSelection: qddrFormState.toggleClauseSelection,
+      fetchClauseSuggestions: qddrFormState.fetchClauseSuggestions,
+      clausesLoading: qddrFormState.clausesLoading,
+      clausesError: qddrFormState.clausesError,
+      userAuthId: currentAuthId,
     },
     carDetailsModalProps: {
       isOpen: carDetails.isCarDetailsModalOpen,

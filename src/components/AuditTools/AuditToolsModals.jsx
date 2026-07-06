@@ -13,7 +13,10 @@ export function AuditChecklistSection({
   fetchData,
   linkedCarsMap,
   handleRemoveCarLink,
-  onSelectCar
+  onSelectCar,
+  linkedQddrsMap,
+  handleRemoveQddrLink,
+  onSelectQddr
 }) {
   if (!activeRun) return null
 
@@ -192,6 +195,63 @@ export function AuditChecklistSection({
                             onClick={(e) => {
                               e.stopPropagation()
                               handleRemoveCarLink && handleRemoveCarLink(car.id, clause.id)
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: s.text,
+                              cursor: 'pointer',
+                              padding: '0 0 0 4px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              fontSize: '10px',
+                              opacity: 0.7
+                            }}
+                            title="Remove Link"
+                            onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
+                            onMouseOut={(e) => e.currentTarget.style.opacity = '0.7'}
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* Linked QDDRs row */}
+                {linkedQddrsMap && linkedQddrsMap[clause.id]?.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px', paddingTop: '4px' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', flexShrink: 0 }}>Linked QDDRs:</span>
+                    {linkedQddrsMap[clause.id].map(qddr => {
+                      const statusConfig = {
+                        open:               { bg: 'rgba(245, 158, 11, 0.12)', text: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)', label: 'Open' },
+                        closed:             { bg: 'rgba(16, 185, 129, 0.10)', text: '#10b981', border: 'rgba(16, 185, 129, 0.3)', label: 'Closed' },
+                      }
+                      const s = statusConfig[qddr.status] || statusConfig.open
+                      return (
+                        <span
+                          key={qddr.id}
+                          onClick={() => {
+                            if (onSelectQddr) {
+                              onSelectQddr(qddr);
+                            }
+                          }}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            fontSize: '11px', fontWeight: '600',
+                            background: s.bg, color: s.text,
+                            border: `1px solid ${s.border}`,
+                            borderRadius: '4px', padding: '2px 8px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          📦 {qddr.reference_no} <span style={{ opacity: 0.7, fontWeight: 'normal' }}>({s.label})</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRemoveQddrLink && handleRemoveQddrLink(qddr.id, clause.id)
                             }}
                             style={{
                               background: 'none',
@@ -396,6 +456,29 @@ export function AuditRunDetailsModal({
                           >
                             <BookOpen size={10} />
                             {car.title} ({car.status})
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {clause.linked_qddrs && clause.linked_qddrs.length > 0 && (
+                      <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', flexShrink: 0 }}>Linked QDDRs:</span>
+                        {clause.linked_qddrs.map(qddr => (
+                          <div 
+                            key={qddr.id} 
+                            style={{ 
+                              display: 'inline-flex', 
+                              alignItems: 'center', 
+                              background: '#fffbeb', 
+                              border: '1px solid #fde68a', 
+                              padding: '2px 8px', 
+                              borderRadius: '12px', 
+                              fontSize: '11px', 
+                              color: '#b45309', 
+                              gap: '6px' 
+                            }}
+                          >
+                            📦 {qddr.title || qddr.reference_no} ({qddr.status})
                           </div>
                         ))}
                       </div>

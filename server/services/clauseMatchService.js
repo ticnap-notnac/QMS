@@ -85,3 +85,21 @@ export async function suggestClausesForCar({ description, flags = {} }) {
     throw err
   }
 }
+
+/**
+ * Suggests ISO clauses that best match a QDDR's discrepancy details.
+ */
+export async function suggestClausesForQddr({ description, flags = {} }) {
+  try {
+    const clauses = await fetchActiveClauses()
+    if (!clauses.length) return []
+
+    const results = computeLexicalMatch(description, flags, clauses)
+
+    return results.slice(0, MAX_SUGGESTIONS)
+
+  } catch (err) {
+    console.error('[clauseMatchService] clause matching failed for QDDR:', err.message)
+    throw err
+  }
+}

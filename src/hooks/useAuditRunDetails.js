@@ -63,16 +63,23 @@ export function useAuditRunDetails() {
             console.log('Fetched linksData:', linksData)
             clausesList = clausesList.map(c => {
               const cars = linksData
-                .filter(l => {
-                  if (l.clause_id === c.id) {
-                    console.log(`Checking clause ${c.id} link:`, l)
-                    console.log(`Match? ${String(l.car_reports?.audit_schedule_id)} === ${String(run.schedule_id)}`)
-                  }
-                  // Temporarily remove the schedule_id filter to see if any show up
-                  return l.clause_id === c.id && l.car_reports
-                })
+                .filter(l => l.clause_id === c.id && l.car_reports)
                 .map(l => l.car_reports)
               return { ...c, linked_cars: cars }
+            })
+          }
+
+          const { data: qddrLinksData, error: qddrLinkErr } = await supabase
+            .from('qddr_clause_links')
+            .select('clause_id, qddr_reports(*)')
+            .in('clause_id', clauseIds)
+
+          if (!qddrLinkErr && qddrLinksData) {
+            clausesList = clausesList.map(c => {
+              const qddrs = qddrLinksData
+                .filter(l => l.clause_id === c.id && l.qddr_reports)
+                .map(l => l.qddr_reports)
+              return { ...c, linked_qddrs: qddrs }
             })
           }
         }

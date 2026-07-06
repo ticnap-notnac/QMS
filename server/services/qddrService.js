@@ -71,9 +71,10 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     corrective_action,
     preventive_action,
     approved_by,
-    noted_by,
     leader,
-    ncr_id
+    ncr_id,
+    clause_ids,
+    audit_schedule_id
   } = body || {}
 
   // Resolve user IDs for signatures
@@ -139,6 +140,7 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     noted_by: notedById,
     leader: leaderId,
     ncr_id: ncr_id ? parseInt(ncr_id, 10) : null,
+    audit_schedule_id: audit_schedule_id || null,
     status: 'open',
     site_id: reporter.site_id || null
   }
@@ -149,6 +151,24 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     const customErr = new Error(`Database error creating QDDR: ${error.message}`)
     customErr.status = 500
     throw customErr
+  }
+
+  // Link this QDDR to the provided ISO clause IDs (if any)
+  if (data?.id && Array.isArray(clause_ids) && clause_ids.length > 0) {
+    const linkRows = clause_ids
+      .map(cid => String(cid).trim())
+      .filter(cid => cid.length > 0)
+      .map(cid => ({ qddr_report_id: data.id, clause_id: cid }))
+
+    if (linkRows.length > 0) {
+      const { error: linkError } = await supabase
+        .from('qddr_clause_links')
+        .insert(linkRows)
+
+      if (linkError) {
+        console.warn('[qddrService] Failed to insert qddr_clause_links:', linkError.message)
+      }
+    }
   }
 
   return { data }
@@ -198,6 +218,10 @@ export async function updateQddrReport({ id, body }) {
  * Hard deletes a QDDR report
  */
 export async function softDeleteQddrReport({ id, actorAuthId }) {
+  // 1. First delete the links
+  await supabase.from('qddr_clause_links').delete().eq('qddr_report_id', id)
+
+  // 2. Delete the report itself
   const { data, error } = await supabase
     .from('qddr_reports')
     .delete()
@@ -268,6 +292,29 @@ export async function editQddrReport({ id, body, actorAuthId }) {
     .maybeSingle()
 
   if (error) throw error
+
+  // Handle clause links
+  const { clause_ids } = body || {}
+  if (Array.isArray(clause_ids)) {
+    // 1. Delete existing links
+    await supabase.from('qddr_clause_links').delete().eq('qddr_report_id', id)
+
+    // 2. Insert new links
+    const linkRows = clause_ids
+      .map(cid => String(cid).trim())
+      .filter(cid => cid.length > 0)
+      .map(cid => ({ qddr_report_id: id, clause_id: cid }))
+
+    if (linkRows.length > 0) {
+      const { error: linkError } = await supabase
+        .from('qddr_clause_links')
+        .insert(linkRows)
+
+      if (linkError) {
+        console.warn('[qddrService] Failed to insert qddr_clause_links during update:', linkError.message)
+      }
+    }
+  }
 
   try {
     const { writeAudit } = await import('../lib/audit.js')
