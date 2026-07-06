@@ -5,8 +5,11 @@ if (!process.env.DATABASE_URL) {
   logger.error('DATABASE_URL is missing in .env')
 }
 
-// Initialize pg-boss with the connection string
-const boss = new PgBoss(process.env.DATABASE_URL)
+// Initialize pg-boss with the connection string and SSL requirements for Supabase
+const boss = new PgBoss({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+})
 
 boss.on('error', error => logger.error(`pg-boss error: ${error.message}`))
 
