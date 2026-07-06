@@ -86,52 +86,46 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // 1. Fetch open complaints (NCR + CAR) directly from Supabase
-        const { count: ncrCount } = await supabase
-          .from('ncr_reports')
-          .select('id', { count: 'exact', head: true })
-          .neq('status', 'CLOSED')
+        // Fire all network requests concurrently to dramatically speed up load times
+        const [
+          ncrRes,
+          carRes,
+          statsRes,
+          trendDataRes,
+          resolutionRes,
+          schedulesRes,
+          carsRes
+        ] = await Promise.all([
+          supabase.from('ncr_reports').select('id', { count: 'exact', head: true }).neq('status', 'CLOSED'),
+          supabase.from('car_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed'),
+          request('/compliance'),
+          request('/compliance/trends'),
+          request('/dashboard/resolution-trends'),
+          supabase.from('audit_schedules').select('id, title, scheduled_date').order('scheduled_date', { ascending: true }).limit(3),
+          supabase.from('car_reports').select('id, reference_no, status, created_at, recipient').order('created_at', { ascending: false }).limit(4)
+        ])
 
-        const { count: carCount } = await supabase
-          .from('car_reports')
-          .select('id', { count: 'exact', head: true })
-          .not('status', 'ilike', 'closed')
+        const stats = statsRes || []
+        setComplianceStats(stats)
+        setTrends(trendDataRes || [])
+        setResolutionTrend(resolutionRes || [])
 
-        // 2. Fetch compliance stats per standard from backend API
-        const stats = await request('/compliance')
-        setComplianceStats(stats || [])
-
-        // 3. Fetch historical trend data from backend API
-        const trendData = await request('/compliance/trends')
-        setTrends(trendData || [])
-
-        // Fetch aggregated resolution trend data directly from the backend
-        // (This protects against huge payload sizes if the database is flocked with data)
-        const trendPayload = await request('/dashboard/resolution-trends')
-        setResolutionTrend(trendPayload || [])
-
-        // 4. Calculate average ISO compliance score
+        // Calculate average ISO compliance score
         let avgCompliance = 0
-        if (stats && stats.length > 0) {
+        if (stats.length > 0) {
           const total = stats.reduce((sum, s) => sum + (s.compliance || 0), 0)
           avgCompliance = Math.round(total / stats.length)
         }
 
         setMetrics({
-          openComplaints: (ncrCount || 0) + (carCount || 0),
+          openComplaints: (ncrRes.count || 0) + (carRes.count || 0),
           isoCompliance: avgCompliance,
           defectRate: 0
         })
 
-        // 5. Fetch upcoming audit schedules from database
-        const { data: rawSchedules } = await supabase
-          .from('audit_schedules')
-          .select('id, title, scheduled_date')
-          .order('scheduled_date', { ascending: true })
-          .limit(3)
-
-        if (rawSchedules && rawSchedules.length > 0) {
-          setUpcomingAudits(rawSchedules.map(s => ({
+        // Handle upcoming audit schedules
+        if (schedulesRes.data && schedulesRes.data.length > 0) {
+          setUpcomingAudits(schedulesRes.data.map(s => ({
             id: s.id,
             title: s.title,
             date: new Date(s.scheduled_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
@@ -140,15 +134,9 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           setUpcomingAudits([])
         }
 
-        // 6. Fetch latest CAR activities from database
-        const { data: rawCars } = await supabase
-          .from('car_reports')
-          .select('id, reference_no, status, created_at, recipient')
-          .order('created_at', { ascending: false })
-          .limit(4)
-
-        if (rawCars && rawCars.length > 0) {
-          setLatestActivities(rawCars.map((c, idx) => ({
+        // Handle latest CAR activities
+        if (carsRes.data && carsRes.data.length > 0) {
+          setLatestActivities(carsRes.data.map((c, idx) => ({
             id: c.id,
             title: `CAR Notification: ${c.reference_no}`,
             description: `Status: ${String(c.status || '').toUpperCase()}${c.recipient ? ` | Assignee: ${c.recipient}` : ''}`,
