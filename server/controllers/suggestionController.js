@@ -42,7 +42,7 @@ export async function generateSuggestion(req, res, next) {
     // Enqueue the heavy CBR logic to pg-boss background worker
     const jobId = await boss.send('cbr-suggestion', { ncrId, deptName, previousSuggestions })
     
-    return res.status(202).json({ success: true, message: 'Suggestion generation started in the background', jobId })
+    return res.status(202).json({ success: true, message: 'Suggestion generation started in the background', jobId, queue: 'cbr-suggestion' })
   } catch (err) {
     next(err)
   }
@@ -52,10 +52,10 @@ export async function generateSuggestionFromText(req, res, next) {
   try {
     const { description, issueType, deptName } = req.body
     
-    // Enqueue the job
+    // Enqueue to pg-boss background worker
     const jobId = await boss.send('cbr-suggestion-text', { description, issueType, deptName })
     
-    return res.status(202).json({ success: true, message: 'Text suggestion generation started in the background', jobId })
+    return res.status(202).json({ success: true, message: 'Text suggestion generation started in the background', jobId, queue: 'cbr-suggestion-text' })
   } catch (err) {
     next(err)
   }
@@ -74,10 +74,33 @@ export async function classifyTags(req, res, next) {
 export async function getJobStatus(req, res, next) {
   try {
     const { jobId } = req.params
-    const job = await boss.getJobById(jobId)
+    // pg-boss v9+ requires the queue name as the first argument to getJobById.
+    // The queue name is passed as a query param (?queue=...) by the frontend.
+    // Fallback: try both known queue names if no queue param is provided.
+    const queueName = req.query.queue
+    const knownQueues = ['cbr-suggestion-text', 'cbr-suggestion']
+    const queuesToTry = queueName ? [queueName] : knownQueues
+
+    let job = null
+    for (const q of queuesToTry) {
+      try {
+        job = await boss.getJobById(q, jobId)
+        if (job) break
+      } catch {
+        // Queue not found or job not in this queue — try next
+      }
+    }
+
     if (!job) {
       return res.status(404).json({ error: 'Job not found' })
     }
+
+    // Temporary debug: log full job so we can see failure reason in system.log
+    if (job.state === 'failed') {
+      const logger = (await import('../utils/logger.js')).default
+      logger.error(`Job ${jobId} failed. Output: ${JSON.stringify(job.output)}`)
+    }
+
     return res.json({ 
       state: job.state, 
       output: job.output,

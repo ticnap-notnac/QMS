@@ -79,7 +79,7 @@ export function useCARDetails() {
             let retries = 0;
             const interval = setInterval(async () => {
                 try {
-                    const status = await fetchJobStatus(result.jobId)
+                    const status = await fetchJobStatus(result.jobId, result.queue)
                     if (status.state === 'completed') {
                         clearInterval(interval)
                         resolve(status.output)

@@ -24,6 +24,8 @@ import dashboardRoutes from './routes/dashboardRoutes.js'
 import chatbotRoutes from './routes/chatbotRoutes.js'
 import { authMiddleware } from './middlewares/authMiddleware.js'
 import { errorHandler } from './middlewares/errorMiddleware.js'
+import { logClientError } from './controllers/logController.js'
+import { startQueue } from './utils/queue.js'
 
 const app = express()
 
@@ -74,6 +76,10 @@ app.use('/api/departments', authMiddleware, departmentRoutes)
 app.use('/api', authMiddleware, locationRoutes)
 app.use('/api', authMiddleware, productTypeRoutes)
 app.use('/api', authMiddleware, issueTypeRoutes)
+// Client-side error reporting — must be before authMiddleware so unauthenticated
+// browsers (e.g. on a failed login) can still POST errors without a 401
+app.post('/api/logs/client-error', logClientError)
+
 app.use('/api/logs', authMiddleware, logRoutes)
 app.use('/api/debug', authMiddleware, debugRoutes)
 app.use('/api', authMiddleware, ncrRoutes)
@@ -88,5 +94,8 @@ app.use('/api/dashboard', authMiddleware, dashboardRoutes)
 app.use('/api', authMiddleware, chatbotRoutes)
 
 app.use(errorHandler)
+
+// Start the pg-boss background job queue and register workers
+startQueue()
 
 export default app

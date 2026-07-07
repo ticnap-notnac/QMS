@@ -243,30 +243,30 @@ export function useQDDRForm() {
         deptName: form.location || 'N/A'
       })
 
-      let res = result;
+      let res = result
       if (result?.jobId) {
         const { fetchJobStatus } = await import('@/services/suggestionService')
         res = await new Promise((resolve, reject) => {
-            const maxRetries = 20;
-            let retries = 0;
-            const interval = setInterval(async () => {
-                try {
-                    const status = await fetchJobStatus(result.jobId)
-                    if (status.state === 'completed') {
-                        clearInterval(interval)
-                        resolve(status.output)
-                    } else if (status.state === 'failed' || status.state === 'cancelled') {
-                        clearInterval(interval)
-                        reject(new Error('Background job failed'))
-                    }
-                    if (++retries >= maxRetries) {
-                        clearInterval(interval)
-                        reject(new Error('Background job timeout'))
-                    }
-                } catch (e) {
-                    // ignore network errors
-                }
-            }, 3000)
+          const maxRetries = 20
+          let retries = 0
+          const interval = setInterval(async () => {
+            try {
+              const status = await fetchJobStatus(result.jobId, result.queue)
+              if (status.state === 'completed') {
+                clearInterval(interval)
+                resolve(status.output)
+              } else if (status.state === 'failed' || status.state === 'cancelled') {
+                clearInterval(interval)
+                reject(new Error('Background job failed'))
+              }
+              if (++retries >= maxRetries) {
+                clearInterval(interval)
+                reject(new Error('Background job timeout'))
+              }
+            } catch (e) {
+              // ignore transient network errors during polling
+            }
+          }, 3000)
         })
       }
 

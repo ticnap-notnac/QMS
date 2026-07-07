@@ -8,8 +8,9 @@ export async function fetchExistingAiSuggestion(ncrId) {
     return await request(`/suggestions/cached/${ncrId}`)
 }
 
-export async function fetchJobStatus(jobId) {
-    return await request(`/suggestions/job/${jobId}`)
+export async function fetchJobStatus(jobId, queue) {
+    const qs = queue ? `?queue=${encodeURIComponent(queue)}` : ''
+    return await request(`/suggestions/job/${jobId}${qs}`)
 }
 
 export async function saveAiSuggestion(ncrId, suggestion, preventiveSuggestion, confidence) {
