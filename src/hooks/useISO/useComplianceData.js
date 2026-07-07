@@ -40,24 +40,42 @@ export function useComplianceData() {
       // Fetch non-compliant findings
       const findingsData = await isoService.fetchNonCompliantFindings()
 
-      // Fetch CAR reports with clause links to filter out linked NCRs and populate createdCars
+      // Fetch CAR reports
       const { data: carsList, error: carsError } = await supabase
         .from('car_reports')
         .select(`
           id,
           reference_no,
-          audit_schedule_id,
-          ncr_id,
-          car_clause_links (
-            clause_id
-          )
+          audit_schedule_id
         `)
       if (carsError) throw carsError
 
+      // Safely fetch clause links
+      const { data: linksData } = await supabase
+        .from('car_clause_links')
+        .select('car_report_id, clause_id')
+      
+      const linksList = linksData || []
+
+      // Fetch NCR links
+      const { data: ncrLinksData } = await supabase
+        .from('car_ncr_links')
+        .select('car_report_id, ncr_id')
+      
+      const ncrLinksList = ncrLinksData || []
+
+      // Merge links into carsList manually
+      if (carsList) {
+        carsList.forEach(car => {
+          car.car_clause_links = (linksList || []).filter(l => l.car_report_id === car.id)
+          car.ncr_id = (ncrLinksList || []).filter(l => l.car_report_id === car.id).map(l => l.ncr_id)
+        })
+      }
+
       const linkedNcrIds = new Set()
-      ;(carsList || []).forEach(car => {
-        if (Array.isArray(car.ncr_id)) {
-          car.ncr_id.forEach(id => linkedNcrIds.add(Number(id)))
+      ;(ncrLinksList || []).forEach(link => {
+        if (link.ncr_id) {
+          linkedNcrIds.add(Number(link.ncr_id))
         }
       })
 

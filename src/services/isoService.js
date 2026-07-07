@@ -40,7 +40,7 @@ export async function fetchNonCompliantFindings() {
  */
 export async function fetchLinkedCarNcrIds() {
   const { data, error } = await supabase
-    .from('car_reports')
+    .from('car_ncr_links')
     .select('ncr_id')
   if (error) throw error
   return data || []
@@ -50,26 +50,52 @@ export async function fetchLinkedCarNcrIds() {
  * Fetches all NCR reports (both open and closed) for ISO page compliance grouping.
  */
 export async function fetchNcrReportsForISO() {
-  const { data, error } = await supabase
+  const { data: ncrData, error } = await supabase
     .from('ncr_reports')
     .select(`
       id,
       reference_no,
       severity,
-      clause_id,
       description,
       status,
       department_id,
       product_type_id,
       location_id,
-      issue_type_id,
-      iso_clauses (
-        clause_number,
-        title
-      )
+      issue_type_id
     `)
   if (error) throw error
-  return data || []
+
+  // Safely fetch clauses to merge manually
+  const { data: clausesData } = await supabase
+    .from('iso_clauses')
+    .select('id, clause_number, title')
+    
+  // Safely fetch QDDR (NCR) to Clause links
+  const { data: ncrClauseLinks } = await supabase
+    .from('qddr_clause_links')
+    .select('qddr_report_id, clause_id')
+    
+  const ncrs = ncrData || []
+  const clausesList = clausesData || []
+  const links = ncrClauseLinks || []
+
+  // Merge the clauses into the ncrData
+  ncrs.forEach(ncr => {
+    const link = links.find(l => l.qddr_report_id === ncr.id)
+    ncr.clause_id = link ? link.clause_id : null
+
+    if (ncr.clause_id) {
+      const matchedClause = clausesList.find(c => c.id === ncr.clause_id)
+      if (matchedClause) {
+        ncr.iso_clauses = {
+          clause_number: matchedClause.clause_number,
+          title: matchedClause.title
+        }
+      }
+    }
+  })
+
+  return ncrs
 }
 
 /**
