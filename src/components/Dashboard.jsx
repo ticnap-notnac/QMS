@@ -59,6 +59,7 @@ const CustomResolutionTooltip = ({ active, payload, label }) => {
 
 export default function Dashboard({ currentUserId, userRole, userDepartmentId }) {
   const navigate = useNavigate()
+  const normalizedRole = String(userRole || '').toLowerCase()
   const [metrics, setMetrics] = useState(null)
   const [complianceStats, setComplianceStats] = useState([])
   const [trends, setTrends] = useState([])
@@ -101,7 +102,13 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           request('/compliance'),
           request('/compliance/trends'),
           request('/dashboard/resolution-trends'),
-          supabase.from('audit_schedules').select('id, title, scheduled_date').order('scheduled_date', { ascending: true }).limit(3),
+          supabase
+            .from('audit_schedules')
+            .select('id, title, scheduled_date, status, audit_checklist_templates(title), iso_standards(name)')
+            .neq('status', 'completed')
+            .gte('scheduled_date', new Date().toISOString().split('T')[0])
+            .order('scheduled_date', { ascending: true })
+            .limit(3),
           supabase.from('car_reports').select('id, reference_no, status, created_at, recipient').order('created_at', { ascending: false }).limit(4)
         ])
 
@@ -128,7 +135,8 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
           setUpcomingAudits(schedulesRes.data.map(s => ({
             id: s.id,
             title: s.title,
-            date: new Date(s.scheduled_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+            date: new Date(s.scheduled_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+            checklistName: s.audit_checklist_templates?.title || s.iso_standards?.name || 'General Checklist'
           })))
         } else {
           setUpcomingAudits([])
@@ -239,7 +247,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
       </section>
 
       {/* Double Column Info Widgets Row */}
-      {(userRole === 'ADMIN' || userRole === 'AUDITOR') && (
+      {(normalizedRole === 'admin' || normalizedRole === 'auditor') && (
         <section className="dashboard-widgets-grid">
         {/* Card 1: Upcoming Regulatory Audits */}
         <div className="dashboard-widget-card">
@@ -268,7 +276,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
                       <span className="row-subtitle">{audit.date}</span>
                     </div>
                   </div>
-                  <span className="row-date-audit">{audit.date}</span>
+                  <span className="row-date-audit">{audit.checklistName}</span>
                 </div>
               ))
             ) : (
