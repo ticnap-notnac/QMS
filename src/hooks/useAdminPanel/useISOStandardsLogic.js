@@ -160,12 +160,13 @@ export default function useISOStandardsLogic({ userName }) {
     if (!clauseToDelete) return
     setDeletingClauseIds(prev => ({ ...prev, [clauseToDelete.id]: true }))
     try {
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from('iso_clauses')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('id', clauseToDelete.id)
 
       if (error) throw new Error(error.message)
+      if (count === 0) throw new Error('Clause was not deleted. It may be linked to existing records.')
 
       setClauses(current => current.filter(c => c.id !== clauseToDelete.id))
       setToast({ message: `Clause ${clauseToDelete.clause_number} deleted.`, type: 'success' })
@@ -448,12 +449,15 @@ export default function useISOStandardsLogic({ userName }) {
     setToggleError('')
     setDeletingStandardIds((current) => ({ ...current, [standardToDelete.id]: true }))
     try {
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from('iso_standards')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('id', standardToDelete.id)
       if (error) {
         throw new Error(error.message)
+      }
+      if (count === 0) {
+        throw new Error('Standard was not deleted. It may be linked to existing records.')
       }
       const standardLabel = `${standardToDelete.name}${standardToDelete.version ? ` - ${standardToDelete.version}` : ''}`
       const performedBy = await getCurrentAuthId()

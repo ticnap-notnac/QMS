@@ -26,26 +26,29 @@ The project follows a standard modern decoupled Monorepo structure, strictly sep
 c:\SchoolStuffs\ThesisSystem\
 │
 ├── server/                 # Express.js Backend API
-│   ├── controllers/        # Business logic for each endpoint (e.g., ncrController.js)
+│   ├── controllers/        # Request parsing and HTTP orchestration
 │   ├── middlewares/        # Global interceptors (Auth, Zod Validation, Winston Error Logs)
 │   ├── routes/             # API Endpoint definitions (/api/ncr)
-│   ├── services/           # External service integrations (Supabase DB calls)
+│   ├── services/           # Business logic and external service integrations (Supabase DB calls)
 │   ├── utils/              # Helper utilities (Logger, AI CBR Engine, AsyncHandler)
 │   ├── validations/        # Zod Schema definitions for robust security
+│   ├── workers/            # Background jobs and task queues (pg-boss for CBR engine)
 │   └── index.js            # Express server initialization
 │
 ├── src/                    # React.js + Vite Frontend
 │   ├── components/         # Reusable UI parts
+│   │   ├── AuditTools/     # Internal Audit specific components
 │   │   ├── Auth/           # Login screens
 │   │   ├── Forms/          # Inputs and Dropdowns
 │   │   ├── Layout/         # Main Layout wrappers (Navbar + AppRouter)
 │   │   ├── Modals/         # Pop-up overlays (NCR Submit, Filters)
 │   │   ├── Navbars/        # Top navigation
-│   │   └── Reports/        # Feeds and List Views
+│   │   ├── Reports/        # Feeds and List Views
+│   │   └── UsersTable/     # User Management data tables
 │   ├── context/            # React Context Providers (LookupContext)
 │   ├── hooks/              # Custom React Hooks (useReportsLogic, useAuth)
 │   ├── lib/                # Core libraries (api.js global interceptor)
-│   ├── pages/              # Top-level Page components (Dashboard, Reports)
+│   ├── pages/              # Top-level Page components (Dashboard, Reports, AuditTools, Settings)
 │   ├── routes/             # AppRouter configuration
 │   ├── services/           # Frontend API fetch wrappers
 │   └── App.jsx             # React entry point
@@ -88,6 +91,7 @@ If you or a groupmate run into `401 (Unauthorized)` errors:
 - Login/Logout audit events are recorded, but login is now recorded only once per browser session (prevents duplicates when switching tabs).
 - Inactivity auto-logout: the client implements an inactivity timer (default 30 minutes) with a pre-timeout warning. 
 - Comprehensive Role-Based Access Controls (RBAC) securely restricting routes and data visibility across the Dashboard, DCC panel, and CAR reports.
+- Background Job Queues: Uses `pg-boss` (Postgres-based queue) for highly reliable background processing of time-consuming tasks (like AI CBR engine requests).
 
 ### Advanced AI Integration
 - **Semantic Recurring Detection Alerts:** Background jobs analyze new reports against the database using Asymmetric Semantic Search, automatically generating Gemini-backed summaries for recurring trends.
@@ -148,11 +152,11 @@ Instead of relying on a single heavy LLM for all tasks, workloads are decoupled 
 - **Background Tasks (Gemini 2.5 Flash-Lite):** High-frequency, low-reasoning tasks like Semantic Auto-Classification of discrepancy tags and initial CAPA suggestions are routed to Google's fastest model. This maximizes throughput (up to 1,000 API requests per day) and minimizes latency.
 - **Conversational Chatbot (OpenRouter / GPT-4o-mini):** Low-frequency, high-reasoning tasks involving RAG, context memory, and data summarization are reserved for heavy reasoning models via the OpenRouter API.
 
-### 2. Asymmetric Semantic Search (Query Expansion)
-To prevent API rate-limiting during Case-Based Reasoning, the system employs **Asymmetric Semantic Search**:
-1. **Semantic Expansion:** When a new defect is logged, exactly *one* request is sent to Gemini to semantically extract its core concepts (e.g., expanding "leak" to "water, fluid, spill").
-2. **Lexical Matching:** These expanded keywords are then matched offline against the entire database using the deterministic Jaccard Lexical engine.
-This guarantees that the system gains the deep context understanding of an LLM while maintaining the extreme speed, offline capability, and $0 cost of a traditional SQL lexical search.
+### 2. Semantic Search & Vector Embeddings
+To prevent API rate-limiting during Case-Based Reasoning, the system employs **True Vector Embeddings** as its primary engine:
+1. **Vectorization:** Defect descriptions are converted into numerical vectors using Google's `text-embedding-004` model.
+2. **Cosine Similarity:** These vectors are then queried directly inside the PostgreSQL database using `pgvector` to calculate distance and find highly semantically similar cases.
+3. **Lexical Fallback (Jaccard):** If vector generation ever fails, the system automatically falls back to an offline Jaccard lexical search using extracted keywords, guaranteeing uninterrupted system uptime.
 
 ### 3. Graceful Degradation (Heuristic Fallback)
 In the event of API outages, missing keys, or rate limits, the system features a built-in **Heuristic Rule Engine**. If an LLM call fails, the system instantly degrades gracefully by running local offline keyword rules to suggest backup CAPA actions and checkbox classifications—ensuring 100% uninterrupted system uptime.
