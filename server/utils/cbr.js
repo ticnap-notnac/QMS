@@ -108,28 +108,33 @@ export async function extractKeywordsWithLLM(text, apiKey) {
 }
 
 /**
- * Generates vector embeddings for a given text using Google's text-embedding-004 model.
+ * Generates vector embeddings for a given text using Google's gemini-embedding-001 model.
+ * NOTE: text-embedding-004 was officially deprecated and shut down on January 14, 2026.
+ * This function uses gemini-embedding-001 with outputDimensionality: 768 to stay within
+ * pgvector's HNSW index limit (max 2000 dims). gemini-embedding-001 natively supports
+ * Matryoshka truncation, so 768-dim output retains strong semantic quality.
  * @param {string} text 
  * @param {string} apiKey 
- * @returns {Promise<number[]|null>} Array of floats (the embedding vector) or null
+ * @returns {Promise<number[]|null>} Array of 768 floats (the embedding vector) or null
  */
 export async function generateEmbedding(text, apiKey) {
   if (!text || !apiKey) return null;
   
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'models/text-embedding-004',
         content: {
           parts: [{ text: text }]
-        }
+        },
+        outputDimensionality: 768  // Truncate to 768 dims — within pgvector HNSW limit (max 2000)
       })
     });
 
     if (!response.ok) {
-      console.warn(`Gemini embedding failed: ${response.statusText}`);
+      const errText = await response.text();
+      console.warn(`Gemini embedding failed (${response.status}): ${errText}`);
       return null;
     }
 
