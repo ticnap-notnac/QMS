@@ -1,3 +1,7 @@
+import dns from 'dns'
+// Force IPv4 globally to fix Supabase Pooler IPv6 ENETUNREACH issues on Render
+dns.setDefaultResultOrder('ipv4first')
+
 import 'dotenv/config'
 import 'express-async-errors'
 import express from 'express'
