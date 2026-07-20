@@ -33,6 +33,8 @@ function computeLexicalMatch(description, flags, clauses) {
 
   // Augment tokens from boolean flags
   const flagKeywords = []
+  
+  // CAR Flags
   if (flags?.internal_audit) flagKeywords.push('audit', 'internal', 'monitoring')
   if (flags?.quality_food_safety) flagKeywords.push('quality', 'food', 'safety', 'product')
   if (flags?.environment_health_safety) flagKeywords.push('environment', 'health', 'safety', 'hazard')
@@ -41,6 +43,23 @@ function computeLexicalMatch(description, flags, clauses) {
   if (flags?.vendor_nonconformance) flagKeywords.push('supplier', 'vendor', 'external', 'procurement')
   if (flags?.government_agency_audit) flagKeywords.push('regulatory', 'legal', 'compliance', 'government')
   if (flags?.customer_audit_nonconformance) flagKeywords.push('customer', 'audit', 'nonconformance')
+
+  // QDDR Flags
+  if (flags?.holes_punctures) flagKeywords.push('damage', 'packaging', 'integrity', 'puncture')
+  if (flags?.deformed_torn) flagKeywords.push('damage', 'deform', 'torn', 'appearance')
+  if (flags?.open_carton) flagKeywords.push('packaging', 'open', 'seal', 'security')
+  if (flags?.crushed_dented) flagKeywords.push('damage', 'crush', 'dent', 'handling')
+  if (flags?.wet_leaked) flagKeywords.push('leak', 'wet', 'spill', 'liquid', 'environment')
+  if (flags?.stain_graffiti) flagKeywords.push('stain', 'contamination', 'appearance', 'cleanliness')
+  if (flags?.bulging) flagKeywords.push('damage', 'pressure', 'bulge', 'storage')
+  if (flags?.improper_stretch_wrapping) flagKeywords.push('packaging', 'wrap', 'secure', 'transport')
+  if (flags?.wrong_no_batchcode) flagKeywords.push('traceability', 'batch', 'code', 'identification', 'label')
+  if (flags?.opened_seal) flagKeywords.push('security', 'seal', 'tamper', 'integrity')
+  if (flags?.no_label_broken_label) flagKeywords.push('label', 'identification', 'broken', 'missing')
+  if (flags?.short_pack) flagKeywords.push('quantity', 'short', 'pack', 'missing')
+  if (flags?.excess_shipment) flagKeywords.push('quantity', 'excess', 'over', 'shipment')
+  if (flags?.documentation_error) flagKeywords.push('document', 'error', 'record', 'paperwork')
+  if (flags?.picking_discrepancy) flagKeywords.push('picking', 'discrepancy', 'order', 'fulfillment')
 
   const allTokens = [...descTokens, ...flagKeywords]
 

@@ -1,15 +1,15 @@
 import { PgBoss } from 'pg-boss'
 import logger from './logger.js'
 
-if (!process.env.DATABASE_URL) {
-  logger.error('DATABASE_URL is missing in .env')
+if (!process.env.DATABASE_URL && !process.env.PG_BOSS_DATABASE_URL) {
+  logger.error('DATABASE_URL or PG_BOSS_DATABASE_URL is missing in .env')
 }
 
 // Initialize pg-boss with the connection string and SSL requirements for Supabase.
 // Note: Supabase's Session Pooler (port 5432) DOES support LISTEN/NOTIFY,
 // so pg-boss works fine through it. Direct connection is blocked locally by IPv6.
 const boss = new PgBoss({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.PG_BOSS_DATABASE_URL || process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 })
 
