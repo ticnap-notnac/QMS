@@ -69,7 +69,7 @@ export function useSuggestionLogic({ report, deptName }) {
                     cached: false,
                     fromRepository: true,
                     matchedFeatures: bestMatch.matched_features || [],
-                    sourceDetails: `CBR Database (${source})`,
+                    sourceDetails: 'CBR Database',
                 })
                 await saveAiSuggestion(report.id, text, preventiveText, confidence)
                 return
