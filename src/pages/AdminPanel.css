@@ -1,6 +1,6 @@
 /* src/pages/AdminPanel.css */
 .admin-panel-main { padding: 24px; max-width: 100%; margin: 0 auto; }
-.admin-panel-title { margin-bottom: 24px; color: #0f172a; font-size: 28px; font-weight: 600; }
+.admin-panel-title { margin-bottom: 24px; color: #0f172a; font-size: 31px; font-weight: 600; }
 
 .admin-tab-navigation { 
   display: flex; 
@@ -23,7 +23,7 @@
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   color: #0f172a;
-  font-size: 14px;
+  font-size: 17px;
   box-sizing: border-box;
 }
 .admin-search-input:focus { outline: none; border-color: #0f172a; background: #ffffff; }
@@ -35,7 +35,7 @@
   color: #ffffff;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
@@ -67,7 +67,7 @@
   padding: 10px 8px; /* Compact internal cell cushioning */
   text-align: left; 
   border-bottom: 1px solid #cbd5e1; 
-  font-size: 13px; 
+  font-size: 16px; 
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis; /* ✂️ Safeguard clip strings gracefully with '...' */
@@ -200,7 +200,7 @@
   border: 1px solid #fca5a5;
   border-radius: 6px;
   color: #dc2626;
-  font-size: 14px;
+  font-size: 17px;
 }
 
 /* Compact status column + micro status dot styles */
@@ -503,7 +503,7 @@
   border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #475569;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.18s ease;
@@ -540,14 +540,14 @@
 
 .iso-section-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 23px;
   color: #0f172a;
 }
 
 .iso-section-header p {
   margin: 6px 0 0;
   color: #475569;
-  font-size: 14px;
+  font-size: 17px;
 }
 
 .iso-section-header--tight p {
@@ -581,7 +581,7 @@
   display: inline-block;
   margin-bottom: 8px;
   color: #475569;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -597,7 +597,7 @@
   border-radius: 6px;
   padding: 10px 12px;
   color: #0f172a;
-  font-size: 14px;
+  font-size: 17px;
   box-sizing: border-box;
 }
 
@@ -635,7 +635,7 @@
   border-radius: 10px;
   background: #0f172a;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -662,7 +662,7 @@
 .iso-help-text {
   margin: 0;
   color: #64748b;
-  font-size: 12px;
+  font-size: 15px;
 }
 
 .iso-inline-message,
@@ -672,7 +672,7 @@
   gap: 8px;
   padding: 11px 14px;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .iso-inline-message--error,
@@ -711,7 +711,7 @@
 
 .iso-table th {
   color: #475569;
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   background: #f8fafc;
@@ -719,7 +719,7 @@
 
 .iso-table td {
   color: #0f172a;
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .iso-table tbody tr:hover {
@@ -734,7 +734,7 @@
 .iso-table-subtext {
   margin-top: 4px;
   color: #64748b;
-  font-size: 12px;
+  font-size: 15px;
 }
 
 .iso-status-pill {
@@ -742,7 +742,7 @@
   align-items: center;
   padding: 6px 10px;
   border-radius: 8px !important;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -814,7 +814,7 @@
 }
 
 .iso-toggle-text {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   color: #475569;
 }
@@ -824,7 +824,7 @@
   align-items: center;
   gap: 6px;
   color: #0f172a;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -927,7 +927,7 @@
   padding: 6px 12px;
   border-radius: 20px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 16px;
   align-self: center;
 }
 
@@ -992,7 +992,7 @@
   background: #f1f5f9;
   color: #0f172a;
   border: 1px solid #cbd5e1;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -1021,7 +1021,7 @@
 }
 
 .admin-list-item span {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   color: #0f172a;
 }
@@ -1054,7 +1054,7 @@
   border: 1px solid #cbd5e1;
   background-color: #ffffff;
   color: #0f172a;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   outline: none;
   cursor: pointer;

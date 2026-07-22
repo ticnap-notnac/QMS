@@ -35,7 +35,7 @@
 }
 .iso-compliance-value {
   margin: 8px 0 0 0;
-  font-size: 48px;
+  font-size: 51px;
   font-weight: 700;
   color: #0f172a;
 }
@@ -50,7 +50,7 @@
   justify-content: center;
   height: 38px;
   padding: 8px 20px !important;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   color: #f1f5f9 !important;
   background: #090d16 !important;
@@ -88,7 +88,7 @@
 }
 .iso-graph-placeholder-text { color: #64748b; }
 .iso-review-card { margin: 0; padding: 32px; }
-.iso-review-title { margin: 0 0 24px 0; font-size: 16px; letter-spacing: 0.5px; }
+.iso-review-title { margin: 0 0 24px 0; font-size: 19px; letter-spacing: 0.5px; }
 .iso-progress-stack { display: flex; flex-direction: column; gap: 20px; }
 .iso-cta-row { display: flex; justify-content: flex-end; width: 100%; margin-top: 8px; }
 .iso-cta-button { padding: 12px 24px; font-weight: 600; }
@@ -187,7 +187,7 @@
 }
 
 .iso-task-item-text {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   color: #334155;
   letter-spacing: 0.3px;
@@ -200,7 +200,7 @@
 
 .iso-submodal-title {
   margin: 0 0 4px 0;
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 600;
   color: #0f172a;
   letter-spacing: 0.3px;
@@ -228,7 +228,7 @@
 
 .iso-submodal-submit-button {
   padding: 10px 24px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   border-radius: 6px;
@@ -256,7 +256,7 @@
 }
 
 .iso-progress-label-text {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
 }
 
@@ -305,13 +305,13 @@
   background: #ffffff;
 }
 .iso-denied-title {
-  font-size: 20px;
+  font-size: 23px;
   font-weight: 700;
   color: #0f172a;
   margin: 0;
 }
 .iso-denied-text {
-  font-size: 14px;
+  font-size: 17px;
   color: #475569;
   line-height: 1.5;
   margin: 0;
@@ -331,7 +331,7 @@
 }
 .iso-action-center-text {
   color: #475569;
-  font-size: 13.5px;
+  font-size: 16.5px;
   margin: 0 0 20px 0;
   line-height: 1.6;
 }
@@ -339,7 +339,7 @@
   text-align: center;
   padding: 24px 0;
   color: #64748b;
-  font-size: 14px;
+  font-size: 17px;
   border: 1px dashed #cbd5e1;
   border-radius: 8px;
   background: #f8fafc;
@@ -373,7 +373,7 @@
   align-items: center;
 }
 .iso-finding-badge {
-  font-size: 11px;
+  font-size: 14px;
   background: #fee2e2;
   color: #b91c1c;
   padding: 2px 6px;
@@ -381,11 +381,11 @@
   font-weight: bold;
 }
 .iso-finding-title {
-  font-size: 14px;
+  font-size: 17px;
   color: #0f172a;
 }
 .iso-car-generated {
-  font-size: 13px;
+  font-size: 16px;
   color: #10b981;
   background: rgba(16, 185, 129, 0.1);
   padding: 8px 16px;
@@ -403,7 +403,7 @@
   background: #f1f5f9;
   padding: 4px 10px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -428,7 +428,7 @@
   }
 
   .iso-compliance-value {
-    font-size: 36px !important;
+    font-size: 39px !important;
     margin-top: 4px !important;
   }
 
@@ -449,7 +449,7 @@
   }
 
   .iso-metric-button {
-    font-size: 11px !important;
+    font-size: 14px !important;
     height: 32px !important;
     padding: 6px 12px !important;
   }
@@ -464,7 +464,7 @@
   }
 
   .iso-review-title {
-    font-size: 14px !important;
+    font-size: 17px !important;
     margin-bottom: 16px !important;
   }
 
@@ -482,15 +482,15 @@
   }
 
   .iso-progress-label-text {
-    font-size: 11px !important;
+    font-size: 14px !important;
   }
 
   .iso-progress-row span {
-    font-size: 11px !important;
+    font-size: 14px !important;
   }
 
   .iso-action-center-text {
-    font-size: 12px !important;
+    font-size: 15px !important;
     margin-bottom: 12px !important;
   }
 
@@ -505,27 +505,27 @@
   }
 
   .iso-finding-badge {
-    font-size: 10px !important;
+    font-size: 13px !important;
     padding: 1px 4px !important;
   }
 
   .iso-finding-title {
-    font-size: 12px !important;
+    font-size: 15px !important;
   }
 
   .iso-btn-generate-car {
     padding: 6px 12px !important;
-    font-size: 11px !important;
+    font-size: 14px !important;
   }
 
   .iso-car-generated {
     padding: 6px 12px !important;
-    font-size: 11px !important;
+    font-size: 14px !important;
   }
 }
 .iso-btn-generate-car {
   padding: 8px 16px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
   border: none;

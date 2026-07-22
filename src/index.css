@@ -101,7 +101,7 @@ input::-ms-clear {
   margin-bottom: 24px;
   text-align: left;
   color: #0f172a;
-  font-size: 28px;
+  font-size: 31px;
   font-weight: 600;
 }
 
@@ -114,7 +114,7 @@ input::-ms-clear {
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-  font-size: 14px;
+  font-size: 17px;
   transition: all 0.2s;
 }
 .btn-primary:hover { background: #1e293b; border-color: #1e293b; }
@@ -155,7 +155,7 @@ input::-ms-clear {
 
 .form-group label {
   display: block;
-  font-size: 12px;
+  font-size: 15px;
   color: #64748b;
   margin-bottom: 8px;
   text-transform: uppercase;
@@ -168,7 +168,7 @@ input::-ms-clear {
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   color: #0f172a;
-  font-size: 14px;
+  font-size: 17px;
   box-sizing: border-box;
 }
 .form-input:focus {
@@ -194,7 +194,7 @@ input::-ms-clear {
 
 .error-message {
   color: #dc2626;
-  font-size: 12px;
+  font-size: 15px;
   margin-top: 4px;
 }
 
@@ -236,13 +236,13 @@ input::-ms-clear {
 .toast-status--error { border-left: 4px solid #dc2626; }
 
 .toast-inner-cluster { display: flex; align-items: center; gap: 12px; }
-.toast-body-text { margin: 0; color: #0f172a; font-size: 13.5px; font-weight: 500; }
+.toast-body-text { margin: 0; color: #0f172a; font-size: 16.5px; font-weight: 500; }
 .toast-dismiss-button { 
   background: none; 
   border: none; 
   color: #94a3b8; 
   cursor: pointer; 
-  font-size: 18px; 
+  font-size: 21px; 
   transition: color 0.2s; 
 }
 .toast-dismiss-button:hover { color: #0f172a; }
@@ -320,13 +320,13 @@ body.high-contrast-mode .reports-submit-dropdown-item:hover {
 
 /* Text Scaling */
 html[data-text-scale="large"] {
-  font-size: 18px !important;
+  font-size: 21px !important;
 }
 html[data-text-scale="large"] body {
   zoom: 1.15;
 }
 html[data-text-scale="xlarge"] {
-  font-size: 20px !important;
+  font-size: 23px !important;
 }
 html[data-text-scale="xlarge"] body {
   zoom: 1.30;

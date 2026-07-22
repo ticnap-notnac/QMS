@@ -21,7 +21,7 @@
   background: #ffffff;
   color: #0f172a;
   outline: none;
-  font-size: 14px;
+  font-size: 17px;
   transition: all 0.2s ease;
 }
 
@@ -49,7 +49,7 @@
 
 .settings-page-title {
   margin: 0 0 8px 0;
-  font-size: 28px;
+  font-size: 31px;
   font-weight: 600;
   color: #0f172a;
 }
@@ -83,14 +83,14 @@
 
 .settings-section-title {
   margin: 0 0 24px 0;
-  font-size: 20px;
+  font-size: 23px;
   font-weight: 600;
   color: #0f172a;
 }
 
 .settings-password-title {
   margin: 0 0 16px 0;
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 600;
   color: #0f172a;
 }
@@ -124,7 +124,7 @@
   padding: 10px 16px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   transition: all 0.2s;
   text-align: left;
@@ -207,7 +207,7 @@
   border: none;
   color: #64748b;
   padding: 10px 16px;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   cursor: pointer;
   border-radius: 6px;
@@ -235,7 +235,7 @@
 .tab-content h2 {
   color: #334155;
   margin-bottom: 20px;
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 600;
 }
 
@@ -248,7 +248,7 @@
 
 .placeholder-box p {
   color: #64748b;
-  font-size: 14px;
+  font-size: 17px;
   margin: 0;
 }
 
@@ -274,7 +274,7 @@
   background: #f8fafc !important;
   color: #475569 !important;
   font-weight: 600 !important;
-  font-size: 12px !important;
+  font-size: 15px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
   padding: 12px 16px !important;
@@ -284,7 +284,7 @@
 
 .iso-table td {
   padding: 14px 16px !important;
-  font-size: 13.5px !important;
+  font-size: 16.5px !important;
   color: #334155 !important;
   border-bottom: 1px solid #cbd5e1 !important;
   vertical-align: middle !important;
@@ -319,7 +319,7 @@
   color: #ffffff !important;
   border-radius: 6px !important;
   padding: 6px 12px !important;
-  font-size: 12px !important;
+  font-size: 15px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
@@ -337,7 +337,7 @@
   color: #dc2626 !important;
   border-radius: 6px !important;
   padding: 6px 12px !important;
-  font-size: 12px !important;
+  font-size: 15px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
@@ -353,7 +353,7 @@
 
 .placeholder-box p:last-child {
   color: #64748b;
-  font-size: 12px;
+  font-size: 15px;
   margin-top: 8px;
 }
 
@@ -370,7 +370,7 @@
 
 .user-info-page-title {
   margin: 0 0 8px 0;
-  font-size: 28px;
+  font-size: 31px;
   font-weight: 600;
   color: #0f172a;
 }
@@ -429,12 +429,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 27px;
   font-weight: 700;
 }
 
-.user-info-name--profile { margin: 0 0 4px 0; font-size: 20px; font-weight: 600; color: #0f172a; }
-.user-info-role--profile { margin: 0; color: #64748b; font-size: 13px; }
+.user-info-name--profile { margin: 0 0 4px 0; font-size: 23px; font-weight: 600; color: #0f172a; }
+.user-info-role--profile { margin: 0; color: #64748b; font-size: 16px; }
 
 .user-info-fields--profile { display: flex; flex-direction: column; gap: 16px; }
 .user-info-field--profile {
@@ -446,12 +446,12 @@
 .user-info-field-label--profile {
   width: 200px;
   color: #64748b;
-  font-size: 13px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.user-info-field-value--profile { color: #0f172a; font-size: 14px; }
+.user-info-field-value--profile { color: #0f172a; font-size: 17px; }
 
 .two-column-row {
   display: flex;
@@ -482,7 +482,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 27px;
   font-weight: bold;
   color: white;
 }
@@ -515,7 +515,7 @@
 
 .profile-field-label {
   width: 180px;
-  font-size: 14px;
+  font-size: 17px;
   color: #64748b;
   font-weight: 500;
   text-align: left;
@@ -524,7 +524,7 @@
 
 .profile-field-value {
   flex: 1;
-  font-size: 14px;
+  font-size: 17px;
   color: #0f172a;
   font-weight: 500;
   text-align: left;
@@ -553,7 +553,7 @@
   border: 1px solid #cbd5e1;
   color: #334155;
   padding: 8px 16px;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   cursor: pointer;
   border-radius: 6px;

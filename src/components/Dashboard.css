@@ -24,26 +24,26 @@
   margin: 0;
   font-weight: 600;
   color: #0f172a;
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .tooltip-value {
   margin: 4px 0 0 0;
   color: #0f172a;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 700;
 }
 
 .tooltip-standard {
   margin: 4px 0 0 0;
   color: #475569;
-  font-size: 12px;
+  font-size: 15px;
 }
 
 .tooltip-resolution {
   margin: 4px 0 0 0;
   color: #0f172a;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -81,20 +81,20 @@
 
 .metric-card-title {
   margin: 0;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: bold;
   color: #000000;
 }
 
 .metric-card-value {
   margin: 8px 0 4px 0;
-  font-size: 28px;
+  font-size: 31px;
   font-weight: 700;
   color: #0f172a;
 }
 
 .metric-card-subtitle {
-  font-size: 12px;
+  font-size: 15px;
   color: #64748b;
 }
 
@@ -124,7 +124,7 @@
 
 .widget-card-title {
   margin: 0;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
   color: #0f172a;
 }
@@ -132,7 +132,7 @@
 .widget-calendar-header {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
   color: #64748b;
   letter-spacing: 0.5px;
@@ -226,24 +226,24 @@
 }
 
 .row-title {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   color: #1e293b;
 }
 
 .row-subtitle {
-  font-size: 11px;
+  font-size: 14px;
   color: #64748b;
 }
 
 .row-date-audit {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 500;
   color: #475569;
 }
 
 .row-date-car {
-  font-size: 11px;
+  font-size: 14px;
   color: #94a3b8;
   font-weight: 500;
 }
@@ -256,7 +256,7 @@
 }
 
 .charts-section-title {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 600;
   color: #0f172a;
   margin: 4px 0 0 0;
@@ -288,7 +288,7 @@
 .chart-title {
   margin: 0;
   color: #0f172a;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -303,5 +303,5 @@
   align-items: center;
   justify-content: center;
   color: #475569;
-  font-size: 13px;
+  font-size: 16px;
 }

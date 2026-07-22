@@ -25,17 +25,17 @@
 
 .metric-card h3 {
   margin: 6px 0 2px;
-  font-size: 22px;
+  font-size: 25px;
   color: #0f172a;
 }
 
 .metric-card p {
   margin: 0;
-  font-size: 12px;
+  font-size: 15px;
 }
 
 .metric-card span {
-  font-size: 10px;
+  font-size: 13px;
   color: #64748b;
 }
 
@@ -46,7 +46,7 @@
 
 .charts-title {
   margin: 0;
-  font-size: 12px;
+  font-size: 15px;
   color: #475569;
 }
 
