@@ -18,14 +18,14 @@
   background: #ffffff;
   border: 1px solid rgba(148, 163, 184, 0.15);
   border-radius: 8px;
-  padding: 8px;
+  padding: 10px;
   color: #475569;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 38px;
-  width: 38px;
+  height: 44px;
+  width: 44px;
   box-sizing: border-box;
   transition: all 0.2s ease;
 }
@@ -466,9 +466,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 38px;
-  padding: 0 16px;
-  font-size: 16px;
+  height: 44px;
+  padding: 0 20px;
+  font-size: 17px;
   font-weight: 500;
   color: #475569;
   background: #ffffff; border: 1px solid #cbd5e1;
@@ -502,7 +502,7 @@
    📱 FACEBOOK-STYLE LAYOUT ENGINE FOR REPORT TIMELINE CARDS
    ========================================================================== */
 .facebook-feed-layout-wrapper {
-  max-width: 960px !important;
+  max-width: 100% !important;
   margin: 24px auto 0 auto !important;
   width: 100% !important;
   box-sizing: border-box !important;
@@ -514,7 +514,7 @@
 .facebook-feed-layout-wrapper .reports-card,
 .facebook-feed-layout-wrapper .reports-list-stack > div {
   width: 100% !important;
-  max-width: 960px !important;
+  max-width: 100% !important;
   margin-left: auto !important;
   margin-right: auto !important;
   box-sizing: border-box !important;
@@ -665,25 +665,27 @@
 }
 .reports-tab-nav-bar {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
-  padding: 6px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  align-self: flex-start;
+  padding: 8px;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  align-self: stretch;
+  max-width: 440px;
 }
 .reports-tab-nav-btn {
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: 12px 24px;
+  border-radius: 8px;
   border: none;
   background: transparent;
   color: #64748b;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   text-transform: uppercase;
-  font-size: 15px;
+  font-size: 16px;
+  flex: 1;
 }
 .reports-tab-nav-btn.active {
   background: #0f172a;
@@ -833,6 +835,21 @@
   text-align: center !important;
 }
 
+.reports-ref-number {
+  margin-left: 24px;
+  color: #334155;
+  font-size: 16px;
+  font-weight: 700;
+}
+@media (max-width: 768px) {
+  .reports-ref-number {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+    margin-left: 12px;
+  }
+}
+
 /* ===================== RECURRING REPORTS & EMPTY STATES ===================== */
 .empty-state-container {
   display: flex;
@@ -894,17 +911,17 @@
 }
 
 .btn-assign-report {
-  padding: 6px 12px;
+  padding: 10px 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   background-color: #ffffff;
   border: 1px solid #cbd5e1;
   color: #334155;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 16px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -915,8 +932,8 @@
 }
 
 .btn-action-icon {
-  width: 32px;
-  height: 32px;
+  width: 42px;
+  height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -934,8 +951,8 @@
 }
 
 .btn-action-icon-danger {
-  width: 32px;
-  height: 32px;
+  width: 42px;
+  height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

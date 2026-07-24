@@ -73,8 +73,8 @@ export default function PendingRatingsWidget({ currentUserId, userRole, userDepa
       transform: isSuccess ? 'translateY(-10px)' : 'translateY(0)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '18px' }}>👋</span>
+        <h3 style={{ margin: 0, fontSize: '16px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '20px' }}>👋</span>
           Your feedback is requested!
         </h3>
         <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold' }}>
@@ -82,20 +82,20 @@ export default function PendingRatingsWidget({ currentUserId, userRole, userDepa
         </span>
       </div>
 
-      <div style={{ background: '#fff', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold' }}>{currentReport.reference_no}</div>
-        <div style={{ fontSize: '13px', color: '#334155' }}>
+      <div style={{ background: '#fff', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ fontSize: '13.5px', color: '#64748b', fontWeight: 'bold' }}>{currentReport.reference_no}</div>
+        <div style={{ fontSize: '14.5px', color: '#334155', lineHeight: '1.5' }}>
           <strong>Issue:</strong> {currentReport.description}
         </div>
         {currentReport.corrective_action && (
-          <div style={{ fontSize: '13px', color: '#334155' }}>
+          <div style={{ fontSize: '14.5px', color: '#334155', lineHeight: '1.5' }}>
             <strong>Corrective Action Taken:</strong> {currentReport.corrective_action}
           </div>
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '4px' }}>
-        <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#0f172a' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '6px' }}>
+        <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#0f172a' }}>
           How effective was this fix?
         </span>
         <div style={{ pointerEvents: isSubmitting || isSuccess ? 'none' : 'auto', opacity: isSubmitting ? 0.6 : 1 }}>

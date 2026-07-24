@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
-import { BookOpen, LoaderCircle, Calendar, Plus, CheckCircle, Clock, Trash2 } from 'lucide-react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { BookOpen, LoaderCircle, Calendar, Plus, CheckCircle, Clock, Trash2, Filter } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 import ConfirmDialog from '../Modals/ConfirmDialog'
 
@@ -14,18 +14,53 @@ export function AuditLogsTab({
   setLogsPage,
   fetchAuditLogs
 }) {
+  const [filterSource, setFilterSource] = useState('ALL')
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  
   const totalPages = Math.max(1, Math.ceil(logsTotal / logsLimit))
+  
+  const filteredLogs = useMemo(() => {
+    if (filterSource === 'ALL') return logs;
+    return logs.filter(log => (log.source || 'system').toUpperCase() === filterSource);
+  }, [logs, filterSource])
+
   return (
     <div className="tab-content" style={isInsideSettings ? { marginTop: '20px' } : {}}>
       <div className="settings-container--profile" style={{ minHeight: 'auto', padding: '24px', flexDirection: 'column' }}>
-        <h3 className="settings-section-title" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <BookOpen size={20} className="icon-cyan" />
-          Audit Activity Logs
-        </h3>
-        
-        <p style={{ color: '#94a3b8', fontSize: '13.5px', marginTop: '-8px', marginBottom: '20px', lineHeight: '1.4' }}>
-          Track all system actions, checklist updates, corrective actions, and policy reads logged under the Quality Management System.
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+          <div>
+            <h3 className="settings-section-title" style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <BookOpen size={20} className="icon-cyan" />
+              Audit Activity Logs
+            </h3>
+            
+            <p style={{ color: '#94a3b8', fontSize: '13.5px', margin: 0, lineHeight: '1.4' }}>
+              Track all system actions, checklist updates, corrective actions, and policy reads logged under the Quality Management System.
+            </p>
+          </div>
+          
+          <div style={{ position: 'relative' }}>
+            <button 
+              type="button"
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className="sidebar-button"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '36px', padding: '0 16px', background: filterSource !== 'ALL' ? '#f0f9ff' : '#ffffff', border: filterSource !== 'ALL' ? '1px solid #0ea5e9' : '1px solid #cbd5e1', color: filterSource !== 'ALL' ? '#0ea5e9' : '#0f172a', borderRadius: '6px', fontWeight: '500', fontSize: '13.5px', cursor: 'pointer', transition: 'all 0.2s', marginTop: '4px' }}
+              title="Filter Audit Logs"
+            >
+              <Filter size={14} />
+              Filter {filterSource !== 'ALL' && `(${filterSource})`}
+            </button>
+            {isFilterOpen && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', zIndex: 50, minWidth: '150px', padding: '4px' }}>
+                <div style={{ padding: '6px 12px', fontSize: '11px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Filter by Source</div>
+                <button type="button" onClick={() => { setFilterSource('ALL'); setIsFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: filterSource === 'ALL' ? '#f1f5f9' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', borderRadius: '4px' }}>All Sources</button>
+                <button type="button" onClick={() => { setFilterSource('AUTH'); setIsFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: filterSource === 'AUTH' ? '#f1f5f9' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', borderRadius: '4px' }}>Auth</button>
+                <button type="button" onClick={() => { setFilterSource('SYSTEM'); setIsFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: filterSource === 'SYSTEM' ? '#f1f5f9' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', borderRadius: '4px' }}>System</button>
+                <button type="button" onClick={() => { setFilterSource('DOCUMENTS'); setIsFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: filterSource === 'DOCUMENTS' ? '#f1f5f9' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', borderRadius: '4px' }}>Documents</button>
+              </div>
+            )}
+          </div>
+        </div>
 
         {logsLoading && (
           <div style={{ textAlign: 'center', padding: '24px 0', color: '#64748b' }}>
@@ -53,14 +88,14 @@ export function AuditLogsTab({
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.length === 0 ? (
+                  {filteredLogs.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="iso-empty-state">
                         No audit activity logs found.
                       </td>
                     </tr>
                   ) : (
-                    logs.map((log) => (
+                    filteredLogs.map((log) => (
                       <tr key={log.id}>
                         <td style={{ fontSize: '12.5px', whiteSpace: 'nowrap' }}>
                           {new Date(log.created_at).toLocaleString()}
@@ -106,7 +141,7 @@ export function AuditLogsTab({
                   Previous
                 </button>
                 <span style={{ fontSize: '13px', color: '#64748b' }}>
-                  Page {logsPage + 1} of {totalPages}
+                  {filteredLogs.length === 0 ? 'Page 0 of 0' : `Page ${logsPage + 1} of ${totalPages}`}
                 </span>
                 <button
                   type="button"

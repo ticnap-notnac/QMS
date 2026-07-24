@@ -1,4 +1,7 @@
 import { LoaderCircle, BookOpen } from 'lucide-react'
+import { useState } from 'react'
+import ReactQuill from 'react-quill-new'
+import 'react-quill-new/dist/quill.snow.css'
 
 export function AuditChecklistSection({
   activeRun,
@@ -18,9 +21,13 @@ export function AuditChecklistSection({
   handleRemoveQddrLink,
   onSelectQddr
 }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
   if (!activeRun) return null
 
-
+  const totalPages = Math.ceil(activeClauses.length / itemsPerPage) || 1;
+  const paginatedClauses = activeClauses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="settings-container--profile" style={{ minHeight: 'auto', padding: '24px', flexDirection: 'column' }}>
@@ -49,7 +56,7 @@ export function AuditChecklistSection({
         {activeClauses.length === 0 ? (
           <p style={{ color: '#64748b', textAlign: 'center' }}>No clauses found for this ISO standard. Please add clauses first.</p>
         ) : (
-          activeClauses.map(clause => {
+          paginatedClauses.map(clause => {
             const answer = resultsMap[clause.id] || { status: 'compliant', evidence: '', notes: '' }
             return (
               <div key={clause.id} className="settings-container--profile" style={{ minHeight: 'auto', padding: '16px', background: '#f8fafc', border: '1px solid #cbd5e1', flexDirection: 'column', gap: '12px' }}>
@@ -57,20 +64,6 @@ export function AuditChecklistSection({
                   <div style={{ flex: 1, minWidth: '250px' }}>
                     <span style={{ fontSize: '14px', fontWeight: '700', color: '#0891b2', marginRight: '8px' }}>Clause {clause.clause_number}</span>
                     <h4 style={{ margin: 0, display: 'inline', fontSize: '14px', color: '#0f172a' }}>{clause.title}</h4>
-                    {clause.requirement ? (
-                      <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(8, 145, 178, 0.05)', borderLeft: '3px solid #0891b2', borderRadius: '0 4px 4px 0' }}>
-                        <p style={{ margin: 0, fontSize: '13px', color: '#334155', lineHeight: '1.4' }}>
-                          <strong style={{ color: '#0891b2' }}>Requirement: </strong>{clause.requirement}
-                        </p>
-                        {clause.what_to_look_for && (
-                          <p style={{ margin: '6px 0 0 0', fontSize: '12.5px', color: '#64748b', lineHeight: '1.4' }}>
-                            <strong style={{ color: '#475569' }}>What to look for: </strong>{clause.what_to_look_for}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      clause.description && <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: '#64748b' }}>{clause.description}</p>
-                    )}
                   </div>
                   
                   {/* Status selectors */}
@@ -124,36 +117,63 @@ export function AuditChecklistSection({
                   </div>
                 </div>
 
-                <div className="form-row-2" style={{ margin: 0, gap: '12px' }}>
+                {clause.requirement ? (
+                  <div style={{ marginTop: '16px', padding: '10px 14px', background: 'rgba(8, 145, 178, 0.05)', borderLeft: '3px solid #0891b2', borderRadius: '0 4px 4px 0' }}>
+                    <div style={{ margin: 0, fontSize: '14.5px', color: '#334155', lineHeight: '1.6', textAlign: 'justify', whiteSpace: 'pre-wrap' }}>
+                      <div style={{ marginBottom: '4px' }}>
+                        <strong style={{ color: '#0891b2' }}>Requirement:</strong>
+                      </div>
+                      <div>
+                        {clause.requirement.replace(/\n/g, ' ').replace(/\s+/g, ' ').replace(/ ([a-z]\) )/g, '\n    $1').replace(/\. This /g, '.\n\nThis ')}
+                      </div>
+                    </div>
+                    {clause.what_to_look_for && (
+                      <div style={{ margin: '12px 0 0 0', fontSize: '13.5px', color: '#64748b', lineHeight: '1.5', textAlign: 'justify', whiteSpace: 'pre-wrap' }}>
+                        <div style={{ marginBottom: '4px' }}>
+                          <strong style={{ color: '#475569' }}>What to look for:</strong>
+                        </div>
+                        <div>
+                          {clause.what_to_look_for.replace(/\n/g, ' ').replace(/\s+/g, ' ').replace(/ ([a-z]\) )/g, '\n    $1').replace(/\. This /g, '.\n\nThis ')}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  clause.description && <p style={{ margin: '0', fontSize: '12px', color: '#64748b' }}>{clause.description}</p>
+                )}
+
+                <div className="form-row-2" style={{ marginTop: '16px', marginBottom: 0, gap: '12px' }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Evidence / Observations</label>
-                    <textarea
-                      placeholder="Enter evidence or observations found..."
-                      className="form-input"
-                      style={{ padding: '8px 12px', fontSize: '13px', minHeight: '60px', resize: 'vertical', fontFamily: 'inherit' }}
-                      value={answer.evidence}
-                      onChange={(e) => {
-                        setResultsMap({
-                          ...resultsMap,
-                          [clause.id]: { ...answer, evidence: e.target.value }
-                        })
-                      }}
-                    />
+                    <div style={{ background: '#fff', borderRadius: '4px' }}>
+                      <ReactQuill
+                        theme="snow"
+                        placeholder="Enter evidence or observations found..."
+                        value={answer.evidence || ''}
+                        onChange={(value) => {
+                          setResultsMap({
+                            ...resultsMap,
+                            [clause.id]: { ...answer, evidence: value }
+                          })
+                        }}
+                      />
+                    </div>
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Findings / CAR Notes</label>
-                    <textarea
-                      placeholder="Add findings notes or links to Corrective Actions..."
-                      className="form-input"
-                      style={{ padding: '8px 12px', fontSize: '13px', minHeight: '60px', resize: 'vertical', fontFamily: 'inherit' }}
-                      value={answer.notes || ''}
-                      onChange={(e) => {
-                        setResultsMap({
-                          ...resultsMap,
-                          [clause.id]: { ...answer, notes: e.target.value }
-                        })
-                      }}
-                    />
+                    <div style={{ background: '#fff', borderRadius: '4px' }}>
+                      <ReactQuill
+                        theme="snow"
+                        placeholder="Add findings notes or links to Corrective Actions..."
+                        value={answer.notes || ''}
+                        onChange={(value) => {
+                          setResultsMap({
+                            ...resultsMap,
+                            [clause.id]: { ...answer, notes: value }
+                          })
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -281,23 +301,49 @@ export function AuditChecklistSection({
         )}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid #cbd5e1', paddingTop: '16px', width: '100%' }}>
-        <button
-          type="button"
-          className="sidebar-button"
-          onClick={() => handleSaveResults(false)}
-          disabled={savingProgress || activeClauses.length === 0}
-        >
-          {savingProgress ? 'Saving...' : 'Save Progress'}
-        </button>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={() => handleSaveResults(true)}
-          disabled={savingProgress || activeClauses.length === 0}
-        >
-          {savingProgress ? 'Completing...' : 'Complete Audit'}
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #cbd5e1', paddingTop: '16px', width: '100%', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            type="button"
+            className="sidebar-button"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            style={{ padding: '6px 12px', fontSize: '12px' }}
+          >
+            Previous
+          </button>
+          <span style={{ fontSize: '13px', color: '#64748b' }}>
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            type="button"
+            className="sidebar-button"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            style={{ padding: '6px 12px', fontSize: '12px' }}
+          >
+            Next
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            type="button"
+            className="sidebar-button"
+            onClick={() => handleSaveResults(false)}
+            disabled={savingProgress || activeClauses.length === 0}
+          >
+            {savingProgress ? 'Saving...' : 'Save Progress'}
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => handleSaveResults(true)}
+            disabled={savingProgress || activeClauses.length === 0}
+          >
+            {savingProgress ? 'Completing...' : 'Complete Audit'}
+          </button>
+        </div>
       </div>
     </div>
   )

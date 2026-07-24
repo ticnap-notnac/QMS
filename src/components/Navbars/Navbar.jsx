@@ -87,7 +87,7 @@ export default function Navbar({
           className={`nav-tab-button ${location.pathname.startsWith('/iso') ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
         >
           <Award size={isMobile ? 24 : 18} />
-          <span>ISO</span>
+          <span>ISO Standards</span>
         </button>
       )}
 
@@ -96,7 +96,7 @@ export default function Navbar({
         className={`nav-tab-button ${location.pathname.startsWith('/dcc') ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
       >
         <History size={isMobile ? 24 : 18} />
-        <span>DCC</span>
+        <span>Document Control Center</span>
       </button>
     </>
   )

@@ -173,7 +173,7 @@ export default function useISOStandardsLogic({ userName }) {
       await logIsoActivity('DELETE_ISO_CLAUSE', { clause_number: clauseToDelete.clause_number, title: clauseToDelete.title })
     } catch (err) {
       console.error(err)
-      setToast({ message: 'This clause could not be deleted. Please try again.', type: 'error' })
+      setToast({ message: err.message || 'This clause could not be deleted. Please try again.', type: 'error' })
     } finally {
       setDeletingClauseIds(prev => ({ ...prev, [clauseToDelete.id]: false }))
       setClauseToDelete(null)

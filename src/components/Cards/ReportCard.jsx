@@ -81,7 +81,7 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
           <div className="reports-user-text">
             <span className="reports-user-name">
               {reporterName}
-              <span style={{ marginLeft: '24px', color: 'var(--muted)', fontSize: '13px', fontWeight: '600' }}>
+              <span className="reports-ref-number">
                 {report.reference_no || `NCR-${report.id}`}
               </span>
             </span>

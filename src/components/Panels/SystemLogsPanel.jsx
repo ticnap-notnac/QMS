@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 import { fetchLogs, recordLogRead } from '@/services/logService'
 import Toast from '@/components/UI/Toast'
+import { Filter } from 'lucide-react'
 
 export default function SystemLogsPanel({ onClose, searchQuery = '' }) {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState(null)
+  
+  const [showFilter, setShowFilter] = useState(false)
+  const [levelFilter, setLevelFilter] = useState('')
 
   // ⚓ Set a larger batch limit since we are using a continuous scroll box now
   const [limit] = useState(200) 
@@ -37,8 +41,11 @@ export default function SystemLogsPanel({ onClose, searchQuery = '' }) {
   }, [])
 
   const filteredLogs = logs.filter((l) => {
+    if (levelFilter && l.level !== levelFilter) return false
+    
     const q = (searchQuery || '').trim().toLowerCase()
     if (!q) return true
+    
     const actionStr = typeof l.action === 'string' ? l.action : JSON.stringify(l.action || l.details || l.metadata)
     return (
       actionStr.toLowerCase().includes(q) ||
@@ -53,9 +60,28 @@ export default function SystemLogsPanel({ onClose, searchQuery = '' }) {
     <div className="system-logs-panel">
       <div className="panel-header">
         <h3>System Logs</h3>
-        <div className="panel-actions">
+        <div className="panel-actions" style={{ position: 'relative' }}>
           <button onClick={() => load()} className="btn">Refresh</button>
-          <button onClick={onClose} className="btn btn--ghost">Close</button>
+          <button onClick={() => setShowFilter(!showFilter)} className="btn btn--ghost" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <Filter size={16} /> Filter
+          </button>
+          
+          {showFilter && (
+            <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: 'white', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', zIndex: 10, minWidth: '150px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '8px', color: '#475569', textTransform: 'uppercase' }}>Filter by Level</div>
+              <select 
+                value={levelFilter} 
+                onChange={(e) => setLevelFilter(e.target.value)}
+                style={{ width: '100%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+              >
+                <option value="">All Levels</option>
+                <option value="audit">Audit</option>
+                <option value="info">Info</option>
+                <option value="warn">Warn</option>
+                <option value="error">Error</option>
+              </select>
+            </div>
+          )}
         </div>
       </div>
 

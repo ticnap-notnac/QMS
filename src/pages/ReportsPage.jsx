@@ -192,57 +192,35 @@ export default function ReportsPage({ userRole, currentUserId, authUserId, userD
             )}
 
           </div>
-          <div className="reports-action-buttons-right" ref={submitDropdownRef} style={{ position: 'relative' }}>
+          <div className="reports-action-buttons-right">
             <button 
               type="button" 
-              onClick={() => setIsSubmitDropdownOpen(!isSubmitDropdownOpen)} 
+              onClick={() => {
+                if (logic.activeTab === 'ncr') logic.openCreateModal()
+                else if (logic.activeTab === 'car') logic.openCARModal()
+                else if (logic.activeTab === 'qddr') logic.openQDDRModal()
+              }} 
               className="btn-gradient-primary reports-submit-primary"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-              title="Submit a new report (NCR, CAR, or QDDR)"
+              title={`Submit a new ${logic.activeTab.toUpperCase()}`}
             >
-              Submit
-              <span style={{ fontSize: '9px', display: 'inline-block', transition: 'transform 0.2s', transform: isSubmitDropdownOpen ? 'rotate(180deg)' : 'none' }}>▼</span>
+              Submit {logic.activeTab.toUpperCase()}
             </button>
-            
-            {isSubmitDropdownOpen && (
-              <div className="reports-submit-dropdown-menu">
-                <button 
-                  type="button" 
-                  onClick={() => { logic.openCreateModal(); setIsSubmitDropdownOpen(false); }}
-                  className="reports-submit-dropdown-item"
-                  title="Submit a Non-Conformance Report (NCR) to document a process or product deviation"
-                >
-                  Submit NCR
-                </button>
-                {canAccessCar && (
-                  <button 
-                    type="button" 
-                    onClick={() => { logic.openCARModal(); setIsSubmitDropdownOpen(false); }}
-                    className="reports-submit-dropdown-item"
-                    title="Submit a Corrective Action Request (CAR) to investigate and resolve systemic issues"
-                  >
-                    Submit CAR
-                  </button>
-                )}
-                {canAccessQddr && (
-                  <button 
-                    type="button" 
-                    onClick={() => { logic.openQDDRModal(); setIsSubmitDropdownOpen(false); }}
-                    className="reports-submit-dropdown-item"
-                    title="Submit a Quality Defect Discovery Report (QDDR) to log material or part defects"
-                  >
-                    Submit QDDR
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
         {availableTabs.length > 1 && (
           <div className="reports-tab-nav reports-tab-nav-bar">
             {availableTabs.map(t => (
-              <button key={t} type="button" className={`btn-quick-toggle reports-tab-nav-btn ${logic.activeTab === t ? 'active' : ''}`} onClick={() => logic.setActiveTab(t)}>{t.toUpperCase()}</button>
+              <button 
+                key={t} 
+                type="button" 
+                className={`btn-quick-toggle reports-tab-nav-btn ${logic.activeTab === t ? 'active' : ''}`} 
+                onClick={() => logic.setActiveTab(t)}
+                title={t === 'ncr' ? 'View Non-Conformance Reports' : t === 'car' ? 'View Corrective Action Requests' : 'View Quality Defect Discovery Reports'}
+              >
+                {t.toUpperCase()}
+              </button>
             ))}
           </div>
         )}
