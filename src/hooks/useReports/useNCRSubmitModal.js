@@ -195,9 +195,6 @@ export default function useNCRSubmitModal({ onSuccess, authUserId }) {
       fd.append('issue_type', form.issueType || 'ncr')
       fd.append('issue_type_id', form.issueTypeId)
       fd.append('description', form.description)
-      if (form.clauseId) {
-        fd.append('clause_id', form.clauseId)
-      }
       if (form.files && form.files.length > 0) {
         form.files.forEach(f => {
           fd.append('evidence_files', f)

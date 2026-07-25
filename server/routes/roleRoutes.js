@@ -1,3 +1,4 @@
+import { Router } from 'express'
 import { createRole, deleteRole, getRoles, putRole, putRolePermissions, putRolePositions } from '../controllers/roleController.js'
 import { requireRoles } from '../middlewares/roleMiddleware.js'
 

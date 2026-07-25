@@ -22,6 +22,12 @@ export function buildReferenceNumber(referenceNo) {
   return Number(match[2]) || 0
 }
 
+export function generateNextNcrReferenceNo(latestRef) {
+  const currentYear = new Date().getFullYear()
+  const nextSeq = buildReferenceNumber(latestRef) + 1
+  return `NCR-${currentYear}-${String(nextSeq).padStart(3, '0')}`
+}
+
 export function normalizeText(value) {
   return String(value || '').trim()
 }
@@ -649,10 +655,8 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     reference_no: referenceNo,
     reported_by: reporter.id,
     status: REPORT_STATUS.OPEN,
-    issue_type: resolvedIssueTypeName,
     issue_type_id: resolvedIssueTypeId,
     occurrence_date: occurrence_date || getLocalDateString(),
-    product_type: resolvedProductTypeName,
     product_type_id: resolvedProductTypeId,
     batch_number,
     complaint_location: resolvedLocationName,
@@ -661,7 +665,6 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     department_id: normalizeId(department_id),
     description,
     evidence_url,
-    clause_id: clause_id ? String(clause_id).trim() : null,
     site_id: reporter.site_id || null,
   }
 
@@ -779,10 +782,8 @@ export async function createNcrReportWithUpload({ body, files, reportedByAuthId 
     reference_no: referenceNo,
     reported_by: reporter.id,
     status: REPORT_STATUS.OPEN,
-    issue_type: resolvedIssueTypeName,
     issue_type_id: resolvedIssueTypeId,
     occurrence_date: occurrence_date || getLocalDateString(),
-    product_type: resolvedProductTypeName,
     product_type_id: resolvedProductTypeId,
     batch_number,
     complaint_location: resolvedLocationName,
@@ -791,7 +792,6 @@ export async function createNcrReportWithUpload({ body, files, reportedByAuthId 
     department_id: normalizeId(department_id),
     description,
     evidence_files: evidenceUrls.length > 0 ? evidenceUrls : [],
-    clause_id: clause_id ? String(clause_id).trim() : null,
     site_id: reporter.site_id || null,
   }
 
