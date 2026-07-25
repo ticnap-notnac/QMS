@@ -4,6 +4,7 @@ import {
   fetchRoleById,
   insertRole,
   updateRole,
+  updateRolePermissions,
   removeRole,
   auditRoleDelete,
   auditRoleUpdate
@@ -20,13 +21,13 @@ export async function getRoles(_req, res) {
 }
 
 export async function createRole(req, res) {
-  const { roleName } = req.body ?? {}
+  const { roleName, permissions } = req.body ?? {}
 
   if (!roleName) {
     return res.status(400).json({ error: 'Role name is required.' })
   }
 
-  const { data, error } = await insertRole(roleName)
+  const { data, error } = await insertRole(roleName, permissions)
 
   if (error) return res.status(500).json({ error: error.message })
 
@@ -68,4 +69,25 @@ export async function putRole(req, res) {
   auditRoleUpdate({ userAuthId, role: data?.[0] })
 
   return res.json(data ?? [])
+}
+
+export async function putRolePermissions(req, res) {
+  const { id } = req.params
+  const { permissions } = req.body ?? {}
+
+  if (!permissions || typeof permissions !== 'object') {
+    return res.status(400).json({ error: 'Permissions object is required.' })
+  }
+
+  const { data: existing, error: fetchError } = await fetchRoleById(id)
+  if (fetchError) return res.status(500).json({ error: fetchError.message })
+  if (!existing) return res.status(404).json({ error: 'Role not found.' })
+
+  const { data, error } = await updateRolePermissions(id, permissions)
+  if (error) return res.status(500).json({ error: error.message })
+
+  const userAuthId = getRequestActor(req)
+  auditRoleUpdate({ userAuthId, role: data?.[0] })
+
+  return res.json(data?.[0] ?? data ?? {})
 }

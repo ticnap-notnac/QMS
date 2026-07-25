@@ -23,8 +23,8 @@ import { useReportsLogic } from '@/hooks/useReportsLogic'
 import { fetchRecurringTrends } from '@/services/ncrService'
 import './ReportsPage.css'
 
-export default function ReportsPage({ userRole, currentUserId, authUserId, userDepartmentId }) {
-  const logic = useReportsLogic({ currentUserId, userRole, authUserId, userDepartmentId })
+export default function ReportsPage({ userRole, userPermissions, currentUserId, authUserId, userDepartmentId }) {
+  const logic = useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId })
   const normalizedRole = String(userRole || '').trim().toLowerCase()
   const canAccessCar = ['admin', 'auditor', 'department manager'].includes(normalizedRole)
   const canAccessQddr = String(userRole || '').trim().toLowerCase() !== 'warehouse staff'

@@ -17,7 +17,7 @@ describe('Authentication Middleware', () => {
   it('should return 401 if no Authorization header is provided', async () => {
     const res = await request(app).get('/api/users');
     expect(res.status).toBe(401);
-    expect(res.body.error).toContain('Missing or invalid Authorization header');
+    expect(res.body.error).toContain('You are not logged in');
   });
 
   it('should return 401 if token is invalid or expired', async () => {
@@ -29,6 +29,6 @@ describe('Authentication Middleware', () => {
       .set('Authorization', 'Bearer invalid-token');
 
     expect(res.status).toBe(401);
-    expect(res.body.error).toBe('Invalid or expired token.');
+    expect(res.body.error).toBe('Your session has expired or is invalid. Please log in again.');
   });
 });

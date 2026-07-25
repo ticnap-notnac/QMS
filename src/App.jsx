@@ -26,6 +26,7 @@ function AppInner() {
   const [toast, setToast] = useState(null)
 
   const [userRole, setUserRole] = useState('user')
+  const [userPermissions, setUserPermissions] = useState({ pages: ['dashboard', 'reports', 'dcc', 'settings'], rights: ['create_report'] })
   const [currentUserId, setCurrentUserId] = useState(null)
   const [userDepartmentId, setUserDepartmentId] = useState(null)
   const [userName, setUserName] = useState('Name of the User')
@@ -80,6 +81,32 @@ function AppInner() {
     setUserDepartmentId(profile.department_id || null)
 
     let resolvedRoleName = profile.roles?.role_name || null
+    if (profile.roles?.permissions) {
+      setUserPermissions(profile.roles.permissions)
+    } else {
+      const normalized = String(resolvedRoleName || profile.role || '').toLowerCase()
+      if (normalized === 'admin') {
+        setUserPermissions({
+          pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'admin_panel', 'settings'],
+          rights: ['accept_decline_report', 'assign_report', 'create_report', 'edit_delete_report', 'submit_capa', 'verify_car', 'manage_iso', 'manage_users', 'manage_audit_schedules'],
+        })
+      } else if (normalized === 'auditor') {
+        setUserPermissions({
+          pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
+          rights: ['accept_decline_report', 'assign_report', 'create_report', 'submit_capa', 'manage_iso', 'manage_audit_schedules'],
+        })
+      } else if (['team leader', 'warehouse executive', 'warehouse supervisor'].includes(normalized)) {
+        setUserPermissions({
+          pages: ['dashboard', 'reports', 'dcc', 'settings'],
+          rights: ['create_report', 'accept_decline_report', 'assign_report'],
+        })
+      } else {
+        setUserPermissions({
+          pages: ['dashboard', 'reports', 'dcc', 'settings'],
+          rights: ['create_report'],
+        })
+      }
+    }
 
     if (resolvedRoleName) {
       setUserPosition(resolvedRoleName)
@@ -111,7 +138,7 @@ function AppInner() {
         if (user) {
           const { data } = await supabase
             .from('users')
-            .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name)')
+            .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name, permissions)')
             .eq('auth_id', user.id)
             .maybeSingle()
 
@@ -140,7 +167,7 @@ function AppInner() {
         if (newUser) {
           supabase
             .from('users')
-            .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name)')
+            .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name, permissions)')
             .eq('auth_id', newUser.id)
             .maybeSingle()
             .then(({ data }) => {
@@ -181,7 +208,7 @@ function AppInner() {
         try {
           const { data } = await supabase
             .from('users')
-            .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name)')
+            .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name, permissions)')
             .eq('auth_id', authData.user.id)
             .maybeSingle()
 
@@ -206,7 +233,7 @@ function AppInner() {
     if (user) {
       const { data } = await supabase
         .from('users')
-        .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name)')
+        .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name, permissions)')
         .eq('auth_id', user.id)
         .maybeSingle()
 
@@ -272,6 +299,7 @@ function AppInner() {
 
   const sharedProps = {
     userRole,
+    userPermissions,
     userName,
     userPosition,
     currentUserId,

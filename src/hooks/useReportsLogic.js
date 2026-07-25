@@ -25,9 +25,10 @@ import { submitQddrReport, updateQddrReport, editQddrReport } from '@/services/q
 import { useCARDetails } from './useCARDetails'
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export function useReportsLogic({ currentUserId, userRole, authUserId, userDepartmentId }) {
+export function useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId }) {
   const { user: authUser } = useAuth()
   const currentAuthId = authUser?.id || authUserId || ''
+  const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
 
   // ── Async / UI state ────────────────────────────────────────────────────────
   const [isReviewSubmitting, setIsReviewSubmitting] = useState(false)
@@ -322,19 +323,20 @@ export function useReportsLogic({ currentUserId, userRole, authUserId, userDepar
   // ─── Derived / memoised ────────────────────────────────────────────────────
 
   const canAssignReports = useMemo(
-    () => ['admin', 'manager', 'department manager'].includes(String(userRole || '').trim().toLowerCase()),
-    [userRole],
+    () => ['admin', 'manager', 'department manager', 'auditor', 'warehouse supervisor'].includes(String(userRole || '').trim().toLowerCase()) || rights.includes('assign_report'),
+    [userRole, rights],
   )
 
   const canApproveReport = useCallback((report) => {
     if (!report) return false;
     const role = String(userRole || '').trim().toLowerCase();
     if (role === 'admin') return true;
+    if (rights.includes('accept_decline_report')) return true;
     if (role === 'department manager' || role === 'manager') {
       return String(report.department_id) === String(userDepartmentId);
     }
     return false;
-  }, [userRole, userDepartmentId])
+  }, [userRole, userDepartmentId, rights])
 
   const canUpdateReport = useCallback(
     (report) => {

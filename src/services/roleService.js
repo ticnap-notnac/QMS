@@ -83,3 +83,12 @@ export async function updateRole(id, roleName) {
     throw normalizeRoleError(err)
   }
 }
+
+export async function updateRolePermissions(id, permissions) {
+  try {
+    const data = await request(`/roles/${id}/permissions`, { method: 'PUT', body: JSON.stringify({ permissions }) })
+    return data
+  } catch (err) {
+    throw normalizeRoleError(err)
+  }
+}

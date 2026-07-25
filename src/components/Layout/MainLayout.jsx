@@ -33,6 +33,7 @@ export default function MainLayout({
         isNotificationsOpen={isNotificationsOpen}
         onToggleNotifications={() => setIsNotificationsOpen((open) => !open)}
         userRole={userRole}
+        userPermissions={sharedProps?.userPermissions}
         userName={userName}
         userPosition={userPosition}
         userEmail={userEmail}

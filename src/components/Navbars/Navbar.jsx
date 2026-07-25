@@ -22,6 +22,7 @@ export default function Navbar({
   isNotificationsOpen,
   onToggleNotifications,
   userRole,
+  userPermissions,
   userName,
   userPosition,
   userEmail,
@@ -42,6 +43,9 @@ export default function Navbar({
   const shouldShowNotifications = typeof canViewNotifications === 'boolean'
     ? canViewNotifications
     : true
+
+  const pagesList = Array.isArray(userPermissions?.pages) ? userPermissions.pages : []
+  const hasPageAccess = (pageKey) => normalizedRole === 'admin' || pagesList.includes(pageKey)
 
   // Close the user dropdown when a click lands outside the reference node bounds
   useEffect(() => {
@@ -65,23 +69,27 @@ export default function Navbar({
 
   const navTabsJSX = (isMobile) => (
     <>
-      <button 
-        onClick={() => navigate('/')} 
-        className={`nav-tab-button ${location.pathname === '/' ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
-      >
-        <LayoutDashboard size={isMobile ? 24 : 18} />
-        <span>Dashboard</span>
-      </button>
+      {hasPageAccess('dashboard') && (
+        <button 
+          onClick={() => navigate('/')} 
+          className={`nav-tab-button ${location.pathname === '/' ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
+        >
+          <LayoutDashboard size={isMobile ? 24 : 18} />
+          <span>Dashboard</span>
+        </button>
+      )}
       
-      <button 
-        onClick={() => navigate('/reports')} 
-        className={`nav-tab-button ${location.pathname.startsWith('/reports') ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
-      >
-        <ClipboardList size={isMobile ? 24 : 18} />
-        <span>Reports</span>
-      </button>
+      {hasPageAccess('reports') && (
+        <button 
+          onClick={() => navigate('/reports')} 
+          className={`nav-tab-button ${location.pathname.startsWith('/reports') ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
+        >
+          <ClipboardList size={isMobile ? 24 : 18} />
+          <span>Reports</span>
+        </button>
+      )}
 
-      {(normalizedRole === 'admin' || normalizedRole === 'auditor') && (
+      {hasPageAccess('iso') && (
         <button 
           onClick={() => navigate('/iso')} 
           className={`nav-tab-button ${location.pathname.startsWith('/iso') ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
@@ -91,13 +99,15 @@ export default function Navbar({
         </button>
       )}
 
-      <button 
-        onClick={() => navigate('/dcc')} 
-        className={`nav-tab-button ${location.pathname.startsWith('/dcc') ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
-      >
-        <History size={isMobile ? 24 : 18} />
-        <span>Document Control Center</span>
-      </button>
+      {hasPageAccess('dcc') && (
+        <button 
+          onClick={() => navigate('/dcc')} 
+          className={`nav-tab-button ${location.pathname.startsWith('/dcc') ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
+        >
+          <History size={isMobile ? 24 : 18} />
+          <span>Document Control Center</span>
+        </button>
+      )}
     </>
   )
 
@@ -109,7 +119,7 @@ export default function Navbar({
       >
         <User size={16} /> User Information
       </button>
-      {['admin', 'auditor'].includes(normalizedRole) && (
+      {hasPageAccess('audit_tools') && (
         <button 
           onClick={() => { navigate('/audit-tools'); onToggleMenu(); }} 
           className="user-menu-item admin"
@@ -117,7 +127,7 @@ export default function Navbar({
           <ClipboardCheck size={16} /> Audit Tools
         </button>
       )}
-      {normalizedRole === 'admin' && (
+      {hasPageAccess('admin_panel') && (
         <button 
           onClick={() => { navigate('/admin'); onToggleMenu(); }} 
           className="user-menu-item admin"

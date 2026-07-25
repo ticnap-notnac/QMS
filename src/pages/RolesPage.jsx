@@ -4,6 +4,7 @@ import AddCategoryModal from '@/components/Modals/AddCategoryModal'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
+import RolePermissionsMatrix from '@/components/Admin/RolePermissionsMatrix'
 import Toast from '@/components/UI/Toast.jsx'
 import './AdminPanel.css'
 import useRolesPageLogic from '@/hooks/useRolesPageLogic'
@@ -86,6 +87,8 @@ export default function RolesPage({
                     deletingId={deletingId}
                     noMatchesText="No matches found."
                   />
+
+                  <RolePermissionsMatrix roles={items} onPermissionsUpdated={reload} />
                 </div>
               </div>
             </div>

@@ -7,15 +7,15 @@ import { createCarSchema, submitCapaSchema, verifyCarSchema } from '../validatio
 
 const router = Router()
 
-router.post('/car', requireRoles(['admin', 'auditor', 'department manager']), validateRequest(createCarSchema), createCar)
-router.get('/car/:id', requireRoles(['admin', 'auditor', 'department manager', 'warehouse staff']), getCarById)
-router.post('/car/suggest-clauses', requireRoles(['admin', 'auditor']), suggestClauses)
-router.put('/car/:id/capa', requireRoles(['admin', 'auditor']), validateRequest(submitCapaSchema), submitCapa)
-router.put('/car/:id/verify', requireRoles(['warehouse staff']), validateRequest(verifyCarSchema), verifyCar)
+router.post('/car', requireRoles(['admin', 'auditor', 'department manager'], 'create_report'), validateRequest(createCarSchema), createCar)
+router.get('/car/:id', getCarById)
+router.post('/car/suggest-clauses', requireRoles(['admin', 'auditor'], 'manage_iso'), suggestClauses)
+router.put('/car/:id/capa', requireRoles(['admin', 'auditor'], 'submit_capa'), validateRequest(submitCapaSchema), submitCapa)
+router.put('/car/:id/verify', requireRoles(['admin', 'auditor', 'warehouse staff', 'checker', 'warehouse checker'], 'verify_car'), validateRequest(verifyCarSchema), verifyCar)
 router.get('/car/clause/:clauseId/cars', getCarsForClause)
 
 import { editCar, deleteCar } from '../controllers/carController.js'
-router.put('/car/:id', requireRoles(['admin', 'auditor']), editCar)
-router.delete('/car/:id', requireRoles(['admin', 'auditor']), deleteCar)
+router.put('/car/:id', requireRoles(['admin', 'auditor'], 'edit_delete_report'), editCar)
+router.delete('/car/:id', requireRoles(['admin', 'auditor'], 'edit_delete_report'), deleteCar)
 
 export default router
