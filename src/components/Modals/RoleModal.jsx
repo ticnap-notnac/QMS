@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import SubmissionLoadingOverlay from '../UI/SubmissionLoadingOverlay.jsx'
 
 export default function RoleModal({
   isOpen,
@@ -20,6 +21,7 @@ export default function RoleModal({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
+      <SubmissionLoadingOverlay isOpen={loading} message="Saving..." />
       <div
         className="modal modal-wide"
         role="dialog"
