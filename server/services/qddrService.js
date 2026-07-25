@@ -71,6 +71,7 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     corrective_action,
     preventive_action,
     approved_by,
+    noted_by,
     leader,
     ncr_id,
     clause_ids,
