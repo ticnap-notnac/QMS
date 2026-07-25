@@ -11,8 +11,8 @@ async function fetchReportById(ncrId) {
   const { data, error } = await supabase
     .from('ncr_reports')
     .select(
-      'issue_type, department_id, description, severity, ' +
-      'investigation_details, corrective_action, resolution_details, product_type'
+      'issue_type_id, department_id, description, severity, ' +
+      'investigation_details, corrective_action, resolution_details, product_type_id'
     )
     .eq('id', ncrId)
     .single()
