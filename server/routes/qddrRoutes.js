@@ -6,13 +6,13 @@ import { createQddrSchema, updateQddrSchema } from '../validations/qddrValidatio
 
 const router = Router()
 
-router.post('/qddr', requireRoles(['admin', 'auditor', 'qa']), validateRequest(createQddrSchema), createQddr)
-router.put('/qddr/:id', requireRoles(['admin', 'auditor', 'department_head']), validateRequest(updateQddrSchema), updateQddr)
+router.post('/qddr', requireRoles(['admin', 'auditor', 'qa'], 'create_report'), validateRequest(createQddrSchema), createQddr)
+router.put('/qddr/:id', requireRoles(['admin', 'auditor', 'department_head'], 'accept_decline_report'), validateRequest(updateQddrSchema), updateQddr)
 
 // Note: editQddr is a separate route for full form edits, using different roles/validation potentially, but we'll re-use the generic id path
-router.put('/qddr/:id/edit', requireRoles(['admin', 'auditor']), editQddr)
-router.delete('/qddr/:id', requireRoles(['admin', 'auditor']), deleteQddr)
+router.put('/qddr/:id/edit', requireRoles(['admin', 'auditor'], 'edit_delete_report'), editQddr)
+router.delete('/qddr/:id', requireRoles(['admin', 'auditor'], 'edit_delete_report'), deleteQddr)
 
-router.post('/qddr/suggest-clauses', requireRoles(['admin', 'auditor', 'department_head', 'qa']), suggestClauses)
+router.post('/qddr/suggest-clauses', requireRoles(['admin', 'auditor', 'department_head', 'qa'], 'manage_iso'), suggestClauses)
 
 export default router

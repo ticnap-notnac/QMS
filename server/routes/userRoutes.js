@@ -6,9 +6,9 @@ import { createUserSchema, updateUserSchema, updateUserStatusSchema } from '../v
 const router = Router()
 
 router.get('/', getUsers)
-router.post('/', requireRoles(['admin']), validateRequest(createUserSchema), createUser)
-router.put('/:id', requireRoles(['admin']), validateRequest(updateUserSchema), updateUser)
-router.delete('/:id', requireRoles(['admin']), deleteUser)
-router.patch('/:id/status', requireRoles(['admin']), validateRequest(updateUserStatusSchema), updateUserStatus)
+router.post('/', requireRoles(['admin'], 'manage_users'), validateRequest(createUserSchema), createUser)
+router.put('/:id', requireRoles(['admin'], 'manage_users'), validateRequest(updateUserSchema), updateUser)
+router.delete('/:id', requireRoles(['admin'], 'manage_users'), deleteUser)
+router.patch('/:id/status', requireRoles(['admin'], 'manage_users'), validateRequest(updateUserStatusSchema), updateUserStatus)
 
 export default router

@@ -91,7 +91,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
 
     return {
       status: authError?.status || 400,
-      error: 'We could not create this user. Please check the entered details and try again.',
+      error: authError?.message || 'We could not create this user. Please check the entered details and try again.',
     }
   }
 
@@ -142,7 +142,11 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
     }
   }
 
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+  let authData = null
+  let authError = null
+
+  // 1. Try Supabase Auth Admin API
+  const adminRes = await supabase.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
@@ -151,42 +155,98 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
       last_name: lastName,
       user_name: userName,
       contact_number: contactNumber || null,
-      role_id: roleId || null,
-      department_id: departmentId || null,
-      site_id: siteId || null,
+      role_id: roleId ? Number(roleId) : null,
+      department_id: departmentId ? Number(departmentId) : null,
+      site_id: siteId ? Number(siteId) : null,
     },
   })
+  authData = adminRes.data
+  authError = adminRes.error
 
-  if (authError) {
+  // 2. If Auth Admin API failed due to service role key JWT format, fall back to auth.signUp
+  if (authError || !authData?.user) {
+    const errStr = String(authError?.message || '').toLowerCase()
+    if (!errStr.includes('already registered') && !errStr.includes('already exists')) {
+      const signUpRes = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            user_name: userName,
+            contact_number: contactNumber || null,
+            role_id: roleId ? Number(roleId) : null,
+            department_id: departmentId ? Number(departmentId) : null,
+            site_id: siteId ? Number(siteId) : null,
+          }
+        }
+      })
+      if (!signUpRes.error && signUpRes.data?.user) {
+        authData = signUpRes.data
+        authError = null
+      } else if (signUpRes.error) {
+        authError = signUpRes.error
+      }
+    }
+  }
+
+  if (authError || !authData?.user) {
     const normalized = describeAuthCreateError(authError)
     return { authUser: null, profile: null, error: normalized.error, status: normalized.status }
   }
 
-  // Force update the public.users record right after creation, because the DB trigger
-  // might not have been updated to map site_id from user_metadata.
+  // Force update or insert the public.users record right after creation
   const profileUpdates = {}
-  if (siteId) profileUpdates.site_id = siteId
-  if (roleId) profileUpdates.role_id = roleId
-  if (departmentId) profileUpdates.department_id = departmentId
+  if (siteId) profileUpdates.site_id = Number(siteId)
+  if (roleId) profileUpdates.role_id = Number(roleId)
+  if (departmentId) profileUpdates.department_id = Number(departmentId)
   if (contactNumber) profileUpdates.contact_number = contactNumber
+  if (userName) profileUpdates.user_name = userName
 
   if (Object.keys(profileUpdates).length > 0) {
     await supabase.from('users').update(profileUpdates).eq('auth_id', authData.user.id)
   }
 
-  const { data: profileData, error: profileError } = await supabase
+  let { data: profileData, error: profileError } = await supabase
     .from('users')
     .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id')
     .eq('auth_id', authData.user.id)
     .maybeSingle()
+
+  if (!profileData && !profileError) {
+    // Fallback: If DB trigger did not populate public.users, create it manually!
+    const { data: createdProfile, error: insertErr } = await supabase
+      .from('users')
+      .insert([{
+        auth_id: authData.user.id,
+        email: email,
+        first_name: firstName,
+        last_name: lastName,
+        user_name: userName,
+        contact_number: contactNumber || null,
+        role_id: roleId ? Number(roleId) : null,
+        department_id: departmentId ? Number(departmentId) : null,
+        site_id: siteId ? Number(siteId) : null,
+        status: 'ACTIVE'
+      }])
+      .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id')
+      .maybeSingle()
+
+    if (!insertErr && createdProfile) {
+      profileData = createdProfile
+    } else if (insertErr) {
+      profileError = insertErr
+    }
+  }
 
   if (profileError) {
     const normalized = describeProfileError(profileError)
     return {
       authUser: authData?.user || null,
       profile: null,
-      error: normalized.error,
-      status: normalized.status,
+      error: normalized.error || profileError.message,
+      status: normalized.status || 400,
     }
   }
 

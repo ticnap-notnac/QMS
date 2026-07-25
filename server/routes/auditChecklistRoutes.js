@@ -10,8 +10,8 @@ import { requireRoles } from '../middlewares/roleMiddleware.js'
 const router = Router()
 
 router.get('/audit-templates', getTemplates)
-router.post('/audit-templates', requireRoles(['admin', 'auditor']), addTemplate)
-router.put('/audit-templates/:id', requireRoles(['admin', 'auditor']), editTemplate)
-router.delete('/audit-templates/:id', requireRoles(['admin', 'auditor']), removeTemplate)
+router.post('/audit-templates', requireRoles(['admin', 'auditor'], 'manage_audit_schedules'), addTemplate)
+router.put('/audit-templates/:id', requireRoles(['admin', 'auditor'], 'manage_audit_schedules'), editTemplate)
+router.delete('/audit-templates/:id', requireRoles(['admin', 'auditor'], 'manage_audit_schedules'), removeTemplate)
 
 export default router

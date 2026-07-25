@@ -23,7 +23,7 @@ export async function createUser(req, res) {
     return res.status(400).json({ error: 'First name, last name, email, password, username, and department are required.' })
   }
 
-  // Additional validation could be added here (e.g., email format, password strength)
+  // Additional validation
   const invalidNameRegex = /[^a-zA-Z\s\-']/
   if (invalidNameRegex.test(firstName) || invalidNameRegex.test(lastName)) {
     return res.status(400).json({ error: 'First and Last names cannot contain numbers or special characters.' })
@@ -38,29 +38,30 @@ export async function createUser(req, res) {
   }
 
   const { authUser, profile, error, status } = await createUserWithAuth({
-    firstName,
-    lastName,
-    email,
+    firstName: String(firstName).trim(),
+    lastName: String(lastName).trim(),
+    email: String(email).trim().toLowerCase(),
     password,
-    userName,
-    contactNumber,
-    roleId,
-    departmentId,
-    siteId,
+    userName: String(userName).trim(),
+    contactNumber: contactNumber ? String(contactNumber).trim() : null,
+    roleId: roleId ? Number(roleId) : null,
+    departmentId: departmentId ? Number(departmentId) : null,
+    siteId: siteId ? Number(siteId) : null,
   })
 
   if (error) {
     logger.error('Create user error', { error, status })
-    return res.status(status).json({ error })
+    return res.status(status || 400).json({ error })
   }
   logger.info('User created', { userId: authUser?.id })
 
-  void sendNewUserCredentialsEmail({
-    toEmail: email,
+  const sanitizedEmail = String(email).trim().toLowerCase()
+  sendNewUserCredentialsEmail({
+    toEmail: sanitizedEmail,
     password,
-    frontendUrl: 'https://qms-jade-vercel.app',
+    frontendUrl: process.env.FRONTEND_URL || 'https://qms-jade.vercel.app',
     displayName: `${firstName || ''} ${lastName || ''}`.trim() || userName || 'there',
-  })
+  }).catch(err => logger.error('Failed to send user credentials email', { error: err?.message }))
 
   return res.json({ authUser, profile })
 }

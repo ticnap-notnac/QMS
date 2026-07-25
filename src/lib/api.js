@@ -21,10 +21,6 @@ function toPlainLanguageError(message) {
     return 'The account was created, but something went wrong while saving the user details. Please refresh and try again.'
   }
 
-  if (/database error/i.test(text) || /supabase/i.test(text) || /invalid json/i.test(text)) {
-    return 'We could not complete this action. Please check the entered details and try again.'
-  }
-
   return text
 }
 

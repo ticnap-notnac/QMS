@@ -77,7 +77,7 @@ export function requirePermission(requiredRight) {
  * @param {string[]} allowedRoles - List of role names allowed to access this route.
  * @param {string} [requiredRight] - Optional right permission to evaluate dynamically.
  */
-export function requireRoles(allowedRoles, requiredRight = null) {
+export function requireRoles(allowedRoles = [], requiredRight = null) {
   return async (req, res, next) => {
     try {
       const authId = req.user?.id
@@ -91,15 +91,15 @@ export function requireRoles(allowedRoles, requiredRight = null) {
       }
 
       const normalizedRole = String(roleName || '').trim().toLowerCase()
-      const roleAllowed = allowedRoles.map(r => String(r).trim().toLowerCase()).includes(normalizedRole)
-      let isAllowed = roleAllowed
+      let isAllowed = false
 
-      if (normalizedRole === 'admin') {
+      if (normalizedRole === 'admin' || normalizedRole === 'super admin') {
         isAllowed = true
-      } else if (requiredRight && permissions && typeof permissions === 'object') {
-        const rights = Array.isArray(permissions.rights) ? permissions.rights : []
-        // Dynamic permission check: if permission key is present in rights, allow; if explicitly configured and missing, deny!
-        isAllowed = rights.includes(requiredRight)
+      } else if (requiredRight && permissions && typeof permissions === 'object' && Array.isArray(permissions.rights)) {
+        isAllowed = permissions.rights.includes(requiredRight)
+      } else {
+        const normalizedAllowed = (allowedRoles || []).map(r => String(r).trim().toLowerCase())
+        isAllowed = normalizedAllowed.includes(normalizedRole)
       }
 
       logger.info('Role & Permission check', { authId, roleName, normalizedRole, allowedRoles, requiredRight, isAllowed })

@@ -565,21 +565,43 @@ Return ONLY a valid JSON array of the string keys that apply. Do not include mar
   // ── Heuristic Fallback ──
   const desc = (description || '').toLowerCase()
   const matched = []
-  
-  if (reportType === 'CAR') {
-    if (desc.includes('safety') || desc.includes('quality') || desc.includes('food')) matched.push('quality_food_safety')
-    if (desc.includes('environment') || desc.includes('hazard') || desc.includes('health')) matched.push('environment_health_safety')
-    if (desc.includes('security') || desc.includes('access') || desc.includes('door')) matched.push('security_issue')
-    if (desc.includes('audit')) matched.push('internal_audit')
-    if (desc.includes('customer')) matched.push('customer_complaint')
-    if (desc.includes('vendor') || desc.includes('supplier')) matched.push('vendor_nonconformance')
-  } else {
-    if (desc.includes('hole') || desc.includes('puncture') || desc.includes('pierce')) matched.push('holes_punctures')
-    if (desc.includes('crush') || desc.includes('dent')) matched.push('crushed_or_dented')
-    if (desc.includes('wet') || desc.includes('leak') || desc.includes('water') || desc.includes('spill') || desc.includes('soak')) matched.push('wet_or_leaked')
-    if (desc.includes('document') || desc.includes('paperwork')) matched.push('documentation_error')
-    if (desc.includes('open carton') || desc.includes('open box')) matched.push('open_carton')
+
+  const HEURISTIC_PATTERNS = {
+    // CAR flags
+    quality_food_safety: ['safety', 'quality', 'food', 'contamination', 'hygiene', 'spoiled', 'expiry'],
+    environment_health_safety: ['environment', 'hazard', 'health', 'safety', 'chemical', 'spill', 'waste', 'injury'],
+    security_issue: ['security', 'access', 'door', 'unauthorized', 'tamper', 'lock', 'stolen', 'break-in'],
+    internal_audit: ['audit', 'internal', 'finding', 'nonconformance', 'inspection', 'check'],
+    customer_complaint: ['customer', 'complaint', 'feedback', 'client', 'dissatisfied', 'rejection'],
+    vendor_nonconformance: ['vendor', 'supplier', 'external', 'procurement', 'delivery', 'carrier'],
+    government_agency_audit: ['government', 'agency', 'regulatory', 'legal', 'fda', 'doh', 'compliance', 'penalty'],
+    customer_audit_nonconformance: ['customer audit', 'client audit', 'external audit'],
+
+    // QDDR flags
+    holes_punctures: ['hole', 'puncture', 'pierce', 'torn', 'rip', 'cut', 'burst'],
+    crushed_or_dented: ['crush', 'dent', 'collapsed', 'smashed', 'bent', 'deformed'],
+    deformed_torn: ['deform', 'torn', 'distorted', 'warped', 'mangled', 'broken'],
+    wet_or_leaked: ['wet', 'leak', 'water', 'spill', 'soak', 'moisture', 'damp', 'dripping'],
+    open_carton: ['open carton', 'open box', 'unsealed', 'opened', 'loose box'],
+    stain_graffiti: ['stain', 'graffiti', 'dirt', 'soiled', 'smudge', 'mark', 'discolored'],
+    bulging: ['bulge', 'swollen', 'puffed', 'expanded', 'pressure'],
+    improper_stretch_wrapping: ['stretch wrap', 'shrink wrap', 'unwrapped', 'loose wrap', 'pallet wrap'],
+    wrong_no_batchcode: ['batch', 'lot', 'code', 'expiry date', 'missing code', 'wrong code', 'mismatch'],
+    opened_seal: ['seal', 'broken seal', 'tampered', 'unsealed', 'opened seal'],
+    no_label_broken_label: ['label', 'missing label', 'torn label', 'unreadable', 'no label'],
+    short_pack: ['short', 'missing count', 'underpack', 'incomplete', 'few'],
+    excess_shipment: ['excess', 'overpack', 'surplus', 'extra', 'overage'],
+    documentation_error: ['document', 'paperwork', 'invoice', 'receipt', 'manifest', 'error', 'mismatch'],
+    picking_discrepancy: ['picking', 'wrong item', 'mispick', 'incorrect item', 'fulfillment'],
   }
-  
+
+  for (const [tagKey, keywords] of Object.entries(HEURISTIC_PATTERNS)) {
+    if (tagsList.includes(tagKey)) {
+      if (keywords.some(kw => desc.includes(kw))) {
+        matched.push(tagKey)
+      }
+    }
+  }
+
   return matched
 }
