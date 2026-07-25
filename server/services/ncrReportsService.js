@@ -471,7 +471,6 @@ export async function submitNcrMultipart({ body, files, reportedByAuthId }) {
     severity,
     issue_type_id,
     description,
-    clause_id,
   } = body || {}
 
   const { data: creatorObj } = await supabase
@@ -541,7 +540,6 @@ export async function submitNcrMultipart({ body, files, reportedByAuthId }) {
     severity: severity || null,
     issue_type_id: issue_type_id || null,
     description: description || null,
-    clause_id: clause_id || null,
     evidence_files: evidenceUrls.length > 0 ? evidenceUrls : [],
     status: status,
     reported_by: creatorObj.id,
