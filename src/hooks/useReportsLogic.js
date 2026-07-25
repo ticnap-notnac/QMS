@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, useEffect } from 'react'
+import { isAdminRole } from '@/utils/roleUtils.js'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { createReport, reviewReportApproval, submitNcrMultipart, updateReport, deleteReport } from '@/services/ncrService'
@@ -122,7 +123,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         .select('id, department_id')
 
       const ncrDeptMap = new Map((ncrs || []).map(n => [n.id, n.department_id]))
-      const isStandardUser = !['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
+      const isStandardUser = !isAdminRole(userRole) && String(userRole || '').trim().toLowerCase() !== 'auditor'
       const activeDeptFilterId = formState.reportFilters.departmentId
 
       // 1. CAR department scoping/filtering
@@ -323,15 +324,15 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   // ─── Derived / memoised ────────────────────────────────────────────────────
 
   const canAssignReports = useMemo(
-    () => ['admin', 'manager', 'department manager', 'auditor', 'warehouse supervisor'].includes(String(userRole || '').trim().toLowerCase()) || rights.includes('assign_report'),
+    () => isAdminRole(userRole) || ['manager', 'department manager', 'auditor', 'warehouse supervisor'].includes(String(userRole || '').trim().toLowerCase()) || rights.includes('assign_report'),
     [userRole, rights],
   )
 
   const canApproveReport = useCallback((report) => {
     if (!report) return false;
-    const role = String(userRole || '').trim().toLowerCase();
-    if (role === 'admin') return true;
+    if (isAdminRole(userRole)) return true;
     if (rights.includes('accept_decline_report')) return true;
+    const role = String(userRole || '').trim().toLowerCase();
     if (role === 'department manager' || role === 'manager') {
       return String(report.department_id) === String(userDepartmentId);
     }
@@ -343,22 +344,23 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       if (!report) return false
       if (String(report.status || '').trim().toUpperCase() === 'CLOSED') return false
       
+      if (isAdminRole(userRole) || rights.includes('edit_delete_report')) return true
       const role = String(userRole || '').trim().toLowerCase()
-      if (role === 'admin' || role === 'manager') return true
+      if (role === 'manager' || role === 'department manager') return true
 
       return String(report.assigned_to || '') !== '' &&
         String(report.assigned_to) === String(currentUserId)
     },
-    [currentUserId, userRole],
+    [currentUserId, userRole, rights],
   )
 
   const canDeleteReport = useCallback(
     (report) => {
       if (!report) return false
-      if (canAssignReports) return true
+      if (isAdminRole(userRole) || rights.includes('edit_delete_report') || canAssignReports) return true
       return Number(report.reported_by) === Number(currentUserId)
     },
-    [canAssignReports, currentUserId]
+    [userRole, rights, canAssignReports, currentUserId]
   )
 
   const handleDeleteReport = useCallback((report) => {

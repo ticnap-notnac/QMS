@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { isAdminRole } from '@/utils/roleUtils.js'
 
 import { useNavigate, useLocation } from 'react-router-dom'
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
@@ -169,7 +170,7 @@ export default function SettingsPage(props) {
                   </div>
                 )}
 
-                {activeSection === 'Audit Tools' && (userRole === 'admin' || userRole === 'auditor') && (
+                {activeSection === 'Audit Tools' && (isAdminRole(userRole) || userRole === 'auditor') && (
                   <div className="settings-content settings-content--profile" style={{ width: '100%' }}>
                     <AuditToolsPage {...props} />
                   </div>

@@ -33,9 +33,10 @@ const AccessDenied = () => (
   </div>
 )
 
+import { isAdminRole } from '@/utils/roleUtils.js'
+
 const ProtectedRoute = ({ pageKey, sharedProps, children }) => {
-  const normalizedRole = String(sharedProps?.userRole || '').trim().toLowerCase()
-  if (normalizedRole === 'admin') return children
+  if (isAdminRole(sharedProps?.userRole)) return children
 
   const pagesList = Array.isArray(sharedProps?.userPermissions?.pages) ? sharedProps.userPermissions.pages : []
   if (pageKey && !pagesList.includes(pageKey)) {

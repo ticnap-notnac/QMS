@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { isAdminRole } from '@/utils/roleUtils.js'
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import RolePermissionsMatrix from '@/components/Admin/RolePermissionsMatrix'
@@ -31,7 +32,7 @@ export default function PermissionsPage({ userRole }) {
 
   return (
     <div className="page-root">
-      {userRole === 'admin' ? (
+      {isAdminRole(userRole) ? (
         <main className="page-main-wide">
           <h1 className="page-title">Manage Role Permissions</h1>
 

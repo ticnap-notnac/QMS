@@ -64,9 +64,23 @@ export function parseResolutionTime(resolutionTimeValue, resolutionTimeUnit) {
   return `${numericValue} ${unit}`
 }
 
+function isAdminRole(roleName) {
+  const norm = String(roleName || '').trim().toLowerCase()
+  if (!norm) return false
+  return (
+    norm === 'admin' ||
+    norm === 'super admin' ||
+    norm === 'super_admin' ||
+    norm === 'system administrator' ||
+    norm === 'system_administrator' ||
+    norm === 'administrator' ||
+    norm.includes('admin')
+  )
+}
+
 export function isAdminOrAuditor(roleName) {
   const normalized = String(roleName || '').trim().toLowerCase()
-  return normalized === 'admin' || normalized === 'auditor'
+  return isAdminRole(roleName) || normalized === 'auditor'
 }
 
 // ─── DB Helpers ───────────────────────────────────────────────────────────────
@@ -1156,8 +1170,8 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
   }
 
   // Department-based rating validation
-  const userRole = currentUser.role?.role_name?.toLowerCase() || ''
-  const isPrivileged = userRole === 'admin' || userRole === 'auditor'
+  const userRole = currentUser.role?.role_name || ''
+  const isPrivileged = isAdminOrAuditor(userRole)
   if (!isPrivileged && report.department_id !== currentUser.department_id) {
     throw Object.assign(new Error('You can only rate reports from your own department.'), { status: 403 })
   }
@@ -1190,7 +1204,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
     const raterRoleMap = {}
     if (ratersRoles) {
       ratersRoles.forEach((user) => {
-        const roleName = String(user.role_id?.name || '').trim().toLowerCase()
+        const roleName = String(user.role_id?.name || '').trim()
         raterRoleMap[user.id] = roleName
       })
     }
@@ -1204,8 +1218,8 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
       const role = raterRoleMap[r.rated_by] || 'staff'
       const val = Number(r.rating)
       
-      if (role === 'admin' || role === 'auditor') bucketA.push(val)
-      else if (role === 'department manager' || role === 'manager') bucketB.push(val)
+      if (isAdminOrAuditor(role)) bucketA.push(val)
+      else if (String(role).toLowerCase() === 'department manager' || String(role).toLowerCase() === 'manager') bucketB.push(val)
       else bucketC.push(val)
     })
 

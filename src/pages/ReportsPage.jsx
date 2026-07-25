@@ -21,12 +21,22 @@ import { deleteQddrReport } from '../services/qddrService.js'
 import { CAR_STATUS } from '../../shared/constants'
 import { useReportsLogic } from '@/hooks/useReportsLogic'
 import { fetchRecurringTrends } from '@/services/ncrService'
+import { isAdminRole } from '@/utils/roleUtils.js'
 import './ReportsPage.css'
 
-export default function ReportsPage({ userRole, userPermissions, currentUserId, authUserId, userDepartmentId }) {
+export default function ReportsPage({
+  userRole,
+  userDepartmentId,
+  currentUserId,
+  authUserId,
+  userName,
+  userPosition,
+  setProfileTargetTab,
+  userPermissions
+}) {
   const logic = useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId })
   const normalizedRole = String(userRole || '').trim().toLowerCase()
-  const canAccessCar = ['admin', 'auditor', 'department manager'].includes(normalizedRole)
+  const canAccessCar = isAdminRole(userRole) || ['auditor', 'department manager'].includes(normalizedRole)
   const canAccessQddr = String(userRole || '').trim().toLowerCase() !== 'warehouse staff'
   const availableTabs = ['ncr', ...(canAccessCar ? ['car'] : []), ...(canAccessQddr ? ['qddr'] : [])]
 
@@ -242,7 +252,7 @@ export default function ReportsPage({ userRole, userPermissions, currentUserId, 
               carReports={displayedCars} 
               isLoading={logic.loadingCar} 
               onSelectCar={logic.openCarDetails} 
-              canEdit={['admin', 'auditor'].includes(normalizedRole)}
+              canEdit={isAdminRole(userRole) || normalizedRole === 'auditor'}
               onEditCar={logic.openEditCarModal}
               onDeleteCar={handleDeleteCar}
             />

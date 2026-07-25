@@ -109,8 +109,22 @@ export async function fetchPendingRatings(userAuthId) {
   
   if (userError || !currentUser) throw new Error('User not found.')
 
+function isAdminRole(roleName) {
+  const norm = String(roleName || '').trim().toLowerCase()
+  if (!norm) return false
+  return (
+    norm === 'admin' ||
+    norm === 'super admin' ||
+    norm === 'super_admin' ||
+    norm === 'system administrator' ||
+    norm === 'system_administrator' ||
+    norm === 'administrator' ||
+    norm.includes('admin')
+  )
+}
+
   const normalizedRole = String(currentUser.role?.role_name || '').toLowerCase().trim()
-  const isAuditorOrAdmin = normalizedRole === 'auditor' || normalizedRole === 'admin'
+  const isAuditorOrAdmin = normalizedRole === 'auditor' || isAdminRole(currentUser.role?.role_name)
   const isManager = normalizedRole === 'department manager' || normalizedRole === 'manager'
 
   // 2. Query closed reports based on role access

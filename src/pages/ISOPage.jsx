@@ -6,6 +6,8 @@ import useISOLogic from '../hooks/useISOLogic'
 import { ProgressRow } from '../components/ISOPage/ProgressRow.jsx'
 import './ISOPage.css'
 
+import { isAdminRole } from '@/utils/roleUtils.js'
+
 export default function ISOPage({ userRole, userName }) {
   const {
     toast, setToast, overallScore, fetchActiveModules, compliantPct, partialPct, gapPct, nonCompliantFindings,
@@ -16,7 +18,8 @@ export default function ISOPage({ userRole, userName }) {
     fetchAndOpenTemplates, closeTemplatesModal
   } = useISOLogic({ userName })
 
-  const isAuthorized = ['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
+  const normRole = String(userRole || '').trim().toLowerCase()
+  const isAuthorized = isAdminRole(userRole) || normRole === 'auditor'
   if (!isAuthorized) {
     return (
       <main className="dashboard page-root iso-denied-container">

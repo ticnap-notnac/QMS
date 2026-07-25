@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { isAdminRole } from '@/utils/roleUtils.js'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/utils/supabase'
 import { request } from '../lib/api'
@@ -247,7 +248,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
       </section>
 
       {/* Double Column Info Widgets Row */}
-      {(normalizedRole === 'admin' || normalizedRole === 'auditor') && (
+      {(isAdminRole(userRole) || normalizedRole === 'auditor') && (
         <section className="dashboard-widgets-grid">
         {/* Card 1: Upcoming Regulatory Audits */}
         <div className="dashboard-widget-card">

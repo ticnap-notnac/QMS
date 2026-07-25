@@ -3,12 +3,21 @@ import { useDCCLogic } from '../hooks/useDCCLogic.js'
 import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
 import { AuditRunDetailsModal } from '../components/AuditTools/AuditToolsModals'
 import './DCCPage.css'
+import { isAdminRole } from '@/utils/roleUtils.js'
 
-export default function DCCPage({ userRole, authUserId }) {
+export default function DCCPage({
+  userRole,
+  userDepartmentId,
+  userName,
+  userPosition,
+  setProfileTargetTab,
+  authUserId
+}) {
   const normRole = String(userRole || '').trim().toLowerCase()
+
   const FOLDER_ITEMS = [
-    ...(normRole === 'admin' ? [{ id: 'system_logs', label: 'System Logs' }] : []),
-    ...(['admin', 'auditor'].includes(normRole) ? [{ id: 'iso_modules', label: 'ISO Modules' }] : []),
+    ...(isAdminRole(userRole) ? [{ id: 'system_logs', label: 'System Logs' }] : []),
+    ...(isAdminRole(userRole) || normRole === 'auditor' ? [{ id: 'iso_modules', label: 'ISO Modules' }] : []),
     { id: 'task_reports', label: 'Task Reports' },
   ]
 

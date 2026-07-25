@@ -3,6 +3,7 @@ import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import Toast from '@/components/UI/Toast'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
+import { isAdminRole } from '@/utils/roleUtils.js'
 import { useISOStandardsLogic } from '@/hooks/useAdminPanel.js'
 import { AddStandardSection, AddClausesSection, ManageClausesSection, ToggleStandardsSection } from '@/components/ISOStandards/ISOStandardsViews'
 import { EditStandardModal, EditClauseModal } from '@/components/ISOPage/ISOModals'
@@ -21,7 +22,7 @@ export default function ISOStandardsPage({ userRole, userName }) {
   return (
     <div className="page-root">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-      {userRole === 'admin' ? (
+      {isAdminRole(userRole) ? (
         <main className="page-main-wide iso-standards-page">
           <h1 className="page-title">Admin - ISO Standards</h1>
           <SettingsNavbar userRole={userRole} />

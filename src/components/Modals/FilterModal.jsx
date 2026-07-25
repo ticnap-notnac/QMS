@@ -5,6 +5,7 @@
  */
 
 import React from 'react'
+import { isAdminRole } from '@/utils/roleUtils.js'
 import { X, Filter } from 'lucide-react'
 
 export default function FilterModal({
@@ -100,7 +101,7 @@ export default function FilterModal({
 
           {/* 📐 ROW 1: Department & Date Input Fields Side-by-Side */}
           {(() => {
-            const isSuperUser = ['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
+            const isSuperUser = isAdminRole(userRole) || String(userRole || '').trim().toLowerCase() === 'auditor'
             return (
               <div style={{ display: 'grid', gridTemplateColumns: isSuperUser ? 'repeat(auto-fit, minmax(200px, 1fr))' : '1fr', gap: '16px' }}>
                 {isSuperUser && (

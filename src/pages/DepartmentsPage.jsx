@@ -5,6 +5,7 @@ import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import { useDepartmentsLogic } from '@/hooks/useAdminPanel.js'
+import { isAdminRole } from '@/utils/roleUtils.js'
 import Toast from '@/components/UI/Toast.jsx'
 import './AdminPanel.css'
 
@@ -24,7 +25,7 @@ export default function DepartmentsPage({ userRole }) {
 
   return (
     <div className="page-root">
-      {userRole === 'admin' ? (
+      {isAdminRole(userRole) ? (
         <main className="page-main-wide">
           <h1 className="page-title">Manage Departments</h1>
           <SettingsNavbar userRole={userRole} />

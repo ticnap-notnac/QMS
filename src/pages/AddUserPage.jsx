@@ -10,6 +10,8 @@ import SubmissionLoadingOverlay from '@/components/UI/SubmissionLoadingOverlay.j
 import Toast from '@/components/UI/Toast.jsx'
 import './AdminPanel.css'
 
+import { isAdminRole } from '@/utils/roleUtils.js'
+
 export default function AddUserPage({ userRole }) {
   const {
     searchQuery,
@@ -34,7 +36,7 @@ export default function AddUserPage({ userRole }) {
 
   return (
     <div className="page-root">
-      {userRole === 'admin' ? (
+      {isAdminRole(userRole) ? (
         <main className="page-main-wide">
           <h1 className="page-title">Admin — Add User</h1>
           <SettingsNavbar userRole={userRole} />

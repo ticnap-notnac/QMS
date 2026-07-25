@@ -29,6 +29,20 @@ async function fetchUserRoleAndPermissions(authId) {
   return { profile, roleName, permissions }
 }
 
+function isAdminRole(roleName) {
+  const norm = String(roleName || '').trim().toLowerCase()
+  if (!norm) return false
+  return (
+    norm === 'admin' ||
+    norm === 'super admin' ||
+    norm === 'super_admin' ||
+    norm === 'system administrator' ||
+    norm === 'system_administrator' ||
+    norm === 'administrator' ||
+    norm.includes('admin')
+  )
+}
+
 /**
  * Middleware requiring specific action right or page permission.
  * @param {string} requiredRight - Key for required right (e.g., 'accept_decline_report', 'manage_iso')
@@ -49,7 +63,7 @@ export function requirePermission(requiredRight) {
       const normalizedRole = String(roleName || '').trim().toLowerCase()
       let isAllowed = false
 
-      if (normalizedRole === 'admin') {
+      if (isAdminRole(roleName)) {
         isAllowed = true
       } else if (permissions && typeof permissions === 'object') {
         const rights = Array.isArray(permissions.rights) ? permissions.rights : []
@@ -93,7 +107,7 @@ export function requireRoles(allowedRoles = [], requiredRight = null) {
       const normalizedRole = String(roleName || '').trim().toLowerCase()
       let isAllowed = false
 
-      if (normalizedRole === 'admin' || normalizedRole === 'super admin') {
+      if (isAdminRole(roleName)) {
         isAllowed = true
       } else if (requiredRight && permissions && typeof permissions === 'object' && Array.isArray(permissions.rights)) {
         isAllowed = permissions.rights.includes(requiredRight)

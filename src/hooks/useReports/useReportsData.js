@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { isAdminRole } from '@/utils/roleUtils.js'
 import { loadDepartments } from '@/services/departmentService'
 import { fetchAllReports } from '@/services/ncrService'
 import { fetchLocations } from '@/services/locationService'
@@ -92,7 +93,7 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
         const allData = await fetchAllReports()
         const allArray = Array.isArray(allData) ? allData : []
         
-        const isStandardUser = !['admin', 'auditor'].includes(String(userRole || '').trim().toLowerCase())
+        const isStandardUser = !isAdminRole(userRole) && String(userRole || '').trim().toLowerCase() !== 'auditor'
         const scopedArray = isStandardUser
           ? allArray.filter(r => String(r.department_id) === String(userDepartmentId))
           : allArray

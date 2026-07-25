@@ -14,6 +14,7 @@ import {
   updateRole as updateRoleController,
   deleteRole as deleteRoleController,
 } from '@/services/roleService'
+import { isAdminRole } from '@/utils/roleUtils.js'
 
 export default function RolesPage({
   userRole,
@@ -49,7 +50,7 @@ export default function RolesPage({
     <div className="page-root">
 
 
-      {userRole === 'admin' ? (
+      {isAdminRole(userRole) ? (
         <main className="page-main-wide">
           <h1 className="page-title">Manage Roles</h1>
 

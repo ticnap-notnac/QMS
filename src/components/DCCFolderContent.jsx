@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { isAdminRole } from '../utils/roleUtils.js'
 import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X } from 'lucide-react'
 import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
@@ -60,7 +61,7 @@ export default function DCCFolderContent({
   const TASK_REPORT_SUBFOLDERS = [
     { id: 'ncr', label: 'NCR' },
     ...(normRole !== 'warehouse staff' ? [{ id: 'qddr', label: 'QDDR' }] : []),
-    ...(['admin', 'auditor'].includes(normRole) ? [
+    ...(isAdminRole(userRole) || normRole === 'auditor' ? [
       { id: 'car', label: 'CAR' },
       { id: 'audit', label: 'Audit Reports' },
       { id: 'audit_schedules', label: 'Audit Schedules' },
@@ -381,7 +382,7 @@ export default function DCCFolderContent({
 
           {/* SYSTEM LOGS TABLE */}
           {selectedFolder?.id === 'system_logs' && (
-            userRole === 'admin' ? (
+            isAdminRole(userRole) ? (
               <SystemLogsPanel onClose={onCloseFolder} searchQuery={searchQuery} />
             ) : (
               <div className="empty-state">

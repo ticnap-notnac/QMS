@@ -15,6 +15,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import NotificationsModal from '../Modals/NotificationsModal.jsx'
 import '../components.css'
 
+import { isAdminRole } from '@/utils/roleUtils.js'
+
 export default function Navbar({
   isUserMenuOpen,
   onToggleMenu,
@@ -45,7 +47,7 @@ export default function Navbar({
     : true
 
   const pagesList = Array.isArray(userPermissions?.pages) ? userPermissions.pages : []
-  const hasPageAccess = (pageKey) => normalizedRole === 'admin' || pagesList.includes(pageKey)
+  const hasPageAccess = (pageKey) => isAdminRole(userRole) || pagesList.includes(pageKey)
 
   // Close the user dropdown when a click lands outside the reference node bounds
   useEffect(() => {
@@ -212,7 +214,7 @@ export default function Navbar({
 
           <div className="app-nav-bottom" ref={desktopMenuContainerRef}>
             <div onClick={onToggleMenu} className="sidebar-user-card-trigger">
-              <div className={`sidebar-user-avatar ${normalizedRole === 'admin' ? 'admin' : 'default'}`}>
+              <div className={`sidebar-user-avatar ${isAdminRole(userRole) ? 'admin' : 'default'}`}>
                 {userName ? userName.charAt(0).toUpperCase() : 'U'}
               </div>
               <div className="sidebar-user-info">
@@ -237,7 +239,7 @@ export default function Navbar({
         <div className="mobile-top-actions">
           {actionIconsJSX}
           <div onClick={onToggleMenu} className="mobile-user-avatar-trigger">
-            <div className={`sidebar-user-avatar ${normalizedRole === 'admin' ? 'admin' : 'default'}`}>
+            <div className={`sidebar-user-avatar ${isAdminRole(userRole) ? 'admin' : 'default'}`}>
               {userName ? userName.charAt(0).toUpperCase() : 'U'}
             </div>
           </div>
