@@ -3,6 +3,8 @@ import useDepartmentsLogic from './useAdminPanel/useDepartmentsLogic'
 import useLocationsLogic from './useAdminPanel/useLocationsLogic'
 import useProductTypesLogic from './useAdminPanel/useProductTypesLogic'
 import useISOStandardsLogic from './useAdminPanel/useISOStandardsLogic'
+import useSeverityCategoryLogic from './useAdminPanel/useSeverityCategoryLogic'
+import usePositionsLogic from './useAdminPanel/usePositionsLogic'
 
 // Unified entry point hook aggregating all admin panel hooks
 export function useAdminPanel({ userRole, userName } = {}) {
@@ -11,13 +13,17 @@ export function useAdminPanel({ userRole, userName } = {}) {
   const locations = useLocationsLogic({ userRole })
   const productTypes = useProductTypesLogic({ userRole })
   const isoStandards = useISOStandardsLogic({ userRole, userName })
+  const severityCategory = useSeverityCategoryLogic({ userRole })
+  const positions = usePositionsLogic({ userRole })
 
   return {
     addUser,
     departments,
     locations,
     productTypes,
-    isoStandards
+    isoStandards,
+    severityCategory,
+    positions
   }
 }
 
@@ -27,5 +33,9 @@ export {
   useDepartmentsLogic,
   useLocationsLogic,
   useProductTypesLogic,
-  useISOStandardsLogic
+  useISOStandardsLogic,
+  useSeverityCategoryLogic,
+  usePositionsLogic
 }
+
+

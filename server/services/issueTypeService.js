@@ -72,8 +72,47 @@ export async function deleteIssueType({ id, userAuthId }) {
     userAuthId,
     details: { id: existing.id, issue_type_name: existing.issue_type_name || null },
   })
-
-  return { success: true }
 }
 
-export default { fetchIssueTypes, createIssueType, deleteIssueType }
+export async function updateIssueType({ id, issue_type_name, actorAuthId }) {
+  const trimmedName = String(issue_type_name || '').trim()
+  if (!trimmedName) {
+    const err = new Error('Issue type name is required.')
+    err.status = 400
+    throw err
+  }
+
+  const { data: existing, error: lookupError } = await supabase
+    .from('issue_types')
+    .select('id, issue_type_name')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (lookupError) throw lookupError
+  if (!existing) {
+    const err = new Error('Issue type not found.')
+    err.status = 404
+    throw err
+  }
+
+  const { data, error } = await supabase
+    .from('issue_types')
+    .update({ issue_type_name: trimmedName })
+    .eq('id', id)
+    .select('id, issue_type_name')
+    .maybeSingle()
+
+  if (error) throw error
+
+  await writeAudit({
+    level: 'audit',
+    source: 'issue_types',
+    action: 'issue_type_update',
+    userAuthId: actorAuthId,
+    details: { id: existing.id, old_name: existing.issue_type_name, new_name: trimmedName },
+  })
+
+  return data
+}
+
+export default { fetchIssueTypes, createIssueType, deleteIssueType, updateIssueType }

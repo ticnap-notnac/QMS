@@ -10,6 +10,8 @@ function EditUserModal({
   departmentsLoading,
   availableSites,
   sitesLoading,
+  availablePositions = [],
+  positionsLoading,
   loading,
   error,
   message,
@@ -99,6 +101,24 @@ function EditUserModal({
                 <option value="">{sitesLoading ? 'Loading sites...' : 'Select a site'}</option>
                 {(availableSites || []).map((site) => (
                   <option key={site.id} value={site.id}>{site.site_name}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="modal-grid-3">
+            <label className="panel-column">
+              <span className="small-label">Position:</span>
+              <select
+                name="positionId"
+                value={formData.positionId || ''}
+                onChange={onChange}
+                className="form-input-reports"
+                disabled={positionsLoading || !availablePositions?.length}
+              >
+                <option value="">{positionsLoading ? 'Loading positions...' : 'Select a position'}</option>
+                {(availablePositions || []).map((pos) => (
+                  <option key={pos.id} value={pos.id}>{pos.position_name}</option>
                 ))}
               </select>
             </label>

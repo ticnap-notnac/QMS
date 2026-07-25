@@ -14,6 +14,7 @@ import departmentRoutes from './routes/departmentRoutes.js'
 import locationRoutes from './routes/locationRoutes.js'
 import productTypeRoutes from './routes/productTypeRoutes.js'
 import issueTypeRoutes from './routes/issueTypeRoutes.js'
+import positionRoutes from './routes/positionRoutes.js'
 import logRoutes from './routes/logRoutes.js'
 import debugRoutes from './routes/debugRoutes.js'
 import ncrRoutes from './routes/ncrRoutes.js'
@@ -80,6 +81,7 @@ app.use('/api/departments', authMiddleware, departmentRoutes)
 app.use('/api', authMiddleware, locationRoutes)
 app.use('/api', authMiddleware, productTypeRoutes)
 app.use('/api', authMiddleware, issueTypeRoutes)
+app.use('/api', authMiddleware, positionRoutes)
 // Client-side error reporting — must be before authMiddleware so unauthenticated
 // browsers (e.g. on a failed login) can still POST errors without a 401
 app.post('/api/logs/client-error', logClientError)

@@ -14,6 +14,8 @@ const DepartmentsPage = lazy(() => import('@/pages/DepartmentsPage.jsx'))
 const LocationsPage = lazy(() => import('@/pages/LocationsPage.jsx'))
 const ProductTypesPage = lazy(() => import('@/pages/ProductTypesPage.jsx'))
 const ISOStandardsPage = lazy(() => import('@/pages/ISOStandardsPage.jsx'))
+const SeverityCategoryPage = lazy(() => import('@/pages/SeverityCategoryPage.jsx'))
+const PositionsPage = lazy(() => import('@/pages/PositionsPage.jsx'))
 const SettingsPage = lazy(() => import('@/pages/SettingsPage.jsx'))
 const AuditToolsPage = lazy(() => import('@/pages/AuditToolsPage.jsx'))
 const PermissionsPage = lazy(() => import('@/pages/PermissionsPage.jsx'))
@@ -62,6 +64,8 @@ export default function AppRouter({ sharedProps, refreshUserData }) {
         <Route path="/settings/locations" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><LocationsPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/product-types" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><ProductTypesPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/iso-standards" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><ISOStandardsPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/severity-category" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><SeverityCategoryPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/positions" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><PositionsPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><AddUserPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/audit-tools" element={<ProtectedRoute pageKey="audit_tools" sharedProps={sharedProps}><AuditToolsPage {...sharedProps} /></ProtectedRoute>} />
       </Routes>

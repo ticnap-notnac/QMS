@@ -31,3 +31,15 @@ export async function deleteIssueType(req, res, next) {
     next(err)
   }
 }
+
+export async function putIssueType(req, res, next) {
+  const { id } = req.params
+  const actorAuthId = getRequestActor(req)
+  const issue_type_name = req.body?.issue_type_name || req.body?.issueTypeName
+  try {
+    const data = await issueTypeService.updateIssueType({ id, issue_type_name, actorAuthId })
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}

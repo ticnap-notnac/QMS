@@ -36,7 +36,8 @@ export default function ReportsPage({
 }) {
   const logic = useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId })
   const normalizedRole = String(userRole || '').trim().toLowerCase()
-  const canAccessCar = isAdminRole(userRole) || ['auditor', 'department manager'].includes(normalizedRole)
+  const canAccessCar = isAdminRole(userRole) || ['team leader', 'warehouse supervisor', 'supervisor', 'safety', 'auditor', 'department manager'].includes(normalizedRole)
+  const canSubmitCar = isAdminRole(userRole) || ['team leader', 'auditor'].includes(normalizedRole)
   const canAccessQddr = String(userRole || '').trim().toLowerCase() !== 'warehouse staff'
   const availableTabs = ['ncr', ...(canAccessCar ? ['car'] : []), ...(canAccessQddr ? ['qddr'] : [])]
 
@@ -203,19 +204,21 @@ export default function ReportsPage({
 
           </div>
           <div className="reports-action-buttons-right">
-            <button 
-              type="button" 
-              onClick={() => {
-                if (logic.activeTab === 'ncr') logic.openCreateModal()
-                else if (logic.activeTab === 'car') logic.openCARModal()
-                else if (logic.activeTab === 'qddr') logic.openQDDRModal()
-              }} 
-              className="btn-gradient-primary reports-submit-primary"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-              title={`Submit a new ${logic.activeTab.toUpperCase()}`}
-            >
-              Submit {logic.activeTab.toUpperCase()}
-            </button>
+            {(logic.activeTab !== 'car' || canSubmitCar) && (
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (logic.activeTab === 'ncr') logic.openCreateModal()
+                  else if (logic.activeTab === 'car') logic.openCARModal()
+                  else if (logic.activeTab === 'qddr') logic.openQDDRModal()
+                }} 
+                className="btn-gradient-primary reports-submit-primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                title={`Submit a new ${logic.activeTab.toUpperCase()}`}
+              >
+                Submit {logic.activeTab.toUpperCase()}
+              </button>
+            )}
           </div>
         </div>
 

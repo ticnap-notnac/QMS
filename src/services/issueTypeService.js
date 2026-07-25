@@ -14,3 +14,8 @@ export async function deleteIssueType(id) {
   await request(`/issue-types/${id}`, { method: 'DELETE' })
   return true
 }
+
+export async function updateIssueType(id, issue_type_name) {
+  return await request(`/issue-types/${id}`, { method: 'PUT', body: JSON.stringify({ issue_type_name }) })
+}
+

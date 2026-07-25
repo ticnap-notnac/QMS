@@ -5,6 +5,7 @@ import { useLookup } from '@/context/LookupContext'
 export default function useAdminCategorySetup({
   loadFn,
   createFn,
+  updateFn,
   deleteFn,
   labelKey,
   entityName,
@@ -20,9 +21,10 @@ export default function useAdminCategorySetup({
   const [itemToDelete, setItemToDelete] = useState(null)
   const [editingItem, setEditingItem] = useState(null)
 
-  const { items, loading, deletingId, creating, reload, createItem, deleteItem, error } = useCategoryManager({
+  const { items, loading, deletingId, creating, reload, createItem, updateItem, deleteItem, error } = useCategoryManager({
     loadFn,
     createFn,
+    updateFn,
     deleteFn
   })
 
@@ -63,8 +65,12 @@ export default function useAdminCategorySetup({
           closeCategoryModal()
           return
         }
-        await createItem(nextValue)
-        await deleteItem(editingItem.id)
+        if (updateFn) {
+          await updateItem(editingItem.id, nextValue)
+        } else {
+          await createItem(nextValue)
+          await deleteItem(editingItem.id)
+        }
         await reloadLookups()
         setToast({ message: `Updated ${entityName.toLowerCase()} successfully from "${originalValue}" to "${nextValue}".`, type: 'success' })
       } else {

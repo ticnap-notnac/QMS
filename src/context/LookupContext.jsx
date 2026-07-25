@@ -2,12 +2,14 @@ import { createContext, useContext, useCallback, useEffect, useState } from 'rea
 import { loadRoles as loadRolesController } from '@/services/roleService'
 import { loadDepartments as loadDepartmentsController } from '@/services/departmentService'
 import { fetchSites } from '@/services/siteService'
+import { fetchPositions } from '@/services/positionService'
 import { supabase } from '@/utils/supabase'
 
 const LookupContext = createContext({
   roles: [],
   departments: [],
   sites: [],
+  positions: [],
   userSiteId: null,
   userSiteName: null,
   loading: false,
@@ -19,6 +21,7 @@ export function LookupProvider({ children }) {
   const [roles, setRoles] = useState([])
   const [departments, setDepartments] = useState([])
   const [sites, setSites] = useState([])
+  const [positions, setPositions] = useState([])
   const [userSiteId, setUserSiteId] = useState(null)
   const [userSiteName, setUserSiteName] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -49,10 +52,11 @@ export function LookupProvider({ children }) {
     setLoading(true)
     setError('')
     try {
-      const [r, d, s] = await Promise.all([
+      const [r, d, s, p] = await Promise.all([
         loadRolesController(),
         loadDepartmentsController(),
         fetchSites(),
+        fetchPositions(),
       ])
       // If a reload unexpectedly returns empty arrays but we already have values,
       // preserve the existing lookups to avoid wiping the UI due to a transient API glitch.
@@ -73,12 +77,14 @@ export function LookupProvider({ children }) {
         return next
       })
       setSites(Array.isArray(s) ? s : [])
+      setPositions(Array.isArray(p) ? p : [])
       await resolveUserSite(session)
     } catch (err) {
       console.error('Lookup reload error:', err)
       setRoles([])
       setDepartments([])
       setSites([])
+      setPositions([])
       setError('We could not load reference data (departments, roles, etc.). Please refresh the page.')
     } finally {
       setLoading(false)
@@ -102,7 +108,7 @@ export function LookupProvider({ children }) {
   }, [reloadLookups])
 
   return (
-    <LookupContext.Provider value={{ roles, departments, sites, userSiteId, userSiteName, loading, error, reloadLookups }}>
+    <LookupContext.Provider value={{ roles, departments, sites, positions, userSiteId, userSiteName, loading, error, reloadLookups }}>
       {children}
     </LookupContext.Provider>
   )

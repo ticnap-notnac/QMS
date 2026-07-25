@@ -3,11 +3,20 @@ import { useLookup } from '@/context/LookupContext'
 import useUserManager from '@/hooks/useUserManager'
 import { createUser, updateUser } from '@/services/userService'
 import { supabase } from '@/utils/supabase'
+import { useAuth } from '@/hooks/useAuth'
+import { isSuperAdminRole, isAdminOrSuperAdminRole } from '@/utils/roleUtils.js'
 
 export default function useAddUserLogic() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL') // 'ALL', 'ACTIVE', 'INACTIVE', 'DEACTIVATED'
-  const { roles, departments, sites, loading: lookupsLoading } = useLookup()
+  const { roles, departments, sites, positions, loading: lookupsLoading } = useLookup()
+  const { userRole } = useAuth()
+
+  const isSuperAdmin = isSuperAdminRole(userRole)
+  const availableRolesForActor = useMemo(() => {
+    if (isSuperAdmin) return roles
+    return (roles || []).filter(r => !isAdminOrSuperAdminRole(r.role_name))
+  }, [roles, isSuperAdmin])
   
   const [formMessage, setFormMessage] = useState('')
   const [formError, setFormError] = useState('')
@@ -32,6 +41,7 @@ export default function useAddUserLogic() {
     roleId: '',
     departmentId: '',
     siteId: '',
+    positionId: '',
   })
 
   // useUserManager orchestrates the DB interface
@@ -291,12 +301,14 @@ export default function useAddUserLogic() {
     onSubmit: handleSubmitNewUser,
     onChange: handleUserFieldChange,
     formData: newUser,
-    availableRoles: roles,
+    availableRoles: availableRolesForActor,
     rolesLoading: lookupsLoading,
     availableDepartments: departments,
     departmentsLoading: lookupsLoading,
     availableSites: sites,
     sitesLoading: lookupsLoading,
+    availablePositions: positions,
+    positionsLoading: lookupsLoading,
     loading: submitting,
     error: formError,
     message: formMessage,
@@ -308,12 +320,14 @@ export default function useAddUserLogic() {
     onSubmit: handleSubmitEditUser,
     onChange: handleEditFieldChange,
     formData: editingUser || {},
-    availableRoles: roles,
+    availableRoles: availableRolesForActor,
     rolesLoading: lookupsLoading,
     availableDepartments: departments,
     departmentsLoading: lookupsLoading,
     availableSites: sites,
     sitesLoading: lookupsLoading,
+    availablePositions: positions,
+    positionsLoading: lookupsLoading,
     loading: editSubmitting,
     error: editFormError,
     message: editFormMessage,

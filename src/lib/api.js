@@ -41,8 +41,16 @@ async function request(path, options = {}) {
     },
   })
 
+  const text = await response.text()
   const contentType = response.headers.get('content-type') || ''
-  const payload = contentType.includes('application/json') ? await response.json() : await response.text()
+  let payload = text
+  if (contentType.includes('application/json') && text.trim()) {
+    try {
+      payload = JSON.parse(text)
+    } catch {
+      payload = text
+    }
+  }
 
   if (!response.ok) {
     if (typeof payload === 'string') {

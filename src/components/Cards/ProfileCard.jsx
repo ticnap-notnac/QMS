@@ -20,11 +20,15 @@ export default function ProfileCard({ userProfile = {}, userRole = 'employee', u
         </div>
         <div className="profile-field user-info-field--profile">
           <span className="profile-field-label user-info-field-label--profile">Employee Department</span>
-          <span className="profile-field-value user-info-field-value--profile">IT Department</span>
+          <span className="profile-field-value user-info-field-value--profile">{userProfile.department_name || userProfile.department || 'IT Department'}</span>
+        </div>
+        <div className="profile-field user-info-field--profile">
+          <span className="profile-field-label user-info-field-label--profile">Role</span>
+          <span className="profile-field-value user-info-field-value--profile" style={{ textTransform: 'capitalize' }}>{userProfile.role_name || userRole || '-'}</span>
         </div>
         <div className="profile-field user-info-field--profile">
           <span className="profile-field-label user-info-field-label--profile">Position</span>
-          <span className="profile-field-value user-info-field-value--profile">{userPosition || '-'}</span>
+          <span className="profile-field-value user-info-field-value--profile">{userProfile.position_name || userProfile.position || userPosition || '-'}</span>
         </div>
         <div className="profile-field user-info-field--profile">
           <span className="profile-field-label user-info-field-label--profile">Email Address</span>
