@@ -16,6 +16,7 @@ const ProductTypesPage = lazy(() => import('@/pages/ProductTypesPage.jsx'))
 const ISOStandardsPage = lazy(() => import('@/pages/ISOStandardsPage.jsx'))
 const SettingsPage = lazy(() => import('@/pages/SettingsPage.jsx'))
 const AuditToolsPage = lazy(() => import('@/pages/AuditToolsPage.jsx'))
+const PermissionsPage = lazy(() => import('@/pages/PermissionsPage.jsx'))
 
 const PageLoader = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', minHeight: '400px' }}>
@@ -55,6 +56,7 @@ export default function AppRouter({ sharedProps, refreshUserData }) {
         <Route path="/settings" element={<SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />} />
         <Route path="/settings/profile" element={<UserInformationPage {...sharedProps} />} />
         <Route path="/settings/roles" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><RolesPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/permissions" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><PermissionsPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/departments" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><DepartmentsPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/locations" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><LocationsPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/product-types" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><ProductTypesPage {...sharedProps} /></ProtectedRoute>} />

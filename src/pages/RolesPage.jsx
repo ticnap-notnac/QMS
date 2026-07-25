@@ -87,8 +87,6 @@ export default function RolesPage({
                     deletingId={deletingId}
                     noMatchesText="No matches found."
                   />
-
-                  <RolePermissionsMatrix roles={items} onPermissionsUpdated={reload} />
                 </div>
               </div>
             </div>

@@ -4,13 +4,14 @@ export default function AdminNavbar({
   activeTab = 'Users',
 }) {
   const navigate = useNavigate()
-  const tabs = ['Users', 'Dept', 'Roles', 'Locations', 'Product Types', 'ISO Standards']
+  const tabs = ['Users', 'Dept', 'Roles', 'Permissions', 'Locations', 'Product Types', 'ISO Standards']
 
   const handleTabChange = (tab) => {
     const routeMap = {
       'Users': '/admin',
       'Dept': '/settings/departments',
       'Roles': '/settings/roles',
+      'Permissions': '/settings/permissions',
       'Locations': '/settings/locations',
       'Product Types': '/settings/product-types',
       'ISO Standards': '/settings/iso-standards'

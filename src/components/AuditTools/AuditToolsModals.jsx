@@ -1,7 +1,5 @@
 import { LoaderCircle, BookOpen } from 'lucide-react'
 import { useState } from 'react'
-import ReactQuill from 'react-quill-new'
-import 'react-quill-new/dist/quill.snow.css'
 
 export function AuditChecklistSection({
   activeRun,
@@ -145,35 +143,35 @@ export function AuditChecklistSection({
                 <div className="form-row-2" style={{ marginTop: '16px', marginBottom: 0, gap: '12px' }}>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Evidence / Observations</label>
-                    <div style={{ background: '#fff', borderRadius: '4px' }}>
-                      <ReactQuill
-                        theme="snow"
-                        placeholder="Enter evidence or observations found..."
-                        value={answer.evidence || ''}
-                        onChange={(value) => {
-                          setResultsMap({
-                            ...resultsMap,
-                            [clause.id]: { ...answer, evidence: value }
-                          })
-                        }}
-                      />
-                    </div>
+                    <textarea
+                      className="form-input-reports"
+                      rows={3}
+                      placeholder="Enter evidence or observations found..."
+                      value={answer.evidence || ''}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setResultsMap({
+                          ...resultsMap,
+                          [clause.id]: { ...answer, evidence: val }
+                        })
+                      }}
+                    />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Findings / CAR Notes</label>
-                    <div style={{ background: '#fff', borderRadius: '4px' }}>
-                      <ReactQuill
-                        theme="snow"
-                        placeholder="Add findings notes or links to Corrective Actions..."
-                        value={answer.notes || ''}
-                        onChange={(value) => {
-                          setResultsMap({
-                            ...resultsMap,
-                            [clause.id]: { ...answer, notes: value }
-                          })
-                        }}
-                      />
-                    </div>
+                    <textarea
+                      className="form-input-reports"
+                      rows={3}
+                      placeholder="Add findings notes or links to Corrective Actions..."
+                      value={answer.notes || ''}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setResultsMap({
+                          ...resultsMap,
+                          [clause.id]: { ...answer, notes: val }
+                        })
+                      }}
+                    />
                   </div>
                 </div>
 
