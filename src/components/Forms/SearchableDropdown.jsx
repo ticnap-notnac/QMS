@@ -24,7 +24,7 @@ function SearchableDropdown({ label, value, onValueChange, options, loading = fa
     <div>
       <label className="label-field">
         {label}
-        {required && <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span>}
+        {required && <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span>}
       </label>
       <div style={{ position: 'relative' }}>
         <input

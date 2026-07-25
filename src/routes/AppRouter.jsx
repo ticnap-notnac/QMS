@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import { LoaderCircle } from 'lucide-react'
+import { isAdminRole } from '@/utils/roleUtils.js'
 
 // Lazy load pages to enable code-splitting
 const DashboardPage = lazy(() => import('@/pages/DashboardPage.jsx'))
@@ -34,8 +35,6 @@ const AccessDenied = () => (
     </main>
   </div>
 )
-
-import { isAdminRole } from '@/utils/roleUtils.js'
 
 const ProtectedRoute = ({ pageKey, sharedProps, children }) => {
   if (isAdminRole(sharedProps?.userRole)) return children
