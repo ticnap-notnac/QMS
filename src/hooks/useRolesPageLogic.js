@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react'
 import useCategoryManager from '@/hooks/useCategoryManager'
 import { useLookup } from '@/context/LookupContext'
+import { updateRolePositions } from '@/services/roleService'
 
 export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn } = {}) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [categoryInput, setCategoryInput] = useState('')
+  const [selectedPositionIds, setSelectedPositionIds] = useState([])
   const [formError, setFormError] = useState('')
   const [formMessage, setFormMessage] = useState('')
 
@@ -21,7 +23,7 @@ export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn
     deleteFn,
   })
 
-  const { reloadLookups } = useLookup()
+  const { positions: availablePositions, reloadLookups } = useLookup()
 
   const filtered = useMemo(() => {
     const q = (searchQuery || '').trim().toLowerCase()
@@ -29,10 +31,18 @@ export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn
     return items.filter((r) => (r.role_name || '').toLowerCase().includes(q))
   }, [items, searchQuery])
 
+  const togglePositionSelection = (posId) => {
+    const target = String(posId)
+    setSelectedPositionIds((prev) =>
+      prev.includes(target) ? prev.filter((id) => id !== target) : [...prev, target]
+    )
+  }
+
   const openCategoryModal = () => {
     setFormError('')
     setFormMessage('')
     setCategoryInput('')
+    setSelectedPositionIds([])
     setEditingItem(null)
     setIsCategoryModalOpen(true)
   }
@@ -40,6 +50,7 @@ export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn
   const closeCategoryModal = () => {
     setIsCategoryModalOpen(false)
     setCategoryInput('')
+    setSelectedPositionIds([])
     setEditingItem(null)
   }
 
@@ -52,22 +63,32 @@ export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn
     }
     try {
       setFormError('')
+      let targetRoleId = null
+
       if (editingItem) {
+        targetRoleId = editingItem.id
         const originalValue = editingItem.role_name || ''
-        if (nextValue === originalValue) {
-          closeCategoryModal()
-          return
+        if (nextValue !== originalValue) {
+          await updateItem(editingItem.id, nextValue)
         }
-        await updateItem(editingItem.id, nextValue)
-        await reloadLookups()
-        setToast({ message: `Updated role successfully from "${originalValue}" to "${nextValue}".`, type: 'success' })
-        setPageError('')
       } else {
-        await createItem(nextValue)
-        await reloadLookups()
-        setToast({ message: `Added role "${nextValue}" successfully.`, type: 'success' })
-        setPageError('')
+        const created = await createItem(nextValue)
+        targetRoleId = Array.isArray(created) ? created[0]?.id : created?.id
       }
+
+      if (targetRoleId) {
+        await updateRolePositions(targetRoleId, selectedPositionIds)
+      }
+
+      await reloadLookups()
+      await reload()
+
+      if (editingItem) {
+        setToast({ message: `Updated role "${nextValue}" and positions successfully.`, type: 'success' })
+      } else {
+        setToast({ message: `Added role "${nextValue}" successfully.`, type: 'success' })
+      }
+      setPageError('')
       closeCategoryModal()
     } catch (err) {
       setFormError(editingItem ? 'Could not update role. Please try again.' : 'This role could not be added. Please try again.')
@@ -110,6 +131,8 @@ export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn
     setFormError('')
     setFormMessage('')
     setCategoryInput(role.role_name || '')
+    const existingPosIds = Array.isArray(role.positions) ? role.positions.map((p) => String(p.id)) : []
+    setSelectedPositionIds(existingPosIds)
     setEditingItem(role)
     setIsCategoryModalOpen(true)
   }
@@ -128,6 +151,9 @@ export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn
     closeCategoryModal,
     categoryInput,
     setCategoryInput,
+    availablePositions,
+    selectedPositionIds,
+    togglePositionSelection,
     formError,
     setFormError,
     formMessage,

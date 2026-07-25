@@ -91,3 +91,15 @@ export async function putRolePermissions(req, res) {
 
   return res.json(data?.[0] ?? data ?? {})
 }
+
+export async function putRolePositions(req, res) {
+  const { id } = req.params
+  const { positionIds } = req.body ?? {}
+  const actorAuthId = getRequestActor(req)
+
+  const { assignPositionsToRole } = await import('../services/positionService.js')
+  const result = await assignPositionsToRole({ roleId: Number(id), positionIds: positionIds || [], actorAuthId })
+
+  if (result.error) return res.status(500).json({ error: result.error.message || result.error })
+  return res.json({ success: true })
+}

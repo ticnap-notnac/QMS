@@ -33,40 +33,64 @@ export default function AdminListPanel({
             return (
               <div className="admin-list-item" key={item.id}>
 
-                {/* Text Label and Optional Color Status Badge Container Row */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span>{label}</span>
+                {/* Text Label, Positions Badges, and Optional Color Status Badge Container Row */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span>{label}</span>
 
-                  {/* 🚀 Dynamic Status Badge: Active (Green), Inactive (Red), Deactivated (Orange) */}
-                  {itemStatus && (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                        whiteSpace: 'nowrap',
-                        background:
-                          itemStatus === 'active' ? 'rgba(16, 185, 129, 0.08)' :
-                            itemStatus === 'inactive' ? 'rgba(239, 68, 68, 0.08)' :
-                              'rgba(245, 158, 11, 0.08)',
-                        color:
-                          itemStatus === 'active' ? '#059669' :
-                            itemStatus === 'inactive' ? '#dc2626' :
-                              '#d97706',
-                        border:
-                          itemStatus === 'active' ? '1px solid rgba(16, 185, 129, 0.2)' :
-                            itemStatus === 'inactive' ? '1px solid rgba(239, 68, 68, 0.2)' :
-                              '1px solid rgba(245, 158, 11, 0.2)'
-                      }}
-                    >
-                      {item.status}
-                    </span>
+                    {/* 🚀 Dynamic Status Badge: Active (Green), Inactive (Red), Deactivated (Orange) */}
+                    {itemStatus && (
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          whiteSpace: 'nowrap',
+                          background:
+                            itemStatus === 'active' ? 'rgba(16, 185, 129, 0.08)' :
+                              itemStatus === 'inactive' ? 'rgba(239, 68, 68, 0.08)' :
+                                'rgba(245, 158, 11, 0.08)',
+                          color:
+                            itemStatus === 'active' ? '#059669' :
+                              itemStatus === 'inactive' ? '#dc2626' :
+                                '#d97706',
+                          border:
+                            itemStatus === 'active' ? '1px solid rgba(16, 185, 129, 0.2)' :
+                              itemStatus === 'inactive' ? '1px solid rgba(239, 68, 68, 0.2)' :
+                                '1px solid rgba(245, 158, 11, 0.2)'
+                        }}
+                      >
+                        {item.status}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 🏷️ Positions Badges (Child job titles linked to this role) */}
+                  {Array.isArray(item.positions) && item.positions.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '2px' }}>
+                      {item.positions.map((pos) => (
+                        <span
+                          key={pos.id}
+                          style={{
+                            background: '#f1f5f9',
+                            color: '#475569',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '11px',
+                            fontWeight: '500',
+                            padding: '2px 8px',
+                            borderRadius: '12px'
+                          }}
+                        >
+                          {pos.position_name}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </div>
 

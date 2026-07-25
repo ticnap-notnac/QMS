@@ -3,10 +3,34 @@ import { writeAudit } from '../lib/audit.js'
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 export async function fetchAllRoles() {
-  return supabase
+  const { data: roles, error: rolesError } = await supabase
     .from('roles')
     .select('id, role_name, permissions')
     .order('role_name', { ascending: true })
+
+  if (rolesError) return { data: null, error: rolesError }
+
+  const { data: positions, error: posError } = await supabase
+    .from('positions')
+    .select('id, position_name, role_id')
+
+  const posMap = new Map()
+  if (positions) {
+    for (const p of positions) {
+      if (p.role_id) {
+        const key = String(p.role_id)
+        if (!posMap.has(key)) posMap.set(key, [])
+        posMap.get(key).push({ id: p.id, position_name: p.position_name })
+      }
+    }
+  }
+
+  const enriched = (roles || []).map((r) => ({
+    ...r,
+    positions: posMap.get(String(r.id)) || []
+  }))
+
+  return { data: enriched, error: null }
 }
 
 export async function fetchRoleById(id) {

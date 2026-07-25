@@ -92,3 +92,12 @@ export async function updateRolePermissions(id, permissions) {
     throw normalizeRoleError(err)
   }
 }
+
+export async function updateRolePositions(id, positionIds) {
+  try {
+    const data = await request(`/roles/${id}/positions`, { method: 'PUT', body: JSON.stringify({ positionIds }) })
+    return data
+  } catch (err) {
+    throw normalizeRoleError(err)
+  }
+}

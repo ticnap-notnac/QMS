@@ -1,10 +1,9 @@
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
-import AddCategoryModal from '@/components/Modals/AddCategoryModal'
+import RoleModal from '@/components/Modals/RoleModal'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
-import RolePermissionsMatrix from '@/components/Admin/RolePermissionsMatrix'
 import Toast from '@/components/UI/Toast.jsx'
 import './AdminPanel.css'
 import useRolesPageLogic from '@/hooks/useRolesPageLogic'
@@ -32,6 +31,9 @@ export default function RolesPage({
     closeCategoryModal,
     categoryInput,
     setCategoryInput,
+    availablePositions,
+    selectedPositionIds,
+    togglePositionSelection,
     formError,
     formMessage,
     toast,
@@ -93,20 +95,21 @@ export default function RolesPage({
             </div>
           </div>
 
-          <AddCategoryModal
+          <RoleModal
             isOpen={isCategoryModalOpen}
             onClose={closeCategoryModal}
             onSubmit={handleSubmitCategory}
             title={editingItem ? 'Edit Role' : 'Create New Role'}
-            label="Role Name"
-            value={categoryInput}
-            onChange={(event) => setCategoryInput(event.target.value)}
-            placeholder="Enter role name"
+            roleName={categoryInput}
+            onRoleNameChange={(event) => setCategoryInput(event.target.value)}
+            availablePositions={availablePositions}
+            selectedPositionIds={selectedPositionIds}
+            onPositionToggle={togglePositionSelection}
             loading={creating || loading}
             error={formError}
             message={formMessage}
             submitLabel={editingItem ? 'Save Changes' : 'Create Role'}
-            helperText={editingItem ? 'Modify the name of the selected role entry.' : 'Create a role entry that will be available in the user modal.'}
+            helperText={editingItem ? 'Modify the role name and select which positions (job titles) belong to this role.' : 'Create a new role and select which positions (job titles) belong to it.'}
           />
           <ConfirmDialog {...confirmDialogProps} />
           {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
