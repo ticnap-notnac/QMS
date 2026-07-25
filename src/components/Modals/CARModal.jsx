@@ -201,7 +201,7 @@ function CARModal({
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label className="label-field">Date: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
+                  <label className="label-field">Date: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></label>
                   <input
                     type="date"
                     value={form.date}
@@ -317,7 +317,7 @@ function CARModal({
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label className="label-field" style={{ margin: 0, textAlign: 'center' }}>DETAILS OF NON-CONFORMANCE: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
+                <label className="label-field" style={{ margin: 0, textAlign: 'center' }}>DETAILS OF NON-CONFORMANCE: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></label>
                 <textarea
                   value={form.details_of_nonconformance}
                   onChange={(e) => handleChange('details_of_nonconformance', e.target.value)}
@@ -441,7 +441,7 @@ function CARModal({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', width: '31.5%' }}>
-                  <label className="label-field">Request Date: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
+                  <label className="label-field">Request Date: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></label>
                   <input
                     type="date"
                     value={form.request_date}

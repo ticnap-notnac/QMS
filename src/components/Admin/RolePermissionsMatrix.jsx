@@ -178,13 +178,13 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
               Configuring permissions for: <span style={{ color: '#2563eb', fontWeight: '700' }}>{selectedRole.role_name}</span>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <button type="button" onClick={handleSelectAll} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+              <button type="button" onClick={handleSelectAll} className="btn-secondary-light" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
                 Select All
               </button>
-              <button type="button" onClick={handleDeselectAll} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+              <button type="button" onClick={handleDeselectAll} className="btn-secondary-light" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
                 Clear All
               </button>
-              <button type="button" onClick={handleResetDefault} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <button type="button" onClick={handleResetDefault} className="btn-secondary-light" style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <RefreshCw size={12} /> Reset Default
               </button>
             </div>
