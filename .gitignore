@@ -28,6 +28,9 @@ dist-ssr
 *.sw?
 
 # Environment variables (secrets)
+.env
+.env.*
+*.env
 server/.env
 
 # Local planning / documentation drafts
