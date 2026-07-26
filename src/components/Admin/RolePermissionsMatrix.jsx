@@ -16,7 +16,9 @@ const AVAILABLE_PAGES = [
 const AVAILABLE_RIGHTS = [
   { key: 'accept_decline_report', label: 'Accept / Decline Reports', description: 'Approve, accept, or decline submitted quality reports' },
   { key: 'assign_report', label: 'Assign Reports', description: 'Assign reports to investigators or reviewers' },
-  { key: 'create_report', label: 'Create Reports', description: 'Create new NCR, CAR, or QDDR reports' },
+  { key: 'create_ncr_report', label: 'Create NCR Reports', description: 'Create new Non-Conformance Reports (NCR)' },
+  { key: 'create_car_report', label: 'Create CAR Reports', description: 'Create new Corrective Action Requests (CAR)' },
+  { key: 'create_qddr_report', label: 'Create QDDR Reports', description: 'Create new Quality Defect & Deviation Reports (QDDR)' },
   { key: 'edit_delete_report', label: 'Edit / Delete Reports', description: 'Modify or remove existing quality reports' },
   { key: 'submit_capa', label: 'Submit CAPA Actions', description: 'Submit corrective and preventive actions for CARs' },
   { key: 'verify_car', label: 'Verify CAR Actions', description: 'Perform verification on completed CAR actions' },
@@ -28,35 +30,35 @@ const AVAILABLE_RIGHTS = [
 const DEFAULT_ROLE_PERMISSIONS = {
   admin: {
     pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'admin_panel', 'settings'],
-    rights: ['accept_decline_report', 'assign_report', 'create_report', 'edit_delete_report', 'submit_capa', 'verify_car', 'manage_iso', 'manage_users', 'manage_audit_schedules'],
+    rights: ['accept_decline_report', 'assign_report', 'create_ncr_report', 'create_car_report', 'create_qddr_report', 'edit_delete_report', 'submit_capa', 'verify_car', 'manage_iso', 'manage_users', 'manage_audit_schedules'],
   },
   auditor: {
     pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
-    rights: ['accept_decline_report', 'assign_report', 'create_report', 'submit_capa', 'manage_iso', 'manage_audit_schedules'],
+    rights: ['accept_decline_report', 'assign_report', 'create_ncr_report', 'create_car_report', 'create_qddr_report', 'submit_capa', 'manage_iso', 'manage_audit_schedules'],
   },
   'team leader': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
-    rights: ['create_report', 'accept_decline_report'],
+    rights: ['create_ncr_report', 'create_car_report', 'accept_decline_report'],
   },
   'warehouse supervisor': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
-    rights: ['create_report', 'accept_decline_report', 'assign_report'],
+    rights: ['create_ncr_report', 'create_car_report', 'create_qddr_report', 'accept_decline_report', 'assign_report'],
   },
   'warehouse executive': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
-    rights: ['create_report', 'accept_decline_report'],
+    rights: ['create_ncr_report', 'create_qddr_report', 'accept_decline_report'],
   },
   'checker': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
-    rights: ['create_report', 'verify_car'],
+    rights: ['create_ncr_report', 'verify_car'],
   },
   'warehouse checker': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
-    rights: ['create_report', 'verify_car'],
+    rights: ['create_ncr_report', 'verify_car'],
   },
   default: {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
-    rights: ['create_report'],
+    rights: ['create_ncr_report'],
   }
 }
 

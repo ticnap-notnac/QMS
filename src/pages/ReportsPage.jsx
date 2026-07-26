@@ -35,10 +35,14 @@ export default function ReportsPage({
   userPermissions
 }) {
   const logic = useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId })
-  const normalizedRole = String(userRole || '').trim().toLowerCase()
-  const canAccessCar = isAdminRole(userRole) || ['team leader', 'warehouse supervisor', 'supervisor', 'safety', 'auditor', 'department manager'].includes(normalizedRole)
-  const canSubmitCar = isAdminRole(userRole) || ['team leader', 'auditor'].includes(normalizedRole)
-  const canAccessQddr = String(userRole || '').trim().toLowerCase() !== 'warehouse staff'
+  const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
+  const hasLegacyCreate = rights.includes('create_report')
+  const canCreateNcr = isAdminRole(userRole) || hasLegacyCreate || rights.includes('create_ncr_report')
+  const canCreateCar = isAdminRole(userRole) || hasLegacyCreate || rights.includes('create_car_report') || ['team leader', 'auditor'].includes(normalizedRole)
+  const canCreateQddr = isAdminRole(userRole) || hasLegacyCreate || rights.includes('create_qddr_report')
+
+  const canAccessCar = isAdminRole(userRole) || canCreateCar || ['team leader', 'warehouse supervisor', 'supervisor', 'safety', 'auditor', 'department manager'].includes(normalizedRole)
+  const canAccessQddr = isAdminRole(userRole) || canCreateQddr || String(userRole || '').trim().toLowerCase() !== 'warehouse staff'
   const availableTabs = ['ncr', ...(canAccessCar ? ['car'] : []), ...(canAccessQddr ? ['qddr'] : [])]
 
   const [carToDelete, setCarToDelete] = useState(null)
@@ -204,7 +208,9 @@ export default function ReportsPage({
 
           </div>
           <div className="reports-action-buttons-right">
-            {(logic.activeTab !== 'car' || canSubmitCar) && (
+            {((logic.activeTab === 'ncr' && canCreateNcr) ||
+              (logic.activeTab === 'car' && canCreateCar) ||
+              (logic.activeTab === 'qddr' && canCreateQddr)) && (
               <button 
                 type="button" 
                 onClick={() => {
