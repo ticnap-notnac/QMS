@@ -392,6 +392,41 @@ export default function DCCFolderContent({
             )
           )}
 
+          {/* ISO TERMS & COMPLIANCE POLICY */}
+          {selectedFolder?.id === 'terms_policy' && (
+            <div className="flex-column full-height" style={{ gap: '20px', padding: '12px' }}>
+              <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                  <ShieldAlert size={22} color="#0891b2" />
+                  <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>ISO Terms & System Compliance Policy</h3>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', color: '#334155', fontSize: '13.5px', lineHeight: '1.6' }}>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px' }}>
+                    <h4 style={{ margin: '0 0 6px 0', color: '#0f172a', fontSize: '14.5px' }}>1. Quality & ISO Standard Adherence</h4>
+                    <p style={{ margin: 0 }}>
+                      All Non-Conformance Reports (NCR), Corrective Action Requests (CAR), and Quality Defect & Deviation Reports (QDDR) created within QFlow must accurately represent operational non-conformances and comply with active ISO 9001:2015 and ISO 22000:2018 quality standards.
+                    </p>
+                  </div>
+
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px' }}>
+                    <h4 style={{ margin: '0 0 6px 0', color: '#0f172a', fontSize: '14.5px' }}>2. Data Integrity & Verification</h4>
+                    <p style={{ margin: 0 }}>
+                      Users are required to ensure that all reported findings, investigation records, uploaded evidence files, and root-cause analysis descriptions are genuine, un-altered, and subject to internal and external audit reviews.
+                    </p>
+                  </div>
+
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px' }}>
+                    <h4 style={{ margin: '0 0 6px 0', color: '#0f172a', fontSize: '14.5px' }}>3. Role-Based Governance</h4>
+                    <p style={{ margin: 0 }}>
+                      System rights (accepting, declining, assigning, and verifying corrective actions) are strictly controlled via role-based access permissions. Unauthorized attempt to modify historical reports or override system audits is prohibited.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ISO MODULES */}
           {selectedFolder?.id === 'iso_modules' && (
             <div className="flex-column full-height" style={{ gap: '20px' }}>

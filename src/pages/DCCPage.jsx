@@ -19,6 +19,7 @@ export default function DCCPage({
     ...(isAdminRole(userRole) ? [{ id: 'system_logs', label: 'System Logs' }] : []),
     ...(isAdminRole(userRole) || normRole === 'auditor' ? [{ id: 'iso_modules', label: 'ISO Modules' }] : []),
     { id: 'task_reports', label: 'Task Reports' },
+    { id: 'terms_policy', label: 'ISO Terms & Compliance Policy' },
   ]
 
   const {

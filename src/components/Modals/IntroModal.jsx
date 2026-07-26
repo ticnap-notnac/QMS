@@ -1,28 +1,15 @@
-import React from 'react';
-import { X, ShieldCheck, Sparkles, Target } from 'lucide-react';
-import learnMoreRaw from '../../../LEARN_MORE.md?raw'
+import React, { useState } from 'react';
+import { X, ShieldCheck, CheckCircle2, FileText } from 'lucide-react';
 
 export default function IntroModal({ isOpen, onClose }) {
+  const [agreed, setAgreed] = useState(false);
+
   if (!isOpen) return null;
 
-  // Parse the markdown: extract first heading as title, then split remaining content into paragraphs
-  const md = String(learnMoreRaw || '')
-  const lines = md.split(/\r?\n/)
-  let title = 'Introduction'
-  let body = md
-  const headingIndex = lines.findIndex((l) => l.trim().startsWith('#'))
-  if (headingIndex >= 0) {
-    title = lines[headingIndex].replace(/^#+\s*/, '')
-    body = lines.slice(headingIndex + 1).join('\n')
-  }
-
-  const sections = body
-    .split(/\n\s*\n/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-
-  const icons = [ShieldCheck, Sparkles, Target]
-  const colors = ['#0f172a', '#475569', '#64748b']
+  const handleAgreeAndContinue = () => {
+    localStorage.setItem('iso_terms_agreed', 'true');
+    onClose();
+  };
 
   return (
     <div style={overlayStyle}>
@@ -31,21 +18,74 @@ export default function IntroModal({ isOpen, onClose }) {
           <X size={18} />
         </button>
 
-        <h2 style={titleStyle}>{title}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          <ShieldCheck size={26} color="#0891b2" />
+          <h2 style={{ ...titleStyle, margin: 0 }}>System Terms & ISO Compliance Agreement</h2>
+        </div>
+
+        <p style={{ color: '#64748b', fontSize: '13.5px', marginTop: '4px', marginBottom: '20px' }}>
+          Please review and accept the quality compliance terms governing QFlow before using the system.
+        </p>
 
         <div style={contentContainerStyle}>
-          {sections.map((text, i) => {
-            const Icon = icons[i % icons.length]
-            const color = colors[i % colors.length]
-            return (
-              <div key={i} style={accentBoxStyle(color, '#f8fafc')}>
-                <div style={iconHeaderStyle}>
-                  <Icon size={16} color={color} />
-                </div>
-                <p style={paragraphStyle}>{text}</p>
-              </div>
-            )
-          })}
+          <div style={accentBoxStyle('#0891b2', '#f8fafc')}>
+            <div style={iconHeaderStyle}>
+              <FileText size={16} color="#0891b2" />
+            </div>
+            <div>
+              <strong style={{ color: '#0f172a', fontSize: '14px', display: 'block', marginBottom: '4px' }}>1. Quality & ISO Standard Adherence</strong>
+              <p style={paragraphStyle}>
+                All Quality Defect Reports (NCR, CAR, QDDR) submitted into QFlow must accurately reflect verified operational data and comply with active ISO 9001 and ISO 22000 quality standards.
+              </p>
+            </div>
+          </div>
+
+          <div style={accentBoxStyle('#0f172a', '#f8fafc')}>
+            <div style={iconHeaderStyle}>
+              <ShieldCheck size={16} color="#0f172a" />
+            </div>
+            <div>
+              <strong style={{ color: '#0f172a', fontSize: '14px', display: 'block', marginBottom: '4px' }}>2. Data Integrity & Verification</strong>
+              <p style={paragraphStyle}>
+                Users agree that all reported non-conformances, investigation details, and root-cause evidence provided are genuine, non-falsified, and subject to audit verification.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Agreement Action Footer */}
+        <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              style={{ accentColor: '#0891b2', width: '16px', height: '16px', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: '13px', color: '#334155', fontWeight: 500 }}>
+              I have read and agree to comply with the <strong style={{ color: '#0f172a' }}>ISO Compliance Terms & Conditions</strong>.
+            </span>
+          </label>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+            <button
+              type="button"
+              onClick={handleAgreeAndContinue}
+              disabled={!agreed}
+              className="btn-gradient-primary"
+              style={{
+                padding: '10px 24px',
+                fontSize: '13.5px',
+                opacity: agreed ? 1 : 0.5,
+                cursor: agreed ? 'pointer' : 'not-allowed',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <CheckCircle2 size={16} /> Accept & Continue
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -220,6 +220,9 @@ function AppInner() {
           console.error('Error fetching user data on login:', err)
         }
 
+        if (!localStorage.getItem('iso_terms_agreed')) {
+          setShowIntro(true)
+        }
         navigate('/')
       }
     } catch (err) {
