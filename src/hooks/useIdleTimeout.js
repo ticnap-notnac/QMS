@@ -34,7 +34,7 @@ export function useIdleTimeout(user, onTimeout, delay = 900000) {
     // Start timer on mount/user login
     resetTimer()
 
-    const events = ['mousemove', 'keydown', 'mousedown', 'scroll', 'touchstart', 'click']
+    const events = ['mousemove', 'keydown', 'keyup', 'mousedown', 'scroll', 'touchstart', 'click', 'input', 'change', 'focus']
     const handleActivity = () => resetTimer()
 
     events.forEach(event => {

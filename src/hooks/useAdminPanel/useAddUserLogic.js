@@ -185,6 +185,7 @@ export default function useAddUserLogic() {
       departmentId: user.department_id ? String(user.department_id) : '',
       siteId: user.site_id ? String(user.site_id) : '',
       status: user.status || 'ACTIVE',
+      password: '',
     })
     setIsEditUserModalOpen(true)
   }
@@ -234,6 +235,14 @@ export default function useAddUserLogic() {
       if (editingUser.departmentId !== undefined) payload.departmentId = editingUser.departmentId || null
       if (editingUser.siteId !== undefined) payload.siteId = editingUser.siteId || null
       if (editingUser.status !== undefined) payload.status = editingUser.status
+      if (editingUser.password && editingUser.password.trim().length > 0) {
+        if (editingUser.password.trim().length < 6) {
+          setEditFormError('New password must be at least 6 characters.')
+          setEditSubmitting(false)
+          return
+        }
+        payload.password = editingUser.password.trim()
+      }
 
       await updateUser(editingUser.id, payload)
       setEditFormMessage('User updated successfully.')
