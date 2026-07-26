@@ -2,9 +2,13 @@ import { z } from 'zod'
 
 export const createCarSchema = z.object({
   body: z.object({
-    requestor: z.string().optional(),
+    requestor: z.string().optional().nullable(),
     details_of_nonconformance: z.string().min(1, 'Details of non-conformance is required'),
-  }).passthrough()
+    department_id: z.union([z.string(), z.number()]).optional().nullable(),
+    issue_type_id: z.union([z.string(), z.number()]).optional().nullable(),
+    ncr_ids: z.array(z.union([z.string(), z.number()])).optional().nullable(),
+    clause_ids: z.array(z.union([z.string(), z.number()])).optional().nullable(),
+  })
 })
 
 export const submitCapaSchema = z.object({

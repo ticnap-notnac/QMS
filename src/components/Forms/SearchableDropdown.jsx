@@ -15,7 +15,7 @@ function SearchableDropdown({ label, value, onValueChange, options, loading = fa
   const [isOpen, setIsOpen] = useState(false)
 
   const filteredOptions = useMemo(() => {
-    const query = value.trim().toLowerCase()
+    const query = String(value || '').trim().toLowerCase()
     if (!query) return options
     return options.filter((o) => String(o.label || '').toLowerCase().includes(query))
   }, [options, value])
@@ -29,7 +29,7 @@ function SearchableDropdown({ label, value, onValueChange, options, loading = fa
       <div style={{ position: 'relative' }}>
         <input
           type="text"
-          value={value}
+          value={value ?? ''}
           onChange={(e) => { onValueChange(e.target.value); setIsOpen(true) }}
           onFocus={() => setIsOpen(true)}
           onBlur={() => window.setTimeout(() => setIsOpen(false), 120)}

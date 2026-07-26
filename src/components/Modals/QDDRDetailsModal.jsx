@@ -22,6 +22,7 @@ export default function QDDRDetailsModal({
   const [status, setStatus] = useState('open')
   const [submitting, setSubmitting] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
+  const [suggestionMeta, setSuggestionMeta] = useState(null)
   const [error, setError] = useState('')
 
   // Sync state with selected QDDR details

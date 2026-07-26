@@ -589,6 +589,36 @@ export function AuditTemplatesTab({
   const [formStandardId, setFormStandardId] = useState('')
   const [formItems, setFormItems] = useState([])
   const [loadingClauses, setLoadingClauses] = useState(false)
+  const isInitialMountRef = useRef(true)
+
+  // 💾 DRAFT AUTO-RESTORE: On open create form, check for saved draft
+  useEffect(() => {
+    if (showForm && !editingTemplate && isInitialMountRef.current) {
+      try {
+        const savedDraft = localStorage.getItem('draft_audit_template')
+        if (savedDraft) {
+          const parsed = JSON.parse(savedDraft)
+          if (parsed.formTitle) setFormTitle(parsed.formTitle)
+          if (parsed.formDescription) setFormDescription(parsed.formDescription)
+          if (parsed.formStandardId) setFormStandardId(parsed.formStandardId)
+          if (parsed.formItems && Array.isArray(parsed.formItems)) setFormItems(parsed.formItems)
+        }
+      } catch (err) {
+        console.warn('Failed to load template draft:', err)
+      }
+      isInitialMountRef.current = false
+    }
+  }, [showForm, editingTemplate])
+
+  // 💾 DRAFT AUTO-SAVE: As admin types, persist to localStorage
+  useEffect(() => {
+    if (showForm && !editingTemplate) {
+      const draft = { formTitle, formDescription, formStandardId, formItems }
+      if (formTitle || formDescription || formStandardId || formItems.length > 0) {
+        localStorage.setItem('draft_audit_template', JSON.stringify(draft))
+      }
+    }
+  }, [showForm, editingTemplate, formTitle, formDescription, formStandardId, formItems])
 
   const handleStandardChange = async (stdId) => {
     setFormStandardId(stdId)
@@ -618,10 +648,30 @@ export function AuditTemplatesTab({
     setError('')
     setSuccess('')
     setEditingTemplate(null)
-    setFormTitle('')
-    setFormDescription('')
-    setFormStandardId('')
-    setFormItems([])
+    isInitialMountRef.current = true
+    
+    // Check if draft exists
+    let hasDraft = false
+    try {
+      const saved = localStorage.getItem('draft_audit_template')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.formTitle || parsed.formDescription || parsed.formStandardId || (parsed.formItems && parsed.formItems.length > 0)) {
+          setFormTitle(parsed.formTitle || '')
+          setFormDescription(parsed.formDescription || '')
+          setFormStandardId(parsed.formStandardId || '')
+          setFormItems(parsed.formItems || [])
+          hasDraft = true
+        }
+      }
+    } catch (e) {}
+
+    if (!hasDraft) {
+      setFormTitle('')
+      setFormDescription('')
+      setFormStandardId('')
+      setFormItems([])
+    }
     setShowForm(true)
   }
 
@@ -670,6 +720,7 @@ export function AuditTemplatesTab({
         await handleUpdateTemplate(editingTemplate.id, payload)
       } else {
         await handleCreateTemplate(payload)
+        localStorage.removeItem('draft_audit_template')
       }
       setShowForm(false)
     } catch (err) {
