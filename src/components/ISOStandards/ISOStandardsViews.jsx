@@ -25,7 +25,7 @@ export function AddStandardSection({
               className="form-input iso-input"
               value={standardForm.name}
               onChange={(event) => setStandardForm((current) => ({ ...current, name: event.target.value }))}
-              placeholder="ISO 9001"
+              placeholder="ISO 22000"
             />
           </div>
           <div className="form-group iso-form-group">
@@ -36,7 +36,7 @@ export function AddStandardSection({
               className="form-input iso-input"
               value={standardForm.version}
               onChange={(event) => setStandardForm((current) => ({ ...current, version: event.target.value }))}
-              placeholder="2015"
+              placeholder="2018"
             />
           </div>
           <div className="form-group iso-form-group iso-form-group--wide">

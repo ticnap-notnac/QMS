@@ -405,7 +405,7 @@ export default function DCCFolderContent({
                   <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px' }}>
                     <h4 style={{ margin: '0 0 6px 0', color: '#0f172a', fontSize: '14.5px' }}>1. Quality & ISO Standard Adherence</h4>
                     <p style={{ margin: 0 }}>
-                      All Non-Conformance Reports (NCR), Corrective Action Requests (CAR), and Quality Defect & Deviation Reports (QDDR) created within QFlow must accurately represent operational non-conformances and comply with active ISO 9001:2015 and ISO 22000:2018 quality standards.
+                      All Non-Conformance Reports (NCR), Corrective Action Requests (CAR), and Quality Defect & Deviation Reports (QDDR) created within QFlow must accurately represent operational non-conformances and comply with active ISO 22000:2018 food safety and quality management standards.
                     </p>
                   </div>
 

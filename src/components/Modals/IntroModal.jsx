@@ -35,7 +35,7 @@ export default function IntroModal({ isOpen, onClose }) {
             <div>
               <strong style={{ color: '#0f172a', fontSize: '14px', display: 'block', marginBottom: '4px' }}>1. Quality & ISO Standard Adherence</strong>
               <p style={paragraphStyle}>
-                All Quality Defect Reports (NCR, CAR, QDDR) submitted into QFlow must accurately reflect verified operational data and comply with active ISO 9001 and ISO 22000 quality standards.
+                All Quality Defect Reports (NCR, CAR, QDDR) submitted into QFlow must accurately reflect verified operational data and comply with active ISO 22000 food safety and quality management standards.
               </p>
             </div>
           </div>
