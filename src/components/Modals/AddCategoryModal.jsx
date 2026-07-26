@@ -1,3 +1,5 @@
+import SubmissionLoadingOverlay from '../UI/SubmissionLoadingOverlay.jsx'
+
 function AddCategoryModal({
   isOpen,
   onClose,
@@ -19,6 +21,7 @@ function AddCategoryModal({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
+      <SubmissionLoadingOverlay isOpen={loading} message="Saving..." />
       <div
         className="modal"
         role="dialog"
