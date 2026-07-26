@@ -16,7 +16,8 @@ export default function FilterModal({
   departments = [],
   onClear,
   onApply,
-  userRole
+  userRole,
+  activeTab = 'ncr'
 }) {
   if (!isOpen) return null
 
@@ -96,7 +97,9 @@ export default function FilterModal({
           
           {/* Informational Subtext */}
           <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: '1.5' }}>
-            Filtering narrows down records by choosing target options for department, current status, metric severity, and occurrence date.
+            {activeTab === 'ncr' && 'Filtering narrows down records by choosing target options for department, current status, metric severity, and occurrence date.'}
+            {activeTab === 'car' && 'Filtering narrows down records by choosing target options for department, current status, issue type, and request date.'}
+            {activeTab === 'qddr' && 'Filtering narrows down records by choosing target options for location, current status, and date.'}
           </p>
 
           {/* 📐 ROW 1: Department & Date Input Fields Side-by-Side */}
@@ -140,7 +143,7 @@ export default function FilterModal({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label className="label-field" style={{ margin: 0 }}>Status</label>
             <div style={{ display: 'flex', gap: '10px' }}>
-              {['OPEN', 'CLOSED'].map((st) => {
+              {(activeTab === 'car' ? ['OPEN', 'UNDER VERIFICATION', 'CLOSED'] : ['OPEN', 'CLOSED']).map((st) => {
                 const isActive = currentStatus === st;
                 return (
                   <button
@@ -169,38 +172,40 @@ export default function FilterModal({
             </div>
           </div>
 
-          {/* 📐 ROW 3: Severity Level Grid Array Rows */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label className="label-field" style={{ margin: 0 }}>Severity Level</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-              {['Low', 'Medium', 'High'].map((sev) => {
-                const isActive = currentSeverity === sev;
-                return (
-                  <button
-                    key={sev}
-                    type="button"
-                    onClick={() => handleSeverityToggle(sev)}
-                    className="btn-quick-toggle"
-                    style={{
-                      height: '36px',
-                      padding: '0',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      border: isActive ? '1px solid #0f172a' : '1px solid #cbd5e1',
-                      background: isActive ? '#0f172a' : '#f8fafc',
-                      color: isActive ? '#ffffff' : '#475569',
-                      transition: 'all 0.2s ease',
-                      textAlign: 'center'
-                    }}
-                  >
-                    {sev}
-                  </button>
-                );
-              })}
+          {/* 📐 ROW 3: Severity Level Grid Array Rows (NCR Only) */}
+          {activeTab === 'ncr' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label className="label-field" style={{ margin: 0 }}>Severity Level</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                {['Low', 'Medium', 'High'].map((sev) => {
+                  const isActive = currentSeverity === sev;
+                  return (
+                    <button
+                      key={sev}
+                      type="button"
+                      onClick={() => handleSeverityToggle(sev)}
+                      className="btn-quick-toggle"
+                      style={{
+                        height: '36px',
+                        padding: '0',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        border: isActive ? '1px solid #0f172a' : '1px solid #cbd5e1',
+                        background: isActive ? '#0f172a' : '#f8fafc',
+                        color: isActive ? '#ffffff' : '#475569',
+                        transition: 'all 0.2s ease',
+                        textAlign: 'center'
+                      }}
+                    >
+                      {sev}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
 

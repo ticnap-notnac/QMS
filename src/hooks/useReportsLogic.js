@@ -130,7 +130,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       let filteredCars = carData || []
       if (isStandardUser) {
         const userDeptName = dataState.departmentNameById.get(String(userDepartmentId))?.toLowerCase()
-        filteredCars = (carData || []).filter(car => {
+        filteredCars = filteredCars.filter(car => {
           if (Array.isArray(car.ncr_id) && car.ncr_id.length > 0) {
             return car.ncr_id.some(ncrId => String(ncrDeptMap.get(Number(ncrId))) === String(userDepartmentId))
           }
@@ -147,7 +147,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         })
       } else if (activeDeptFilterId) {
         const filterDeptName = dataState.departmentNameById.get(String(activeDeptFilterId))?.toLowerCase()
-        filteredCars = (carData || []).filter(car => {
+        filteredCars = filteredCars.filter(car => {
           if (Array.isArray(car.ncr_id) && car.ncr_id.length > 0) {
             return car.ncr_id.some(ncrId => String(ncrDeptMap.get(Number(ncrId))) === String(activeDeptFilterId))
           }
@@ -163,24 +163,40 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
           return false
         })
       }
+
+      // Apply extra report filters (Status, Date) for CAR
+      if (formState.reportFilters?.status) {
+        filteredCars = filteredCars.filter(car => String(car.status || '').trim().toLowerCase() === String(formState.reportFilters.status).trim().toLowerCase())
+      }
+      if (formState.reportFilters?.date) {
+        filteredCars = filteredCars.filter(car => String(car.created_at || '').startsWith(formState.reportFilters.date))
+      }
       setCarReports(filteredCars)
 
       // 2. QDDR department scoping/filtering
       let filteredQddrs = qddrData || []
       if (isStandardUser) {
-        filteredQddrs = (qddrData || []).filter(q => {
+        filteredQddrs = filteredQddrs.filter(q => {
           if (q.ncr_id) {
             return String(ncrDeptMap.get(Number(q.ncr_id))) === String(userDepartmentId)
           }
           return false
         })
       } else if (activeDeptFilterId) {
-        filteredQddrs = (qddrData || []).filter(q => {
+        filteredQddrs = filteredQddrs.filter(q => {
           if (q.ncr_id) {
             return String(ncrDeptMap.get(Number(q.ncr_id))) === String(activeDeptFilterId)
           }
           return false
         })
+      }
+
+      // Apply extra report filters (Status, Date) for QDDR
+      if (formState.reportFilters?.status) {
+        filteredQddrs = filteredQddrs.filter(q => String(q.status || '').trim().toLowerCase() === String(formState.reportFilters.status).trim().toLowerCase())
+      }
+      if (formState.reportFilters?.date) {
+        filteredQddrs = filteredQddrs.filter(q => String(q.created_at || '').startsWith(formState.reportFilters.date))
       }
       setQddrReports(filteredQddrs)
     } catch (err) {
@@ -397,6 +413,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   const handleFilterApply = async (filters) => { 
     formState.setReportFilters(filters); 
     await dataState.refreshReportsList(filters) 
+    await refreshCarAndQddrLists()
     modalsState.setIsFilterModalOpen(false)
   }
 
@@ -404,6 +421,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     const cleared = { departmentId: '', status: '', severities: [], date: '' }
     formState.setReportFilters(cleared)
     await dataState.refreshReportsList(cleared)
+    await refreshCarAndQddrLists()
     modalsState.setIsFilterModalOpen(false)
   }
 

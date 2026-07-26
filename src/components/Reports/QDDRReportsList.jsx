@@ -1,5 +1,6 @@
 import React from 'react'
 import { Edit2, Trash2 } from 'lucide-react'
+import QDDRReportCard from '../Cards/QDDRReportCard.jsx'
 
 export default function QDDRReportsList({
   qddrReports,
@@ -7,7 +8,8 @@ export default function QDDRReportsList({
   onSelectQddr,
   canEdit,
   onEditQddr,
-  onDeleteQddr
+  onDeleteQddr,
+  viewMode = 'table'
 }) {
   if (isLoading) {
     return (
@@ -21,6 +23,23 @@ export default function QDDRReportsList({
     return (
       <div className="empty-state-container">
         <span className="empty-state-text">No QDDR reports found.</span>
+      </div>
+    )
+  }
+
+  if (viewMode === 'feed') {
+    return (
+      <div className="reports-feed-list" style={{ marginTop: '24px' }}>
+        {qddrReports.map(qddr => (
+          <QDDRReportCard
+            key={qddr.id}
+            qddr={qddr}
+            canEdit={canEdit}
+            onSelectQddr={onSelectQddr}
+            onEditQddr={onEditQddr}
+            onDeleteQddr={onDeleteQddr}
+          />
+        ))}
       </div>
     )
   }

@@ -778,6 +778,13 @@
   gap: 16px;
 }
 
+@media (max-width: 900px) {
+  .modal-grid-3, .modal-grid-2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
 .panel-column {
   display: flex;
   flex-direction: column;

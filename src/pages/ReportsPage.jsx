@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { SlidersHorizontal } from 'lucide-react'
+import { SlidersHorizontal, LayoutGrid, List } from 'lucide-react'
 import Toast from '@/components/UI/Toast'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import FilterModal from '../components/Modals/FilterModal.jsx'
@@ -50,6 +50,8 @@ export default function ReportsPage({
   const [trendClusters, setTrendClusters] = useState([])
   const [isRecurringMode, setIsRecurringMode] = useState(false)
   const [isSubmitDropdownOpen, setIsSubmitDropdownOpen] = useState(false)
+  const [carViewMode, setCarViewMode] = useState('feed')
+  const [qddrViewMode, setQddrViewMode] = useState('feed')
   const submitDropdownRef = useRef(null)
 
   useEffect(() => {
@@ -229,18 +231,72 @@ export default function ReportsPage({
         </div>
 
         {availableTabs.length > 1 && (
-          <div className="reports-tab-nav reports-tab-nav-bar">
-            {availableTabs.map(t => (
-              <button 
-                key={t} 
-                type="button" 
-                className={`btn-quick-toggle reports-tab-nav-btn ${logic.activeTab === t ? 'active' : ''}`} 
-                onClick={() => logic.setActiveTab(t)}
-                title={t === 'ncr' ? 'View Non-Conformance Reports' : t === 'car' ? 'View Corrective Action Requests' : 'View Quality Defect Discovery Reports'}
-              >
-                {t.toUpperCase()}
-              </button>
-            ))}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0 }}>
+              {availableTabs.map(t => {
+                const tabNames = {
+                  ncr: <>Non-Conformance<br/>Report</>,
+                  car: <>Corrective Action<br/>Request</>,
+                  qddr: <>Quality Defect<br/>Discovery Report</>
+                };
+                return (
+                  <button 
+                    key={t} 
+                    type="button" 
+                    className={`btn-quick-toggle reports-tab-nav-btn ${logic.activeTab === t ? 'active' : ''}`} 
+                    style={{ whiteSpace: 'nowrap', lineHeight: '1.2' }}
+                    onClick={() => logic.setActiveTab(t)}
+                    title={t === 'ncr' ? 'View Non-Conformance Reports' : t === 'car' ? 'View Corrective Action Requests' : 'View Quality Defect Discovery Reports'}
+                  >
+                    {tabNames[t] || t.toUpperCase()}
+                  </button>
+                );
+              })}
+            </div>
+            {logic.activeTab === 'car' && (
+              <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
+                <button
+                  type="button"
+                  className={`btn-quick-toggle reports-tab-nav-btn ${carViewMode === 'feed' ? 'active' : ''}`}
+                  onClick={() => setCarViewMode('feed')}
+                  title="Card View"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <LayoutGrid size={18} /> FEED
+                </button>
+                <button
+                  type="button"
+                  className={`btn-quick-toggle reports-tab-nav-btn ${carViewMode === 'table' ? 'active' : ''}`}
+                  onClick={() => setCarViewMode('table')}
+                  title="Table View"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <List size={18} /> TABLE
+                </button>
+              </div>
+            )}
+            {logic.activeTab === 'qddr' && (
+              <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
+                <button
+                  type="button"
+                  className={`btn-quick-toggle reports-tab-nav-btn ${qddrViewMode === 'feed' ? 'active' : ''}`}
+                  onClick={() => setQddrViewMode('feed')}
+                  title="Card View"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <LayoutGrid size={18} /> FEED
+                </button>
+                <button
+                  type="button"
+                  className={`btn-quick-toggle reports-tab-nav-btn ${qddrViewMode === 'table' ? 'active' : ''}`}
+                  onClick={() => setQddrViewMode('table')}
+                  title="Table View"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <List size={18} /> TABLE
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -264,6 +320,7 @@ export default function ReportsPage({
               canEdit={isAdminRole(userRole) || normalizedRole === 'auditor'}
               onEditCar={logic.openEditCarModal}
               onDeleteCar={handleDeleteCar}
+              viewMode={carViewMode}
             />
           )}
           {logic.activeTab === 'qddr' && (
@@ -274,12 +331,13 @@ export default function ReportsPage({
               canEdit={canAccessCar}
               onEditQddr={logic.openEditQddrModal}
               onDeleteQddr={handleDeleteQddr}
+              viewMode={qddrViewMode}
             />
           )}
         </div>
       </div>
 
-      <FilterModal {...logic.filterModalProps} />
+      <FilterModal {...logic.filterModalProps} activeTab={logic.activeTab} />
       <UpdateReportModal {...logic.updateModalProps} />
       <AssignReportModal {...logic.assignModalProps} />
       <CreateReportModal {...logic.createModalProps} />
