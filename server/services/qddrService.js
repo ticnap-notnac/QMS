@@ -140,7 +140,7 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     approved_by: approvedById,
     noted_by: notedById,
     leader: leaderId,
-    ncr_id: ncr_id ? parseInt(ncr_id, 10) : null,
+    ncr_id: ncr_id ? (Array.isArray(ncr_id) ? ncr_id.map(id => parseInt(id, 10)) : [parseInt(ncr_id, 10)]) : null,
     audit_schedule_id: audit_schedule_id || null,
     status: 'open',
     site_id: reporter.site_id || null
