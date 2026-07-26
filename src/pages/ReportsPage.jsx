@@ -237,7 +237,7 @@ export default function ReportsPage({
                 const tabNames = {
                   ncr: <>Non-Conformance<br/>Report</>,
                   car: <>Corrective Action<br/>Request</>,
-                  qddr: <>Quality Defect<br/>Discovery Report</>
+                  qddr: <>Quality Defects / Damaged /<br/>Discrepancy Report</>
                 };
                 return (
                   <button 
@@ -246,7 +246,7 @@ export default function ReportsPage({
                     className={`btn-quick-toggle reports-tab-nav-btn ${logic.activeTab === t ? 'active' : ''}`} 
                     style={{ whiteSpace: 'nowrap', lineHeight: '1.2' }}
                     onClick={() => logic.setActiveTab(t)}
-                    title={t === 'ncr' ? 'View Non-Conformance Reports' : t === 'car' ? 'View Corrective Action Requests' : 'View Quality Defect Discovery Reports'}
+                    title={t === 'ncr' ? 'View Non-Conformance Reports' : t === 'car' ? 'View Corrective Action Requests' : 'View Quality Defects / Damaged / Discrepancy Reports'}
                   >
                     {tabNames[t] || t.toUpperCase()}
                   </button>
