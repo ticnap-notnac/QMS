@@ -62,6 +62,7 @@ export default function useISOLogic({ userName }) {
     activeFinding,
     departments,
     users,
+    allReports,
     loadingDropdowns,
     clausesLoading,
     clausesError,
@@ -143,7 +144,7 @@ export default function useISOLogic({ userName }) {
     departmentsLoading: loadingDropdowns,
     users,
     usersLoading: loadingDropdowns,
-    allReports: []
+    allReports
   }
 
   return {

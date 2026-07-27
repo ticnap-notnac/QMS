@@ -110,8 +110,18 @@ export function AuditLogsTab({
                             {typeof log.action === 'string' ? log.action : JSON.stringify(log.action)}
                           </div>
                           {log.details && Object.keys(log.details).length > 0 && (
-                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontFamily: 'monospace' }}>
-                              {JSON.stringify(log.details)}
+                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                              {log.details.details ? (
+                                log.details.details
+                              ) : log.action === 'user_update' ? (
+                                `Updated user ID: ${log.details.id || 'Unknown'}`
+                              ) : log.action === 'role_update' ? (
+                                `Updated role: ${log.details.role_name || 'Unknown'}`
+                              ) : log.action === 'CREATE_ISO_STANDARD' || log.action === 'UPDATE_ISO_STANDARD' ? (
+                                `${log.action === 'CREATE_ISO_STANDARD' ? 'Created' : 'Updated'} standard: ${log.details.name || 'Unknown'}`
+                              ) : (
+                                ''
+                              )}
                             </div>
                           )}
                         </td>
@@ -322,7 +332,7 @@ export function AuditSchedulesTab({
       .filter(aud => String(aud.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
       .map(aud => ({
         id: aud.auth_id,
-        label: `${aud.first_name} ${aud.last_name} (${aud.role_id === 1 ? 'Admin' : 'Auditor'})`
+        label: `${aud.first_name} ${aud.last_name} (${aud.roles?.role_name || 'Auditor'})`
       }))
   }, [auditors])
 

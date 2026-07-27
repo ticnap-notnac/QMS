@@ -1,5 +1,6 @@
-import { LoaderCircle, BookOpen } from 'lucide-react'
+import { LoaderCircle, BookOpen, Paperclip, CheckCircle } from 'lucide-react'
 import { useState } from 'react'
+import { supabase } from '../../utils/supabase'
 
 export function AuditChecklistSection({
   activeRun,
@@ -13,28 +14,71 @@ export function AuditChecklistSection({
   setActiveRun,
   fetchData,
   linkedCarsMap,
-  handleRemoveCarLink,
-  onSelectCar,
   linkedQddrsMap,
+  handleRemoveCarLink,
   handleRemoveQddrLink,
+  onSelectCar,
   onSelectQddr
 }) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
+  const totalPages = Math.ceil(activeClauses.length / itemsPerPage)
+  const paginatedClauses = activeClauses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
-  if (!activeRun) return null
+  const [uploadingFiles, setUploadingFiles] = useState({})
 
-  const totalPages = Math.ceil(activeClauses.length / itemsPerPage) || 1;
-  const paginatedClauses = activeClauses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const handleFileUpload = async (e, clauseId) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setUploadingFiles(prev => ({ ...prev, [clauseId]: true }))
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      const filePath = `${activeRun.id}/${fileName}`
+
+      const { data, error } = await supabase.storage
+        .from('audit-evidence')
+        .upload(filePath, file)
+
+      if (error) throw error
+
+      const { data: urlData } = supabase.storage
+        .from('audit-evidence')
+        .getPublicUrl(filePath)
+
+      const currentAnswer = resultsMap[clauseId] || { status: 'compliant', evidence: '', notes: '' }
+      setResultsMap({
+        ...resultsMap,
+        [clauseId]: { ...currentAnswer, attachment_url: urlData.publicUrl }
+      })
+    } catch (err) {
+      console.error('Upload error:', err)
+      alert('Failed to upload file. Please try again.')
+    } finally {
+      setUploadingFiles(prev => ({ ...prev, [clauseId]: false }))
+    }
+  }
 
   return (
-    <div className="settings-container--profile" style={{ minHeight: 'auto', padding: '24px', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #cbd5e1', paddingBottom: '12px', flexWrap: 'wrap', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Header Info */}
+      <div className="iso-card" style={{ marginBottom: '24px', padding: '16px 20px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '20px', color: '#0f172a' }}>Audit Checklist: {activeRun.title}</h2>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>Standard: {activeRun.standard_name}</p>
+          <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', color: '#0f172a' }}>
+            Audit Checklist: {activeRun?.audit_schedules?.audit_checklist_templates?.title || 'Custom'}
+          </h3>
+          <span style={{ fontSize: '13px', color: '#64748b' }}>
+            Standard: {activeRun?.audit_schedules?.iso_standards?.name} ({activeRun?.audit_schedules?.iso_standards?.version})
+          </span>
         </div>
-        <button className="sidebar-button" onClick={() => { setActiveRun(null); fetchData(); }} style={{ borderColor: '#cbd5e1' }}>
+        <button
+          className="btn-secondary"
+          onClick={() => {
+            setActiveRun(null)
+            fetchData()
+          }}
+        >
           Go Back
         </button>
       </div>
@@ -50,252 +94,142 @@ export function AuditChecklistSection({
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px', width: '100%', overflowX: 'auto' }}>
         {activeClauses.length === 0 ? (
           <p style={{ color: '#64748b', textAlign: 'center' }}>No clauses found for this ISO standard. Please add clauses first.</p>
         ) : (
-          paginatedClauses.map(clause => {
-            const answer = resultsMap[clause.id] || { status: 'compliant', evidence: '', notes: '' }
-            return (
-              <div key={clause.id} className="settings-container--profile" style={{ minHeight: 'auto', padding: '16px', background: '#f8fafc', border: '1px solid #cbd5e1', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
-                  <div style={{ flex: 1, minWidth: '250px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: '700', color: '#0891b2', marginRight: '8px' }}>Clause {clause.clause_number}</span>
-                    <h4 style={{ margin: 0, display: 'inline', fontSize: '14px', color: '#0f172a' }}>{clause.title}</h4>
-                  </div>
-                  
-                  {/* Status selectors */}
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {['compliant', 'partial', 'non_compliant', 'na'].map(statusVal => {
-                      const labelMap = {
-                        compliant: 'Compliant',
-                        partial: 'Partial',
-                        non_compliant: 'Non-Compliant',
-                        na: 'N/A'
-                      }
-                      const colorMap = {
-                        compliant: 'rgba(16, 185, 129, 0.15)',
-                        partial: 'rgba(245, 158, 11, 0.15)',
-                        non_compliant: 'rgba(239, 68, 68, 0.15)',
-                        na: 'rgba(100, 116, 139, 0.15)'
-                      }
-                      const textMap = {
-                        compliant: '#10b981',
-                        partial: '#f59e0b',
-                        non_compliant: '#ef4444',
-                        na: '#94a3b8'
-                      }
-                      
-                      const isActive = answer.status === statusVal
-                      return (
-                        <button
-                          key={statusVal}
-                          type="button"
-                          onClick={() => {
+          <div className="iso-table-wrap">
+            <table className="iso-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '120px' }}>Clause</th>
+                  <th style={{ width: '25%' }}>What To Look for and how?</th>
+                  <th style={{ width: '25%' }}>Evidence / Observation</th>
+                  <th style={{ width: '25%' }}>Findings</th>
+                  <th style={{ width: '120px' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedClauses.map(clause => {
+                  const answer = resultsMap[clause.id] || { status: 'compliant', evidence: '', notes: '' }
+                  return (
+                    <tr key={clause.id}>
+                      <td style={{ verticalAlign: 'top' }}>
+                        <strong style={{ color: '#0891b2', display: 'block', marginBottom: '4px' }}>Clause {clause.clause_number}</strong>
+                        <span style={{ fontSize: '13px', color: '#334155', fontWeight: '500' }}>{clause.title}</span>
+                      </td>
+                      <td style={{ verticalAlign: 'top', fontSize: '13px', whiteSpace: 'pre-wrap' }}>
+                        {clause.requirement && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <strong>Requirement:</strong><br/>
+                            {clause.requirement}
+                          </div>
+                        )}
+                        {clause.what_to_look_for && (
+                          <div style={{ color: '#64748b' }}>
+                            <strong>Guide:</strong><br/>
+                            {clause.what_to_look_for}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ verticalAlign: 'top' }}>
+                        <textarea
+                          className="form-input-reports"
+                          rows={4}
+                          placeholder="Enter evidence..."
+                          value={answer.evidence || ''}
+                          onChange={(e) => {
                             setResultsMap({
                               ...resultsMap,
-                              [clause.id]: { ...answer, status: statusVal }
+                              [clause.id]: { ...answer, evidence: e.target.value }
+                            })
+                          }}
+                          style={{ marginBottom: '8px', fontSize: '13px' }}
+                        />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <label style={{
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '12px',
+                            color: '#0891b2',
+                            background: 'rgba(8, 145, 178, 0.1)',
+                            padding: '4px 8px',
+                            borderRadius: '4px'
+                          }}>
+                            {uploadingFiles[clause.id] ? <LoaderCircle size={14} className="spin" /> : <Paperclip size={14} />}
+                            {uploadingFiles[clause.id] ? 'Uploading...' : 'Attach File'}
+                            <input
+                              type="file"
+                              style={{ display: 'none' }}
+                              onChange={(e) => handleFileUpload(e, clause.id)}
+                            />
+                          </label>
+                          {answer.attachment_url && (
+                            <a href={answer.attachment_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <CheckCircle size={14} /> View File
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                      <td style={{ verticalAlign: 'top' }}>
+                        <textarea
+                          className="form-input-reports"
+                          rows={4}
+                          placeholder="Enter findings / CAR notes..."
+                          value={answer.notes || ''}
+                          onChange={(e) => {
+                            setResultsMap({
+                              ...resultsMap,
+                              [clause.id]: { ...answer, notes: e.target.value }
+                            })
+                          }}
+                          style={{ marginBottom: '8px', fontSize: '13px' }}
+                        />
+                        {/* Linked CARs & QDDRs display could go here if needed, or omitted for compactness */}
+                        {linkedCarsMap && linkedCarsMap[clause.id]?.length > 0 && (
+                          <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 'bold' }}>
+                            Linked CARs: {linkedCarsMap[clause.id].map(car => car.reference_no).join(', ')}
+                          </div>
+                        )}
+                        {linkedQddrsMap && linkedQddrsMap[clause.id]?.length > 0 && (
+                          <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 'bold' }}>
+                            Linked QDDRs: {linkedQddrsMap[clause.id].map(qddr => qddr.reference_no).join(', ')}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ verticalAlign: 'top' }}>
+                        <select
+                          className="form-input-reports"
+                          value={answer.status || 'compliant'}
+                          onChange={(e) => {
+                            setResultsMap({
+                              ...resultsMap,
+                              [clause.id]: { ...answer, status: e.target.value }
                             })
                           }}
                           style={{
-                            padding: '6px 12px',
-                            fontSize: '12px',
-                            borderRadius: '4px',
-                            border: isActive ? `1px solid ${textMap[statusVal]}` : '1px solid #cbd5e1',
-                            background: isActive ? colorMap[statusVal] : 'transparent',
-                            color: isActive ? textMap[statusVal] : '#64748b',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            padding: '6px',
+                            color: answer.status === 'compliant' ? '#10b981' : 
+                                   answer.status === 'non_compliant' ? '#ef4444' : 
+                                   answer.status === 'partial' ? '#f59e0b' : '#64748b'
                           }}
                         >
-                          {labelMap[statusVal]}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {clause.requirement ? (
-                  <div style={{ marginTop: '16px', padding: '10px 14px', background: 'rgba(8, 145, 178, 0.05)', borderLeft: '3px solid #0891b2', borderRadius: '0 4px 4px 0' }}>
-                    <div style={{ margin: 0, fontSize: '14.5px', color: '#334155', lineHeight: '1.6', textAlign: 'justify', whiteSpace: 'pre-wrap' }}>
-                      <div style={{ marginBottom: '4px' }}>
-                        <strong style={{ color: '#0891b2' }}>Requirement:</strong>
-                      </div>
-                      <div>
-                        {clause.requirement.replace(/\n/g, ' ').replace(/\s+/g, ' ').replace(/ ([a-z]\) )/g, '\n    $1').replace(/\. This /g, '.\n\nThis ')}
-                      </div>
-                    </div>
-                    {clause.what_to_look_for && (
-                      <div style={{ margin: '12px 0 0 0', fontSize: '13.5px', color: '#64748b', lineHeight: '1.5', textAlign: 'justify', whiteSpace: 'pre-wrap' }}>
-                        <div style={{ marginBottom: '4px' }}>
-                          <strong style={{ color: '#475569' }}>What to look for:</strong>
-                        </div>
-                        <div>
-                          {clause.what_to_look_for.replace(/\n/g, ' ').replace(/\s+/g, ' ').replace(/ ([a-z]\) )/g, '\n    $1').replace(/\. This /g, '.\n\nThis ')}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  clause.description && <p style={{ margin: '0', fontSize: '12px', color: '#64748b' }}>{clause.description}</p>
-                )}
-
-                <div className="form-row-2" style={{ marginTop: '16px', marginBottom: 0, gap: '12px' }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Evidence / Observations</label>
-                    <textarea
-                      className="form-input-reports"
-                      rows={3}
-                      placeholder="Enter evidence or observations found..."
-                      value={answer.evidence || ''}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        setResultsMap({
-                          ...resultsMap,
-                          [clause.id]: { ...answer, evidence: val }
-                        })
-                      }}
-                    />
-                  </div>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Findings / CAR Notes</label>
-                    <textarea
-                      className="form-input-reports"
-                      rows={3}
-                      placeholder="Add findings notes or links to Corrective Actions..."
-                      value={answer.notes || ''}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        setResultsMap({
-                          ...resultsMap,
-                          [clause.id]: { ...answer, notes: val }
-                        })
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Linked CARs row */}
-                {linkedCarsMap && linkedCarsMap[clause.id]?.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px', paddingTop: '4px' }}>
-                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', flexShrink: 0 }}>Linked CARs:</span>
-                    {linkedCarsMap[clause.id].map(car => {
-                      const statusConfig = {
-                        open:               { bg: 'rgba(245, 158, 11, 0.12)', text: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)', label: 'Open' },
-                        under_verification: { bg: 'rgba(34, 211, 238, 0.10)', text: '#22d3ee', border: 'rgba(34, 211, 238, 0.3)', label: 'Under Verification' },
-                        closed:             { bg: 'rgba(16, 185, 129, 0.10)', text: '#10b981', border: 'rgba(16, 185, 129, 0.3)', label: 'Closed' },
-                      }
-                      const s = statusConfig[car.status] || statusConfig.open
-                      return (
-                        <span
-                          key={car.id}
-                          onClick={() => {
-                            console.log('CAR badge clicked! car:', car);
-                            console.log('onSelectCar function:', onSelectCar);
-                            if (onSelectCar) {
-                              onSelectCar(car);
-                            } else {
-                              console.warn('onSelectCar is undefined!');
-                            }
-                          }}
-                          style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            fontSize: '11px', fontWeight: '600',
-                            background: s.bg, color: s.text,
-                            border: `1px solid ${s.border}`,
-                            borderRadius: '4px', padding: '2px 8px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          📋 {car.reference_no} <span style={{ opacity: 0.7, fontWeight: 'normal' }}>({s.label})</span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleRemoveCarLink && handleRemoveCarLink(car.id, clause.id)
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: s.text,
-                              cursor: 'pointer',
-                              padding: '0 0 0 4px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              fontSize: '10px',
-                              opacity: 0.7
-                            }}
-                            title="Remove Link"
-                            onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
-                            onMouseOut={(e) => e.currentTarget.style.opacity = '0.7'}
-                          >
-                            ✕
-                          </button>
-                        </span>
-                      )
-                    })}
-                  </div>
-                )}
-
-                {/* Linked QDDRs row */}
-                {linkedQddrsMap && linkedQddrsMap[clause.id]?.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px', paddingTop: '4px' }}>
-                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', flexShrink: 0 }}>Linked QDDRs:</span>
-                    {linkedQddrsMap[clause.id].map(qddr => {
-                      const statusConfig = {
-                        open:               { bg: 'rgba(245, 158, 11, 0.12)', text: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)', label: 'Open' },
-                        closed:             { bg: 'rgba(16, 185, 129, 0.10)', text: '#10b981', border: 'rgba(16, 185, 129, 0.3)', label: 'Closed' },
-                      }
-                      const s = statusConfig[qddr.status] || statusConfig.open
-                      return (
-                        <span
-                          key={qddr.id}
-                          onClick={() => {
-                            if (onSelectQddr) {
-                              onSelectQddr(qddr);
-                            }
-                          }}
-                          style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            fontSize: '11px', fontWeight: '600',
-                            background: s.bg, color: s.text,
-                            border: `1px solid ${s.border}`,
-                            borderRadius: '4px', padding: '2px 8px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          📦 {qddr.reference_no} <span style={{ opacity: 0.7, fontWeight: 'normal' }}>({s.label})</span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleRemoveQddrLink && handleRemoveQddrLink(qddr.id, clause.id)
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: s.text,
-                              cursor: 'pointer',
-                              padding: '0 0 0 4px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              fontSize: '10px',
-                              opacity: 0.7
-                            }}
-                            title="Remove Link"
-                            onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
-                            onMouseOut={(e) => e.currentTarget.style.opacity = '0.7'}
-                          >
-                            ✕
-                          </button>
-                        </span>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )
-          })
+                          <option value="compliant">Compliant</option>
+                          <option value="partial">Partial</option>
+                          <option value="non_compliant">Non-Compliant</option>
+                          <option value="na">N/A</option>
+                        </select>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -346,6 +280,7 @@ export function AuditChecklistSection({
     </div>
   )
 }
+
 
 export function AuditRunDetailsModal({
   isDetailsModalOpen,

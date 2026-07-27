@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import * as isoService from '@/services/isoService'
+import * as ncrService from '@/services/ncrService'
 import { suggestClausesForCar, submitCarReport } from '@/services/carService'
 import { CAR_STATUS } from '../../../shared/constants'
 import { useLookup } from '@/context/LookupContext'
@@ -44,6 +45,7 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
 
   const [departments, setDepartments] = useState([])
   const [users, setUsers] = useState([])
+  const [allReports, setAllReports] = useState([])
   const [loadingDropdowns, setLoadingDropdowns] = useState(false)
 
   // Clause Suggestion specific states
@@ -55,6 +57,13 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
       setLoadingDropdowns(true)
       const deptData = await isoService.fetchDepartments()
       const userData = await isoService.fetchUsers()
+      
+      try {
+        const reportsData = await ncrService.fetchAllReports()
+        setAllReports(reportsData || [])
+      } catch (reportsErr) {
+        console.error('[useISOCARForm] Error loading NCR reports:', reportsErr)
+      }
       
       setDepartments((deptData || []).map(d => ({ id: d.id, label: d.department_name })))
       const activeUserData = (userData || []).filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
@@ -239,6 +248,7 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
     activeFinding,
     departments,
     users,
+    allReports,
     loadingDropdowns,
     clausesLoading,
     clausesError,

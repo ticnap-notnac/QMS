@@ -108,7 +108,14 @@ export default function SystemLogsPanel({ onClose, searchQuery = '' }) {
                   <td>{l.level}</td>
                   <td>{l.source || '-'}</td>
                   <td>
-                    {typeof l.action === 'string' ? l.action : JSON.stringify(l.action || l.details || l.metadata)}
+                    <div style={{ fontWeight: '500', color: '#0f172a' }}>
+                      {typeof l.action === 'string' ? l.action : JSON.stringify(l.action)}
+                    </div>
+                    {(l.details || l.metadata) && (
+                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', fontFamily: 'monospace' }}>
+                        {JSON.stringify(l.details || l.metadata)}
+                      </div>
+                    )}
                   </td>
                   <td>{l.user_display || l.user_auth_id || '-'}</td>
                 </tr>

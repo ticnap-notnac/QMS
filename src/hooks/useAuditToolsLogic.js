@@ -186,7 +186,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
           id: resObj?.id || null,
           status: resObj?.status || 'compliant',
           evidence: resObj?.evidence || '',
-          notes: resObj?.notes || ''
+          notes: resObj?.notes || '',
+          attachment_url: resObj?.attachment_url || ''
         }
       })
 
@@ -274,7 +275,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
           clause_id: clauseId,
           status: resultsMap[clauseId].status,
           evidence: resultsMap[clauseId].evidence || null,
-          notes: resultsMap[clauseId].notes || null
+          notes: resultsMap[clauseId].notes || null,
+          attachment_url: resultsMap[clauseId].attachment_url || null
         }
         if (resultsMap[clauseId].id) {
           payload.id = resultsMap[clauseId].id
@@ -285,7 +287,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       const { data: savedData, error: upsertError } = await supabase
         .from('audit_results')
         .upsert(upsertData)
-        .select('id, clause_id, status, evidence, notes')
+        .select('id, clause_id, status, evidence, notes, attachment_url')
 
       if (upsertError) throw upsertError
 
@@ -295,7 +297,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
           id: row.id,
           status: row.status,
           evidence: row.evidence || '',
-          notes: row.notes || ''
+          notes: row.notes || '',
+          attachment_url: row.attachment_url || ''
         }
       })
       setResultsMap(updatedResultsMap)
@@ -379,13 +382,17 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       if (stdError) throw stdError
       setStandards(standardsData || [])
 
-      const { data: auditorsData, error: audError } = await supabase
+      const { data: allUsersData, error: audError } = await supabase
         .from('users')
-        .select('id, first_name, last_name, auth_id, role_id, status')
-        .in('role_id', [1, 2])
+        .select('id, first_name, last_name, auth_id, role_id, status, roles(role_name)')
       
       if (audError) throw audError
-      setAuditors(auditorsData || [])
+      
+      const auditorsData = (allUsersData || []).filter(u => 
+        u.roles?.role_name === 'Team Leader' || u.roles?.role_name === 'QA Officer'
+      )
+      
+      setAuditors(auditorsData)
 
       setTemplatesLoading(true)
       const templatesData = await checklistService.fetchTemplates().catch(err => {
