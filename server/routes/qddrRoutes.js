@@ -13,6 +13,6 @@ router.put('/qddr/:id', requirePermission('accept_decline_report'), validateRequ
 router.put('/qddr/:id/edit', requirePermission('edit_delete_report'), editQddr)
 router.delete('/qddr/:id', requirePermission('edit_delete_report'), deleteQddr)
 
-router.post('/qddr/suggest-clauses', requirePermission('manage_iso'), suggestClauses)
+router.post('/qddr/suggest-clauses', requirePermission('reports'), suggestClauses)
 
 export default router

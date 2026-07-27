@@ -151,12 +151,15 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
 
   useEffect(() => {
     if (currentAuthId) {
-      Promise.resolve().then(() => {
-        loadLookupData()
-        refreshReportsList()
-      })
+      loadLookupData()
     }
-  }, [currentAuthId, loadLookupData, refreshReportsList])
+  }, [currentAuthId, loadLookupData])
+
+  useEffect(() => {
+    if (currentAuthId) {
+      refreshReportsList()
+    }
+  }, [currentAuthId, refreshReportsList])
 
   const locationOptions = useMemo(() => toOptionList(locations, 'location_name'), [locations])
   const productTypeOptions = useMemo(() => toOptionList(productTypes, 'product_type_name'), [productTypes])

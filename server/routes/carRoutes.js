@@ -9,7 +9,7 @@ const router = Router()
 
 router.post('/car', requirePermission('create_report'), validateRequest(createCarSchema), createCar)
 router.get('/car/:id', getCarById)
-router.post('/car/suggest-clauses', requirePermission('manage_iso'), suggestClauses)
+router.post('/car/suggest-clauses', requirePermission('reports'), suggestClauses)
 router.put('/car/:id/capa', requirePermission('submit_capa'), validateRequest(submitCapaSchema), submitCapa)
 router.put('/car/:id/verify', requirePermission('verify_car'), validateRequest(verifyCarSchema), verifyCar)
 router.get('/car/clause/:clauseId/cars', getCarsForClause)

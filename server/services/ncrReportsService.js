@@ -92,10 +92,13 @@ export function isAdminOrAuditor(roleName) {
 // ─── DB Helpers ───────────────────────────────────────────────────────────────
 
 export async function buildEvidenceDisplayUrl(rawUrl) {
-  const path = extractEvidenceStoragePath(rawUrl)
-  if (!path) return rawUrl || null
+  if (!rawUrl) return null
+  const value = String(rawUrl).trim()
+  if (value.includes('token=')) return value
+  const path = extractEvidenceStoragePath(value)
+  if (!path) return value
   const { data, error } = await supabase.storage.from('ncr-evidence').createSignedUrl(path, 60 * 60)
-  if (error || !data?.signedUrl) return rawUrl || null
+  if (error || !data?.signedUrl) return value
   return data.signedUrl
 }
 
@@ -173,37 +176,25 @@ export async function createNotificationsForRolesAndDepartment({ globalRoleNames
   const globalUsers = await getUsersByRoleNames(globalRoleNames)
   let deptUsers = []
   
-  if (departmentId && departmentRoleNames.length > 0) {
-    const normalizedRoleNames = [...new Set(departmentRoleNames.map((name) => String(name || '').trim().toLowerCase()).filter(Boolean))]
-    const { data: roles, error: rolesError } = await supabase.from('roles').select('id, role_name')
-    if (!rolesError && roles) {
-      const targetRoleIds = roles
-        .filter((role) => normalizedRoleNames.includes(String(role.role_name || '').trim().toLowerCase()))
-        .map((role) => role.id)
-      
-      if (targetRoleIds.length > 0) {
-        const { data: users, error: usersError } = await supabase
-          .from('users')
-          .select('id, user_name, first_name, last_name, auth_id, role_id, department_id')
-          .in('role_id', targetRoleIds)
-          .eq('department_id', departmentId)
-          
-        if (!usersError && users) {
-          deptUsers = users
-        }
-      }
-    }
+  if (departmentRoleNames.length > 0 && departmentId) {
+    const roleUsers = await getUsersByRoleNames(departmentRoleNames)
+    const { data: deptUserRows } = await supabase
+      .from('users')
+      .select('id')
+      .eq('department_id', departmentId)
+    
+    const deptUserIds = new Set((deptUserRows || []).map(u => u.id))
+    deptUsers = roleUsers.filter(u => deptUserIds.has(u.id))
   }
 
-  // Combine and deduplicate users by id
-  const userMap = new Map()
-  globalUsers.forEach(u => userMap.set(u.id, u))
-  deptUsers.forEach(u => userMap.set(u.id, u))
-  
-  const finalUsers = Array.from(userMap.values())
-  if (finalUsers.length === 0) return 0
+  const allUsersMap = new Map()
+  globalUsers.forEach(u => allUsersMap.set(u.id, u))
+  deptUsers.forEach(u => allUsersMap.set(u.id, u))
 
-  const rows = finalUsers.map((user) => ({
+  const uniqueUsers = Array.from(allUsersMap.values())
+  if (uniqueUsers.length === 0) return 0
+
+  const rows = uniqueUsers.map((user) => ({
     user_id: user.id,
     title,
     message,
@@ -305,11 +296,61 @@ export async function buildEnrichedReports(reports) {
   const locationById = new Map((locationsResult.data || []).map((l) => [String(l.id), l.location_name]))
   const productTypeById = new Map((productTypesResult.data || []).map((p) => [String(p.id), p.product_name]))
 
+  // Batch generate signed URLs for all evidence files in one call
+  const pathsToSign = new Set()
+  reportList.forEach((report) => {
+    const urls = [
+      report.evidence_url,
+      ...(Array.isArray(report.evidence_files) ? report.evidence_files : []),
+      report.investigation_evidence_url,
+      ...(Array.isArray(report.investigation_evidence_files) ? report.investigation_evidence_files : []),
+    ]
+    urls.forEach((url) => {
+      if (!url) return
+      const str = String(url).trim()
+      if (str.includes('token=')) return
+      const p = extractEvidenceStoragePath(str)
+      if (p) pathsToSign.add(p)
+    })
+  })
+
+  const signedUrlMap = new Map()
+  if (pathsToSign.size > 0) {
+    const pathArray = Array.from(pathsToSign)
+    const { data: signedData } = await supabase.storage
+      .from('ncr-evidence')
+      .createSignedUrls(pathArray, 60 * 60)
+    if (signedData && Array.isArray(signedData)) {
+      signedData.forEach((item) => {
+        if (item?.path && item?.signedUrl) {
+          signedUrlMap.set(item.path, item.signedUrl)
+        }
+      })
+    }
+  }
+
+  const resolveUrl = (url) => {
+    if (!url) return null
+    const str = String(url).trim()
+    if (str.includes('token=')) return str
+    const p = extractEvidenceStoragePath(str)
+    if (p && signedUrlMap.has(p)) return signedUrlMap.get(p)
+    return str
+  }
+
   const enriched = reportList.map((report) => {
     const reporter = userById.get(report.reported_by)
     const reporterFullName = reporter
       ? `${reporter.first_name || ''} ${reporter.last_name || ''}`.trim() || reporter.user_name || null
       : null
+
+    const signedEvidenceFiles = Array.isArray(report.evidence_files)
+      ? report.evidence_files.map(resolveUrl)
+      : []
+
+    const signedInvestigationFiles = Array.isArray(report.investigation_evidence_files)
+      ? report.investigation_evidence_files.map(resolveUrl)
+      : []
 
     return {
       ...report,
@@ -322,29 +363,14 @@ export async function buildEnrichedReports(reports) {
       product_type_name: report.product_type_id
         ? productTypeById.get(String(report.product_type_id)) || null
         : report.product_type || null,
+      evidence_url: resolveUrl(report.evidence_url),
+      evidence_files: signedEvidenceFiles,
+      investigation_evidence_url: resolveUrl(report.investigation_evidence_url),
+      investigation_evidence_files: signedInvestigationFiles,
     }
   })
 
-  return Promise.all(
-    enriched.map(async (report) => {
-      const signedEvidenceFiles = Array.isArray(report.evidence_files)
-        ? await Promise.all(report.evidence_files.map((url) => buildEvidenceDisplayUrl(url)))
-        : []
-
-      const signedInvestigationFiles = Array.isArray(report.investigation_evidence_files)
-        ? await Promise.all(report.investigation_evidence_files.map((url) => buildEvidenceDisplayUrl(url)))
-        : []
-
-      return {
-        ...report,
-        evidence_url: await buildEvidenceDisplayUrl(report.evidence_url),
-        evidence_files: signedEvidenceFiles,
-        investigation_evidence_url: await buildEvidenceDisplayUrl(report.investigation_evidence_url),
-        investigation_evidence_files: signedInvestigationFiles,
-      }
-    })
-  )
-
+  return enriched
 }
 
 export async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, rawName }) {

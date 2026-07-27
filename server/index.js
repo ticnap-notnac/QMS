@@ -30,7 +30,6 @@ import chatbotRoutes from './routes/chatbotRoutes.js'
 import { authMiddleware } from './middlewares/authMiddleware.js'
 import { errorHandler } from './middlewares/errorMiddleware.js'
 import { logClientError } from './controllers/logController.js'
-import { startQueue } from './utils/queue.js'
 
 const app = express()
 
@@ -100,8 +99,5 @@ app.use('/api/dashboard', authMiddleware, dashboardRoutes)
 app.use('/api', authMiddleware, chatbotRoutes)
 
 app.use(errorHandler)
-
-// Start the pg-boss background job queue and register workers
-startQueue()
 
 export default app
