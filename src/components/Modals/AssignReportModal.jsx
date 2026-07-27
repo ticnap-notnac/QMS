@@ -44,7 +44,7 @@ export default function AssignReportModal({
           borderRadius: '16px',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
+          overflow: 'visible',
           border: '1px solid #cbd5e1',
           boxShadow: '0 24px 48px rgba(0, 0, 0, 0.1)',
           boxSizing: 'border-box'

@@ -2,6 +2,12 @@ import { LoaderCircle, BookOpen, Paperclip, CheckCircle } from 'lucide-react'
 import { useState } from 'react'
 import { supabase } from '../../utils/supabase'
 
+const formatTextWithLists = (text) => {
+  if (!text) return text;
+  // Format items like " a)", " 1)" etc. to be on a new line and indented
+  return text.replace(/(?:\s+)([a-z0-9]{1,2}\))/g, '\n  $1');
+}
+
 export function AuditChecklistSection({
   activeRun,
   error,
@@ -21,9 +27,22 @@ export function AuditChecklistSection({
   onSelectQddr
 }) {
   const [currentPage, setCurrentPage] = useState(1)
+  const [searchClause, setSearchClause] = useState('')
+  const [jumpPage, setJumpPage] = useState('')
   const itemsPerPage = 5
-  const totalPages = Math.ceil(activeClauses.length / itemsPerPage)
-  const paginatedClauses = activeClauses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  
+  const filteredClauses = activeClauses.filter(clause => {
+    if (!searchClause) return true
+    const searchLower = searchClause.toLowerCase()
+    return (
+      (clause.clause_number && clause.clause_number.toString().toLowerCase().includes(searchLower)) ||
+      (clause.title && clause.title.toLowerCase().includes(searchLower)) ||
+      (clause.requirement && clause.requirement.toLowerCase().includes(searchLower))
+    )
+  })
+
+  const totalPages = Math.ceil(filteredClauses.length / itemsPerPage) || 1
+  const paginatedClauses = filteredClauses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   const [uploadingFiles, setUploadingFiles] = useState({})
 
@@ -72,15 +91,76 @@ export function AuditChecklistSection({
             Standard: {activeRun?.audit_schedules?.iso_standards?.name} ({activeRun?.audit_schedules?.iso_standards?.version})
           </span>
         </div>
-        <button
-          className="btn-secondary"
-          onClick={() => {
-            setActiveRun(null)
-            fetchData()
-          }}
-        >
-          Go Back
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Search Clause */}
+          <input 
+            type="text" 
+            placeholder="Search clause..." 
+            value={searchClause}
+            onChange={(e) => {
+              setSearchClause(e.target.value)
+              setCurrentPage(1)
+            }}
+            style={{ 
+              padding: '6px 12px', 
+              border: '1px solid #cbd5e1', 
+              borderRadius: '6px', 
+              fontSize: '14px', 
+              outline: 'none',
+              width: '200px'
+            }}
+          />
+
+          {/* Jump to Page */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '14px', color: '#475569' }}>Page:</span>
+            <input 
+              type="number" 
+              min="1" 
+              max={totalPages}
+              value={jumpPage}
+              onChange={(e) => setJumpPage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const p = parseInt(jumpPage)
+                  if (p >= 1 && p <= totalPages) {
+                    setCurrentPage(p)
+                    setJumpPage('') // Clear after jump
+                  }
+                }
+              }}
+              onBlur={() => {
+                const p = parseInt(jumpPage)
+                if (p >= 1 && p <= totalPages) {
+                  setCurrentPage(p)
+                }
+                setJumpPage('') // Clear when unfocused
+              }}
+              placeholder={currentPage.toString()}
+              style={{ 
+                width: '60px', 
+                padding: '6px', 
+                border: '1px solid #cbd5e1', 
+                borderRadius: '6px', 
+                fontSize: '14px', 
+                outline: 'none',
+                textAlign: 'center'
+              }}
+            />
+            <span style={{ fontSize: '14px', color: '#94a3b8' }}>/ {totalPages}</span>
+          </div>
+
+          <button
+            className="btn-add-action"
+            style={{ background: '#ffffff', color: '#475569', border: '1px solid #cbd5e1', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontSize: '14px', padding: '6px 14px' }}
+            onClick={() => {
+              setActiveRun(null)
+              fetchData()
+            }}
+          >
+            Go Back
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -98,15 +178,15 @@ export function AuditChecklistSection({
         {activeClauses.length === 0 ? (
           <p style={{ color: '#64748b', textAlign: 'center' }}>No clauses found for this ISO standard. Please add clauses first.</p>
         ) : (
-          <div className="iso-table-wrap">
-            <table className="iso-table">
+          <div className="iso-table-wrap" style={{ overflowX: 'auto' }}>
+            <table className="iso-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1000px' }}>
               <thead>
                 <tr>
-                  <th style={{ width: '120px' }}>Clause</th>
-                  <th style={{ width: '25%' }}>What To Look for and how?</th>
+                  <th style={{ width: '12%' }}>Clause</th>
+                  <th style={{ width: '30%' }}>What To Look for and how?</th>
                   <th style={{ width: '25%' }}>Evidence / Observation</th>
-                  <th style={{ width: '25%' }}>Findings</th>
-                  <th style={{ width: '120px' }}>Status</th>
+                  <th style={{ width: '19%' }}>Findings</th>
+                  <th style={{ width: '14%' }}>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -114,27 +194,27 @@ export function AuditChecklistSection({
                   const answer = resultsMap[clause.id] || { status: 'compliant', evidence: '', notes: '' }
                   return (
                     <tr key={clause.id}>
-                      <td style={{ verticalAlign: 'top' }}>
-                        <strong style={{ color: '#0891b2', display: 'block', marginBottom: '4px' }}>Clause {clause.clause_number}</strong>
-                        <span style={{ fontSize: '13px', color: '#334155', fontWeight: '500' }}>{clause.title}</span>
+                      <td className="valign-top" style={{ paddingRight: '16px' }}>
+                        <strong style={{ color: '#0891b2', display: 'block', marginBottom: '6px', fontSize: '14px' }}>Clause {clause.clause_number}</strong>
+                        <span style={{ fontSize: '13.5px', color: '#334155', fontWeight: '500', display: 'block', wordBreak: 'break-word' }}>{clause.title}</span>
                       </td>
-                      <td style={{ verticalAlign: 'top', fontSize: '13px', whiteSpace: 'pre-wrap' }}>
+                      <td className="valign-top" style={{ fontSize: '13.5px', paddingRight: '20px', wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.5' }}>
                         {clause.requirement && (
-                          <div style={{ marginBottom: '8px' }}>
-                            <strong>Requirement:</strong><br/>
-                            {clause.requirement}
+                          <div style={{ marginBottom: '12px' }}>
+                            <strong style={{ color: '#0f172a' }}>Requirement:</strong><br/>
+                            <span style={{ color: '#334155', whiteSpace: 'pre-wrap', display: 'block', textAlign: 'justify' }}>{formatTextWithLists(clause.requirement)}</span>
                           </div>
                         )}
                         {clause.what_to_look_for && (
                           <div style={{ color: '#64748b' }}>
-                            <strong>Guide:</strong><br/>
-                            {clause.what_to_look_for}
+                            <strong style={{ color: '#475569' }}>Guide:</strong><br/>
+                            <span style={{ whiteSpace: 'pre-wrap', display: 'block', textAlign: 'justify' }}>{formatTextWithLists(clause.what_to_look_for)}</span>
                           </div>
                         )}
                       </td>
-                      <td style={{ verticalAlign: 'top' }}>
+                      <td className="valign-top" style={{ paddingRight: '16px' }}>
                         <textarea
-                          className="form-input-reports"
+                          className="input-field"
                           rows={4}
                           placeholder="Enter evidence..."
                           value={answer.evidence || ''}
@@ -144,7 +224,7 @@ export function AuditChecklistSection({
                               [clause.id]: { ...answer, evidence: e.target.value }
                             })
                           }}
-                          style={{ marginBottom: '8px', fontSize: '13px' }}
+                          style={{ display: 'block', margin: 0, marginBottom: '10px', width: '100%', resize: 'vertical', minHeight: '80px', borderRadius: '8px' }}
                         />
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <label style={{
@@ -153,11 +233,17 @@ export function AuditChecklistSection({
                             alignItems: 'center',
                             gap: '6px',
                             fontSize: '12px',
+                            fontWeight: '500',
                             color: '#0891b2',
                             background: 'rgba(8, 145, 178, 0.1)',
-                            padding: '4px 8px',
-                            borderRadius: '4px'
-                          }}>
+                            border: '1px solid rgba(8, 145, 178, 0.2)',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(8, 145, 178, 0.15)'}
+                          onMouseOut={(e) => e.currentTarget.style.background = 'rgba(8, 145, 178, 0.1)'}
+                          >
                             {uploadingFiles[clause.id] ? <LoaderCircle size={14} className="spin" /> : <Paperclip size={14} />}
                             {uploadingFiles[clause.id] ? 'Uploading...' : 'Attach File'}
                             <input
@@ -173,9 +259,9 @@ export function AuditChecklistSection({
                           )}
                         </div>
                       </td>
-                      <td style={{ verticalAlign: 'top' }}>
+                      <td className="valign-top" style={{ paddingRight: '16px' }}>
                         <textarea
-                          className="form-input-reports"
+                          className="input-field"
                           rows={4}
                           placeholder="Enter findings / CAR notes..."
                           value={answer.notes || ''}
@@ -185,7 +271,7 @@ export function AuditChecklistSection({
                               [clause.id]: { ...answer, notes: e.target.value }
                             })
                           }}
-                          style={{ marginBottom: '8px', fontSize: '13px' }}
+                          style={{ display: 'block', margin: 0, marginBottom: '10px', width: '100%', resize: 'vertical', minHeight: '80px', borderRadius: '8px' }}
                         />
                         {/* Linked CARs & QDDRs display could go here if needed, or omitted for compactness */}
                         {linkedCarsMap && linkedCarsMap[clause.id]?.length > 0 && (
@@ -199,9 +285,8 @@ export function AuditChecklistSection({
                           </div>
                         )}
                       </td>
-                      <td style={{ verticalAlign: 'top' }}>
+                      <td className="valign-top">
                         <select
-                          className="form-input-reports"
                           value={answer.status || 'compliant'}
                           onChange={(e) => {
                             setResultsMap({
@@ -210,18 +295,37 @@ export function AuditChecklistSection({
                             })
                           }}
                           style={{
-                            fontSize: '13px',
+                            display: 'block',
+                            fontFamily: 'inherit',
+                            fontSize: '14px',
                             fontWeight: '600',
-                            padding: '6px',
-                            color: answer.status === 'compliant' ? '#10b981' : 
-                                   answer.status === 'non_compliant' ? '#ef4444' : 
-                                   answer.status === 'partial' ? '#f59e0b' : '#64748b'
+                            padding: '8px 32px 8px 12px',
+                            width: '100%',
+                            appearance: 'none',
+                            WebkitAppearance: 'none',
+                            MozAppearance: 'none',
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'right 12px center',
+                            backgroundSize: '16px',
+                            borderRadius: '8px',
+                            border: '1px solid',
+                            outline: 'none',
+                            backgroundColor: answer.status === 'compliant' ? '#f0fdf4' : 
+                                             answer.status === 'non_compliant' ? '#fef2f2' : 
+                                             answer.status === 'partial' ? '#fffbeb' : '#f8fafc',
+                            borderColor: answer.status === 'compliant' ? '#bbf7d0' : 
+                                         answer.status === 'non_compliant' ? '#fecaca' : 
+                                         answer.status === 'partial' ? '#fde68a' : '#cbd5e1',
+                            color: answer.status === 'compliant' ? '#16a34a' : 
+                                   answer.status === 'non_compliant' ? '#dc2626' : 
+                                   answer.status === 'partial' ? '#d97706' : '#64748b'
                           }}
                         >
-                          <option value="compliant">Compliant</option>
-                          <option value="partial">Partial</option>
-                          <option value="non_compliant">Non-Compliant</option>
-                          <option value="na">N/A</option>
+                          <option value="compliant" style={{ background: '#ffffff', color: '#0f172a', fontWeight: '500' }}>Compliant</option>
+                          <option value="partial" style={{ background: '#ffffff', color: '#0f172a', fontWeight: '500' }}>Partial</option>
+                          <option value="non_compliant" style={{ background: '#ffffff', color: '#0f172a', fontWeight: '500' }}>Non-Compliant</option>
+                          <option value="na" style={{ background: '#ffffff', color: '#0f172a', fontWeight: '500' }}>N/A</option>
                         </select>
                       </td>
                     </tr>

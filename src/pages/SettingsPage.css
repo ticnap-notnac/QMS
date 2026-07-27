@@ -291,6 +291,10 @@
   text-align: left !important;
 }
 
+.iso-table td.valign-top {
+  vertical-align: top !important;
+}
+
 .iso-table tbody tr {
   transition: background 0.15s ease !important;
 }
