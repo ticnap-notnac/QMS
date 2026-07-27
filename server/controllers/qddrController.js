@@ -18,7 +18,7 @@ export async function createQddr(req, res, next) {
       details: { id: data?.id ?? null, reference_no: data?.reference_no }
     })
     await safeCreateNotificationsForRoles({
-      roleNames: ['admin', 'auditor'],
+      roleNames: ['admin', 'qa officer'],
       title: `New QDDR Submitted: ${data?.reference_no || 'Unknown'}`,
       message: `A new Quality Defect & Deviation Report (QDDR) ${data?.reference_no || ''} has been generated. Please review it.`,
       type: 'warning',

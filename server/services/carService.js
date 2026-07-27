@@ -230,7 +230,7 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
     ])
 
     await safeCreateNotificationsForRolesAndDepartment({
-      globalRoleNames: departmentId ? [] : ['user'],
+      globalRoleNames: departmentId ? ['admin', 'qa officer'] : ['admin', 'qa officer', 'user'],
       departmentRoleNames: departmentId ? ['user'] : [],
       departmentId,
       title: `CAR VoE Pending: ${existing.reference_no}`,

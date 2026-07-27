@@ -17,7 +17,7 @@ export async function createCar(req, res, next) {
       details: { id: data?.id ?? null, reference_no: data?.reference_no }
     })
     await safeCreateNotificationsForRoles({
-      roleNames: ['admin', 'auditor'],
+      roleNames: ['admin', 'qa officer'],
       title: `New CAR Submitted: ${data?.reference_no || 'Unknown'}`,
       message: `A new Corrective Action Report (CAR) ${data?.reference_no || ''} has been generated. Please review it.`,
       type: 'warning',
