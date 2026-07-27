@@ -48,6 +48,8 @@
    ========================================================================== */
 .admin-users-table-wrap {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto; 
   -webkit-overflow-scrolling: touch;
   border: 1px solid #cbd5e1;
@@ -872,8 +874,10 @@
   border: 1px solid #e2e8f0;
   border-radius: 18px;
   padding: 14px;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .admin-top-row {
@@ -904,13 +908,29 @@
 }
 
 .admin-search-container {
-  flex: 1 1 auto;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  width: 100%;
-  min-width: 0;
-  position: relative;
+  gap: 12px;
+  flex: 1 1 auto;
+}
+
+@media (max-width: 768px) {
+  .admin-search-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-search-container {
+    flex-direction: column;
+    width: 100%;
+  }
+  .admin-status-select {
+    width: 100%;
+  }
+  .btn-add-action {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .admin-actions-right {
@@ -946,6 +966,8 @@
 
 .glass-card-content {
   margin-top: 6px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .admin-users-section {
@@ -953,6 +975,7 @@
   flex-direction: column;
   gap: 16px;
   padding: 24px;
+  min-width: 0;
 }
 
 .admin-users-header {

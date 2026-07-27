@@ -372,3 +372,18 @@ body.reduce-motion-mode *::after {
   transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
 }
+
+@media (max-width: 992px) {
+  .mobile-fullscreen-overlay {
+    padding: 0 !important;
+  }
+  .mobile-fullscreen-modal {
+    max-width: 100vw !important;
+    max-height: 100dvh !important;
+    height: 100dvh !important;
+    width: 100vw !important;
+    border-radius: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+  }
+}

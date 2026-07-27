@@ -231,8 +231,9 @@ export default function ReportsPage({
         </div>
 
         {availableTabs.length > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0 }}>
+          <div className="reports-tab-nav-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            {/* Desktop Tabs */}
+            <div className="reports-tab-nav reports-tab-nav-bar desktop-only-tabs" style={{ marginBottom: 0 }}>
               {availableTabs.map(t => {
                 const tabNames = {
                   ncr: <>Non-Conformance<br/>Report</>,
@@ -252,6 +253,28 @@ export default function ReportsPage({
                   </button>
                 );
               })}
+            </div>
+
+            {/* Mobile Dropdown */}
+            <div className="mobile-only-tabs">
+              <select 
+                className="reports-tab-mobile-dropdown"
+                value={logic.activeTab}
+                onChange={(e) => logic.setActiveTab(e.target.value)}
+              >
+                {availableTabs.map(t => {
+                  const tabNamesMobile = {
+                    ncr: 'NON-CONFORMANCE REPORT',
+                    car: 'CORRECTIVE ACTION REQUEST',
+                    qddr: 'QUALITY DEFECTS REPORT'
+                  };
+                  return (
+                    <option key={t} value={t}>
+                      {tabNamesMobile[t] || t.toUpperCase()}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
             {logic.activeTab === 'car' && (
               <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>

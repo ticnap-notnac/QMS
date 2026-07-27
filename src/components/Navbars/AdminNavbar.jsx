@@ -23,7 +23,8 @@ export default function AdminNavbar({
 
   return (
     <div className="admin-top-nav">
-      <div className="admin-tabs">
+      {/* Desktop Tabs */}
+      <div className="admin-tabs desktop-only">
         {tabs.map((t) => (
           <button
             key={t}
@@ -34,6 +35,19 @@ export default function AdminNavbar({
             {t}
           </button>
         ))}
+      </div>
+
+      {/* Mobile Dropdown (Hidden on Desktop) */}
+      <div className="admin-tabs-mobile mobile-only">
+        <select 
+          className="admin-tab-select"
+          value={activeTab}
+          onChange={(e) => handleTabChange(e.target.value)}
+        >
+          {tabs.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 import { LoaderCircle, BookOpen, Paperclip, CheckCircle } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../../utils/supabase'
 
 const formatTextWithLists = (text) => {
@@ -395,45 +396,58 @@ export function AuditRunDetailsModal({
   runResults,
   handlePrintReport
 }) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 992);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 992);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   if (!isDetailsModalOpen || !selectedRunDetails) return null
 
-  return (
-    <div 
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        background: 'rgba(15, 23, 42, 0.4)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 2000,
-        padding: '20px',
-        boxSizing: 'border-box'
-      }}
-      onClick={() => setIsDetailsModalOpen(false)}
-    >
+  return createPortal(
+    <>
       <div 
         style={{
-          position: 'relative',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           width: '100%',
-          maxWidth: '750px',
-          background: '#ffffff',
-          border: '1px solid #cbd5e1',
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
-          borderRadius: '16px',
-          padding: '24px 32px',
-          boxSizing: 'border-box',
+          height: '100%',
+          background: 'rgba(15, 23, 42, 0.4)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
           display: 'flex',
-          flexDirection: 'column',
-          gap: '20px'
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999999, // Super high z-index to stay above everything
+          padding: '20px',
+          boxSizing: 'border-box'
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={() => setIsDetailsModalOpen(false)}
       >
+        <div 
+          style={{
+            position: 'relative',
+            width: '100%',
+            maxWidth: '750px',
+            maxHeight: '90vh',
+            background: '#ffffff',
+            border: '1px solid #cbd5e1',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+            borderRadius: '16px',
+            padding: '24px',
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            margin: 0
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
         <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>
@@ -452,39 +466,40 @@ export function AuditRunDetailsModal({
           </button>
         </div>
 
-        <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '12px', margin: '16px 0' }}>
-          {loadingRunDetails ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: '#64748b' }}>
-              <LoaderCircle size={24} className="iso-spinner" style={{ margin: '0 auto 8px' }} />
-              Loading checklist findings...
-            </div>
-          ) : runClauses.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#64748b', fontSize: '13.5px' }}>No evaluated clauses found.</div>
-          ) : (
-            runClauses.map((clause) => {
-              const result = runResults.find(r => r.clause_id === clause.id) || { status: 'na', evidence: '', notes: '', requirement: '', what_to_look_for: '' }
-              
-              const statusColors = {
-                compliant: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981', label: 'Compliant' },
-                partial: { bg: 'rgba(245, 158, 11, 0.1)', text: '#f59e0b', label: 'Partial' },
-                non_compliant: { bg: 'rgba(239, 68, 68, 0.1)', text: '#ef4444', label: 'Non-Compliant' },
-                na: { bg: 'rgba(100, 116, 139, 0.1)', text: '#94a3b8', label: 'N/A' }
-              }
-              const badge = statusColors[result.status] || statusColors.na
+      <div style={{ maxHeight: 'calc(90vh - 220px)', overflowY: 'auto', paddingRight: '4px', margin: '16px 0' }}>
+        {loadingRunDetails ? (
+          <div style={{ textAlign: 'center', padding: '24px 0', color: '#64748b' }}>
+            <LoaderCircle size={24} className="iso-spinner" style={{ margin: '0 auto 8px' }} />
+            Loading checklist findings...
+          </div>
+        ) : runClauses.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#64748b', fontSize: '13.5px' }}>
+            No evaluated clauses found.
+          </div>
+        ) : (
+          runClauses.map((clause, index) => {
+            const result = runResults.find(r => r.clause_id === clause.id) || {
+              status: 'na', evidence: '', notes: '', requirement: '', what_to_look_for: ''
+            }
+            const statusColors = {
+              compliant: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10b981', label: 'Compliant' },
+              partial: { bg: 'rgba(245, 158, 11, 0.1)', text: '#f59e0b', label: 'Partial' },
+              non_compliant: { bg: 'rgba(239, 68, 68, 0.1)', text: '#ef4444', label: 'Non-Compliant' },
+              na: { bg: 'rgba(100, 116, 139, 0.1)', text: '#94a3b8', label: 'N/A' }
+            }
+            const badge = statusColors[result.status] || statusColors.na
 
-              return (
-                <div
-                  key={clause.id}
-                  style={{
-                    padding: '14px',
-                    borderRadius: '8px',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px'
-                  }}
-                >
+            return (
+              <div
+                key={clause.id}
+                style={{
+                  padding: '14px',
+                  borderRadius: '8px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  marginBottom: index === runClauses.length - 1 ? 0 : '12px'
+                }}
+              >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
                     <div>
                       <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#0891b2', marginRight: '8px' }}>
@@ -501,8 +516,8 @@ export function AuditRunDetailsModal({
 
                   {result.requirement && (
                     <div style={{ fontSize: '12.5px', color: '#334155', padding: '6px 10px', background: 'rgba(8, 145, 178, 0.05)', borderLeft: '2px solid #0891b2', borderRadius: '0 4px 4px 0' }}>
-                      <p style={{ margin: 0 }}><strong>Requirement:</strong> {result.requirement}</p>
-                      {result.what_to_look_for && <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}><strong>What to look for:</strong> {result.what_to_look_for}</p>}
+                      <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}><strong>Requirement:</strong> {result.requirement}</p>
+                      {result.what_to_look_for && <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b', whiteSpace: 'pre-wrap' }}><strong>What to look for:</strong> {result.what_to_look_for}</p>}
                     </div>
                   )}
 
@@ -594,5 +609,7 @@ export function AuditRunDetailsModal({
         </div>
       </div>
     </div>
+    </>,
+    document.body
   )
 }

@@ -394,7 +394,7 @@ export default function DCCFolderContent({
 
           {/* ISO TERMS & COMPLIANCE POLICY */}
           {selectedFolder?.id === 'terms_policy' && (
-            <div className="flex-column full-height" style={{ gap: '20px', padding: '12px' }}>
+            <div className="flex-column" style={{ gap: '20px', padding: '12px' }}>
               <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
                   <ShieldAlert size={22} color="#0891b2" />
