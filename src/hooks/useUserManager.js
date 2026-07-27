@@ -28,7 +28,7 @@ export default function useUserManager({ createFn } = {}) {
     setError('')
     if (!createFn) throw new Error('createFn is required')
     const result = await createFn(userData)
-    await reload()
+    reload()
     return result
   }, [createFn, reload])
 
@@ -45,7 +45,7 @@ export default function useUserManager({ createFn } = {}) {
       }
 
       await request(`/users/${id}`, { method: 'DELETE', body: JSON.stringify({ userAuthId }) })
-      await reload()
+      reload()
     } catch (err) {
       setError(err?.message || String(err))
       throw err

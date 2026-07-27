@@ -729,27 +729,26 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
   const confirmDeleteSchedule = async () => {
     if (!scheduleToDelete) return
     
-    // Optimistic UI update: instantly remove it from the screen
-    setSchedules(prev => prev.filter(s => s.id !== scheduleToDelete))
+    const scheduleId = scheduleToDelete
     setLoading(true)
     try {
       const { error: deleteErr } = await supabase
         .from('audit_schedules')
         .delete()
-        .eq('id', scheduleToDelete)
+        .eq('id', scheduleId)
 
       if (deleteErr) throw deleteErr
+      
+      setScheduleToDelete(null)
+      setSchedules(prev => prev.filter(s => s.id !== scheduleId))
       setSuccess('Audit schedule deleted successfully!')
-      // Still fetch to ensure we're completely synced with the database
       fetchData()
     } catch (err) {
       console.error(err)
       setError('This schedule could not be deleted. Please try again.')
-      // Revert the UI if it failed
       fetchData()
     } finally {
       setLoading(false)
-      setScheduleToDelete(null)
     }
   }
 

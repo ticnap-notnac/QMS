@@ -156,30 +156,7 @@ function AddUserModal({
           </div>
 
           <div className="modal-grid-3">
-            <label className="panel-column">
-              <span className="small-label">Role: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
-              <select
-                name="roleId"
-                value={formData.roleId}
-                onChange={onChange}
-                className="form-input-reports"
-                disabled={rolesLoading || availableRoles.length === 0}
-              >
-                <option value="">
-                  {rolesLoading ? 'Loading roles...' : 'Select a role'}
-                </option>
-                {!rolesLoading && availableRoles.length === 0 ? (
-                  <option value="" disabled>
-                    No roles available
-                  </option>
-                ) : null}
-                {availableRoles.map((role) => (
-                  <option key={role.id} value={role.id}>
-                    {role.role_name}
-                  </option>
-                ))}
-              </select>
-            </label>
+
 
             <label className="panel-column">
               <span className="small-label">Department: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>

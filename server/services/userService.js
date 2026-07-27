@@ -10,7 +10,7 @@ export async function fetchAllUsers() {
   const [usersResult, rolesResult, departmentsResult] = await Promise.all([
     supabase
       .from('users')
-      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, created_at, status, site_id')
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, created_at, status, site_id, position_id')
       .order('created_at', { ascending: false })
       .limit(1000),
     supabase.from('roles').select('id, role_name'),
@@ -201,6 +201,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
   if (siteId) profileUpdates.site_id = Number(siteId)
   if (roleId) profileUpdates.role_id = Number(roleId)
   if (departmentId) profileUpdates.department_id = Number(departmentId)
+  if (positionId) profileUpdates.position_id = Number(positionId)
   if (contactNumber) profileUpdates.contact_number = contactNumber
   if (userName) profileUpdates.user_name = userName
 
@@ -210,7 +211,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
 
   let { data: profileData, error: profileError } = await supabase
     .from('users')
-    .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id')
+    .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id')
     .eq('auth_id', authData.user.id)
     .maybeSingle()
 
@@ -230,7 +231,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
         site_id: siteId ? Number(siteId) : null,
         status: 'ACTIVE'
       }])
-      .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id')
+      .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id')
       .maybeSingle()
 
     if (!insertErr && createdProfile) {
@@ -275,7 +276,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
 export async function fetchUserById(id) {
   const { data, error } = await supabase
     .from('users')
-    .select('id, first_name, last_name, user_name, email, auth_id')
+    .select('id, first_name, last_name, user_name, email, auth_id, position_id')
     .eq('id', id)
     .maybeSingle()
 
@@ -333,10 +334,10 @@ export async function deleteUserById(id, actorAuthId) {
  * @param {string} actorAuthId - Auth ID of the requesting admin
  * @returns {{ profile: object|null, error: string|null, status: number }}
  */
-export async function updateUserById(id, { firstName, lastName, email, userName, contactNumber, roleId, departmentId, siteId, password, status }, actorAuthId) {
+export async function updateUserById(id, { firstName, lastName, email, userName, contactNumber, roleId, departmentId, siteId, positionId, password, status }, actorAuthId) {
   const { data: existing, error: fetchError } = await supabase
     .from('users')
-    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id')
+    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id, position_id')
     .eq('id', id)
     .maybeSingle()
 
@@ -351,6 +352,7 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
   if (roleId !== undefined && String(roleId) !== String(existing.role_id)) updates.role_id = roleId || null
   if (departmentId !== undefined && String(departmentId) !== String(existing.department_id)) updates.department_id = departmentId || null
   if (siteId !== undefined && String(siteId) !== String(existing.site_id ?? '')) updates.site_id = siteId || null
+  if (positionId !== undefined && String(positionId) !== String(existing.position_id ?? '')) updates.position_id = positionId || null
   if (email !== undefined && email !== (existing.email || '')) updates.email = email
   if (status !== undefined && status !== (existing.status || '')) {
     const VALID_STATUSES = ['ACTIVE', 'INACTIVE', 'DEACTIVATED', 'Active', 'Inactive', 'Deactivated']
@@ -366,7 +368,7 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
       .from('users')
       .update(updates)
       .eq('id', id)
-      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id')
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id, position_id')
       .maybeSingle()
 
     if (profileError) return { profile: null, error: profileError.message, status: 500 }

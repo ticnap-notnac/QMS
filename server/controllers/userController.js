@@ -9,7 +9,7 @@ import {
   updateUserStatusById, 
 } from '../services/userService.js'
 
-import { isSuperAdminRole, isAdminOrSuperAdminRole } from '../utils/roleUtils.js'
+import { isAdminOrSuperAdminRole } from '../utils/roleUtils.js'
 import { supabase } from '../lib/supabase.js'
 
 export async function getUsers(_req, res) {
@@ -19,16 +19,8 @@ export async function getUsers(_req, res) {
 }
 
 export async function createUser(req, res) {
-  const { firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId } = req.body || {}
+  const { firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId, positionId } = req.body || {}
   const actorRoleName = req.dbUser?.role_name || ''
-
-  // Only Super Admin can assign Admin or Super Admin roles
-  if (!isSuperAdminRole(actorRoleName) && roleId) {
-    const { data: targetRole } = await supabase.from('roles').select('role_name').eq('id', roleId).maybeSingle()
-    if (targetRole && isAdminOrSuperAdminRole(targetRole.role_name)) {
-      return res.status(403).json({ error: 'Only Super Admins can assign the Admin or Super Admin role.' })
-    }
-  }
 
   // Basic input validation
   if (!firstName || !lastName || !email || !password || !userName || !departmentId) {
@@ -59,6 +51,7 @@ export async function createUser(req, res) {
     roleId: roleId ? Number(roleId) : null,
     departmentId: departmentId ? Number(departmentId) : null,
     siteId: siteId ? Number(siteId) : null,
+    positionId: positionId ? Number(positionId) : null,
   })
 
   if (error) {
@@ -95,14 +88,6 @@ export async function updateUser(req, res) {
   // Basic validation: ensure body is not empty
   if (!req.body || Object.keys(req.body).length === 0) {
     return res.status(400).json({ error: 'Request body cannot be empty.' })
-  }
-
-  const targetRoleId = req.body.roleId || req.body.role_id
-  if (!isSuperAdminRole(actorRoleName) && targetRoleId) {
-    const { data: targetRole } = await supabase.from('roles').select('role_name').eq('id', targetRoleId).maybeSingle()
-    if (targetRole && isAdminOrSuperAdminRole(targetRole.role_name)) {
-      return res.status(403).json({ error: 'Only Super Admins can assign the Admin or Super Admin role.' })
-    }
   }
 
   const { firstName, lastName, contactNumber } = req.body

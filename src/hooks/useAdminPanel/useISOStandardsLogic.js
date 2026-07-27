@@ -158,25 +158,26 @@ export default function useISOStandardsLogic({ userName }) {
 
   const confirmDeleteClause = async () => {
     if (!clauseToDelete) return
-    setDeletingClauseIds(prev => ({ ...prev, [clauseToDelete.id]: true }))
+    const clause = clauseToDelete
+    setDeletingClauseIds(prev => ({ ...prev, [clause.id]: true }))
     try {
       const { error, count } = await supabase
         .from('iso_clauses')
         .delete({ count: 'exact' })
-        .eq('id', clauseToDelete.id)
+        .eq('id', clause.id)
 
       if (error) throw new Error(error.message)
       if (count === 0) throw new Error('Clause was not deleted. It may be linked to existing records.')
 
-      setClauses(current => current.filter(c => c.id !== clauseToDelete.id))
-      setToast({ message: `Clause ${clauseToDelete.clause_number} deleted.`, type: 'success' })
-      await logIsoActivity('DELETE_ISO_CLAUSE', { clause_number: clauseToDelete.clause_number, title: clauseToDelete.title })
+      setClauseToDelete(null)
+      setClauses(current => current.filter(c => c.id !== clause.id))
+      setToast({ message: `Clause ${clause.clause_number} deleted.`, type: 'success' })
+      await logIsoActivity('DELETE_ISO_CLAUSE', { clause_number: clause.clause_number, title: clause.title })
     } catch (err) {
       console.error(err)
       setToast({ message: err.message || 'This clause could not be deleted. Please try again.', type: 'error' })
     } finally {
-      setDeletingClauseIds(prev => ({ ...prev, [clauseToDelete.id]: false }))
-      setClauseToDelete(null)
+      setDeletingClauseIds(prev => ({ ...prev, [clause.id]: false }))
     }
   }
 
@@ -192,9 +193,9 @@ export default function useISOStandardsLogic({ userName }) {
       
       if (error) throw new Error(error.message)
       
+      setEditingStandard(null)
       setStandards(current => current.map(s => s.id === id ? { ...s, ...updates } : s))
       setToast({ message: 'ISO Standard updated successfully.', type: 'success' })
-      setEditingStandard(null)
       await logIsoActivity('UPDATE_ISO_STANDARD', { id, updates })
     } catch (err) {
       console.error(err)
@@ -214,9 +215,9 @@ export default function useISOStandardsLogic({ userName }) {
       
       if (error) throw new Error(error.message)
       
+      setEditingClause(null)
       setClauses(current => current.map(c => c.id === id ? { ...c, ...updates } : c))
       setToast({ message: 'Clause updated successfully.', type: 'success' })
-      setEditingClause(null)
       await logIsoActivity('UPDATE_ISO_CLAUSE', { id, updates })
     } catch (err) {
       console.error(err)
@@ -446,36 +447,37 @@ export default function useISOStandardsLogic({ userName }) {
 
   const confirmDeleteStandard = async () => {
     if (!standardToDelete) return
+    const standard = standardToDelete
     setToggleError('')
-    setDeletingStandardIds((current) => ({ ...current, [standardToDelete.id]: true }))
+    setDeletingStandardIds((current) => ({ ...current, [standard.id]: true }))
     try {
       const { error, count } = await supabase
         .from('iso_standards')
         .delete({ count: 'exact' })
-        .eq('id', standardToDelete.id)
+        .eq('id', standard.id)
       if (error) {
         throw new Error(error.message)
       }
       if (count === 0) {
         throw new Error('Standard was not deleted. It may be linked to existing records.')
       }
-      const standardLabel = `${standardToDelete.name}${standardToDelete.version ? ` - ${standardToDelete.version}` : ''}`
+      setStandardToDelete(null)
+      const standardLabel = `${standard.name}${standard.version ? ` - ${standard.version}` : ''}`
       const performedBy = await getCurrentAuthId()
       await logIsoActivity('DELETE_ISO_STANDARD', {
         entity_type: 'iso_standard',
-        entity_id: standardToDelete.id,
+        entity_id: standard.id,
         entity_name: standardLabel,
         performed_by: performedBy,
         timestamp: new Date().toISOString(),
         details: `Deleted ISO standard '${standardLabel}' along with all associated clause groups and clauses.`,
       })
+      setToast({ message: `${standard.name} has been deleted.`, type: 'success' })
       await refreshStandards()
-      setToast({ message: `${standardToDelete.name} has been deleted.`, type: 'success' })
     } catch (error) {
       setToast({ message: 'This standard could not be deleted. It may be linked to existing records.', type: 'error' })
     } finally {
-      setDeletingStandardIds((current) => ({ ...current, [standardToDelete.id]: false }))
-      setStandardToDelete(null)
+      setDeletingStandardIds((current) => ({ ...current, [standard.id]: false }))
     }
   }
 

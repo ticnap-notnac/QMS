@@ -6,6 +6,7 @@ export default function UsersTable({
   roleNameById,
   departmentNameById,
   siteNameById,
+  positionNameById,
   onEdit,
   onDelete
 }) {
@@ -17,6 +18,7 @@ export default function UsersTable({
             <th>Name</th>
             <th>Username</th>
             <th>Email</th>
+            <th>Position</th>
             <th>Role</th>
             <th>Department</th>
             <th className="text-center">Site</th>
@@ -29,6 +31,7 @@ export default function UsersTable({
           {filteredUsers.map((user) => {
             const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'
             const roleName = user.role_name || roleNameById.get(String(user.role_id)) || '-'
+            const positionName = user.position_name || positionNameById?.get(String(user.position_id)) || '-'
             const departmentLabel = user.department_name || departmentNameById.get(String(user.department_id)) || '-'
             const siteLabel = user.site_name || siteNameById?.get(String(user.site_id)) || '—'
             const isDeleting = deletingUserId === user.id
@@ -38,6 +41,7 @@ export default function UsersTable({
                 <td>{fullName}</td>
                 <td>{user.user_name || '-'}</td>
                 <td>{user.email || '-'}</td>
+                <td>{positionName}</td>
                 <td>{roleName}</td>
                 <td>{departmentLabel}</td>
                 <td className="text-center">

@@ -77,6 +77,7 @@ export default function useAddUserLogic() {
       roleId: '',
       departmentId: '',
       siteId: '',
+      positionId: '',
     })
     setIsAddUserModalOpen(true)
   }
@@ -112,6 +113,9 @@ export default function useAddUserLogic() {
         return
       }
 
+      const positionObj = positions.find(p => String(p.id) === String(newUser.positionId))
+      const derivedRoleId = positionObj ? positionObj.role_id : null
+
       const result = await createUserItem({
         firstName: newUser.firstName,
         lastName: newUser.lastName,
@@ -119,9 +123,10 @@ export default function useAddUserLogic() {
         password: newUser.password,
         userName: newUser.userName,
         contactNumber: newUser.contactNumber,
-        roleId: newUser.roleId || null,
+        roleId: derivedRoleId || null,
         departmentId: newUser.departmentId || null,
         siteId: newUser.siteId || null,
+        positionId: newUser.positionId || null,
       })
 
       setFormMessage(`Created ${result.authUser.email} successfully.`)
@@ -136,9 +141,10 @@ export default function useAddUserLogic() {
         roleId: '',
         departmentId: '',
         siteId: '',
+        positionId: '',
       })
-      await reloadUsers()
       setIsAddUserModalOpen(false)
+      await reloadUsers()
     } catch (err) {
       const rawMessage = err?.message || err?.error || 'We could not create this user. Please try again.'
       setFormError(rawMessage)
@@ -153,16 +159,16 @@ export default function useAddUserLogic() {
 
   const confirmDeleteUser = async () => {
     if (!userToDelete) return
-    const displayName = `${userToDelete.first_name || ''} ${userToDelete.last_name || ''}`.trim() || userToDelete.user_name || userToDelete.email
+    const user = userToDelete
+    const displayName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.user_name || user.email
     try {
       setToast(null)
-      await deleteItem(userToDelete.id)
+      await deleteItem(user.id)
+      setUserToDelete(null)
       setToast({ message: `Deleted user "${displayName}" successfully.`, type: 'success' })
     } catch (err) {
       console.error('Delete user error:', err)
       setToast({ message: err?.message || 'This user could not be deleted. Please try again.', type: 'error' })
-    } finally {
-      setUserToDelete(null)
     }
   }
 
@@ -184,6 +190,7 @@ export default function useAddUserLogic() {
       roleId: user.role_id ? String(user.role_id) : '',
       departmentId: user.department_id ? String(user.department_id) : '',
       siteId: user.site_id ? String(user.site_id) : '',
+      positionId: user.position_id ? String(user.position_id) : '',
       status: user.status || 'ACTIVE',
       password: '',
     })
@@ -231,7 +238,13 @@ export default function useAddUserLogic() {
       if (editingUser.email !== undefined) payload.email = editingUser.email
       if (editingUser.userName !== undefined) payload.userName = editingUser.userName
       if (editingUser.contactNumber !== undefined) payload.contactNumber = editingUser.contactNumber
-      if (editingUser.roleId !== undefined) payload.roleId = editingUser.roleId || null
+      
+      if (editingUser.positionId !== undefined) {
+        payload.positionId = editingUser.positionId || null
+        const positionObj = positions.find(p => String(p.id) === String(editingUser.positionId))
+        payload.roleId = positionObj ? positionObj.role_id : null
+      }
+
       if (editingUser.departmentId !== undefined) payload.departmentId = editingUser.departmentId || null
       if (editingUser.siteId !== undefined) payload.siteId = editingUser.siteId || null
       if (editingUser.status !== undefined) payload.status = editingUser.status
@@ -248,6 +261,8 @@ export default function useAddUserLogic() {
       setEditFormMessage('User updated successfully.')
       const displayName = `${editingUser.firstName || ''} ${editingUser.lastName || ''}`.trim()
       setToast({ message: `Updated user "${displayName}" successfully.`, type: 'success' })
+      closeEditUserModal()
+      
       await reloadUsers()
 
       try {
@@ -258,13 +273,10 @@ export default function useAddUserLogic() {
       } catch (err) {
         // ignore
       }
-
-      setTimeout(() => {
-        closeEditUserModal()
-      }, 700)
     } catch (err) {
       console.error('Update user error:', err)
-      setEditFormError('The user account could not be updated. Please try again.')
+      const rawMessage = err?.message || err?.error || 'The user account could not be updated. Please try again.'
+      setEditFormError(rawMessage)
     } finally {
       setEditSubmitting(false)
     }
@@ -273,6 +285,7 @@ export default function useAddUserLogic() {
   const roleNameById = useMemo(() => new Map((roles || []).map((role) => [String(role.id), role.role_name])), [roles])
   const departmentNameById = useMemo(() => new Map((departments || []).map((department) => [String(department.id), department.department_name])), [departments])
   const siteNameById = useMemo(() => new Map((sites || []).map((site) => [String(site.id), site.site_name])), [sites])
+  const positionNameById = useMemo(() => new Map((positions || []).map((position) => [String(position.id), position.position_name])), [positions])
 
   const filteredUsers = useMemo(() => {
     let result = adminUsers || []
@@ -300,6 +313,7 @@ export default function useAddUserLogic() {
     roleNameById,
     departmentNameById,
     siteNameById,
+    positionNameById,
     onEdit: openEditUserModal,
     onDelete: handleDeleteUser,
   }

@@ -71,14 +71,15 @@ export default function useAdminCategorySetup({
           await createItem(nextValue)
           await deleteItem(editingItem.id)
         }
-        await reloadLookups()
+        closeCategoryModal()
         setToast({ message: `Updated ${entityName.toLowerCase()} successfully from "${originalValue}" to "${nextValue}".`, type: 'success' })
+        await reloadLookups()
       } else {
         await createItem(nextValue)
-        await reloadLookups()
+        closeCategoryModal()
         setToast({ message: `Added ${entityName.toLowerCase()} "${nextValue}" successfully.`, type: 'success' })
+        await reloadLookups()
       }
-      closeCategoryModal()
     } catch (err) {
       setFormError(editingItem ? `Could not update ${entityName.toLowerCase()}. Please try again.` : 'This item could not be added. Please try again.')
     }
@@ -90,15 +91,15 @@ export default function useAdminCategorySetup({
 
   const confirmDeleteCategory = async () => {
     if (!itemToDelete) return
+    const item = itemToDelete
     try {
       setToast(null)
-      await deleteItem(itemToDelete.id)
+      await deleteItem(item.id)
+      setItemToDelete(null)
+      setToast({ message: `Deleted ${entityName.toLowerCase()} "${item[labelKey]}" successfully.`, type: 'success' })
       await reloadLookups()
-      setToast({ message: `Deleted ${entityName.toLowerCase()} "${itemToDelete[labelKey]}" successfully.`, type: 'success' })
     } catch (err) {
       setToast({ message: err?.message || 'This item could not be deleted. It may be in use elsewhere in the system.', type: 'error' })
-    } finally {
-      setItemToDelete(null)
     }
   }
 

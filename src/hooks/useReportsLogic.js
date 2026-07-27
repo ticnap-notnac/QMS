@@ -386,14 +386,14 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
 
   const confirmDeleteReport = useCallback(async () => {
     if (!reportToDelete) return
+    const report = reportToDelete
     try {
-      await deleteReport(reportToDelete.id)
-      setToast({ message: `Report ${reportToDelete.reference_no || ''} deleted successfully.`, type: 'success' })
+      await deleteReport(report.id)
+      setReportToDelete(null)
+      setToast({ message: `Report ${report.reference_no || ''} deleted successfully.`, type: 'success' })
       await dataState.refreshReportsList(formState.reportFilters)
     } catch (err) {
       setToast({ message: 'Failed to delete report.', type: 'error' })
-    } finally {
-      setReportToDelete(null)
     }
   }, [reportToDelete, dataState, formState.reportFilters, setToast])
 

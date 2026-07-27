@@ -9,6 +9,8 @@ export default function RoleModal({
   roleName,
   onRoleNameChange,
   availablePositions = [],
+  roles = [],
+  editingRoleId,
   selectedPositionIds = [],
   onPositionToggle,
   loading,
@@ -84,6 +86,14 @@ export default function RoleModal({
               ) : (
                 availablePositions.map((pos) => {
                   const isChecked = selectedPositionIds.includes(String(pos.id)) || selectedPositionIds.includes(Number(pos.id))
+                  let assignedText = null
+                  if (pos.role_id && String(pos.role_id) !== String(editingRoleId)) {
+                    const assignedRole = roles.find(r => String(r.id) === String(pos.role_id))
+                    if (assignedRole) {
+                      assignedText = `(Assigned to: ${assignedRole.role_name})`
+                    }
+                  }
+
                   return (
                     <label
                       key={pos.id}
@@ -103,7 +113,14 @@ export default function RoleModal({
                         onChange={() => onPositionToggle(String(pos.id))}
                         style={{ accentColor: '#0f172a', width: '16px', height: '16px', cursor: 'pointer' }}
                       />
-                      <span>{pos.position_name}</span>
+                      <span>
+                        {pos.position_name}
+                        {assignedText && (
+                          <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '12px', marginLeft: '6px' }}>
+                            {assignedText}
+                          </span>
+                        )}
+                      </span>
                     </label>
                   )
                 })

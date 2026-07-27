@@ -103,6 +103,8 @@ export default function RolesPage({
             roleName={categoryInput}
             onRoleNameChange={(event) => setCategoryInput(event.target.value)}
             availablePositions={availablePositions}
+            roles={items}
+            editingRoleId={editingItem?.id}
             selectedPositionIds={selectedPositionIds}
             onPositionToggle={togglePositionSelection}
             loading={creating || loading}

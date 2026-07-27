@@ -30,7 +30,7 @@ export default function useCategoryManager({ loadFn, createFn, updateFn, deleteF
     setCreating(true)
     try {
       await createFn(name)
-      await reload()
+      reload()
     } catch (err) {
       setError('This item could not be created. Please try again.')
       throw err
@@ -44,7 +44,7 @@ export default function useCategoryManager({ loadFn, createFn, updateFn, deleteF
     setError('')
     try {
       await deleteFn(id)
-      await reload()
+      reload()
     } catch (err) {
       setError('This item could not be deleted. It may be in use elsewhere.')
       throw err
@@ -57,7 +57,7 @@ export default function useCategoryManager({ loadFn, createFn, updateFn, deleteF
     setError('')
     try {
       await updateFn(id, name)
-      await reload()
+      reload()
     } catch (err) {
       setError('This item could not be updated. Please try again.')
       throw err

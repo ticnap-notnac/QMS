@@ -80,16 +80,16 @@ export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn
         await updateRolePositions(targetRoleId, selectedPositionIds)
       }
 
-      await reloadLookups()
-      await reload()
-
+      closeCategoryModal()
       if (editingItem) {
         setToast({ message: `Updated role "${nextValue}" and positions successfully.`, type: 'success' })
       } else {
         setToast({ message: `Added role "${nextValue}" successfully.`, type: 'success' })
       }
       setPageError('')
-      closeCategoryModal()
+
+      await reloadLookups()
+      await reload()
     } catch (err) {
       setFormError(editingItem ? 'Could not update role. Please try again.' : 'This role could not be added. Please try again.')
     }
@@ -101,15 +101,15 @@ export default function useRolesPageLogic({ loadFn, createFn, updateFn, deleteFn
 
   const confirmDeleteRole = async () => {
     if (!roleToDelete) return
+    const role = roleToDelete
     try {
       setPageError('')
-      await deleteItem(roleToDelete.id)
+      await deleteItem(role.id)
+      setRoleToDelete(null)
+      setToast({ message: `Deleted role "${role.role_name}" successfully.`, type: 'success' })
       await reloadLookups()
-      setToast({ message: `Deleted role "${roleToDelete.role_name}" successfully.`, type: 'success' })
     } catch (err) {
       setToast({ message: err?.message || 'This role could not be deleted.', type: 'error' })
-    } finally {
-      setRoleToDelete(null)
     }
   }
 
