@@ -35,6 +35,7 @@ export default function ReportsPage({
   userPermissions
 }) {
   const logic = useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId })
+  const normalizedRole = String(userRole || '').trim().toLowerCase()
   const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
   const hasLegacyCreate = rights.includes('create_report')
   const canCreateNcr = isAdminRole(userRole) || hasLegacyCreate || rights.includes('create_ncr_report')

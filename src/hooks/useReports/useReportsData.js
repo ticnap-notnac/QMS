@@ -95,7 +95,7 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
         
         const isStandardUser = !isAdminRole(userRole) && String(userRole || '').trim().toLowerCase() !== 'auditor'
         const scopedArray = isStandardUser
-          ? allArray.filter(r => String(r.department_id) === String(userDepartmentId))
+          ? allArray.filter(r => String(r.department_id) === String(userDepartmentId) || isReportAssignedToCurrentUser(r, currentUserId))
           : allArray
 
         const open = scopedArray.filter(r => !r.investigation_details && String(r.status).trim().toLowerCase() !== REPORT_STATUS.CLOSED.toLowerCase())

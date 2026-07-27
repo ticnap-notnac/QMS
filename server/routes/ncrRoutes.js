@@ -10,7 +10,7 @@ const router = Router()
 const upload = multer({ storage: multer.memoryStorage() })
 
 router.get('/ncr', getReports)
-router.get('/ncr/recurring-trends', requirePermission('view_reports'), getRecurringUnlinkedIssues)
+router.get('/ncr/recurring-trends', requirePermission('reports'), getRecurringUnlinkedIssues)
 router.post('/ncr', validateRequest(createReportSchema), createReport)
 router.post('/ncr/submit', upload.array('evidence_files', 3), createReportSubmit)
 router.put('/ncr/:id', validateRequest(createReportSchema), updateReport)

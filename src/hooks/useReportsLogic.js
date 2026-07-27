@@ -131,6 +131,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       if (isStandardUser) {
         const userDeptName = dataState.departmentNameById.get(String(userDepartmentId))?.toLowerCase()
         filteredCars = filteredCars.filter(car => {
+          if (String(car.created_by) === String(currentUserId) || String(car.requestor) === String(currentUserId)) return true
           if (Array.isArray(car.ncr_id) && car.ncr_id.length > 0) {
             return car.ncr_id.some(ncrId => String(ncrDeptMap.get(Number(ncrId))) === String(userDepartmentId))
           }
@@ -176,16 +177,32 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       // 2. QDDR department scoping/filtering
       let filteredQddrs = qddrData || []
       if (isStandardUser) {
+        const userDeptName = dataState.departmentNameById.get(String(userDepartmentId))?.toLowerCase()
         filteredQddrs = filteredQddrs.filter(q => {
-          if (q.ncr_id) {
+          if (String(q.reported_by) === String(currentUserId) || String(q.leader) === String(currentUserId) || String(q.approved_by) === String(currentUserId) || String(q.noted_by) === String(currentUserId)) return true
+          if (Array.isArray(q.ncr_id) && q.ncr_id.length > 0) {
+            return q.ncr_id.some(ncrId => String(ncrDeptMap.get(Number(ncrId))) === String(userDepartmentId))
+          }
+          if (q.ncr_id && !Array.isArray(q.ncr_id)) {
             return String(ncrDeptMap.get(Number(q.ncr_id))) === String(userDepartmentId)
           }
+          if (userDeptName && q.issuing_department) {
+            return q.issuing_department.toLowerCase() === userDeptName
+          }
+          if (!q.ncr_id || (Array.isArray(q.ncr_id) && q.ncr_id.length === 0)) return true
           return false
         })
       } else if (activeDeptFilterId) {
+        const filterDeptName = dataState.departmentNameById.get(String(activeDeptFilterId))?.toLowerCase()
         filteredQddrs = filteredQddrs.filter(q => {
+          if (Array.isArray(q.ncr_id) && q.ncr_id.length > 0) {
+            return q.ncr_id.some(ncrId => String(ncrDeptMap.get(Number(ncrId))) === String(activeDeptFilterId))
+          }
           if (q.ncr_id) {
             return String(ncrDeptMap.get(Number(q.ncr_id))) === String(activeDeptFilterId)
+          }
+          if (filterDeptName && q.issuing_department) {
+            return q.issuing_department.toLowerCase() === filterDeptName
           }
           return false
         })
