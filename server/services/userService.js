@@ -50,7 +50,7 @@ export async function fetchAllUsers() {
  * @param {object} fields
  * @returns {{ authUser: object|null, profile: object|null, error: string|null, status: number }}
  */
-export async function createUserWithAuth({ firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId }) {
+export async function createUserWithAuth({ firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId, positionId }) {
   const describeAuthCreateError = (authError) => {
     const message = String(authError?.message || '').toLowerCase()
     const code = String(authError?.code || '').toLowerCase()
@@ -158,6 +158,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
       role_id: roleId ? Number(roleId) : null,
       department_id: departmentId ? Number(departmentId) : null,
       site_id: siteId ? Number(siteId) : null,
+      position_id: positionId ? Number(positionId) : null,
     },
   })
   authData = adminRes.data
@@ -179,6 +180,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
             role_id: roleId ? Number(roleId) : null,
             department_id: departmentId ? Number(departmentId) : null,
             site_id: siteId ? Number(siteId) : null,
+            position_id: positionId ? Number(positionId) : null,
           }
         }
       })
@@ -229,8 +231,11 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
         role_id: roleId ? Number(roleId) : null,
         department_id: departmentId ? Number(departmentId) : null,
         site_id: siteId ? Number(siteId) : null,
+        position_id: positionId ? Number(positionId) : null,
         status: 'ACTIVE'
       }])
+      .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id')
+      .maybeSingle()
       .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id')
       .maybeSingle()
 
