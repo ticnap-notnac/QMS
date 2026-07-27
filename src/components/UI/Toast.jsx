@@ -34,40 +34,48 @@ export default function Toast({
   }
 
   return (
-    <div className={`toast-alert-card toast-status--${type}`}>
-      <div className="toast-inner-cluster">
-        <span className="toast-indicator-icon">
-          {type === 'success' && '🔹'}
-          {type === 'error' && '🔸'}
-          {type === 'info' && '🔹'}
-        </span>
-        <div className="toast-body-text" style={{ flex: 1 }}>
-          <p style={{ margin: 0 }}>{message}</p>
-          {onConfirm && (
-            <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
-              <button 
-                onClick={onConfirm}
-                className="btn-gradient-primary"
-                style={{ padding: '4px 12px', fontSize: '12px', minHeight: 'auto' }}
-              >
-                {confirmText}
-              </button>
-              <button 
-                onClick={handleDismiss}
-                className="btn-secondary-light"
-                style={{ padding: '4px 12px', fontSize: '12px', minHeight: 'auto', borderRadius: '8px' }}
-              >
-                {cancelText}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-      {!onConfirm && (
-        <button className="toast-dismiss-button" onClick={handleDismiss} aria-label="Close notification">
-          &times;
-        </button>
+    <>
+      {onConfirm && (
+        <div 
+          className="toast-modal-backdrop"
+          onClick={handleDismiss}
+        />
       )}
-    </div>
+      <div className={`toast-alert-card toast-status--${type} ${onConfirm ? 'toast-center' : ''}`}>
+        <div className="toast-inner-cluster">
+          <span className="toast-indicator-icon">
+            {type === 'success' && '🔹'}
+            {type === 'error' && '🔸'}
+            {type === 'info' && '🔹'}
+          </span>
+          <div className="toast-body-text" style={{ flex: 1 }}>
+            <p style={{ margin: 0 }}>{message}</p>
+            {onConfirm && (
+              <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
+                <button 
+                  onClick={onConfirm}
+                  className="btn-gradient-primary"
+                  style={{ padding: '4px 12px', fontSize: '12px', minHeight: 'auto' }}
+                >
+                  {confirmText}
+                </button>
+                <button 
+                  onClick={handleDismiss}
+                  className="btn-secondary-light"
+                  style={{ padding: '4px 12px', fontSize: '12px', minHeight: 'auto', borderRadius: '8px' }}
+                >
+                  {cancelText}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        {!onConfirm && (
+          <button className="toast-dismiss-button" onClick={handleDismiss} aria-label="Close notification">
+            &times;
+          </button>
+        )}
+      </div>
+    </>
   )
 }

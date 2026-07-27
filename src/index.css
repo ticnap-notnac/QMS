@@ -230,6 +230,37 @@ input::-ms-clear {
   animation: slideNotificationIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
+.toast-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 4999;
+  animation: fadeBackdropIn 0.2s ease-out forwards;
+}
+
+@keyframes fadeBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.toast-center {
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translate(-50%, -50%) !important;
+  animation: popCenterIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+@keyframes popCenterIn {
+  from { opacity: 0; transform: translate(-50%, -40%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
 /* Color codes mapped to theme accents */
 .toast-status--info { border-left: 4px solid #0f172a; }
 .toast-status--success { border-left: 4px solid #16a34a; }
