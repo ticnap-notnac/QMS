@@ -1,4 +1,6 @@
 import { User, SquarePen, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { formatDate, getStatusStyle, getSeverityStyle, getApprovalState, formatAssignedUser } from '@/utils/themeHelpers'
 
 /**
@@ -34,6 +36,8 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
   const resolutionTimeLabel = report.resolution_time_value
     ? `${report.resolution_time_value} ${report.resolution_time_unit || ''}`.trim()
     : 'Not available'
+
+  const [previewImage, setPreviewImage] = useState(null)
 
   return (
     <div className="reports-card" id={`report-card-${report.id}`}>
@@ -143,7 +147,7 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
             {report.investigation_evidence_files.map((fileUrl, idx) => {
               const isImage = fileUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)
               return (
-                <div key={idx} className="evidence-thumb-small" onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}>
+                <div key={idx} className="evidence-thumb-small" onClick={() => { if(isImage) setPreviewImage(fileUrl); else window.open(fileUrl, '_blank', 'noopener,noreferrer'); }}>
                   {isImage ? (
                     <img src={fileUrl} alt={`Evidence ${idx + 1}`} className="evidence-img" />
                   ) : (
@@ -158,12 +162,27 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
             src={report.investigation_evidence_url}
             alt="Investigation evidence"
             className="reports-evidence-img"
-            onClick={() => window.open(report.investigation_evidence_url, '_blank', 'noopener,noreferrer')}
+            onClick={() => setPreviewImage(report.investigation_evidence_url)}
           />
         ) : (
           <p className="evidence-empty-text">No investigation evidence image attached</p>
         )}
       </div>
+
+      {/* ── Image Preview Modal ────────────────────────────────────────── */}
+      {previewImage && createPortal(
+        <div className="modal-backdrop" style={{ zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setPreviewImage(null)}>
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}>
+            <button 
+               onClick={() => setPreviewImage(null)}
+               style={{ position: 'absolute', top: -40, right: 0, background: 'none', border: 'none', color: 'white', fontSize: '32px', cursor: 'pointer', padding: '8px', lineHeight: 1 }}>
+               &times;
+            </button>
+            <img src={previewImage} alt="Fullscreen Evidence" style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', borderRadius: '8px', background: '#000', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }} onClick={(e) => e.stopPropagation()} />
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* ── Action row ─────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '16px' }}>

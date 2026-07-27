@@ -1,5 +1,6 @@
 import { User, SquarePen, Trash2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { formatDate, getStatusStyle, getSeverityStyle, formatAssignedUser } from '@/utils/themeHelpers'
 import { getReportRating, rateReport } from '@/services/ncrService'
 import StarRating from '../UI/StarRating'
@@ -23,6 +24,7 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
   const [ratingStats, setRatingStats] = useState({ average: 0, count: 0, userRating: null })
   const [isRatingLoading, setIsRatingLoading] = useState(false)
   const [toast, setToast] = useState(null)
+  const [previewImage, setPreviewImage] = useState(null)
 
   useEffect(() => {
     if (isClosed) {
@@ -169,7 +171,7 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
             {report.evidence_files.map((fileUrl, idx) => {
               const isImage = fileUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)
               return (
-                <div key={idx} className="evidence-thumb" onClick={() => window.open(fileUrl, '_blank', 'noopener,noreferrer')}>
+                <div key={idx} className="evidence-thumb" onClick={() => { if(isImage) setPreviewImage(fileUrl); else window.open(fileUrl, '_blank', 'noopener,noreferrer'); }}>
                   {isImage ? (
                     <img src={fileUrl} alt={`Evidence ${idx + 1}`} className="evidence-img" />
                   ) : (
@@ -184,12 +186,27 @@ function ReportCard({ report, departmentNameById, userNameById, canAssignReports
             src={report.evidence_url}
             alt="Evidence"
             className="reports-evidence-img"
-            onClick={() => window.open(report.evidence_url, '_blank', 'noopener,noreferrer')}
+            onClick={() => setPreviewImage(report.evidence_url)}
           />
         ) : (
           <p style={{ color: 'var(--muted)', textAlign: 'center' }}>No evidence image attached</p>
         )}
       </div>
+
+      {/* ── Image Preview Modal ────────────────────────────────────────── */}
+      {previewImage && createPortal(
+        <div className="modal-backdrop" style={{ zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setPreviewImage(null)}>
+          <div style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}>
+            <button 
+               onClick={() => setPreviewImage(null)}
+               style={{ position: 'absolute', top: -40, right: 0, background: 'none', border: 'none', color: 'white', fontSize: '32px', cursor: 'pointer', padding: '8px', lineHeight: 1 }}>
+               &times;
+            </button>
+            <img src={previewImage} alt="Fullscreen Evidence" style={{ maxWidth: '100%', maxHeight: '90vh', objectFit: 'contain', borderRadius: '8px', background: '#000', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }} onClick={(e) => e.stopPropagation()} />
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* ── Rating Section (Closed Reports) ─────────────────────────────── */}
       {isClosed && (
