@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { isAdminRole } from '../utils/roleUtils.js'
-import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X } from 'lucide-react'
+import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X, Calendar } from 'lucide-react'
 import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
 import html2pdf from 'html2pdf.js'
 import CARPrintTemplate from './Print/CARPrintTemplate.jsx'
 import NCRPrintTemplate from './Print/NCRPrintTemplate.jsx'
 import QDDRPrintTemplate from './Print/QDDRPrintTemplate.jsx'
+import DCCReportDetailsModal from './Modals/DCCReportDetailsModal.jsx'
 
 
 const SEVERITY_COLORS = {
@@ -23,6 +24,39 @@ function resolveStorageUrl(path) {
   if (path.startsWith('http://') || path.startsWith('https://')) return path
   const { data } = supabase.storage.from(NCR_EVIDENCE_BUCKET).getPublicUrl(path)
   return data?.publicUrl ?? null
+}
+
+/**
+ * Groups an array of report objects by Creation/Occurrence Month and Year.
+ * Returns an array of group objects sorted in reverse chronological order (newest month first).
+ */
+function groupReportsByMonthYear(reports) {
+  if (!reports || !reports.length) return []
+
+  const groups = {}
+
+  reports.forEach((item) => {
+    const rawDate = item.occurrence_date || item.created_at || item.request_date || item.audit_date
+    const d = rawDate ? new Date(rawDate) : new Date()
+    const validDate = isNaN(d.getTime()) ? new Date() : d
+
+    const year = validDate.getFullYear()
+    const monthIndex = validDate.getMonth()
+    const monthName = validDate.toLocaleString('default', { month: 'long' })
+    const monthKey = `${year}-${String(monthIndex + 1).padStart(2, '0')}`
+    const label = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`
+
+    if (!groups[monthKey]) {
+      groups[monthKey] = {
+        key: monthKey,
+        label,
+        items: []
+      }
+    }
+    groups[monthKey].items.push(item)
+  })
+
+  return Object.values(groups).sort((a, b) => b.key.localeCompare(a.key))
 }
 
 export default function DCCFolderContent({
@@ -70,6 +104,7 @@ export default function DCCFolderContent({
 
   const [localSearch, setLocalSearch] = useState('')
   const [selectedDocument, setSelectedDocument] = useState(null)
+  const [viewDetailsDoc, setViewDetailsDoc] = useState(null)
   const [shareSuccess, setShareSuccess] = useState(false)
   
   // PDF Download State & Refs
@@ -136,6 +171,63 @@ export default function DCCFolderContent({
         setDownloadingType(null)
       }
     }, 100)
+  }
+
+  const renderGroupedReports = (reports, reportType) => {
+    if (!reports || !reports.length) {
+      return <div className="empty-state">No {reportType} reports found.</div>
+    }
+
+    const groups = groupReportsByMonthYear(reports)
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+        {groups.map((group) => (
+          <div key={group.key} className="dcc-month-group">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              paddingBottom: '8px',
+              borderBottom: '2px solid #e2e8f0',
+              marginBottom: '16px'
+            }}>
+              <Calendar size={18} color="#0f172a" />
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                {group.label}
+              </h3>
+              <span style={{
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                padding: '2px 10px',
+                borderRadius: '12px',
+                background: '#f1f5f9',
+                color: '#64748b'
+              }}>
+                {group.items.length} {group.items.length === 1 ? 'file' : 'files'}
+              </span>
+            </div>
+
+            <div className="dcc-document-grid">
+              {group.items.map((item) => (
+                <div
+                  key={item.id}
+                  className={`dcc-document-card ${selectedDocument?.id === item.id ? 'active' : ''}`}
+                  onClick={() => setSelectedDocument({ ...item, _type: reportType })}
+                >
+                  <div className="document-card-icon-wrap doc">
+                    <FileText size={24} />
+                  </div>
+                  <span className="document-card-label">
+                    {item.reference_no || item.title || `${reportType}-${item.id.slice(0, 6)}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
   }
 
   const queryClean = (searchQuery || '').trim().toLowerCase()
@@ -490,107 +582,27 @@ export default function DCCFolderContent({
             </div>
           )}
 
-          {/* DOCUMENT CARDS GRID FOR REPORTS */}
+          {/* DOCUMENT CARDS GRID FOR REPORTS (GROUPED BY MONTH & YEAR) */}
           {selectedFolder?.id === 'task_reports' && selectedTaskFolder && (
-            <div className="flex-column full-height" style={{ gap: '16px' }}>
+            <div className="flex-column" style={{ gap: '16px', height: 'auto' }}>
               {selectedTaskFolder.id === 'ncr' && (
-                loadingNcr ? <div>Loading NCR reports...</div> :
-                !filteredNcrReports.length ? <div className="empty-state">No NCR reports found.</div> : (
-                  <div className="dcc-document-grid">
-                    {filteredNcrReports.map((ncr) => (
-                      <div
-                        key={ncr.id}
-                        className={`dcc-document-card ${selectedDocument?.id === ncr.id ? 'active' : ''}`}
-                        onClick={() => setSelectedDocument({ ...ncr, _type: 'NCR' })}
-                      >
-                        <div className="document-card-icon-wrap doc">
-                          <FileText size={24} />
-                        </div>
-                        <span className="document-card-label">{ncr.reference_no || `NCR-${ncr.id.slice(0,6)}`}</span>
-                      </div>
-                    ))}
-                  </div>
-                )
+                loadingNcr ? <div>Loading NCR reports...</div> : renderGroupedReports(filteredNcrReports, 'NCR')
               )}
 
               {selectedTaskFolder.id === 'car' && (
-                loadingCar ? <div>Loading CAR reports...</div> :
-                !filteredCarReports.length ? <div className="empty-state">No CAR reports found.</div> : (
-                  <div className="dcc-document-grid">
-                    {filteredCarReports.map((car) => (
-                      <div
-                        key={car.id}
-                        className={`dcc-document-card ${selectedDocument?.id === car.id ? 'active' : ''}`}
-                        onClick={() => setSelectedDocument({ ...car, _type: 'CAR' })}
-                      >
-                        <div className="document-card-icon-wrap doc">
-                          <FileText size={24} />
-                        </div>
-                        <span className="document-card-label">{car.reference_no || `CAR-${car.id.slice(0,6)}`}</span>
-                      </div>
-                    ))}
-                  </div>
-                )
+                loadingCar ? <div>Loading CAR reports...</div> : renderGroupedReports(filteredCarReports, 'CAR')
               )}
 
               {selectedTaskFolder.id === 'qddr' && (
-                loadingQddr ? <div>Loading QDDR reports...</div> :
-                !filteredQddrReports.length ? <div className="empty-state">No QDDR reports found.</div> : (
-                  <div className="dcc-document-grid">
-                    {filteredQddrReports.map((q) => (
-                      <div
-                        key={q.id}
-                        className={`dcc-document-card ${selectedDocument?.id === q.id ? 'active' : ''}`}
-                        onClick={() => setSelectedDocument({ ...q, _type: 'QDDR' })}
-                      >
-                        <div className="document-card-icon-wrap doc">
-                          <FileText size={24} />
-                        </div>
-                        <span className="document-card-label">{q.reference_no || `QDDR-${q.id.slice(0,6)}`}</span>
-                      </div>
-                    ))}
-                  </div>
-                )
+                loadingQddr ? <div>Loading QDDR reports...</div> : renderGroupedReports(filteredQddrReports, 'QDDR')
               )}
 
               {selectedTaskFolder.id === 'audit' && (
-                loadingAudit ? <div>Loading Audit reports...</div> :
-                !filteredAuditReports.length ? <div className="empty-state">No Completed Audit reports found.</div> : (
-                  <div className="dcc-document-grid">
-                    {filteredAuditReports.map((audit) => (
-                      <div
-                        key={audit.id}
-                        className={`dcc-document-card ${selectedDocument?.id === audit.id ? 'active' : ''}`}
-                        onClick={() => setSelectedDocument({ ...audit, _type: 'AUDIT_RUN' })}
-                      >
-                        <div className="document-card-icon-wrap doc">
-                          <FileText size={24} />
-                        </div>
-                        <span className="document-card-label">{audit.title || `Audit-${audit.id.slice(0,6)}`}</span>
-                      </div>
-                    ))}
-                  </div>
-                )
+                loadingAudit ? <div>Loading Audit reports...</div> : renderGroupedReports(filteredAuditReports, 'AUDIT_RUN')
               )}
 
               {selectedTaskFolder.id === 'audit_schedules' && (
-                loadingAuditSchedules ? <div>Loading Schedules...</div> :
-                !filteredAuditSchedules.length ? <div className="empty-state">No Scheduled Audits found.</div> : (
-                  <div className="dcc-document-grid">
-                    {filteredAuditSchedules.map((sched) => (
-                      <div
-                        key={sched.id}
-                        className={`dcc-document-card ${selectedDocument?.id === sched.id ? 'active' : ''}`}
-                        onClick={() => setSelectedDocument({ ...sched, _type: 'AUDIT_SCHED' })}
-                      >
-                        <div className="document-card-icon-wrap doc">
-                          <FileText size={24} />
-                        </div>
-                        <span className="document-card-label">{sched.title || `Sched-${sched.id.slice(0,6)}`}</span>
-                      </div>
-                    ))}
-                  </div>
-                )
+                loadingAuditSchedules ? <div>Loading Schedules...</div> : renderGroupedReports(filteredAuditSchedules, 'AUDIT_SCHED')
               )}
             </div>
           )}
@@ -715,6 +727,17 @@ export default function DCCFolderContent({
                   </span>
                 </div>
 
+                {/* View Details Button */}
+                {['CAR', 'NCR', 'QDDR'].includes(selectedDocument._type) && (
+                  <button 
+                    onClick={() => setViewDetailsDoc(selectedDocument)} 
+                    className="btn btn-outline dcc-details-action-btn"
+                  >
+                    <Eye size={13} style={{ marginRight: '6px' }} />
+                    View Details
+                  </button>
+                )}
+
                 {/* Open CAPA Details */}
                 {selectedDocument._type === 'CAR' && (
                   <button 
@@ -756,6 +779,13 @@ export default function DCCFolderContent({
           )}
         </div>
       )}
+
+      <DCCReportDetailsModal
+        isOpen={!!viewDetailsDoc}
+        onClose={() => setViewDetailsDoc(null)}
+        document={viewDetailsDoc}
+        onDownloadPDF={handleDownloadPDF}
+      />
 
       {/* Hidden Print Templates for PDF Generation */}
       <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', opacity: 0, pointerEvents: 'none' }}>

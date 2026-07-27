@@ -758,15 +758,43 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
 }
 
 /* Center Explorer Panel */
+main.page-root .dcc-glass-main-card .dcc-center-pane,
 .dcc-center-pane {
   flex: 1 !important;
   height: 100% !important;
+  max-height: 100% !important;
   padding: 24px !important;
   display: flex !important;
   flex-direction: column !important;
   overflow-y: auto !important;
   min-width: 0 !important;
   background: #ffffff !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #64748b #f1f5f9 !important;
+}
+
+.dcc-center-pane::-webkit-scrollbar,
+.dcc-explorer-viewport::-webkit-scrollbar {
+  width: 10px !important;
+  display: block !important;
+}
+
+.dcc-center-pane::-webkit-scrollbar-track,
+.dcc-explorer-viewport::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+  border-radius: 6px !important;
+}
+
+.dcc-center-pane::-webkit-scrollbar-thumb,
+.dcc-explorer-viewport::-webkit-scrollbar-thumb {
+  background: #64748b !important;
+  border: 2px solid #f1f5f9 !important;
+  border-radius: 6px !important;
+}
+
+.dcc-center-pane::-webkit-scrollbar-thumb:hover,
+.dcc-explorer-viewport::-webkit-scrollbar-thumb:hover {
+  background: #334155 !important;
 }
 
 .dcc-breadcrumbs-header {
@@ -818,10 +846,24 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
   position: relative !important;
 }
 
+main.page-root .dcc-glass-main-card .dcc-explorer-viewport,
 .dcc-explorer-viewport {
   flex: 1 !important;
   min-height: 0 !important;
   margin-top: 16px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-right: 8px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #64748b #f1f5f9 !important;
+}
+
+/* Allow flex-column inside dcc-explorer-viewport to unclip and scroll freely */
+main.page-root .dcc-glass-main-card .dcc-explorer-viewport .flex-column.full-height,
+.dcc-explorer-viewport .flex-column.full-height {
+  overflow: visible !important;
+  height: auto !important;
+  min-height: min-content !important;
 }
 
 /* Document Grid Cards */
