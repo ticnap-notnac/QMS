@@ -373,10 +373,10 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   const canDeleteReport = useCallback(
     (report) => {
       if (!report) return false
-      if (isAdminRole(userRole) || rights.includes('edit_delete_report') || canAssignReports) return true
+      if (isAdminRole(userRole) || rights.includes('edit_delete_report')) return true
       return Number(report.reported_by) === Number(currentUserId)
     },
-    [userRole, rights, canAssignReports, currentUserId]
+    [userRole, rights, currentUserId]
   )
 
   const handleDeleteReport = useCallback((report) => {

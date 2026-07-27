@@ -19,7 +19,7 @@ const AVAILABLE_RIGHTS = [
   { key: 'create_ncr_report', label: 'Create NCR Reports', description: 'Create new Non-Conformance Reports (NCR)' },
   { key: 'create_car_report', label: 'Create CAR Reports', description: 'Create new Corrective Action Requests (CAR)' },
   { key: 'create_qddr_report', label: 'Create QDDR Reports', description: 'Create new Quality Defect & Deviation Reports (QDDR)' },
-  { key: 'edit_delete_report', label: 'Edit / Delete Reports', description: 'Modify or remove existing quality reports' },
+  { key: 'edit_delete_report', label: 'Update / Delete Reports', description: 'Update or remove existing quality reports' },
   { key: 'submit_capa', label: 'Submit CAPA Actions', description: 'Submit corrective and preventive actions for CARs' },
   { key: 'verify_car', label: 'Verify CAR Actions', description: 'Perform verification on completed CAR actions' },
   { key: 'manage_iso', label: 'Manage ISO Standards', description: 'Add, update, or remove ISO standards and clauses' },
