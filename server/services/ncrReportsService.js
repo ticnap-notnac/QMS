@@ -424,9 +424,9 @@ export async function fetchReports(scope = 'open', actorAuthId = null) {
                 userId: report.assigned_to,
               })
             }
-            // Also send to auditors and admins
+            // Also send to qa officers and admins
             await createNotificationsForRoles({
-              roleNames: ['admin', 'auditor'],
+              roleNames: ['admin', 'qa officer'],
               title: notifTitle,
               message: notifMessage,
               type: 'warning',
@@ -955,12 +955,9 @@ export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
   }
   const normalizedRole = String(roleName).trim().toLowerCase()
 
-  // 2. Enforce Role and Department restrictions
-  if (normalizedRole === 'staff' || normalizedRole === 'auditor') {
-    throw Object.assign(new Error('Auditors and Staff members do not have permission to review or approve reports. This must be done by a Manager or Admin.'), { status: 403 })
-  }
+  // Removed staff/auditor role check. Deferring to dynamic route permissions.
 
-  if (normalizedRole === 'department manager' || normalizedRole === 'manager') {
+  if (normalizedRole === 'department manager' || normalizedRole === 'manager' || normalizedRole === 'team leader') {
     if (String(report.department_id) !== String(currentUser.department_id)) {
       throw Object.assign(new Error('Managers can only approve reports that belong to their own department.'), { status: 403 })
     }
@@ -1051,7 +1048,7 @@ export async function deleteNcrReport(id, currentUserAuthId) {
   if (!existing) throw Object.assign(new Error('NCR report not found.'), { status: 404 })
 
   // 4. Assert permissions
-  const isAuthorized = ['admin', 'auditor'].includes(normalizedRole) ||
+  const isAuthorized = ['admin', 'qa officer'].includes(normalizedRole) ||
     Number(existing.reported_by) === Number(profile.id)
 
   if (!isAuthorized) {

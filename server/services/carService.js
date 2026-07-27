@@ -204,18 +204,7 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
     throw err
   }
 
-  // Security Check: Only Auditors can submit a CAPA Plan
-  const profile = await getUserProfileByAuthId(actorAuthId)
-  if (!profile) {
-    const err = new Error('Current user profile not found')
-    err.status = 403
-    throw err
-  }
-  if (normalizeRole(profile.role_name) !== 'auditor') {
-    const err = new Error('403 Forbidden: Only a Quality Auditor may submit a CAPA plan.')
-    err.status = 403
-    throw err
-  }
+  // Removed hardcoded 'auditor' role check; deferring to dynamic route permissions.
 
   const { data, error } = await supabase
     .from('car_reports')
@@ -233,7 +222,7 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
 
   if (error) throw error
 
-  // Create notifications for warehouse staff in the relevant department to verify effectiveness.
+  // Create notifications for users in the relevant department to verify effectiveness.
   try {
     const departmentId = await resolveDepartmentIdByName([
       existing?.responsible_department,
@@ -241,8 +230,8 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
     ])
 
     await safeCreateNotificationsForRolesAndDepartment({
-      globalRoleNames: departmentId ? [] : ['warehouse staff'],
-      departmentRoleNames: departmentId ? ['warehouse staff'] : [],
+      globalRoleNames: departmentId ? [] : ['user'],
+      departmentRoleNames: departmentId ? ['user'] : [],
       departmentId,
       title: `CAR VoE Pending: ${existing.reference_no}`,
       message: `A CAPA plan has been submitted for ${existing.reference_no}. Please verify the effectiveness in your department.`,
@@ -286,12 +275,6 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, verificati
   const profile = await getUserProfileByAuthId(actorAuthId)
   if (!profile) {
     const err = new Error('Current user profile not found')
-    err.status = 403
-    throw err
-  }
-
-  if (normalizeRole(profile.role_name) !== 'warehouse staff') {
-    const err = new Error('Only warehouse staff may verify CAR effectiveness.')
     err.status = 403
     throw err
   }

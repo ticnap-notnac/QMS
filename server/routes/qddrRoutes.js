@@ -1,18 +1,18 @@
 import { Router } from 'express'
 import { createQddr, updateQddr, editQddr, deleteQddr, suggestClauses } from '../controllers/qddrController.js'
-import { requireRoles } from '../middlewares/roleMiddleware.js'
+import { requirePermission } from '../middlewares/roleMiddleware.js'
 import { validateRequest } from '../middlewares/validateRequest.js'
 import { createQddrSchema, updateQddrSchema } from '../validations/qddrValidation.js'
 
 const router = Router()
 
-router.post('/qddr', requireRoles(['admin', 'auditor', 'qa'], 'create_report'), validateRequest(createQddrSchema), createQddr)
-router.put('/qddr/:id', requireRoles(['admin', 'auditor', 'department_head'], 'accept_decline_report'), validateRequest(updateQddrSchema), updateQddr)
+router.post('/qddr', requirePermission('create_report'), validateRequest(createQddrSchema), createQddr)
+router.put('/qddr/:id', requirePermission('accept_decline_report'), validateRequest(updateQddrSchema), updateQddr)
 
 // Note: editQddr is a separate route for full form edits, using different roles/validation potentially, but we'll re-use the generic id path
-router.put('/qddr/:id/edit', requireRoles(['admin', 'auditor'], 'edit_delete_report'), editQddr)
-router.delete('/qddr/:id', requireRoles(['admin', 'auditor'], 'edit_delete_report'), deleteQddr)
+router.put('/qddr/:id/edit', requirePermission('edit_delete_report'), editQddr)
+router.delete('/qddr/:id', requirePermission('edit_delete_report'), deleteQddr)
 
-router.post('/qddr/suggest-clauses', requireRoles(['admin', 'auditor', 'department_head', 'qa'], 'manage_iso'), suggestClauses)
+router.post('/qddr/suggest-clauses', requirePermission('manage_iso'), suggestClauses)
 
 export default router

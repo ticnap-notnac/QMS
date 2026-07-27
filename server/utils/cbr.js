@@ -273,12 +273,15 @@ export function retrieveBestMatch(currentReport, candidates) {
       // Normalise effectiveness_score (0-5 scale) to 0-1, default 0 if absent
       let effectivenessNorm = Math.min((candidate.effectiveness_score || 0) / 5, 1)
       
-      // Apply Role-Based Rating Hierarchy (Admin/Auditor/Manager ratings carry more weight)
+      // Apply Role-Based Rating Hierarchy based on defined roles
       const role = String(candidate.rater_role || '').toLowerCase().trim();
-      let roleMultiplier = 1.0; // default for warehouse staff
-      if (role.includes('auditor') || role.includes('admin')) {
+      let roleMultiplier = 1.0; // default for 'User' level roles
+      
+      if (role === 'admin') {
+        roleMultiplier = 1.3;
+      } else if (role === 'qa officer') {
         roleMultiplier = 1.2;
-      } else if (role.includes('manager')) {
+      } else if (role === 'team leader') {
         roleMultiplier = 1.1;
       }
       

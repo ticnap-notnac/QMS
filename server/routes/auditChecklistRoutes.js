@@ -5,13 +5,13 @@ import {
   editTemplate,
   removeTemplate,
 } from '../controllers/auditChecklistController.js'
-import { requireRoles } from '../middlewares/roleMiddleware.js'
+import { requirePermission } from '../middlewares/roleMiddleware.js'
 
 const router = Router()
 
 router.get('/audit-templates', getTemplates)
-router.post('/audit-templates', requireRoles(['admin', 'auditor'], 'manage_audit_schedules'), addTemplate)
-router.put('/audit-templates/:id', requireRoles(['admin', 'auditor'], 'manage_audit_schedules'), editTemplate)
-router.delete('/audit-templates/:id', requireRoles(['admin', 'auditor'], 'manage_audit_schedules'), removeTemplate)
+router.post('/audit-templates', requirePermission('manage_audit_schedules'), addTemplate)
+router.put('/audit-templates/:id', requirePermission('manage_audit_schedules'), editTemplate)
+router.delete('/audit-templates/:id', requirePermission('manage_audit_schedules'), removeTemplate)
 
 export default router
