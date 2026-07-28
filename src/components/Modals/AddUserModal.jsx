@@ -202,9 +202,7 @@ function AddUserModal({
                 ))}
               </select>
             </label>
-          </div>
 
-          <div className="modal-grid-3">
             <label className="panel-column">
               <span className="small-label">Position:</span>
               <select

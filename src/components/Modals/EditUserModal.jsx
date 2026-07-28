@@ -101,9 +101,7 @@ function EditUserModal({
                 ))}
               </select>
             </label>
-          </div>
 
-          <div className="modal-grid-3">
             <label className="panel-column">
               <span className="small-label">Position:</span>
               <select
@@ -119,7 +117,9 @@ function EditUserModal({
                 ))}
               </select>
             </label>
+          </div>
 
+          <div className="modal-grid-3">
             <label className="panel-column">
               <span className="small-label">New Password (Reset):</span>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>

@@ -18,18 +18,7 @@ export default function ISOPage({ userRole, userName }) {
     fetchAndOpenTemplates, closeTemplatesModal
   } = useISOLogic({ userName })
 
-  const normRole = String(userRole || '').trim().toLowerCase()
-  const isAuthorized = isAdminRole(userRole) || normRole === 'auditor'
-  if (!isAuthorized) {
-    return (
-      <main className="dashboard page-root iso-denied-container">
-        <div className="metric-card iso-denied-card">
-          <h2 className="iso-denied-title">Access Denied</h2>
-          <p className="iso-denied-text">You do not have permission to view the ISO Compliance panel.</p>
-        </div>
-      </main>
-    )
-  }
+
 
   return (
     <main className="page-root">

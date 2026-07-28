@@ -30,7 +30,8 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
         flexDirection: 'column',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         overflow: 'hidden',
-        border: '1px solid #e2e8f0'
+        border: '1px solid #e2e8f0',
+        transform: 'translateZ(0)'
       }}>
         {/* Header */}
         <div style={{
@@ -39,7 +40,9 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: '#f8fafc'
+          background: '#f8fafc',
+          borderTopLeftRadius: '16px',
+          borderTopRightRadius: '16px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
@@ -298,8 +301,10 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
           borderTop: '1px solid #e2e8f0',
           background: '#f8fafc',
           display: 'flex',
-          justify: 'space-between',
-          alignItems: 'center'
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottomLeftRadius: '16px',
+          borderBottomRightRadius: '16px'
         }}>
           {onDownloadPDF ? (
             <button

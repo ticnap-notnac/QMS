@@ -62,6 +62,7 @@ export default function useAddUserLogic() {
   const handleUserFieldChange = (event) => {
     const { name, value } = event.target
     setNewUser((current) => ({ ...current, [name]: value }))
+    setFormError('')
   }
 
   const openAddUserModal = () => {
@@ -205,6 +206,7 @@ export default function useAddUserLogic() {
   const handleEditFieldChange = (event) => {
     const { name, value } = event.target
     setEditingUser((cur) => ({ ...cur, [name]: value }))
+    setEditFormError('')
   }
 
   const handleSubmitEditUser = async (e) => {

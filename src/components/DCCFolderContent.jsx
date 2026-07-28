@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { isAdminRole } from '../utils/roleUtils.js'
-import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X, Calendar } from 'lucide-react'
+import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X, Calendar, SlidersHorizontal } from 'lucide-react'
 import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
 import html2pdf from 'html2pdf.js'
@@ -412,19 +412,26 @@ export default function DCCFolderContent({
         )}
 
         <div className="dcc-search-area">
-          <div className="search-container-centered">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder={
-                selectedFolder
-                  ? `Search ${selectedFolder.label}${subFolderLabel}...`
-                  : 'Search documents or folders...'
-              }
-              className="search-bar-field"
-            />
-            <Search size={16} className="search-icon-absolute" />
+          <div className="search-container-centered" style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder={
+                  selectedFolder
+                    ? `Search ${selectedFolder.label}${subFolderLabel}...`
+                    : 'Search documents or folders...'
+                }
+                className="search-bar-field"
+                style={{ width: '100%' }}
+              />
+              <Search size={16} className="search-icon-absolute" />
+            </div>
+            <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '20px', height: '40px' }}>
+              <SlidersHorizontal size={16} color="#64748b" />
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#334155' }}>Filter</span>
+            </button>
           </div>
         </div>
 
