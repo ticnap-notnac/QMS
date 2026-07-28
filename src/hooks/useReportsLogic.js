@@ -37,6 +37,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   const [toast, setToast] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
   const [reportToDelete, setReportToDelete] = useState(null)
+  const [isDeletingReport, setIsDeletingReport] = useState(false)
 
   // ── Preventive Action Rating state ──────────────────────────────────────────
   const [preventiveRating, setPreventiveRating] = useState('')
@@ -404,6 +405,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   const confirmDeleteReport = useCallback(async () => {
     if (!reportToDelete) return
     const report = reportToDelete
+    setIsDeletingReport(true)
     try {
       await deleteReport(report.id)
       setReportToDelete(null)
@@ -411,12 +413,15 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       await dataState.refreshReportsList(formState.reportFilters)
     } catch (err) {
       setToast({ message: 'Failed to delete report.', type: 'error' })
+    } finally {
+      setIsDeletingReport(false)
     }
   }, [reportToDelete, dataState, formState.reportFilters, setToast])
 
   const cancelDeleteReport = useCallback(() => {
+    if (isDeletingReport) return
     setReportToDelete(null)
-  }, [])
+  }, [isDeletingReport])
 
   const approvalQueueReports = useMemo(
     () => filterApprovalQueueReports(dataState.investigatedReports),
@@ -899,6 +904,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       confirmText: 'Delete',
       cancelText: 'Cancel',
       isDestructive: true,
+      isLoading: isDeletingReport,
       onConfirm: confirmDeleteReport,
       onCancel: cancelDeleteReport,
     },

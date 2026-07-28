@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
-import { Upload as UploadIcon, X } from 'lucide-react'
+import { Upload as UploadIcon, X, LoaderCircle } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 
 export default function NCRSubmitModal({ 
@@ -367,7 +367,11 @@ export default function NCRSubmitModal({
               }
             }}
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Report'}
+            {isSubmitting ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <LoaderCircle size={16} className="iso-spinner" /> Submitting...
+              </span>
+            ) : 'Submit Report'}
           </button>
         </div>
 

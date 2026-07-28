@@ -488,7 +488,11 @@ function CARModal({
                 onClick={onSubmit}
                 style={{ margin: 0, padding: '8px 24px', fontSize: '13px', height: 'auto', boxShadow: 'none' }}
               >
-                {isSubmitting ? 'Submitting…' : (form.id ? 'Update CAR' : 'Submit CAR')}
+                {isSubmitting ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <LoaderCircle size={16} className="iso-spinner" /> Submitting…
+                  </span>
+                ) : (form.id ? 'Update CAR' : 'Submit CAR')}
               </button>
             </>
           )}

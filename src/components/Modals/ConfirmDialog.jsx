@@ -1,5 +1,5 @@
 import React from 'react'
-
+import { LoaderCircle } from 'lucide-react'
 /**
  * A reusable confirmation dialog modal that replaces native window.confirm().
  * 
@@ -50,7 +50,11 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             disabled={isLoading}
           >
-            {isLoading ? 'Processing...' : confirmText}
+            {isLoading ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <LoaderCircle size={16} className="iso-spinner" /> Processing...
+              </span>
+            ) : confirmText}
           </button>
         </div>
       </div>

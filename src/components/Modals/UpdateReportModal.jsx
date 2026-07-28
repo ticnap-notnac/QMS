@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Calendar, FileSearch, Upload as UploadIcon } from 'lucide-react'
+import { Calendar, FileSearch, Upload as UploadIcon, LoaderCircle } from 'lucide-react'
 import SearchableDropdown from '@/components/Forms/SearchableDropdown'
 import { REPORT_STATUS } from '../../../shared/constants'
 function FieldCard({ label, value }) {
@@ -398,7 +398,11 @@ export default function UpdateReportModal({
               </button>
             ) : (
               <button type="submit" className="btn-gradient-primary reports-update-button" disabled={isSubmitting}>
-                {isSubmitting ? 'Updating...' : 'Update Report'}
+                {isSubmitting ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <LoaderCircle size={16} className="iso-spinner" /> Updating...
+                  </span>
+                ) : 'Update Report'}
               </button>
             )}
           </div>

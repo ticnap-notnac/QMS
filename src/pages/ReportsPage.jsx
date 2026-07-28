@@ -48,6 +48,8 @@ export default function ReportsPage({
 
   const [carToDelete, setCarToDelete] = useState(null)
   const [qddrToDelete, setQddrToDelete] = useState(null)
+  const [isDeletingCar, setIsDeletingCar] = useState(false)
+  const [isDeletingQddr, setIsDeletingQddr] = useState(false)
   const [trendClusters, setTrendClusters] = useState([])
   const [isRecurringMode, setIsRecurringMode] = useState(false)
   const [isSubmitDropdownOpen, setIsSubmitDropdownOpen] = useState(false)
@@ -125,6 +127,7 @@ export default function ReportsPage({
 
   const confirmDeleteCar = async () => {
     if (!carToDelete) return
+    setIsDeletingCar(true)
     try {
       await deleteCarReport(carToDelete, authUserId)
       logic.setToast({ message: 'CAR deleted successfully', type: 'success' })
@@ -132,16 +135,21 @@ export default function ReportsPage({
     } catch (err) {
       logic.setToast({ message: 'This CAR could not be deleted. It may be linked to other records.', type: 'error' })
     } finally {
+      setIsDeletingCar(false)
       setCarToDelete(null)
     }
   }
 
-  const cancelDeleteCar = () => setCarToDelete(null)
+  const cancelDeleteCar = () => {
+    if (isDeletingCar) return
+    setCarToDelete(null)
+  }
 
   const handleDeleteQddr = (id) => setQddrToDelete(id)
 
   const confirmDeleteQddr = async () => {
     if (!qddrToDelete) return
+    setIsDeletingQddr(true)
     try {
       await deleteQddrReport(qddrToDelete, authUserId)
       logic.setToast({ message: 'QDDR deleted successfully', type: 'success' })
@@ -149,11 +157,15 @@ export default function ReportsPage({
     } catch (err) {
       logic.setToast({ message: 'This QDDR could not be deleted. It may be linked to other records.', type: 'error' })
     } finally {
+      setIsDeletingQddr(false)
       setQddrToDelete(null)
     }
   }
 
-  const cancelDeleteQddr = () => setQddrToDelete(null)
+  const cancelDeleteQddr = () => {
+    if (isDeletingQddr) return
+    setQddrToDelete(null)
+  }
 
   const confirmDeleteCarDialogProps = {
     isOpen: !!carToDelete,
@@ -162,6 +174,7 @@ export default function ReportsPage({
     confirmText: 'Delete',
     cancelText: 'Cancel',
     isDestructive: true,
+    isLoading: isDeletingCar,
     onConfirm: confirmDeleteCar,
     onCancel: cancelDeleteCar,
   }
@@ -173,6 +186,7 @@ export default function ReportsPage({
     confirmText: 'Delete',
     cancelText: 'Cancel',
     isDestructive: true,
+    isLoading: isDeletingQddr,
     onConfirm: confirmDeleteQddr,
     onCancel: cancelDeleteQddr,
   }
