@@ -89,14 +89,19 @@ export default function DCCFolderContent({
   auditSchedules,
   loadingAuditSchedules,
   userRole,
+  userPermissions,
   onFetchRunDetails
 }) {
   const normRole = String(userRole || '').trim().toLowerCase()
+  const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
+  const canAccessCar = isAdminRole(userRole) || rights.includes('create_car_report') || ['team leader', 'auditor'].includes(normRole)
+  const canAccessQddr = isAdminRole(userRole) || rights.includes('create_qddr_report')
+
   const TASK_REPORT_SUBFOLDERS = [
     { id: 'ncr', label: 'NCR' },
-    ...(normRole !== 'warehouse staff' ? [{ id: 'qddr', label: 'QDDR' }] : []),
+    ...(canAccessQddr ? [{ id: 'qddr', label: 'QDDR' }] : []),
+    ...(canAccessCar ? [{ id: 'car', label: 'CAR' }] : []),
     ...(isAdminRole(userRole) || normRole === 'auditor' ? [
-      { id: 'car', label: 'CAR' },
       { id: 'audit', label: 'Audit Reports' },
       { id: 'audit_schedules', label: 'Audit Schedules' },
     ] : [])

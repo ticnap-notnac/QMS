@@ -7,6 +7,7 @@ import { isAdminRole } from '@/utils/roleUtils.js'
 
 export default function DCCPage({
   userRole,
+  userPermissions,
   userDepartmentId,
   userName,
   userPosition,
@@ -49,7 +50,7 @@ export default function DCCPage({
             onCloseTaskFolder={closeTaskFolder} ncrReports={ncrReports} loadingNcr={loadingNcr} carReports={carReports}
             loadingCar={loadingCar} onSelectCar={openCarDetails} qddrReports={qddrReports} loadingQddr={loadingQddr}
             auditReports={auditReports} loadingAudit={loadingAudit} auditSchedules={auditSchedules}
-            loadingAuditSchedules={loadingAuditSchedules} userRole={userRole}
+            loadingAuditSchedules={loadingAuditSchedules} userRole={userRole} userPermissions={userPermissions}
             onFetchRunDetails={fetchRunDetails}
           />
         </div>

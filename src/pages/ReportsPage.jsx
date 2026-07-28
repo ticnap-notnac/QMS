@@ -39,11 +39,11 @@ export default function ReportsPage({
   const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
   const hasLegacyCreate = rights.includes('create_report')
   const canCreateNcr = isAdminRole(userRole) || hasLegacyCreate || rights.includes('create_ncr_report')
-  const canCreateCar = isAdminRole(userRole) || hasLegacyCreate || rights.includes('create_car_report') || ['team leader', 'auditor'].includes(normalizedRole)
-  const canCreateQddr = isAdminRole(userRole) || hasLegacyCreate || rights.includes('create_qddr_report')
+  const canCreateCar = isAdminRole(userRole) || rights.includes('create_car_report') || ['team leader', 'auditor'].includes(normalizedRole)
+  const canCreateQddr = isAdminRole(userRole) || rights.includes('create_qddr_report')
 
-  const canAccessCar = isAdminRole(userRole) || canCreateCar || ['team leader', 'warehouse supervisor', 'supervisor', 'safety', 'auditor', 'department manager'].includes(normalizedRole)
-  const canAccessQddr = isAdminRole(userRole) || canCreateQddr || String(userRole || '').trim().toLowerCase() !== 'warehouse staff'
+  const canAccessCar = isAdminRole(userRole) || canCreateCar
+  const canAccessQddr = isAdminRole(userRole) || canCreateQddr
   const availableTabs = ['ncr', ...(canAccessCar ? ['car'] : []), ...(canAccessQddr ? ['qddr'] : [])]
 
   const [carToDelete, setCarToDelete] = useState(null)
