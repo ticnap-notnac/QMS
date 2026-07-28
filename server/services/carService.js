@@ -73,10 +73,15 @@ function buildCarReferenceNumber(referenceNo) {
   return Number(match[1]) || 0
 }
 
+/**
+ * Creates a new CAR report.
+ *
+ * @param {Object} params
+ * @param {Object} params.body
+ * @param {string} params.reportedByAuthId
+ * @returns {Promise<{data: Object}>}
+ */
 export async function createCarReport({ body, reportedByAuthId }) {
-  // We assume reportedByAuthId maps to a user who is creating it, though CAR has specific 'requestor' fields.
-  
-  // Extract all fields that match car_reports table
   const {
     requesting_department,
     responsible_department,
@@ -102,7 +107,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
     details_of_nonconformance,
     request_date,
     ncr_ids,
-    clause_ids,   // array of iso_clauses.id values to link to this CAR
+    clause_ids,
     audit_schedule_id
   } = body || {}
 
@@ -167,8 +172,6 @@ export async function createCarReport({ body, reportedByAuthId }) {
     throw customErr
   }
 
-  // Link this CAR to the provided ISO clause IDs (if any)
-  // iso_clauses.id is UUID — keep them as strings, just filter blanks
   if (data?.id && Array.isArray(clause_ids) && clause_ids.length > 0) {
     const linkRows = clause_ids
       .map(cid => String(cid).trim())
@@ -190,6 +193,18 @@ export async function createCarReport({ body, reportedByAuthId }) {
   return { data }
 }
 
+/**
+ * Submits a CAPA report for an existing CAR.
+ *
+ * @param {Object} params
+ * @param {string|number} params.carId
+ * @param {string} params.rootCauseAnalysis
+ * @param {string} params.correctiveAction
+ * @param {string} params.preventiveAction
+ * @param {string} params.targetVerificationDate
+ * @param {string} params.actorAuthId
+ * @returns {Promise<{data: Object}>}
+ */
 export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAction, preventiveAction, targetVerificationDate, actorAuthId }) {
   const { data: existing, error: findError } = await supabase
     .from('car_reports')
@@ -203,8 +218,6 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
     err.status = 404
     throw err
   }
-
-  // Removed hardcoded 'auditor' role check; deferring to dynamic route permissions.
 
   const { data, error } = await supabase
     .from('car_reports')
@@ -222,7 +235,6 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
 
   if (error) throw error
 
-  // Create notifications for users in the relevant department to verify effectiveness.
   try {
     const departmentId = await resolveDepartmentIdByName([
       existing?.responsible_department,
@@ -258,6 +270,17 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
   return { data }
 }
 
+/**
+ * Verifies the effectiveness of a CAR.
+ *
+ * @param {Object} params
+ * @param {string|number} params.carId
+ * @param {string} params.outcome
+ * @param {string} params.notes
+ * @param {number} params.verificationRating
+ * @param {string} params.actorAuthId
+ * @returns {Promise<{data: Object}>}
+ */
 export async function verifyCarEffectiveness({ carId, outcome, notes, verificationRating, actorAuthId }) {
   const { data: existing, error: findError } = await supabase
     .from('car_reports')
@@ -324,10 +347,10 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, verificati
 }
 
 /**
- * Returns all CARs linked to a specific ISO clause via car_clause_links.
- * Used by the Audit Checklist to show open CARs alongside each clause row.
+ * Returns all CARs linked to a specific ISO clause.
  *
- * @param {number} clauseId
+ * @param {string|number} clauseId
+ * @returns {Promise<Object[]>}
  */
 export async function fetchCarsForClause(clauseId) {
   const { data, error } = await supabase
@@ -348,6 +371,12 @@ export async function fetchCarsForClause(clauseId) {
   return (data || []).map(row => row.car_reports).filter(Boolean)
 }
 
+/**
+ * Fetches a CAR report by its ID.
+ *
+ * @param {string|number} carId
+ * @returns {Promise<Object|null>}
+ */
 export async function fetchCarReportById(carId) {
   const { data, error } = await supabase
     .from('car_reports')
@@ -361,10 +390,9 @@ export async function fetchCarReportById(carId) {
 
 /**
  * Batch-fetches all CARs linked to a set of clause IDs.
- * Used by handleStartAudit() to load all linked CARs in one query.
  *
- * @param {number[]} clauseIds
- * @returns {Object} Map of { [clause_id]: [{ id, reference_no, status }] }
+ * @param {Array<string|number>} clauseIds
+ * @returns {Promise<Object>}
  */
 export async function fetchLinkedCarsForClauses(clauseIds) {
   if (!clauseIds?.length) return {}
@@ -393,13 +421,16 @@ export async function fetchLinkedCarsForClauses(clauseIds) {
 }
 
 /**
- * Hard deletes a CAR report
+ * Soft deletes a CAR report and its clause links.
+ *
+ * @param {Object} params
+ * @param {string|number} params.carId
+ * @param {string} params.actorAuthId
+ * @returns {Promise<{data: Object}>}
  */
 export async function softDeleteCarReport({ carId, actorAuthId }) {
-  // 1. First delete the links
   await supabase.from('car_clause_links').delete().eq('car_report_id', carId)
   
-  // 2. Delete the report itself
   const { data, error } = await supabase
     .from('car_reports')
     .delete()
@@ -426,7 +457,13 @@ export async function softDeleteCarReport({ carId, actorAuthId }) {
 }
 
 /**
- * Updates a CAR report
+ * Updates an existing CAR report and its clause links.
+ *
+ * @param {Object} params
+ * @param {string|number} params.carId
+ * @param {Object} params.body
+ * @param {string} params.actorAuthId
+ * @returns {Promise<{data: Object}>}
  */
 export async function updateCarReport({ carId, body, actorAuthId }) {
   const payload = {
@@ -464,13 +501,10 @@ export async function updateCarReport({ carId, body, actorAuthId }) {
 
   if (error) throw error
 
-  // Handle clause links
   const { clause_ids } = body || {}
   if (Array.isArray(clause_ids)) {
-    // 1. Delete existing links
     await supabase.from('car_clause_links').delete().eq('car_report_id', carId)
 
-    // 2. Insert new links
     const linkRows = clause_ids
       .map(cid => String(cid).trim())
       .filter(cid => cid.length > 0)

@@ -3,8 +3,8 @@ import { hasServiceRole, supabase } from '../lib/supabase.js'
 import { writeAudit } from '../lib/audit.js'
 
 /**
- * Fetches all users enriched with role_name and department_name.
- * @returns {{ data: object[]|null, error: string|null }}
+ * Fetches all users enriched with role, department, and site information.
+ * @returns {Promise<{ data: object[]|null, error: string|null }>} A promise that resolves to an object containing either the enriched user data array or an error message.
  */
 export async function fetchAllUsers() {
   const [usersResult, rolesResult, departmentsResult] = await Promise.all([
@@ -28,7 +28,6 @@ export async function fetchAllUsers() {
     (departmentsResult.data || []).map((d) => [String(d.id), d.department_name])
   )
 
-  // Fetch sites to enrich the response with site_name
   const { data: sitesData } = await supabase.from('sites').select('id, site_name, site_code')
   const siteMap = new Map(
     (sitesData || []).map((s) => [String(s.id), { site_name: s.site_name, site_code: s.site_code }])
@@ -46,9 +45,19 @@ export async function fetchAllUsers() {
 }
 
 /**
- * Creates an auth user and returns its linked profile row.
- * @param {object} fields
- * @returns {{ authUser: object|null, profile: object|null, error: string|null, status: number }}
+ * Creates a new user in Supabase Auth and links it to a public user profile.
+ * @param {object} fields - The user details.
+ * @param {string} fields.firstName - User's first name.
+ * @param {string} fields.lastName - User's last name.
+ * @param {string} fields.email - User's email address.
+ * @param {string} fields.password - User's password.
+ * @param {string} [fields.userName] - Optional username.
+ * @param {string} [fields.contactNumber] - Optional contact number.
+ * @param {number|string} [fields.roleId] - Optional role ID.
+ * @param {number|string} [fields.departmentId] - Optional department ID.
+ * @param {number|string} [fields.siteId] - Optional site ID.
+ * @param {number|string} [fields.positionId] - Optional position ID.
+ * @returns {Promise<{ authUser: object|null, profile: object|null, error: string|null, status: number }>} An object containing the created auth user, public profile, error message, and HTTP status code.
  */
 export async function createUserWithAuth({ firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId, positionId }) {
   const describeAuthCreateError = (authError) => {
@@ -145,7 +154,6 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
   let authData = null
   let authError = null
 
-  // 1. Try Supabase Auth Admin API
   const adminRes = await supabase.auth.admin.createUser({
     email,
     password,
@@ -164,7 +172,6 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
   authData = adminRes.data
   authError = adminRes.error
 
-  // 2. If Auth Admin API failed due to service role key JWT format, fall back to auth.signUp
   if (authError || !authData?.user) {
     const errStr = String(authError?.message || '').toLowerCase()
     if (!errStr.includes('already registered') && !errStr.includes('already exists')) {
@@ -198,7 +205,6 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
     return { authUser: null, profile: null, error: normalized.error, status: normalized.status }
   }
 
-  // Force update or insert the public.users record right after creation
   const profileUpdates = {}
   if (siteId) profileUpdates.site_id = Number(siteId)
   if (roleId) profileUpdates.role_id = Number(roleId)
@@ -218,7 +224,6 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
     .maybeSingle()
 
   if (!profileData && !profileError) {
-    // Fallback: If DB trigger did not populate public.users, create it manually!
     const { data: createdProfile, error: insertErr } = await supabase
       .from('users')
       .insert([{
@@ -274,9 +279,9 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
 }
 
 /**
- * Fetches a single user profile by primary key.
- * @param {string} id
- * @returns {{ data: object|null, error: string|null }}
+ * Fetches a single user profile by their unique ID.
+ * @param {string} id - The unique identifier of the user.
+ * @returns {Promise<{ data: object|null, error: string|null }>} A promise resolving to the user profile data or an error message.
  */
 export async function fetchUserById(id) {
   const { data, error } = await supabase
@@ -289,10 +294,10 @@ export async function fetchUserById(id) {
 }
 
 /**
- * Deletes a user from public.users and Supabase Auth, then writes an audit log.
- * @param {string} id - Profile PK
- * @param {string} actorAuthId - Auth ID of the requesting admin
- * @returns {{ success: boolean, error: string|null, status: number }}
+ * Deletes a user from both the public profile table and Supabase Auth, and records an audit log.
+ * @param {string} id - The unique identifier of the user to delete.
+ * @param {string} actorAuthId - The Auth ID of the user performing the deletion.
+ * @returns {Promise<{ success: boolean, error: string|null, status: number }>} A promise resolving to an object indicating success, error message, and HTTP status code.
  */
 export async function deleteUserById(id, actorAuthId) {
   const { data: existing, error: fetchError } = await fetchUserById(id)
@@ -333,11 +338,22 @@ export async function deleteUserById(id, actorAuthId) {
 }
 
 /**
- * Updates profile fields and optionally syncs email/password to Supabase Auth.
- * @param {string} id - Profile PK
- * @param {object} fields
- * @param {string} actorAuthId - Auth ID of the requesting admin
- * @returns {{ profile: object|null, error: string|null, status: number }}
+ * Updates a user's profile and conditionally updates their Supabase Auth credentials.
+ * @param {string} id - The unique identifier of the user to update.
+ * @param {object} fields - The fields to update.
+ * @param {string} [fields.firstName] - Updated first name.
+ * @param {string} [fields.lastName] - Updated last name.
+ * @param {string} [fields.email] - Updated email.
+ * @param {string} [fields.userName] - Updated username.
+ * @param {string} [fields.contactNumber] - Updated contact number.
+ * @param {number|string} [fields.roleId] - Updated role ID.
+ * @param {number|string} [fields.departmentId] - Updated department ID.
+ * @param {number|string} [fields.siteId] - Updated site ID.
+ * @param {number|string} [fields.positionId] - Updated position ID.
+ * @param {string} [fields.password] - Updated password.
+ * @param {string} [fields.status] - Updated account status.
+ * @param {string} actorAuthId - The Auth ID of the user performing the update.
+ * @returns {Promise<{ profile: object|null, error: string|null, status: number }>} A promise resolving to the updated profile, error message, and HTTP status code.
  */
 export async function updateUserById(id, { firstName, lastName, email, userName, contactNumber, roleId, departmentId, siteId, positionId, password, status }, actorAuthId) {
   const { data: existing, error: fetchError } = await supabase
@@ -404,6 +420,13 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
 }
 
 
+/**
+ * Updates the status of a specific user.
+ * @param {string} id - The unique identifier of the user.
+ * @param {string} status - The new status to apply to the user.
+ * @param {string} actorAuthId - The Auth ID of the user performing the status update.
+ * @returns {Promise<{ success: boolean, error: string|null, status: number }>} A promise resolving to an object indicating success, error message, and HTTP status code.
+ */
 export async function updateUserStatusById(id, status, actorAuthId) {
   const VALID_STATUSES = ['Active', 'Inactive', 'Deactivated', 'ACTIVE', 'INACTIVE', 'DEACTIVATED']
 

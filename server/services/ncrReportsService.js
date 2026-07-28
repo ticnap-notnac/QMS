@@ -10,28 +10,53 @@ import { getLocalDateString } from '../utils/date.js'
 
 // ─── Pure Utilities ──────────────────────────────────────────────────────────
 
+/**
+ * Normalizes an ID value to a number if possible.
+ * @param {any} value - The value to normalize.
+ * @returns {number|string|null} The normalized ID.
+ */
 export function normalizeId(value) {
   if (value === null || value === undefined || value === '') return null
   const numeric = Number(value)
   return Number.isNaN(numeric) ? value : numeric
 }
 
+/**
+ * Extracts the numeric sequence from a reference number string.
+ * @param {string} referenceNo - The reference number string.
+ * @returns {number} The numeric sequence, or 0 if not matched.
+ */
 export function buildReferenceNumber(referenceNo) {
   const match = String(referenceNo || '').match(/^NCR-(\d{4})-(\d{3,})$/i)
   if (!match) return 0
   return Number(match[2]) || 0
 }
 
+/**
+ * Generates the next NCR reference number.
+ * @param {string} latestRef - The latest reference number.
+ * @returns {string} The next reference number.
+ */
 export function generateNextNcrReferenceNo(latestRef) {
   const currentYear = new Date().getFullYear()
   const nextSeq = buildReferenceNumber(latestRef) + 1
   return `NCR-${currentYear}-${String(nextSeq).padStart(3, '0')}`
 }
 
+/**
+ * Normalizes text by trimming whitespace.
+ * @param {any} value - The text value to normalize.
+ * @returns {string} The normalized text.
+ */
 export function normalizeText(value) {
   return String(value || '').trim()
 }
 
+/**
+ * Normalizes severity string to uppercase standard values.
+ * @param {any} value - The severity value.
+ * @returns {string} The normalized severity.
+ */
 export function normalizeSeverityValue(value) {
   const normalized = normalizeText(value).toLowerCase()
   if (normalized === 'high') return 'HIGH'
@@ -40,6 +65,11 @@ export function normalizeSeverityValue(value) {
   return normalizeText(value)
 }
 
+/**
+ * Extracts the storage path from a raw evidence URL.
+ * @param {string} rawUrl - The raw URL string.
+ * @returns {string|null} The extracted path.
+ */
 export function extractEvidenceStoragePath(rawUrl) {
   const value = String(rawUrl || '').trim()
   if (!value) return null
@@ -49,6 +79,11 @@ export function extractEvidenceStoragePath(rawUrl) {
   return decodeURIComponent(match[1])
 }
 
+/**
+ * Normalizes a date string to YYYY-MM-DD format.
+ * @param {any} value - The date string to normalize.
+ * @returns {string|null} The normalized date string.
+ */
 export function normalizeVerificationDate(value) {
   const text = normalizeText(value)
   if (!text) return null
@@ -61,6 +96,12 @@ export function normalizeVerificationDate(value) {
   return text
 }
 
+/**
+ * Parses and normalizes resolution time and unit.
+ * @param {any} resolutionTimeValue - The numeric time value.
+ * @param {string} resolutionTimeUnit - The unit (hours, days).
+ * @returns {string|null} The formatted resolution time.
+ */
 export function parseResolutionTime(resolutionTimeValue, resolutionTimeUnit) {
   const numericValue = Number(resolutionTimeValue)
   if (!Number.isFinite(numericValue) || numericValue <= 0) return null
@@ -84,13 +125,23 @@ function isAdminRole(roleName) {
   )
 }
 
-export function isAdminOrAuditor(roleName) {
+/**
+ * Checks if a role name belongs to an admin or QA Officer.
+ * @param {string} roleName - The role name to check.
+ * @returns {boolean} True if admin or QA Officer, false otherwise.
+ */
+export function isAdminOrQA(roleName) {
   const normalized = String(roleName || '').trim().toLowerCase()
-  return isAdminRole(roleName) || normalized === 'auditor'
+  return isAdminRole(roleName) || normalized === 'qa officer'
 }
 
 // ─── DB Helpers ───────────────────────────────────────────────────────────────
 
+/**
+ * Generates a signed URL for evidence display.
+ * @param {string} rawUrl - The raw URL string.
+ * @returns {Promise<string|null>} The signed URL.
+ */
 export async function buildEvidenceDisplayUrl(rawUrl) {
   if (!rawUrl) return null
   const value = String(rawUrl).trim()
@@ -102,6 +153,16 @@ export async function buildEvidenceDisplayUrl(rawUrl) {
   return data.signedUrl
 }
 
+/**
+ * Creates a notification for a user and sends an email.
+ * @param {Object} params - Notification parameters.
+ * @param {string} params.title - The notification title.
+ * @param {string} params.message - The notification message.
+ * @param {string} [params.type='info'] - The type of notification.
+ * @param {number|null} [params.reportId=null] - Associated report ID.
+ * @param {string|null} [params.userId=null] - The user ID to notify.
+ * @returns {Promise<Object|null>} The created notification record.
+ */
 export async function createNotification({ title, message, type = 'info', reportId = null, userId = null }) {
   if (!userId) return null
 
@@ -112,13 +173,17 @@ export async function createNotification({ title, message, type = 'info', report
 
   if (error) throw error
 
-  // Send SMTP email in the background
   sendNotificationEmail(userId, title, message)
     .catch(err => console.error('Failed to send SMTP email in background:', err.message))
 
   return data ? data[0] : null
 }
 
+/**
+ * Fetches users by their role names.
+ * @param {string[]} [roleNames=[]] - Array of role names to search for.
+ * @returns {Promise<Object[]>} Array of user objects.
+ */
 export async function getUsersByRoleNames(roleNames = []) {
   const normalizedRoleNames = [
     ...new Set(
@@ -147,6 +212,16 @@ export async function getUsersByRoleNames(roleNames = []) {
 
 import { sendNotificationEmail } from './emailService.js'
 
+/**
+ * Creates notifications for users with specific roles.
+ * @param {Object} params - Notification parameters.
+ * @param {string[]} [params.roleNames=[]] - Target roles.
+ * @param {string} params.title - The notification title.
+ * @param {string} params.message - The notification message.
+ * @param {string} [params.type='info'] - The type of notification.
+ * @param {number|null} [params.reportId=null] - Associated report ID.
+ * @returns {Promise<number>} Number of notifications created.
+ */
 export async function createNotificationsForRoles({ roleNames = [], title, message, type = 'info', reportId = null }) {
   const users = await getUsersByRoleNames(roleNames)
   if (users.length === 0) return 0
@@ -163,7 +238,6 @@ export async function createNotificationsForRoles({ roleNames = [], title, messa
   const { error } = await supabase.from('notifications').insert(rows)
   if (error) throw error
 
-  // Send SMTP emails for each notification in the background
   rows.forEach((row) => {
     sendNotificationEmail(row.user_id, row.title, row.message)
       .catch((err) => console.error('Failed to send SMTP email in background:', err.message))
@@ -172,6 +246,18 @@ export async function createNotificationsForRoles({ roleNames = [], title, messa
   return rows.length
 }
 
+/**
+ * Creates notifications for global roles and specific department roles.
+ * @param {Object} params - Notification parameters.
+ * @param {string[]} [params.globalRoleNames=[]] - Global roles to notify.
+ * @param {string[]} [params.departmentRoleNames=[]] - Department-specific roles.
+ * @param {number} params.departmentId - The department ID.
+ * @param {string} params.title - The notification title.
+ * @param {string} params.message - The notification message.
+ * @param {string} [params.type='info'] - The type of notification.
+ * @param {number|null} [params.reportId=null] - Associated report ID.
+ * @returns {Promise<number>} Number of notifications created.
+ */
 export async function createNotificationsForRolesAndDepartment({ globalRoleNames = [], departmentRoleNames = [], departmentId, title, message, type = 'info', reportId = null }) {
   const globalUsers = await getUsersByRoleNames(globalRoleNames)
   let deptUsers = []
@@ -206,7 +292,6 @@ export async function createNotificationsForRolesAndDepartment({ globalRoleNames
   const { error } = await supabase.from('notifications').insert(rows)
   if (error) throw error
 
-  // Send SMTP emails for each notification in the background
   rows.forEach((row) => {
     sendNotificationEmail(row.user_id, row.title, row.message)
       .catch((err) => console.error('Failed to send SMTP email in background:', err.message))
@@ -215,6 +300,11 @@ export async function createNotificationsForRolesAndDepartment({ globalRoleNames
   return rows.length
 }
 
+/**
+ * Fetches the current user profile based on auth ID.
+ * @param {string} authId - The authentication ID.
+ * @returns {Promise<Object>} The user profile with role name.
+ */
 export async function getCurrentUser(authId) {
   if (!authId) throw new Error('Missing x-user-auth-id header.')
 
@@ -240,6 +330,11 @@ export async function getCurrentUser(authId) {
   return { ...profile, role_name: roleName }
 }
 
+/**
+ * Builds lookup maps for users, roles, and departments from reports.
+ * @param {Object[]} reports - Array of report objects.
+ * @returns {Promise<Object>} Object containing userById, roleById, and departmentById maps.
+ */
 export async function getReporterMaps(reports) {
   const reporterIds = [...new Set(reports.map((r) => r.reported_by).filter(Boolean))]
   if (reporterIds.length === 0) {
@@ -273,6 +368,11 @@ export async function getReporterMaps(reports) {
   }
 }
 
+/**
+ * Enriches reports with related data and signed evidence URLs.
+ * @param {Object[]} reports - Array of report objects.
+ * @returns {Promise<Object[]>} Array of enriched report objects.
+ */
 export async function buildEnrichedReports(reports) {
   const reportList = Array.isArray(reports) ? reports : []
   if (reportList.length === 0) return []
@@ -296,7 +396,6 @@ export async function buildEnrichedReports(reports) {
   const locationById = new Map((locationsResult.data || []).map((l) => [String(l.id), l.location_name]))
   const productTypeById = new Map((productTypesResult.data || []).map((p) => [String(p.id), p.product_name]))
 
-  // Batch generate signed URLs for all evidence files in one call
   const pathsToSign = new Set()
   reportList.forEach((report) => {
     const urls = [
@@ -373,6 +472,16 @@ export async function buildEnrichedReports(reports) {
   return enriched
 }
 
+/**
+ * Resolves a catalog entry by ID or name, inserting it if not found.
+ * @param {Object} params - Resolution parameters.
+ * @param {string} params.table - The database table name.
+ * @param {string} params.idColumn - The ID column name.
+ * @param {string} params.nameColumn - The name column name.
+ * @param {any} params.rawId - The raw ID value.
+ * @param {string} params.rawName - The raw name value.
+ * @returns {Promise<Object>} The resolved entry with id and name.
+ */
 export async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, rawName }) {
   const numericId = normalizeId(rawId)
   if (numericId !== null && numericId !== undefined && numericId !== '') {
@@ -410,14 +519,14 @@ export async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, 
 
 /**
  * Fetches NCR reports filtered by scope and enriches them with related data.
- * @param {'open'|'investigated'|'all'} scope
+ * @param {'open'|'investigated'|'closed'|'all'} [scope='open'] - The scope of reports to fetch.
+ * @param {string|null} [actorAuthId=null] - The auth ID of the actor fetching reports.
+ * @returns {Promise<Object[]>} Array of enriched report objects.
  */
 export async function fetchReports(scope = 'open', actorAuthId = null) {
-  // Dynamic cron-like check for verification dates that are reached (Run in background asynchronously)
   Promise.resolve().then(async () => {
     try {
       const todayStr = getLocalDateString()
-      // Find reports with verification_date reached and no preventive_rating
       const { data: dueReports } = await supabase
         .from('ncr_reports')
         .select('id, reference_no, verification_date, status, assigned_to')
@@ -427,11 +536,9 @@ export async function fetchReports(scope = 'open', actorAuthId = null) {
 
       if (dueReports && dueReports.length > 0) {
         for (const report of dueReports) {
-          // Create notifications for admins, auditors, and the assigned user if they don't already exist
           const notifTitle = `Verification Date Up: ${report.reference_no}`
           const notifMessage = `The verification date (${report.verification_date}) for report ${report.reference_no} has been reached. Please submit the Preventive Action rating.`
 
-          // Check if a notification already exists for this report with this title to avoid duplicates
           const { data: existingNotif } = await supabase
             .from('notifications')
             .select('id')
@@ -440,7 +547,6 @@ export async function fetchReports(scope = 'open', actorAuthId = null) {
             .limit(1)
 
           if (!existingNotif || existingNotif.length === 0) {
-            // Send notification to the assigned investigator (if any)
             if (report.assigned_to) {
               await createNotification({
                 title: notifTitle,
@@ -450,7 +556,6 @@ export async function fetchReports(scope = 'open', actorAuthId = null) {
                 userId: report.assigned_to,
               })
             }
-            // Also send to qa officers and admins
             await createNotificationsForRoles({
               roleNames: ['admin', 'qa officer'],
               title: notifTitle,
@@ -493,8 +598,15 @@ export async function fetchReports(scope = 'open', actorAuthId = null) {
   return buildEnrichedReports(data || [])
 }
 
+/**
+ * Submits a new NCR report with multipart file upload.
+ * @param {Object} params - Submission parameters.
+ * @param {Object} params.body - The request body containing report data.
+ * @param {Object[]} params.files - Array of uploaded files.
+ * @param {string} params.reportedByAuthId - The auth ID of the reporter.
+ * @returns {Promise<Object>} The created report data.
+ */
 export async function submitNcrMultipart({ body, files, reportedByAuthId }) {
-  // Extract all expected fields
   const {
     department_id,
     product_type_id,
@@ -517,7 +629,6 @@ export async function submitNcrMultipart({ body, files, reportedByAuthId }) {
     throw err
   }
 
-  // Generate Reference No
   const { data: records, error: latestError } = await supabase
     .from('ncr_reports')
     .select('reference_no')
@@ -529,13 +640,11 @@ export async function submitNcrMultipart({ body, files, reportedByAuthId }) {
   const latestNumeric = (records || []).find(r => /^NCR-\d{4}-\d{3}$/i.test(r.reference_no))
   const referenceNo = generateNextNcrReferenceNo(latestNumeric?.reference_no)
 
-  // Determine initial status based on severity
   const normalizedSeverity = String(severity || '').trim().toLowerCase()
   const status = (normalizedSeverity === 'critical' || normalizedSeverity === 'high')
     ? REPORT_STATUS.OPEN
     : REPORT_STATUS.PENDING_REVIEW
 
-  // Handle multiple evidence files upload
   let evidenceUrls = []
   if (files && files.length > 0) {
     for (const file of files) {
@@ -562,7 +671,6 @@ export async function submitNcrMultipart({ body, files, reportedByAuthId }) {
     }
   }
 
-  // Create NCR DB Record
   const payload = {
     reference_no: referenceNo,
     department_id: department_id || null,
@@ -604,7 +712,6 @@ export async function submitNcrMultipart({ body, files, reportedByAuthId }) {
     console.warn('Failed to record create audit log:', auditError)
   }
 
-  // Run AI trend clustering in background
   if (reportData && reportData.id) {
     analyzeAndClusterReportInBackground(reportData.id).catch(err => {
       console.error('Background trend clustering failed:', err)
@@ -615,7 +722,11 @@ export async function submitNcrMultipart({ body, files, reportedByAuthId }) {
 }
 
 /**
- * Creates a new NCR report (no file upload). Used by createReport controller action.
+ * Creates a new NCR report without file upload.
+ * @param {Object} params - Creation parameters.
+ * @param {Object} params.body - The request body containing report data.
+ * @param {string} params.reportedByAuthId - The auth ID of the reporter.
+ * @returns {Promise<Object>} The created report data and reference number.
  */
 export async function createNcrReport({ body, reportedByAuthId }) {
   const {
@@ -697,7 +808,6 @@ export async function createNcrReport({ body, reportedByAuthId }) {
   const { data, error } = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()
   if (error) throw error
 
-  // Run AI trend clustering in background
   if (data && data.id) {
     analyzeAndClusterReportInBackground(data.id).catch(err => {
       console.error('Background trend clustering failed:', err)
@@ -708,7 +818,12 @@ export async function createNcrReport({ body, reportedByAuthId }) {
 }
 
 /**
- * Creates a new NCR report with file upload (multipart). Used by createReportSubmit controller action.
+ * Creates a new NCR report with file upload.
+ * @param {Object} params - Creation parameters.
+ * @param {Object} params.body - The request body containing report data.
+ * @param {Object[]} params.files - Array of uploaded files.
+ * @param {string} params.reportedByAuthId - The auth ID of the reporter.
+ * @returns {Promise<Object>} The created report data, reference number, and reporter.
  */
 export async function createNcrReportWithUpload({ body, files, reportedByAuthId }) {
   const {
@@ -829,6 +944,10 @@ export async function createNcrReportWithUpload({ body, files, reportedByAuthId 
 
 /**
  * Applies a partial update to an NCR report record.
+ * @param {Object} params - Update parameters.
+ * @param {number} params.id - The report ID.
+ * @param {Object} params.body - The request body containing updated data.
+ * @returns {Promise<Object>} The updated report data.
  */
 export async function updateNcrReport({ id, body }) {
   const { data: existing, error: existingError } = await supabase
@@ -894,7 +1013,12 @@ export async function updateNcrReport({ id, body }) {
 }
 
 /**
- * Submits investigation details for a report; handles optional evidence file upload.
+ * Submits investigation details for a report, with optional evidence upload.
+ * @param {Object} params - Investigation parameters.
+ * @param {number} params.id - The report ID.
+ * @param {Object} params.body - The request body containing investigation data.
+ * @param {Object[]} params.files - Array of uploaded files.
+ * @returns {Promise<Object>} The updated report data and previous existing record.
  */
 export async function updateNcrInvestigation({ id, body, files }) {
   const {
@@ -959,6 +1083,12 @@ export async function updateNcrInvestigation({ id, body, files }) {
 
 /**
  * Approves or rejects an NCR report after investigation review.
+ * @param {Object} params - Review parameters.
+ * @param {number} params.id - The report ID.
+ * @param {string} params.decision - The decision ('approve' or 'reject').
+ * @param {string} params.reason - The reason for the decision.
+ * @param {Object} params.currentUser - The current user object.
+ * @returns {Promise<Object>} The updated report data, original report, and next status.
  */
 export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
   const { data: report, error: reportError } = await supabase
@@ -969,7 +1099,6 @@ export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
   if (reportError) throw reportError
   if (!report) throw Object.assign(new Error('NCR report not found.'), { status: 404 })
 
-  // 1. Fetch user role
   let roleName = ''
   if (currentUser?.role_id) {
     const { data: roleData } = await supabase
@@ -980,8 +1109,6 @@ export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
     roleName = roleData?.role_name || ''
   }
   const normalizedRole = String(roleName).trim().toLowerCase()
-
-  // Removed staff/auditor role check. Deferring to dynamic route permissions.
 
   if (normalizedRole === 'department manager' || normalizedRole === 'manager' || normalizedRole === 'team leader') {
     if (String(report.department_id) !== String(currentUser.department_id)) {
@@ -1037,7 +1164,10 @@ export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
 }
 
 /**
- * Deletes an NCR report by id. Returns the deleted record for audit context.
+ * Deletes an NCR report by ID.
+ * @param {number} id - The report ID.
+ * @param {string} currentUserAuthId - The auth ID of the user requesting deletion.
+ * @returns {Promise<Object>} The deleted report record.
  */
 export async function deleteNcrReport(id, currentUserAuthId) {
   if (!currentUserAuthId) {
@@ -1088,6 +1218,14 @@ export async function deleteNcrReport(id, currentUserAuthId) {
   return existing
 }
 
+/**
+ * Assigns an NCR report to an employee for investigation.
+ * @param {Object} params - Assignment parameters.
+ * @param {number} params.reportId - The report ID.
+ * @param {number} params.assignedToId - The ID of the assignee.
+ * @param {string} params.currentUserAuthId - The auth ID of the assigner.
+ * @returns {Promise<Object>} The updated report data and assigned user object.
+ */
 export async function assignReportToEmployee({ reportId, assignedToId, currentUserAuthId }) {
   const normalizedReportId = normalizeId(reportId)
   const normalizedAssignedToId = normalizeId(assignedToId)
@@ -1106,7 +1244,6 @@ export async function assignReportToEmployee({ reportId, assignedToId, currentUs
   if (assigneeError) throw assigneeError
   if (!assignee) throw new Error('Assigned employee not found.')
 
-  // assigned_to is now fetched so the re-assignment guard works correctly
   const { data: report, error: reportError } = await supabase
     .from('ncr_reports')
     .select('id, reference_no, assigned_to, status')
@@ -1145,7 +1282,6 @@ export async function assignReportToEmployee({ reportId, assignedToId, currentUs
     }])
   if (notificationError) throw notificationError
 
-  // Send SMTP email in the background
   sendNotificationEmail(assignee.id, title, message)
     .catch(err => console.error('Failed to send SMTP email in background:', err.message))
 
@@ -1167,6 +1303,14 @@ export async function assignReportToEmployee({ reportId, assignedToId, currentUs
   return { report: updatedReport || null, assignedTo: assignee }
 }
 
+/**
+ * Submits an effectiveness rating for a closed NCR report.
+ * @param {Object} params - Rating parameters.
+ * @param {number} params.reportId - The report ID.
+ * @param {number} params.rating - The rating value.
+ * @param {string} params.userAuthId - The auth ID of the rater.
+ * @returns {Promise<Object>} The inserted or updated rating data.
+ */
 export async function submitReportRating({ reportId, rating, userAuthId }) {
   const normalizedReportId = normalizeId(reportId)
   if (!normalizedReportId) throw new Error('Report id is required.')
@@ -1190,14 +1334,12 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
     throw Object.assign(new Error('Only closed reports can be rated.'), { status: 400 })
   }
 
-  // Department-based rating validation
   const userRole = currentUser.role?.role_name || ''
-  const isPrivileged = isAdminOrAuditor(userRole)
+  const isPrivileged = isAdminOrQA(userRole)
   if (!isPrivileged && report.department_id !== currentUser.department_id) {
     throw Object.assign(new Error('You can only rate reports from your own department.'), { status: 403 })
   }
 
-  // Insert or update rating
   const { data: ratingData, error: ratingError } = await supabase
     .from('ncr_report_ratings')
     .upsert(
@@ -1208,14 +1350,12 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
     .maybeSingle()
   if (ratingError) throw ratingError
 
-  // Fetch all ratings for this report
   const { data: allRatings, error: allRatingsError } = await supabase
     .from('ncr_report_ratings')
     .select('rating, rated_by')
     .eq('report_id', report.id)
 
   if (!allRatingsError && allRatings && allRatings.length > 0) {
-    // 1. Fetch user roles for these raters
     const userIds = [...new Set(allRatings.map((r) => r.rated_by))]
     const { data: ratersRoles } = await supabase
       .from('users')
@@ -1230,26 +1370,23 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
       })
     }
 
-    // 2. Group ratings by bucket
-    const bucketA = [] // Auditors / Admins
-    const bucketB = [] // Managers
-    const bucketC = [] // Staff
+    const bucketA = []
+    const bucketB = []
+    const bucketC = []
 
     allRatings.forEach((r) => {
       const role = raterRoleMap[r.rated_by] || 'staff'
       const val = Number(r.rating)
       
-      if (isAdminOrAuditor(role)) bucketA.push(val)
+      if (isAdminOrQA(role)) bucketA.push(val)
       else if (String(role).toLowerCase() === 'department manager' || String(role).toLowerCase() === 'manager') bucketB.push(val)
       else bucketC.push(val)
     })
 
-    // 3. Calculate internal bucket averages
     const avgA = bucketA.length > 0 ? bucketA.reduce((a, b) => a + b, 0) / bucketA.length : 0
     const avgB = bucketB.length > 0 ? bucketB.reduce((a, b) => a + b, 0) / bucketB.length : 0
     const avgC = bucketC.length > 0 ? bucketC.reduce((a, b) => a + b, 0) / bucketC.length : 0
 
-    // 4. Determine dynamic weights
     let weightA = 0.40
     let weightB = 0.20
     let weightC = 0.40
@@ -1260,17 +1397,14 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
 
     const totalWeight = weightA + weightB + weightC
     
-    // 5. Calculate final weighted average
     let finalAvg = 0
     if (totalWeight > 0) {
       finalAvg = ( (avgA * weightA) + (avgB * weightB) + (avgC * weightC) ) / totalWeight
     }
 
-    // Ensure finalAvg is rounded nicely or strictly capped to 5
     const effectivenessScore = Math.min(5, Math.max(0.5, finalAvg))
 
     if (effectivenessScore >= 3.0) {
-      // Promote to case_repository
       const { data: existingCase, error: existingCaseError } = await supabase
         .from('case_repository')
         .select('id')
@@ -1284,15 +1418,12 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
           corrective_action: report.corrective_action || report.investigation_details || 'None provided',
           preventive_action: report.resolution_details || 'None provided',
           effectiveness_score: effectivenessScore,
-          // CBR: store extracted keywords (not raw slice) + new feature columns
-          // problem_keywords: extractKeywordsAsString(report.description), removed because we use vector embeddings
           severity: report.severity || null,
           department_id: report.department_id || null,
           product_type: report.product_type || null,
           times_used: 1
         }])
       } else if (existingCase) {
-        // Update effectiveness score
         await supabase.from('case_repository').update({ effectiveness_score: effectivenessScore })
           .eq('id', existingCase.id)
       }
@@ -1313,6 +1444,13 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
   return ratingData
 }
 
+/**
+ * Fetches statistics of ratings for a specific report.
+ * @param {Object} params - Stats parameters.
+ * @param {number} params.reportId - The report ID.
+ * @param {string} params.userAuthId - The auth ID of the user.
+ * @returns {Promise<Object>} Statistics including average, count, and user rating.
+ */
 export async function getReportRatingsStats({ reportId, userAuthId }) {
   const normalizedReportId = normalizeId(reportId)
   if (!normalizedReportId) throw new Error('Report id is required.')
@@ -1346,10 +1484,12 @@ export async function getReportRatingsStats({ reportId, userAuthId }) {
   }
 }
 
+/**
+ * Fetches recurring issues that are not linked to a trend cluster.
+ * @param {number} [days=14] - The timeframe in days.
+ * @returns {Promise<Object[][]>} Array of clustered reports.
+ */
 export async function fetchRecurringUnlinkedIssues(days = 14) {
-  // Fetch active trend clusters with their associated reports from the database
-  // using the new trend_clusters table populated by the background AI worker.
-  
   const { data: trendClusters, error } = await supabase
     .from('trend_clusters')
     .select(`
@@ -1371,7 +1511,6 @@ export async function fetchRecurringUnlinkedIssues(days = 14) {
   const clusters = []
   
   for (const cluster of trendClusters) {
-    // Only return clusters that have at least 2 reports
     if (cluster.ncr_reports && cluster.ncr_reports.length > 1) {
       const safeCluster = cluster.ncr_reports.map(r => ({
         id: r.id,

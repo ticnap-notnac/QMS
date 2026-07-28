@@ -25,8 +25,14 @@ async function findUserIdByName(name) {
   return data?.id || null
 }
 
+/**
+ * Creates a new QDDR report.
+ * @param {Object} params - The parameters for creating a QDDR report.
+ * @param {Object} params.body - The report data payload.
+ * @param {string} params.reportedByAuthId - The auth ID of the user creating the report.
+ * @returns {Promise<{data: Object}>} The created QDDR report data.
+ */
 export async function createQddrReport({ body, reportedByAuthId }) {
-  // Resolve reporter from auth actor
   const { data: reporter, error: reporterError } = await supabase
     .from('users')
     .select('id, site_id')
@@ -36,7 +42,6 @@ export async function createQddrReport({ body, reportedByAuthId }) {
   if (reporterError) throw reporterError
   if (!reporter) throw Object.assign(new Error('Reporter profile not found.'), { status: 404 })
 
-  // Extract all fields matching qddr_reports schema
   const {
     location,
     date,
@@ -78,14 +83,12 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     audit_schedule_id
   } = body || {}
 
-  // Resolve user IDs for signatures
   const [approvedById, notedById, leaderId] = await Promise.all([
     findUserIdByName(approved_by),
     findUserIdByName(noted_by),
     findUserIdByName(leader)
   ])
 
-  // Get next sequential reference number
   const { data: records, error: latestError } = await supabase
     .from('qddr_reports')
     .select('reference_no')
@@ -154,7 +157,6 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     throw customErr
   }
 
-  // Link this QDDR to the provided ISO clause IDs (if any)
   if (data?.id && Array.isArray(clause_ids) && clause_ids.length > 0) {
     const linkRows = clause_ids
       .map(cid => String(cid).trim())
@@ -175,6 +177,13 @@ export async function createQddrReport({ body, reportedByAuthId }) {
   return { data }
 }
 
+/**
+ * Updates specific fields of an existing QDDR report.
+ * @param {Object} params - The parameters for updating a QDDR report.
+ * @param {number|string} params.id - The ID of the QDDR report.
+ * @param {Object} params.body - The fields to update.
+ * @returns {Promise<{data: Object}>} The updated QDDR report data.
+ */
 export async function updateQddrReport({ id, body }) {
   const {
     corrective_action,
@@ -216,13 +225,15 @@ export async function updateQddrReport({ id, body }) {
 }
 
 /**
- * Hard deletes a QDDR report
+ * Deletes a QDDR report and its associated clause links.
+ * @param {Object} params - The parameters for deleting a QDDR report.
+ * @param {number|string} params.id - The ID of the QDDR report to delete.
+ * @param {string} params.actorAuthId - The auth ID of the user performing the deletion.
+ * @returns {Promise<{data: Object}>} The deleted QDDR report data.
  */
 export async function softDeleteQddrReport({ id, actorAuthId }) {
-  // 1. First delete the links
   await supabase.from('qddr_clause_links').delete().eq('qddr_report_id', id)
 
-  // 2. Delete the report itself
   const { data, error } = await supabase
     .from('qddr_reports')
     .delete()
@@ -249,7 +260,12 @@ export async function softDeleteQddrReport({ id, actorAuthId }) {
 }
 
 /**
- * Updates a QDDR report fully
+ * Fully edits an existing QDDR report and its clause links.
+ * @param {Object} params - The parameters for editing a QDDR report.
+ * @param {number|string} params.id - The ID of the QDDR report.
+ * @param {Object} params.body - The full report data payload.
+ * @param {string} params.actorAuthId - The auth ID of the user performing the edit.
+ * @returns {Promise<{data: Object}>} The updated QDDR report data.
  */
 export async function editQddrReport({ id, body, actorAuthId }) {
   const payload = {
@@ -294,13 +310,10 @@ export async function editQddrReport({ id, body, actorAuthId }) {
 
   if (error) throw error
 
-  // Handle clause links
   const { clause_ids } = body || {}
   if (Array.isArray(clause_ids)) {
-    // 1. Delete existing links
     await supabase.from('qddr_clause_links').delete().eq('qddr_report_id', id)
 
-    // 2. Insert new links
     const linkRows = clause_ids
       .map(cid => String(cid).trim())
       .filter(cid => cid.length > 0)
