@@ -1,5 +1,5 @@
 import Toast from '../components/UI/Toast.jsx'
-import CARModal from '../components/Modals/CARModal.jsx'
+import QDDRModal from '../components/Modals/QDDRModal.jsx'
 import { AlertTriangle, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react'
 import { ISOModulesModal, ISOTaskSelectionModal, ISOSubTaskModal, ISOTemplatesModal } from '../components/ISOPage/ISOModals.jsx'
 import useISOLogic from '../hooks/useISOLogic'
@@ -11,7 +11,7 @@ import { isAdminRole } from '@/utils/roleUtils.js'
 export default function ISOPage({ userRole, userName }) {
   const {
     toast, setToast, overallScore, fetchActiveModules, compliantPct, partialPct, gapPct, nonCompliantFindings,
-    createdCars, handleOpenCarModal, modulesModalProps, taskSelectionModalProps, carModalProps, isAuditTaskModalOpen,
+    createdCars, handleOpenQddrModal, modulesModalProps, taskSelectionModalProps, qddrModalProps, isAuditTaskModalOpen,
     setIsAuditTaskModalOpen, isCapaTaskModalOpen, setIsCapaTaskModalOpen, isDocumentTaskModalOpen, setIsDocumentTaskModalOpen,
     isTrainingTaskModalOpen, setIsTrainingTaskModalOpen, handleTaskCreation,
     isTemplatesModalOpen, loadingTemplates, templates, selectedTemplate, setSelectedTemplate,
@@ -49,7 +49,7 @@ export default function ISOPage({ userRole, userName }) {
 
         <div className="metric-card metric-card--padded iso-action-center-card">
           <h3 className="metric-card-title iso-review-title iso-action-center-title"><AlertTriangle size={18} className="icon-amber" />Gaps Action Center</h3>
-          <p className="iso-action-center-text">Review non-compliant clauses and generate CARs.</p>
+          <p className="iso-action-center-text">Review non-compliant clauses and generate QDDRs.</p>
           {nonCompliantFindings.length === 0 ? (
             <div className="iso-no-gaps">No active gaps found!</div>
           ) : (
@@ -64,9 +64,11 @@ export default function ISOPage({ userRole, userName }) {
                   </div>
                   <div>
                     {createdCars[finding.id] ? (
-                      <div className="iso-car-generated"><CheckCircle2 size={14} />CAR Generated ({createdCars[finding.id]})</div>
+                      <div className="iso-car-generated"><CheckCircle2 size={14} />QDDR Generated ({createdCars[finding.id]})</div>
                     ) : (
-                      <button type="button" onClick={() => handleOpenCarModal(finding)} className="btn-gradient-primary iso-btn-generate-car">Generate CAR</button>
+                      <button type="button" onClick={() => handleOpenQddrModal(finding)} className="btn-gradient-primary iso-btn-generate-car">
+                        Generate QDDR
+                      </button>
                     )}
                   </div>
                 </div>
@@ -76,6 +78,7 @@ export default function ISOPage({ userRole, userName }) {
         </div>
       </div>
       <ISOModulesModal {...modulesModalProps} />
+      <QDDRModal {...qddrModalProps} />
       <ISOTaskSelectionModal {...taskSelectionModalProps} />
       <ISOTemplatesModal 
         isOpen={isTemplatesModalOpen} 
@@ -89,7 +92,6 @@ export default function ISOPage({ userRole, userName }) {
       <ISOSubTaskModal isOpen={isCapaTaskModalOpen} onClose={() => setIsCapaTaskModalOpen(false)} title="CAPA Task" canvasText="CAPA Task Configuration Canvas" onSubmit={() => handleTaskCreation("CAPA Task")} />
       <ISOSubTaskModal isOpen={isDocumentTaskModalOpen} onClose={() => setIsDocumentTaskModalOpen(false)} title="Document Update Task" canvasText="Document Update Workspace Canvas" onSubmit={() => handleTaskCreation("Document Update Task")} />
       <ISOSubTaskModal isOpen={isTrainingTaskModalOpen} onClose={() => setIsTrainingTaskModalOpen(false)} title="Training Task" canvasText="Training Program Configuration Canvas" onSubmit={() => handleTaskCreation("Training Task")} />
-      <CARModal {...carModalProps} />
     </main>
   )
 }

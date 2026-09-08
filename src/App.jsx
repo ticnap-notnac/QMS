@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState, useRef } from 'react'
 import './App.css'
 import { supabase } from './utils/supabase'
 import Login from './components/Auth/Login.jsx'
-import IntroModal from './components/Modals/IntroModal.jsx'
 import { fetchUnreadNotificationCount } from '@/services/notificationService'
 import { LookupProvider, useLookup } from './context/LookupContext'
 import { useNavigate } from 'react-router-dom'
@@ -20,7 +19,6 @@ function normalizeRoleValue(value) {
 // Separated from AppRoot so that useLookup() is called *inside* LookupProvider.
 
 function AppInner() {
-  const [showIntro, setShowIntro] = useState(false)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
@@ -220,9 +218,6 @@ function AppInner() {
           console.error('Error fetching user data on login:', err)
         }
 
-        if (!localStorage.getItem('iso_terms_agreed')) {
-          setShowIntro(true)
-        }
         navigate('/')
       }
     } catch (err) {
@@ -381,11 +376,8 @@ function AppInner() {
       ) : (
         <Login
           onSubmit={handleSubmit}
-          onLearnMore={() => setShowIntro(true)}
         />
       )}
-
-      <IntroModal isOpen={showIntro} onClose={() => setShowIntro(false)} />
 
       {toast && (
         <Toast

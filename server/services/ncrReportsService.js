@@ -88,11 +88,27 @@ export function normalizeVerificationDate(value) {
   const text = normalizeText(value)
   if (!text) return null
   if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text
-  const displayMatch = text.match(/^(\d{2})-(\d{2})-(\d{4})$/)
+  
+  // Handle MM/DD/YYYY or DD/MM/YYYY
+  const displayMatch = text.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/)
   if (displayMatch) {
-    const [, day, month, year] = displayMatch
+    const [, first, second, year] = displayMatch
+    // Try to guess which is month (if one is > 12)
+    let month = second;
+    let day = first;
+    if (Number(first) <= 12 && Number(second) > 12) {
+      month = first;
+      day = second;
+    }
     return `${year}-${month}-${day}`
   }
+
+  // Fallback for valid JS dates
+  const parsed = new Date(text)
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().split('T')[0]
+  }
+
   return text
 }
 
@@ -993,7 +1009,7 @@ export async function updateNcrReport({ id, body }) {
   if (resolvedProductType) { updates.product_type = resolvedProductType.name; updates.product_type_id = resolvedProductType.id }
   if (batch_number !== undefined) updates.batch_number = batch_number
   if (resolvedLocation) { updates.complaint_location = resolvedLocation.name; updates.location_id = resolvedLocation.id }
-  if (resolvedIssueType) { updates.issue_type = resolvedIssueType.name; updates.issue_type_id = resolvedIssueType.id }
+  if (resolvedIssueType) { updates.issue_type_id = resolvedIssueType.id }
   if (severity !== undefined) updates.severity = normalizeSeverityValue(severity)
   if (department_id !== undefined) updates.department_id = normalizeId(department_id)
   if (description !== undefined) updates.description = description
@@ -1072,7 +1088,13 @@ export async function updateNcrInvestigation({ id, body, files }) {
     updated_at: new Date().toISOString(),
   }
 
-  if (issue_type) updates.issue_type = issue_type
+  if (issue_type || body.issue_type_id) {
+    const resolved = await resolveCatalogEntry({
+      table: 'issue_types', idColumn: 'id', nameColumn: 'issue_type_name',
+      rawId: body.issue_type_id, rawName: issue_type,
+    })
+    updates.issue_type_id = resolved.id
+  }
 
   const { data, error } = await supabase
     .from('ncr_reports').update(updates).eq('id', id).select('*').maybeSingle()
@@ -1325,7 +1347,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
 
   const { data: report, error: reportError } = await supabase
     .from('ncr_reports')
-    .select('id, reference_no, status, department_id, issue_type, investigation_details, resolution_details')
+    .select('id, reference_no, status, department_id')
     .eq('id', normalizedReportId)
     .maybeSingle()
   if (reportError) throw reportError

@@ -67,7 +67,7 @@ export default function RecurringIssuesAlert({ clusters, onGenerateCar, onViewRe
           onMouseOver={(e) => e.target.style.backgroundColor = '#b91c1c'}
           onMouseOut={(e) => e.target.style.backgroundColor = '#dc2626'}
         >
-          Generate CAR
+          Generate QDDR
         </button>
       </div>
     </div>

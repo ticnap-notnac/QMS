@@ -23,8 +23,8 @@ export default function StarRating({
     if (readOnly) return
     const { left, width } = e.currentTarget.getBoundingClientRect()
     const percent = (e.clientX - left) / width
-    // if mouse is on the left half of the star, it's a half star, otherwise full star
-    const value = index + (percent < 0.5 ? 0.5 : 1)
+    // we only allow full star ratings now
+    const value = index + 1
     setHoverValue(value)
   }
 

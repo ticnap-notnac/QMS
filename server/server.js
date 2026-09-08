@@ -19,8 +19,8 @@ process.on('unhandledRejection', (reason, promise) => {
 const startServer = async () => {
   await startQueue()
 
-  const server = app.listen(PORT, () => {
-    logger.info(`Server running on port ${PORT}`)
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`Server running on port ${PORT} at 0.0.0.0`)
   })
 
   // Catch server startup errors (like Port Already in Use)

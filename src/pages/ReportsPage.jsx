@@ -206,7 +206,7 @@ export default function ReportsPage({
               <button type="button" className={`btn-quick-toggle ${logic.isApprovalQueueMode ? 'active' : ''}`} onClick={() => logic.setIsApprovalQueueMode((c) => !c)}>{logic.isApprovalQueueMode ? 'Show All' : `Needs Approval (${logic.approvalQueueReports.length})`}</button>
             )}
             <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>{logic.isClosedMode ? 'Show Open' : `Closed (${logic.activeTab === 'ncr' ? logic.closedReports.length : logic.carReports.filter(c => c.status === CAR_STATUS.CLOSED).length})`}</button>
-            {logic.activeTab === 'ncr' && trendClusters.length > 0 && (
+            {false && logic.activeTab === 'ncr' && trendClusters.length > 0 && (
               <button 
                 type="button" 
                 className={`btn-quick-toggle ${isRecurringMode ? 'active recurring-active' : 'recurring-inactive'}`} 

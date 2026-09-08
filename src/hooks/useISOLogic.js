@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useComplianceData } from './useISO/useComplianceData'
 import { useISOModules } from './useISO/useISOModules'
-import { useISOCARForm } from './useISO/useISOCARForm'
+import { useISOQDDRForm } from './useISO/useISOQDDRForm'
 import { useISOTemplates } from './useISO/useISOTemplates'
 
 export default function useISOLogic({ userName }) {
@@ -52,28 +52,30 @@ export default function useISOLogic({ userName }) {
     handleTaskCreation
   } = useISOModules({ setToast })
 
-  // 3. CAR Modal form state & fix for clause suggestions
+  // 3. QDDR Modal form state & fix for clause suggestions
   const {
-    carForm,
-    isCarModalOpen,
-    setIsCarModalOpen,
-    isSubmittingCar,
-    carError,
+    qddrForm,
+    isQddrModalOpen,
+    setIsQddrModalOpen,
+    isSubmittingQddr,
+    qddrError,
     activeFinding,
-    departments,
+    locations,
     users,
     allReports,
     loadingDropdowns,
     clausesLoading,
     clausesError,
+    suggesting,
+    suggestActions,
     loadDropdownOptions,
-    handleCarChange,
-    toggleNcrSelection,
+    handleQddrChange,
+    selectNcr,
     toggleClauseSelection,
     fetchClauseSuggestions,
-    handleOpenCarModal,
-    handleSubmitCAR
-  } = useISOCARForm({
+    handleOpenQddrModal,
+    handleSubmitQDDR
+  } = useISOQDDRForm({
     userName,
     userAuthId: currentAuthId,
     setToast,
@@ -126,25 +128,27 @@ export default function useISOLogic({ userName }) {
     openTrainingTask
   }
 
-  const carModalProps = {
-    isOpen: isCarModalOpen,
-    onClose: () => setIsCarModalOpen(false),
-    form: carForm,
-    handleChange: handleCarChange,
-    toggleNcrSelection,
+  const qddrModalProps = {
+    isOpen: isQddrModalOpen,
+    onClose: () => setIsQddrModalOpen(false),
+    form: qddrForm,
+    handleChange: handleQddrChange,
+    selectNcr,
     toggleClauseSelection,
     fetchClauseSuggestions,
     clausesLoading,
     clausesError,
     userAuthId: currentAuthId,
-    error: carError,
-    isSubmitting: isSubmittingCar,
-    onSubmit: handleSubmitCAR,
-    departments,
-    departmentsLoading: loadingDropdowns,
+    error: qddrError,
+    isSubmitting: isSubmittingQddr,
+    onSubmit: handleSubmitQDDR,
+    locations,
+    locationsLoading: loadingDropdowns,
     users,
     usersLoading: loadingDropdowns,
-    allReports
+    allReports,
+    suggesting,
+    suggestActions
   }
 
   return {
@@ -167,11 +171,11 @@ export default function useISOLogic({ userName }) {
     gapPct,
     nonCompliantFindings,
     createdCars,
-    handleOpenCarModal,
+    handleOpenQddrModal,
     setIsSelectionModalOpen,
     modulesModalProps,
     taskSelectionModalProps,
-    carModalProps,
+    qddrModalProps,
     isAuditTaskModalOpen,
     setIsAuditTaskModalOpen,
     isCapaTaskModalOpen,

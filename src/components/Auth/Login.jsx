@@ -5,7 +5,6 @@ import { translateAuthError } from '@/utils/authErrors'
 
 function Login({
   onSubmit,
-  onLearnMore,
 }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -146,10 +145,6 @@ function Login({
             </button>
           </form>
         </div>
-
-        <button className="secondary-button" type="button" onClick={onLearnMore}>
-          Learn More
-        </button>
       </section>
     </main>
   )

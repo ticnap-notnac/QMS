@@ -109,6 +109,17 @@ export default function ReportsFeedList({
           const firstReport = cluster[0]
           const headerText = firstReport?.recurring_reason || `Flagged as recurring trend with ${otherReportsCount} other report(s).`
 
+          // Pre-calculate visible reports for this cluster
+          const visibleReports = cluster.map(clusterReport => {
+            const openReport = reports.find(r => r.id === clusterReport.id)
+            const investigatedReport = displayedInvestigatedReports.find(r => r.id === clusterReport.id)
+            const closedReport = closedReports.find(r => r.id === clusterReport.id)
+            return investigatedReport || closedReport || openReport || null
+          }).filter(Boolean)
+
+          // If no reports are visible in this cluster, do not render the banner
+          if (visibleReports.length === 0) return null;
+
           return (
             <div key={`cluster-${clusterIdx}`} style={{ marginBottom: '40px' }}>
               <div className="recurring-banner-container" style={{ margin: '0 0 16px 0' }}>
@@ -118,17 +129,12 @@ export default function ReportsFeedList({
                 {headerText}
               </div>
               <div className="reports-list-stack" style={{ gap: '16px' }}>
-                {cluster.map(clusterReport => {
-                  // Find the full report object from the filtered lists
-                  const openReport = reports.find(r => r.id === clusterReport.id)
-                  const investigatedReport = displayedInvestigatedReports.find(r => r.id === clusterReport.id)
-                  const closedReport = closedReports.find(r => r.id === clusterReport.id)
-                  
-                  if (investigatedReport) {
+                {visibleReports.map(visibleReport => {
+                  if (displayedInvestigatedReports.some(r => r.id === visibleReport.id)) {
                     return (
                       <InvestigatedReportCard
-                        key={`investigated-${investigatedReport.id}`}
-                        report={investigatedReport}
+                        key={`investigated-${visibleReport.id}`}
+                        report={visibleReport}
                         departmentNameById={departmentNameById}
                         userNameById={userNameById}
                         canAssignReports={canAssignReports}
@@ -143,11 +149,11 @@ export default function ReportsFeedList({
                     )
                   }
                   
-                  if (closedReport) {
+                  if (closedReports.some(r => r.id === visibleReport.id)) {
                     return (
                       <ReportCard
-                        key={`closed-${closedReport.id}`}
-                        report={closedReport}
+                        key={`closed-${visibleReport.id}`}
+                        report={visibleReport}
                         departmentNameById={departmentNameById}
                         userNameById={userNameById}
                         canAssignReports={canAssignReports}
@@ -160,24 +166,20 @@ export default function ReportsFeedList({
                     )
                   }
                   
-                  if (openReport) {
-                    return (
-                      <ReportCard
-                        key={`open-${openReport.id}`}
-                        report={openReport}
-                        departmentNameById={departmentNameById}
-                        userNameById={userNameById}
-                        canAssignReports={canAssignReports}
-                        canUpdateReport={canUpdateReport}
-                        canDeleteReport={canDeleteReport}
-                        onUpdate={onUpdate}
-                        onAssign={onAssign}
-                        onDelete={onDelete}
-                      />
-                    )
-                  }
-                  
-                  return null
+                  return (
+                    <ReportCard
+                      key={`open-${visibleReport.id}`}
+                      report={visibleReport}
+                      departmentNameById={departmentNameById}
+                      userNameById={userNameById}
+                      canAssignReports={canAssignReports}
+                      canUpdateReport={canUpdateReport}
+                      canDeleteReport={canDeleteReport}
+                      onUpdate={onUpdate}
+                      onAssign={onAssign}
+                      onDelete={onDelete}
+                    />
+                  )
                 })}
               </div>
             </div>
