@@ -9,7 +9,8 @@ import {
   LogOut,
   User,
   Shield,
-  ClipboardCheck
+  ClipboardCheck,
+  HelpCircle
 } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import NotificationsModal from '../Modals/NotificationsModal.jsx'
@@ -23,6 +24,7 @@ export default function Navbar({
   onLogout,
   isNotificationsOpen,
   onToggleNotifications,
+  onToggleHelp,
   userRole,
   userPermissions,
   userName,
@@ -73,18 +75,18 @@ export default function Navbar({
     <>
       {hasPageAccess('dashboard') && (
         <button 
-          onClick={() => navigate('/')} 
-          className={`nav-tab-button ${location.pathname === '/' ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
+          onClick={() => navigate('/dashboard')} 
+          className={`nav-tab-button ${location.pathname.startsWith('/dashboard') ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
         >
           <LayoutDashboard size={isMobile ? 24 : 18} />
-          <span>Dashboard</span>
+          <span>Overview</span>
         </button>
       )}
-      
+
       {hasPageAccess('reports') && (
         <button 
-          onClick={() => navigate('/reports')} 
-          className={`nav-tab-button ${location.pathname.startsWith('/reports') ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
+          onClick={() => navigate('/')} 
+          className={`nav-tab-button ${location.pathname === '/' ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
         >
           <ClipboardList size={isMobile ? 24 : 18} />
           <span>Reports</span>
@@ -172,6 +174,15 @@ export default function Navbar({
           ) : null}
         </button>
       )}
+
+      <button 
+        onClick={onToggleHelp} 
+        className="nav-icon-link-button desktop-only" 
+        title="Help & Documentation"
+        aria-label="Help & Documentation"
+      >
+        <HelpCircle size={20} />
+      </button>
       
       <button 
         onClick={() => { navigate('/settings'); setProfileTargetTab('Settings'); }} 
@@ -198,21 +209,27 @@ export default function Navbar({
       {/* 1. DESKTOP NAVBAR (Hidden on mobile) */}
       <header className="app-navbar desktop-only">
         <div className="app-navbar-inner">
-          <div onClick={() => navigate('/')} className="app-navbar-brand">
-            <img src="/qflow_logo_transparent.png" alt="QFlow Logo" className="brand-logo-img" />
-          </div>
-
-          {userSiteName && (
-            <div className="app-navbar-site-badge" title={`Active Site: ${userSiteName}`}>
-              {userSiteName}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div onClick={() => navigate('/dashboard')} className="app-navbar-brand">
+              <img src="/qflow_logo_transparent.png" alt="QFlow Logo" className="brand-logo-img" />
             </div>
-          )}
+
+            {userSiteName && (
+              <div className="app-navbar-site-badge" title={`Active Site: ${userSiteName}`}>
+                {userSiteName}
+              </div>
+            )}
+          </div>
 
           <nav className="app-nav-center">
             {navTabsJSX(false)}
           </nav>
 
           <div className="app-nav-bottom" ref={desktopMenuContainerRef}>
+            {actionIconsJSX}
+            
+            <div className="sidebar-vertical-separator" style={{ width: '1px', height: '24px', backgroundColor: 'rgba(255, 255, 255, 0.2)', margin: '0 8px' }}></div>
+
             <div onClick={onToggleMenu} className="sidebar-user-card-trigger">
               <div className={`sidebar-user-avatar ${isAdminRole(userRole) ? 'admin' : 'default'}`}>
                 {userName ? userName.charAt(0).toUpperCase() : 'U'}
@@ -224,15 +241,13 @@ export default function Navbar({
             </div>
 
             {isUserMenuOpen && userMenuDropdownJSX}
-
-            {actionIconsJSX}
           </div>
         </div>
       </header>
 
       {/* 2. MOBILE TOP HEADER (Hidden on desktop) */}
       <header className="app-navbar-mobile-top mobile-only" ref={mobileMenuContainerRef}>
-        <div onClick={() => navigate('/')} className="mobile-brand">
+        <div onClick={() => navigate('/dashboard')} className="mobile-brand">
           <img src="/qflow_logo_transparent.png" alt="QFlow Logo" className="brand-logo-img-mobile" />
         </div>
         

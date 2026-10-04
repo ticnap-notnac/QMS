@@ -1,38 +1,35 @@
 /* src/components/components.css */
 
-/* 1. LEFT SIDEBAR NAVBAR */
+/* 1. TOP NAVBAR */
 .app-navbar {
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  bottom: 0;
-  width: 240px;
-  background: linear-gradient(180deg, #0b1528 0%, #050a14 100%); /* Premium deep dark slate-blue blending with the logo */
+  width: 100%;
+  height: 72px;
+  background: #4987A4;
   color: #ffffff;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   z-index: 100;
   box-sizing: border-box;
-  border-right: 1px solid rgba(14, 165, 233, 0.15); /* Soft cyan-tinted border glow */
-  scrollbar-width: none; /* Hide scrollbar for Firefox */
-  -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .app-navbar::-webkit-scrollbar {
-  display: none !important; /* Hide scrollbar for Chrome, Safari, and Edge */
+  display: none !important;
 }
 
 .app-navbar-inner {
   height: 100% !important;
   display: flex !important;
-  flex-direction: column !important;
-  padding: 32px 20px !important;
+  flex-direction: row !important;
+  padding: 0 24px !important;
   box-sizing: border-box !important;
   width: 100% !important;
-  justify-content: flex-start !important;
+  max-width: none !important;
+  align-items: center !important;
+  justify-content: space-between !important;
   gap: 24px !important;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
 }
 
 .app-navbar-inner::-webkit-scrollbar {
@@ -47,11 +44,11 @@
   cursor: pointer;
   color: #ffffff;
   text-decoration: none;
-  width: 100%;
+  width: auto;
 }
 
 .brand-logo-img {
-  height: 125px;
+  height: 48px;
   width: auto;
   max-width: 100%;
   object-fit: contain;
@@ -87,18 +84,17 @@
   justify-content: center;
   gap: 6px;
   padding: 0;
-  border-radius: 0;
+  margin: 0;
   background: none;
   border: none;
-  color: #a1a1aa;
-  font-size: 14.5px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 140px;
-  margin: -10px auto 0 auto;
 }
 
 
@@ -108,65 +104,62 @@
   top: auto !important;
   transform: none !important;
   display: flex !important;
-  flex-direction: column !important;
+  flex-direction: row !important;
   gap: 8px !important;
-  width: 100% !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 1 !important;
 }
 
 .nav-tab-button {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   background: none;
   border: none;
-  color: #94a3b8; /* Slate-400 text color */
-  padding: 12px 14px;
-  font-size: 14.5px;
-  font-weight: 700;
+  color: #FFFFFF;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  border-radius: 8px;
-  width: 100%;
-  text-align: left;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 9999px;
+  transition: all 0.2s ease;
 }
 
 .nav-tab-button svg {
-  color: #64748b; /* Muted slate icon color */
+  color: #D3EBF9;
   transition: color 0.25s ease, transform 0.25s ease;
   flex-shrink: 0;
 }
 
 .nav-tab-button:hover {
-  background: rgba(14, 165, 233, 0.08); /* Soft cyan backdrop */
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .nav-tab-button:hover svg {
-  color: #0ea5e9; /* Light cyan icon highlight */
   transform: translateX(2px);
 }
 
 .nav-tab-button.active {
-  background: rgba(14, 165, 233, 0.15) !important; /* Semi-translucent cyan active block */
-  color: #38bdf8 !important; /* Vibrant cyan-sky text */
-  font-weight: 700;
-  box-shadow: inset 3px 0 0 #0ea5e9 !important; /* Left-side active border stripe */
+  background: #FFFFFF !important;
+  color: #1A435A !important;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
 .nav-tab-button.active svg {
-  color: #38bdf8 !important;
+  color: #1A435A !important;
 }
 
 /* Bottom Actions of Sidebar */
 .app-nav-bottom {
-  margin-top: auto;
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  align-items: flex-start;
-  width: 100%;
-  padding-top: 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: auto;
+  position: relative;
 }
 
 .nav-icon-link-button {
@@ -175,7 +168,7 @@
   justify-content: center;
   background: none;
   border: none;
-  color: #a1a1aa;
+  color: #D3EBF9;
   cursor: pointer;
   border-radius: 8px;
   padding: 8px;
@@ -183,7 +176,7 @@
 }
 
 .nav-icon-link-button:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
 }
 
@@ -682,9 +675,9 @@ div[class*="navbar"] {
 }
 
 .sidebar-user-name {
-  font-size: 14.5px;
+  font-size: 13px;
   font-weight: 600;
-  color: #ffffff;
+  color: #FFFFFF;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -693,18 +686,19 @@ div[class*="navbar"] {
 }
 
 .sidebar-user-position {
-  font-size: 13.5px;
-  color: #a1a1aa;
+  font-size: 11px;
+  color: #D3EBF9;
   font-weight: 500;
   text-transform: uppercase;
 }
 
-/* Dropdown aligned relative to the bottom user card */
+/* Dropdown aligned relative to the top navbar right */
 .sidebar-user-menu-dropdown {
   position: absolute;
-  bottom: 80px;
-  left: 20px;
-  right: 20px;
+  top: 60px;
+  right: 24px;
+  left: auto;
+  width: 220px;
   background: #2e2e2e;
   border: 1px solid #3e3e3e;
   border-radius: 8px;
@@ -712,7 +706,7 @@ div[class*="navbar"] {
   display: flex;
   flex-direction: column;
   z-index: 250;
-  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar-user-menu-dropdown .user-menu-item {
@@ -781,14 +775,14 @@ div[class*="navbar"] {
   height: 15px;
   border-radius: 50%;
   padding: 0 3px;
-  background: #22d3ee;
-  color: #0f172a;
-  font-size: 11.5px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid #1e1e1e;
+  border: 1.5px solid #4987A4;
 }
 
 
@@ -1035,11 +1029,17 @@ div[class*="navbar"] {
   align-items: center !important;
   justify-content: center !important;
   padding: 0 !important;
-  transition: color 0.2s ease !important;
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 28px !important;
+  border-radius: 50% !important;
+  transition: all 0.2s ease !important;
+  line-height: 1 !important;
 }
 
 .modal-close-button:hover {
   color: #0f172a !important;
+  background: #e2e8f0 !important;
 }
 
 /* ==========================================================================

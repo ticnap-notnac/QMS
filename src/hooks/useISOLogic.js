@@ -14,9 +14,9 @@ export default function useISOLogic({ userName }) {
   // 1. Compliance calculations & findings state
   const {
     compliantCount,
-    partialCount,
-    gapCount,
-    overallScore,
+    ofiCount,
+    minorNcCount,
+    majorNcCount,
     nonCompliantFindings,
     createdCars,
     setCreatedCars,
@@ -99,10 +99,7 @@ export default function useISOLogic({ userName }) {
   }, [fetchComplianceData, loadDropdownOptions])
 
   // Aggregate derived stats
-  const totalResults = compliantCount + partialCount + gapCount
-  const compliantPct = totalResults > 0 ? Math.round((compliantCount / totalResults) * 100) : 100
-  const partialPct = totalResults > 0 ? Math.round((partialCount / totalResults) * 100) : 0
-  const gapPct = totalResults > 0 ? Math.round((gapCount / totalResults) * 100) : 0
+  const totalFindings = ofiCount + minorNcCount + majorNcCount
 
   // Props formatting to be consumed by Modals in ISOPage.jsx
   const modulesModalProps = {
@@ -160,11 +157,12 @@ export default function useISOLogic({ userName }) {
     closeTemplatesModal,
 
     // Compliance stats
-    overallScore,
+    totalFindings,
     fetchActiveModules,
-    compliantPct,
-    partialPct,
-    gapPct,
+    compliantCount,
+    ofiCount,
+    minorNcCount,
+    majorNcCount,
     nonCompliantFindings,
     createdCars,
     handleOpenCarModal,

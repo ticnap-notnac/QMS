@@ -198,8 +198,59 @@ export default function ReportsPage({
           <Toast message={logic.toast.message} type={logic.toast.type} onClose={() => logic.setToast(null)} />
         </div>
       )}
-      <div className="reports-main-wrap">
-        <div className="reports-action-header-row">
+      <div className="reports-layout-container">
+        {/* Desktop Sidebar */}
+        {availableTabs.length > 1 && (
+          <aside className="reports-sidebar desktop-only-tabs">
+            <h3 className="reports-sidebar-title">Modules</h3>
+            {availableTabs.map(t => {
+              const tabNames = {
+                ncr: 'Newsfeed (NCR)',
+                car: 'Corrective Actions (CAR)',
+                qddr: 'Defect Reports (QDDR)'
+              };
+              return (
+                <button 
+                  key={t} 
+                  type="button" 
+                  className={`reports-sidebar-btn ${logic.activeTab === t ? 'active' : ''}`} 
+                  onClick={() => logic.setActiveTab(t)}
+                  title={tabNames[t] || t.toUpperCase()}
+                >
+                  {tabNames[t] || t.toUpperCase()}
+                </button>
+              );
+            })}
+          </aside>
+        )}
+
+        {/* Mobile Dropdown (shown only on mobile) */}
+        {availableTabs.length > 1 && (
+          <div className="mobile-only-tabs" style={{ width: '100%', marginBottom: '16px' }}>
+            <select 
+              className="reports-tab-mobile-dropdown"
+              value={logic.activeTab}
+              onChange={(e) => logic.setActiveTab(e.target.value)}
+              style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+            >
+              {availableTabs.map(t => {
+                const tabNamesMobile = {
+                  ncr: 'Newsfeed (NCR)',
+                  car: 'Corrective Actions (CAR)',
+                  qddr: 'Defect Reports (QDDR)'
+                };
+                return (
+                  <option key={t} value={t}>
+                    {tabNamesMobile[t] || t.toUpperCase()}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        )}
+
+        <div className="reports-main-wrap">
+          <div className="reports-action-header-row">
           <div className="reports-header-controls-left">
             <button type="button" onClick={() => logic.setIsFilterModalOpen(true)} className="btn-glass-action" title="Open Filters"><SlidersHorizontal size={18} /></button>
             {logic.activeTab === 'ncr' && logic.canAssignReports && (
@@ -245,52 +296,8 @@ export default function ReportsPage({
           </div>
         </div>
 
-        {availableTabs.length > 1 && (
-          <div className="reports-tab-nav-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            {/* Desktop Tabs */}
-            <div className="reports-tab-nav reports-tab-nav-bar desktop-only-tabs" style={{ marginBottom: 0 }}>
-              {availableTabs.map(t => {
-                const tabNames = {
-                  ncr: <>Non-Conformance<br/>Report</>,
-                  car: <>Corrective Action<br/>Request</>,
-                  qddr: <>Quality Defects / Damaged /<br/>Discrepancy Report</>
-                };
-                return (
-                  <button 
-                    key={t} 
-                    type="button" 
-                    className={`btn-quick-toggle reports-tab-nav-btn ${logic.activeTab === t ? 'active' : ''}`} 
-                    style={{ whiteSpace: 'nowrap', lineHeight: '1.2' }}
-                    onClick={() => logic.setActiveTab(t)}
-                    title={t === 'ncr' ? 'View Non-Conformance Reports' : t === 'car' ? 'View Corrective Action Requests' : 'View Quality Defects / Damaged / Discrepancy Reports'}
-                  >
-                    {tabNames[t] || t.toUpperCase()}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Mobile Dropdown */}
-            <div className="mobile-only-tabs">
-              <select 
-                className="reports-tab-mobile-dropdown"
-                value={logic.activeTab}
-                onChange={(e) => logic.setActiveTab(e.target.value)}
-              >
-                {availableTabs.map(t => {
-                  const tabNamesMobile = {
-                    ncr: 'NON-CONFORMANCE REPORT',
-                    car: 'CORRECTIVE ACTION REQUEST',
-                    qddr: 'QUALITY DEFECTS REPORT'
-                  };
-                  return (
-                    <option key={t} value={t}>
-                      {tabNamesMobile[t] || t.toUpperCase()}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
+        {availableTabs.length > 1 && logic.activeTab !== 'ncr' && (
+          <div className="reports-tab-nav-container" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px' }}>
             {logic.activeTab === 'car' && (
               <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
                 <button
@@ -373,6 +380,7 @@ export default function ReportsPage({
             />
           )}
         </div>
+      </div>
       </div>
 
       <FilterModal {...logic.filterModalProps} activeTab={logic.activeTab} />

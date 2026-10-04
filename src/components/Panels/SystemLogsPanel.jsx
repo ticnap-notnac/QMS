@@ -108,7 +108,7 @@ export default function SystemLogsPanel({ onClose, searchQuery = '' }) {
                   <td>{l.level}</td>
                   <td>{l.source || '-'}</td>
                   <td>
-                    <div style={{ fontWeight: '500', color: '#0f172a' }}>
+                    <div style={{ fontWeight: '500', color: '#1A435A' }}>
                       {typeof l.action === 'string' ? l.action : JSON.stringify(l.action)}
                     </div>
                     {(l.details || l.metadata) && (

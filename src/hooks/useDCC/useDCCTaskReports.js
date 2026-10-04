@@ -115,14 +115,13 @@ export function useDCCTaskReports({ carDetails } = {}) {
         const runRes = (resultsData || []).filter(r => r.run_id === run.id)
         const totalClauses = runRes.length
         const compliantClauses = runRes.filter(r => r.status === 'compliant').length
-        const partialClauses = runRes.filter(r => r.status === 'partial').length
-        const nonCompliantClauses = runRes.filter(r => r.status === 'non_compliant').length
+        const ofiClauses = runRes.filter(r => r.status === 'ofi').length
+        const minorNcClauses = runRes.filter(r => r.status === 'minor_nc').length
+        const majorNcClauses = runRes.filter(r => r.status === 'major_nc').length
         const naClauses = runRes.filter(r => r.status === 'na').length
 
-        const applicableCount = totalClauses - naClauses
-        const score = applicableCount > 0 
-          ? Math.round((compliantClauses / applicableCount) * 100) 
-          : 100
+        const isFailed = majorNcClauses > 0
+        const statusText = isFailed ? 'Failed / Critical' : 'Completed'
 
         return {
           id: run.id,
@@ -132,11 +131,12 @@ export function useDCCTaskReports({ carDetails } = {}) {
           auditor_name: aud ? `${aud.first_name} ${aud.last_name}` : 'Unknown Auditor',
           started_at: run.started_at,
           completed_at: run.completed_at,
-          score,
+          statusText,
           totalClauses,
           compliantClauses,
-          partialClauses,
-          nonCompliantClauses,
+          ofiClauses,
+          minorNcClauses,
+          majorNcClauses,
           naClauses
         }
       })

@@ -45,7 +45,7 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
       <div className="reports-card-header">
         <div className="reports-user-block">
           <div className="reports-avatar">
-            <User size={20} color="#0f172a" />
+            <User size={20} color="#1A435A" />
           </div>
           <div className="reports-user-text">
             <span className="reports-user-name">
@@ -137,36 +137,72 @@ function InvestigatedReportCard({ report, departmentNameById, userNameById, canA
         </>
       )}
 
-      {/* ── Investigation evidence ──────────────────────────────────────── */}
+      {/* ── Evidence (Before & After) ──────────────────────────────────────── */}
       <div className="reports-details-title-wrap">
-        <h4 className="reports-details-title">Investigation Evidence</h4>
+        <h4 className="reports-details-title">Evidence (Before & After)</h4>
       </div>
       <div className="evidence-box">
-        {(report.investigation_evidence_files && report.investigation_evidence_files.length > 0) ? (
-          <div className="evidence-list-container">
-            {report.investigation_evidence_files.map((fileUrl, idx) => {
-              const isImage = fileUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)
-              return (
-                <div key={idx} className="evidence-thumb-small" onClick={() => { if(isImage) setPreviewImage(fileUrl); else window.open(fileUrl, '_blank', 'noopener,noreferrer'); }}>
-                  {isImage ? (
-                    <img src={fileUrl} alt={`Evidence ${idx + 1}`} className="evidence-img" />
-                  ) : (
-                    <div className="evidence-placeholder-small" title="Document">📄</div>
-                  )}
-                </div>
-              )
-            })}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          {/* Before */}
+          <div>
+            <div className="reports-label-small" style={{ textAlign: 'center', marginBottom: '8px' }}>Before (Initial)</div>
+            {(report.evidence_files && report.evidence_files.length > 0) ? (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                {report.evidence_files.map((fileUrl, idx) => {
+                  const isImage = fileUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)
+                  return (
+                    <div key={idx} className="evidence-thumb" onClick={() => { if(isImage) setPreviewImage(fileUrl); else window.open(fileUrl, '_blank', 'noopener,noreferrer'); }}>
+                      {isImage ? (
+                        <img src={fileUrl} alt={`Evidence ${idx + 1}`} className="evidence-img" />
+                      ) : (
+                        <div className="evidence-placeholder" title="Document">📄</div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : report.evidence_url ? (
+              <img
+                src={report.evidence_url}
+                alt="Evidence"
+                className="reports-evidence-img"
+                onClick={() => setPreviewImage(report.evidence_url)}
+              />
+            ) : (
+              <p style={{ color: 'var(--muted)', textAlign: 'center', fontSize: '14px' }}>No initial evidence</p>
+            )}
           </div>
-        ) : report.investigation_evidence_url ? (
-          <img
-            src={report.investigation_evidence_url}
-            alt="Investigation evidence"
-            className="reports-evidence-img"
-            onClick={() => setPreviewImage(report.investigation_evidence_url)}
-          />
-        ) : (
-          <p className="evidence-empty-text">No investigation evidence image attached</p>
-        )}
+
+          {/* After */}
+          <div>
+            <div className="reports-label-small" style={{ textAlign: 'center', marginBottom: '8px' }}>After (Resolved)</div>
+            {(report.investigation_evidence_files && report.investigation_evidence_files.length > 0) ? (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                {report.investigation_evidence_files.map((fileUrl, idx) => {
+                  const isImage = fileUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)
+                  return (
+                    <div key={idx} className="evidence-thumb" onClick={() => { if(isImage) setPreviewImage(fileUrl); else window.open(fileUrl, '_blank', 'noopener,noreferrer'); }}>
+                      {isImage ? (
+                        <img src={fileUrl} alt={`Resolution Evidence ${idx + 1}`} className="evidence-img" />
+                      ) : (
+                        <div className="evidence-placeholder" title="Document">📄</div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : report.investigation_evidence_url ? (
+              <img
+                src={report.investigation_evidence_url}
+                alt="Resolution Evidence"
+                className="reports-evidence-img"
+                onClick={() => setPreviewImage(report.investigation_evidence_url)}
+              />
+            ) : (
+              <p style={{ color: 'var(--muted)', textAlign: 'center', fontSize: '14px' }}>No resolution evidence</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* ── Image Preview Modal ────────────────────────────────────────── */}

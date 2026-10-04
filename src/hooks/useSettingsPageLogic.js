@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/utils/supabase'
 import { insertLog } from '@/services/logService'
+import useDirtyState from './useDirtyState'
 
 export function useSettingsPageLogic({ authUserId, onProfileUpdate } = {}) {
-  const [userProfile, setUserProfile] = useState({
+  const profileState = useDirtyState({
     first_name: '',
     last_name: '',
     user_name: '',
     email: '',
     contact_number: '',
   })
+  
+  const userProfile = profileState.data
+  const setUserProfile = profileState.setData
+
   const [activeSection, setActiveSection] = useState('Profile & Account')
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
@@ -19,7 +24,6 @@ export function useSettingsPageLogic({ authUserId, onProfileUpdate } = {}) {
 
   useEffect(() => {
     if (activeSection === 'Audit Tools') {
-      // enforcement of UI-level guard: callers should ensure userRole check
       setActiveSection('Profile & Account')
     }
   }, [])
@@ -42,7 +46,7 @@ export function useSettingsPageLogic({ authUserId, onProfileUpdate } = {}) {
             console.error('Error fetching user profile:', error)
             setToast({ message: 'We could not load your user credentials. Please refresh the page.', type: 'error' })
           } else if (data) {
-            setUserProfile({
+            profileState.setSavedData({
               first_name: data.first_name || '',
               last_name: data.last_name || '',
               user_name: data.user_name || '',
@@ -50,7 +54,13 @@ export function useSettingsPageLogic({ authUserId, onProfileUpdate } = {}) {
               contact_number: data.contact_number || '',
             })
           } else {
-            setUserProfile(prev => ({ ...prev, email: user?.email || prev.email }))
+            profileState.setSavedData({
+              first_name: '',
+              last_name: '',
+              user_name: '',
+              email: user?.email || '',
+              contact_number: '',
+            })
           }
         }
       } catch (err) {
@@ -120,6 +130,7 @@ export function useSettingsPageLogic({ authUserId, onProfileUpdate } = {}) {
       }
 
       if (onProfileUpdate) await onProfileUpdate()
+      profileState.setSavedData(userProfile)
       setToast({ message: 'Your profile has been updated successfully!', type: 'success' })
     } catch (err) {
       setToast({ message: err.message, type: 'error' })
@@ -140,6 +151,11 @@ export function useSettingsPageLogic({ authUserId, onProfileUpdate } = {}) {
     passwords,
     setPasswords,
     handleUpdateChanges,
+    isDirty: profileState.isDirty,
+    showConfirmModal: profileState.showConfirmModal,
+    setShowConfirmModal: profileState.setShowConfirmModal,
+    handleCancel: profileState.handleCancel,
+    confirmRevert: profileState.confirmRevert,
   }
 }
 

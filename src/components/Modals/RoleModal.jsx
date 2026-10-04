@@ -111,7 +111,7 @@ export default function RoleModal({
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => onPositionToggle(String(pos.id))}
-                        style={{ accentColor: '#0f172a', width: '16px', height: '16px', cursor: 'pointer' }}
+                        style={{ accentColor: '#1A435A', width: '16px', height: '16px', cursor: 'pointer' }}
                       />
                       <span>
                         {pos.position_name}
@@ -134,7 +134,7 @@ export default function RoleModal({
               type="submit"
               disabled={loading}
               style={{
-                background: '#0f172a',
+                background: '#1A435A',
                 border: 'none',
                 padding: '8px 24px',
                 borderRadius: '4px',

@@ -15,7 +15,7 @@ export function ISOModulesModal({
   if (!isOpen) return null
   return (
     <div className="iso-modal-overlay" onClick={onClose}>
-      <div className="iso-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', width: '90%' }}>
+      <div className="iso-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px', width: '90%', minHeight: '450px' }}>
         <div className="iso-modal-header" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {selectedModule && (
@@ -28,7 +28,7 @@ export function ISOModulesModal({
                 ←
               </button>
             )}
-            <h3 className="iso-submodal-title" style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>
+            <h3 className="iso-submodal-title" style={{ margin: 0, fontSize: '18px', color: '#1A435A' }}>
               {selectedModule ? `${selectedModule.name} Clauses` : 'Active ISO Modules'}
             </h3>
           </div>
@@ -51,7 +51,7 @@ export function ISOModulesModal({
               No clauses found for this standard.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '350px', overflowY: 'auto', paddingRight: '4px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '550px', overflowY: 'auto', paddingRight: '4px' }}>
               {clauses.map((clause, i) => (
                 <div
                   key={i}
@@ -69,7 +69,7 @@ export function ISOModulesModal({
                     <span style={{ fontWeight: 'bold', color: '#0891b2', fontSize: '14px', minWidth: '40px' }}>
                       {clause.clause_number}
                     </span>
-                    <span style={{ fontWeight: '600', color: '#0f172a', fontSize: '14px' }}>
+                    <span style={{ fontWeight: '600', color: '#1A435A', fontSize: '14px' }}>
                       {clause.title}
                     </span>
                   </div>
@@ -90,7 +90,7 @@ export function ISOModulesModal({
               No active ISO standards found. You can toggle standards under Settings &gt; ISO Standards.
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '350px', overflowY: 'auto', paddingRight: '4px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '550px', overflowY: 'auto', paddingRight: '4px' }}>
               {activeModules.map((module, i) => (
                 <div
                   key={i}
@@ -110,7 +110,7 @@ export function ISOModulesModal({
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(8, 145, 178, 0.05)'; e.currentTarget.style.borderColor = 'rgba(8, 145, 178, 0.15)'; }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '14.5px' }}>{module.name}</span>
+                    <span style={{ fontWeight: 'bold', color: '#1A435A', fontSize: '14.5px' }}>{module.name}</span>
                     {module.version && <span style={{ fontSize: '11px', background: 'rgba(15, 23, 42, 0.06)', padding: '2px 6px', borderRadius: '4px', color: '#475569' }}>v{module.version}</span>}
                   </div>
                   {module.description && <span style={{ fontSize: '12.5px', color: '#475569', lineHeight: '1.4' }}>{module.description}</span>}
@@ -207,7 +207,7 @@ export function ISOTemplatesModal({
 
   return (
     <div className="iso-modal-overlay" onClick={onClose}>
-      <div className="iso-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', width: '90%' }}>
+      <div className="iso-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px', width: '90%', minHeight: '450px' }}>
         <div className="iso-modal-header" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {selectedTemplate && (
@@ -220,7 +220,7 @@ export function ISOTemplatesModal({
                 ←
               </button>
             )}
-            <h3 className="iso-submodal-title" style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>
+            <h3 className="iso-submodal-title" style={{ margin: 0, fontSize: '18px', color: '#1A435A' }}>
               {selectedTemplate ? selectedTemplate.title : 'ISO Audit Templates'}
             </h3>
           </div>
@@ -235,7 +235,7 @@ export function ISOTemplatesModal({
           </button>
         </div>
 
-        <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '4px' }}>
+        <div style={{ maxHeight: '550px', overflowY: 'auto', paddingRight: '4px' }}>
           {loadingTemplates ? (
             <div style={{ padding: '24px 0', textAlign: 'center', color: '#64748b' }}>Loading templates...</div>
           ) : !selectedTemplate ? (
@@ -260,7 +260,7 @@ export function ISOTemplatesModal({
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#f1f5f9' }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#f8fafc' }}
                   >
-                    <div style={{ fontWeight: '600', color: '#0f172a', marginBottom: '4px' }}>{tpl.title}</div>
+                    <div style={{ fontWeight: '600', color: '#1A435A', marginBottom: '4px' }}>{tpl.title}</div>
                     <div style={{ fontSize: '13px', color: '#64748b' }}>{tpl.description}</div>
                     {tpl.iso_standards && (
                       <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: '500', color: '#0ea5e9', display: 'inline-block', padding: '2px 8px', background: '#e0f2fe', borderRadius: '12px' }}>
@@ -286,7 +286,7 @@ export function ISOTemplatesModal({
                           Clause {item.iso_clauses.clause_number}: {item.iso_clauses.title}
                         </div>
                       )}
-                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#0f172a', marginBottom: '6px' }}>
+                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#1A435A', marginBottom: '6px' }}>
                         {item.requirement}
                       </div>
                       {item.what_to_look_for && (
@@ -331,7 +331,7 @@ export function EditStandardModal({ standard, isOpen, onClose, onSave, savingEdi
     <div className="iso-modal-overlay" onClick={onClose}>
       <div className="iso-modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', width: '90%' }}>
         <div className="iso-modal-header" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>Edit ISO Standard</h3>
+          <h3 style={{ margin: 0, fontSize: '18px', color: '#1A435A' }}>Edit ISO Standard</h3>
           <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
             <X size={18} />
           </button>
@@ -404,7 +404,7 @@ export function EditClauseModal({ clause, isOpen, onClose, onSave, savingEdit })
     <div className="iso-modal-overlay" onClick={onClose}>
       <div className="iso-modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', width: '90%' }}>
         <div className="iso-modal-header" style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>Edit Clause</h3>
+          <h3 style={{ margin: 0, fontSize: '18px', color: '#1A435A' }}>Edit Clause</h3>
           <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
             <X size={18} />
           </button>

@@ -30,7 +30,7 @@ export async function fetchNonCompliantFindings() {
         title
       )
     `)
-    .eq('status', 'non_compliant')
+    .in('status', ['ofi', 'minor_nc', 'major_nc'])
   if (error) throw error
   return data || []
 }

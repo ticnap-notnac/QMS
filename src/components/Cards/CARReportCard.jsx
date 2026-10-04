@@ -67,7 +67,7 @@ function CARReportCard({ car, canEdit, onSelectCar, onEditCar, onDeleteCar }) {
       <div className="reports-card-header">
         <div className="reports-user-block">
           <div className="reports-avatar">
-            <User size={20} color="#0f172a" />
+            <User size={20} color="#1A435A" />
           </div>
           <div className="reports-user-text">
             <span className="reports-user-name">

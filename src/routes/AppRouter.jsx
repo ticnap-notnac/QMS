@@ -23,7 +23,7 @@ const PermissionsPage = lazy(() => import('@/pages/PermissionsPage.jsx'))
 
 const PageLoader = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', minHeight: '400px' }}>
-    <LoaderCircle size={32} className="iso-spinner" color="#0f172a" />
+    <LoaderCircle size={32} className="iso-spinner" color="#1A435A" />
   </div>
 )
 
@@ -51,8 +51,8 @@ export default function AppRouter({ sharedProps, refreshUserData }) {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/" element={<ProtectedRoute pageKey="dashboard" sharedProps={sharedProps}><DashboardPage {...sharedProps} /></ProtectedRoute>} />
-        <Route path="/reports" element={<ProtectedRoute pageKey="reports" sharedProps={sharedProps}><ReportsPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/" element={<ProtectedRoute pageKey="reports" sharedProps={sharedProps}><ReportsPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute pageKey="dashboard" sharedProps={sharedProps}><DashboardPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/iso" element={<ProtectedRoute pageKey="iso" sharedProps={sharedProps}><ISOPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/dcc" element={<ProtectedRoute pageKey="dcc" sharedProps={sharedProps}><DCCPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings" element={<SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />} />

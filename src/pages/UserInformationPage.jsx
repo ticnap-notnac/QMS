@@ -16,8 +16,6 @@ export default function UserInformationPage(props) {
   const { userProfile, loading, error, activeTab, setActiveTab } =
     useUserInformationPageLogic({ authUserId, profileTargetTab })
 
-
-
   if (error) {
     return (
       <div className="page-root">

@@ -49,7 +49,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
               width: '42px',
               height: '42px',
               borderRadius: '10px',
-              background: '#0f172a',
+              background: '#1A435A',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
@@ -59,7 +59,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1A435A', margin: 0 }}>
                   {document.reference_no || document.title || 'Document Details'}
                 </h2>
                 <span style={{
@@ -129,7 +129,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
               <Building size={16} color="#64748b" />
               <div>
                 <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Department</span>
-                <strong style={{ fontSize: '0.875rem', color: '#0f172a' }}>{document.department_name || document.department || '—'}</strong>
+                <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.department_name || document.department || '—'}</strong>
               </div>
             </div>
 
@@ -137,7 +137,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
               <MapPin size={16} color="#64748b" />
               <div>
                 <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Location</span>
-                <strong style={{ fontSize: '0.875rem', color: '#0f172a' }}>{document.complaint_location || document.location_name || document.location || '—'}</strong>
+                <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.complaint_location || document.location_name || document.location || '—'}</strong>
               </div>
             </div>
 
@@ -145,7 +145,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
               <Tag size={16} color="#64748b" />
               <div>
                 <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Product Type</span>
-                <strong style={{ fontSize: '0.875rem', color: '#0f172a' }}>{document.product_type || document.product_type_name || '—'}</strong>
+                <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.product_type || document.product_type_name || '—'}</strong>
               </div>
             </div>
 
@@ -153,7 +153,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
               <FileText size={16} color="#64748b" />
               <div>
                 <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Batch Number</span>
-                <strong style={{ fontSize: '0.875rem', color: '#0f172a' }}>{document.batch_number || '—'}</strong>
+                <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.batch_number || '—'}</strong>
               </div>
             </div>
 
@@ -171,7 +171,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
               <Calendar size={16} color="#64748b" />
               <div>
                 <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Occurrence Date</span>
-                <strong style={{ fontSize: '0.875rem', color: '#0f172a' }}>{document.occurrence_date || document.created_at?.split('T')[0] || '—'}</strong>
+                <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.occurrence_date || document.created_at?.split('T')[0] || '—'}</strong>
               </div>
             </div>
           </div>
@@ -331,7 +331,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
             onClick={onClose}
             style={{
               padding: '8px 20px',
-              background: '#0f172a',
+              background: '#1A435A',
               color: '#ffffff',
               border: 'none',
               borderRadius: '6px',

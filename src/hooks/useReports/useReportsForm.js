@@ -3,6 +3,7 @@ import { useState, useRef } from 'react'
 const DEFAULT_CREATE_FORM = {
   productType: '',
   batchNumber: '',
+  plateNumber: '',
   location: '',
   severity: '',
   department: '',
@@ -19,6 +20,7 @@ export function useReportsForm() {
   const [productType, setProductType] = useState(DEFAULT_CREATE_FORM.productType)
   const [productTypeId, setProductTypeId] = useState('')
   const [batchNumber, setBatchNumber] = useState(DEFAULT_CREATE_FORM.batchNumber)
+  const [plateNumber, setPlateNumber] = useState(DEFAULT_CREATE_FORM.plateNumber)
   const [location, setLocation] = useState(DEFAULT_CREATE_FORM.location)
   const [locationId, setLocationId] = useState('')
   const [severity, setSeverity] = useState(DEFAULT_CREATE_FORM.severity)
@@ -42,6 +44,7 @@ export function useReportsForm() {
     setProductType(DEFAULT_CREATE_FORM.productType)
     setProductTypeId('')
     setBatchNumber(DEFAULT_CREATE_FORM.batchNumber)
+    setPlateNumber(DEFAULT_CREATE_FORM.plateNumber)
     setLocation(DEFAULT_CREATE_FORM.location)
     setLocationId('')
     setSeverity(DEFAULT_CREATE_FORM.severity)
@@ -68,6 +71,7 @@ export function useReportsForm() {
       productType, setProductType,
       productTypeId, setProductTypeId,
       batchNumber, setBatchNumber,
+      plateNumber, setPlateNumber,
       location, setLocation,
       locationId, setLocationId,
       severity, setSeverity,

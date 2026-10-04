@@ -30,7 +30,7 @@ function resolveStorageUrl(path) {
  * Groups an array of report objects by Creation/Occurrence Month and Year.
  * Returns an array of group objects sorted in reverse chronological order (newest month first).
  */
-function groupReportsByMonthYear(reports) {
+function groupReportsByMonthYear(reports, sortOrder = 'newest') {
   if (!reports || !reports.length) return []
 
   const groups = {}
@@ -56,7 +56,37 @@ function groupReportsByMonthYear(reports) {
     groups[monthKey].items.push(item)
   })
 
-  return Object.values(groups).sort((a, b) => b.key.localeCompare(a.key))
+  const result = Object.values(groups)
+  
+  if (sortOrder === 'oldest') {
+    result.sort((a, b) => a.key.localeCompare(b.key))
+  } else {
+    result.sort((a, b) => b.key.localeCompare(a.key))
+  }
+
+  result.forEach(group => {
+    if (sortOrder === 'alpha') {
+      group.items.sort((a, b) => {
+        const titleA = (a.reference_no || a.title || '').toString().toLowerCase()
+        const titleB = (b.reference_no || b.title || '').toString().toLowerCase()
+        return titleA.localeCompare(titleB)
+      })
+    } else if (sortOrder === 'oldest') {
+      group.items.sort((a, b) => {
+        const dateA = new Date(a.occurrence_date || a.created_at || a.request_date || a.audit_date).getTime()
+        const dateB = new Date(b.occurrence_date || b.created_at || b.request_date || b.audit_date).getTime()
+        return dateA - dateB
+      })
+    } else {
+      group.items.sort((a, b) => {
+        const dateA = new Date(a.occurrence_date || a.created_at || a.request_date || a.audit_date).getTime()
+        const dateB = new Date(b.occurrence_date || b.created_at || b.request_date || b.audit_date).getTime()
+        return dateB - dateA
+      })
+    }
+  })
+
+  return result
 }
 
 export default function DCCFolderContent({
@@ -111,6 +141,8 @@ export default function DCCFolderContent({
   const [selectedDocument, setSelectedDocument] = useState(null)
   const [viewDetailsDoc, setViewDetailsDoc] = useState(null)
   const [shareSuccess, setShareSuccess] = useState(false)
+  const [showFilterMenu, setShowFilterMenu] = useState(false)
+  const [sortOrder, setSortOrder] = useState('newest')
   
   // PDF Download State & Refs
   const [downloadingReport, setDownloadingReport] = useState(null)
@@ -183,7 +215,7 @@ export default function DCCFolderContent({
       return <div className="empty-state">No {reportType} reports found.</div>
     }
 
-    const groups = groupReportsByMonthYear(reports)
+    const groups = groupReportsByMonthYear(reports, sortOrder)
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
@@ -237,34 +269,72 @@ export default function DCCFolderContent({
 
   const queryClean = (searchQuery || '').trim().toLowerCase()
 
-  // 1. Root level filtering
-  const filteredFolderItems = folderItems.filter((item) =>
-    !queryClean || item.label.toLowerCase().includes(queryClean)
-  )
+  // Helper to sort generic arrays
+  const applySort = (arr) => {
+    const withIndex = arr.map((item, index) => ({ item, index }))
+    
+    withIndex.sort((a, b) => {
+      const getTitle = (obj) => (obj.label || obj.name || obj.title || obj.reference_no || '').toString().toLowerCase()
+      const getDateValue = (obj) => {
+        const val = obj.occurrence_date || obj.created_at || obj.request_date || obj.audit_date || obj.updated_at || obj.when
+        return val ? new Date(val).getTime() : 0
+      }
+      
+      if (sortOrder === 'alpha') {
+        const cmp = getTitle(a.item).localeCompare(getTitle(b.item))
+        return cmp !== 0 ? cmp : (a.index - b.index)
+      } else if (sortOrder === 'oldest') {
+        const dA = getDateValue(a.item)
+        const dB = getDateValue(b.item)
+        if (dA === 0 && dB === 0) return a.index - b.index
+        if (dA === dB) {
+          const cmp = getTitle(a.item).localeCompare(getTitle(b.item))
+          return cmp !== 0 ? cmp : (a.index - b.index)
+        }
+        return dA - dB
+      } else {
+        const dA = getDateValue(a.item)
+        const dB = getDateValue(b.item)
+        if (dA === 0 && dB === 0) return a.index - b.index
+        if (dA === dB) {
+          const cmp = getTitle(a.item).localeCompare(getTitle(b.item))
+          return cmp !== 0 ? cmp : (a.index - b.index)
+        }
+        return dB - dA
+      }
+    })
+    
+    return withIndex.map(wrapper => wrapper.item)
+  }
 
-  const filteredRecentlyViewed = recentlyViewed.filter((rv) =>
+  // 1. Root level filtering
+  const filteredFolderItems = applySort(folderItems.filter((item) =>
+    !queryClean || item.label.toLowerCase().includes(queryClean)
+  ))
+
+  const filteredRecentlyViewed = applySort(recentlyViewed.filter((rv) =>
     !queryClean || rv.label.toLowerCase().includes(queryClean)
-  )
+  ))
 
   // 2. ISO Standards filtering
-  const filteredStandards = standards.filter((s) =>
+  const filteredStandards = applySort(standards.filter((s) =>
     !queryClean ||
     s.name.toLowerCase().includes(queryClean) ||
     (s.version && s.version.toLowerCase().includes(queryClean))
-  )
+  ))
 
   // 3. ISO Clauses filtering
-  const filteredClauses = clauses.filter((cl) =>
+  const filteredClauses = applySort(clauses.filter((cl) =>
     !queryClean ||
     (cl.clause_number && String(cl.clause_number).toLowerCase().includes(queryClean)) ||
     (cl.title && String(cl.title).toLowerCase().includes(queryClean)) ||
     (cl.description && String(cl.description).toLowerCase().includes(queryClean))
-  )
+  ))
 
   // 4. Task Subfolders filtering
-  const filteredTaskSubfolders = TASK_REPORT_SUBFOLDERS.filter((item) =>
+  const filteredTaskSubfolders = applySort(TASK_REPORT_SUBFOLDERS.filter((item) =>
     !queryClean || item.label.toLowerCase().includes(queryClean)
-  )
+  ))
 
   // 5. Task Reports filtering
   const filteredNcrReports = ncrReports.filter((ncr) =>
@@ -412,8 +482,9 @@ export default function DCCFolderContent({
         )}
 
         <div className="dcc-search-area">
-          <div className="search-container-centered" style={{ display: 'flex', gap: '10px' }}>
-            <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+          <div className="search-container-centered">
+            <div style={{ position: 'relative', width: '100%', maxWidth: '600px', display: 'flex', alignItems: 'center', margin: '0 auto' }}>
+              <Search size={18} className="search-icon-absolute" />
               <input
                 type="text"
                 value={searchQuery}
@@ -424,16 +495,31 @@ export default function DCCFolderContent({
                     : 'Search documents or folders...'
                 }
                 className="search-bar-field"
-                style={{ width: '100%' }}
               />
-              <Search size={16} className="search-icon-absolute" />
+              <button className="filter-icon-absolute" title="Filter options" onClick={() => setShowFilterMenu(!showFilterMenu)}>
+                <SlidersHorizontal size={18} />
+              </button>
+              {showFilterMenu && (
+                <div style={{ position: 'absolute', top: '100%', right: '0', marginTop: '8px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 50, minWidth: '180px', padding: '8px' }}>
+                  <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sort By</div>
+                  <div onClick={() => { setSortOrder('newest'); setShowFilterMenu(false); }} style={{ padding: '10px 12px', cursor: 'pointer', borderRadius: '8px', background: sortOrder === 'newest' ? '#f1f5f9' : 'transparent', fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: sortOrder === 'newest' ? '#0891b2' : 'transparent' }}></div>
+                    Newest First
+                  </div>
+                  <div onClick={() => { setSortOrder('oldest'); setShowFilterMenu(false); }} style={{ padding: '10px 12px', cursor: 'pointer', borderRadius: '8px', background: sortOrder === 'oldest' ? '#f1f5f9' : 'transparent', fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: sortOrder === 'oldest' ? '#0891b2' : 'transparent' }}></div>
+                    Oldest First
+                  </div>
+                  <div onClick={() => { setSortOrder('alpha'); setShowFilterMenu(false); }} style={{ padding: '10px 12px', cursor: 'pointer', borderRadius: '8px', background: sortOrder === 'alpha' ? '#f1f5f9' : 'transparent', fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: sortOrder === 'alpha' ? '#0891b2' : 'transparent' }}></div>
+                    Alphabetical (A-Z)
+                  </div>
+                </div>
+              )}
             </div>
-            <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '20px', height: '40px' }}>
-              <SlidersHorizontal size={16} color="#64748b" />
-              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#334155' }}>Filter</span>
-            </button>
           </div>
         </div>
+
 
         <div className="dcc-explorer-viewport">
           {/* ROOT VIEW */}

@@ -58,9 +58,9 @@ export default function AssignReportModal({
           borderBottom: '1px solid #e2e8f0',
           boxSizing: 'border-box'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#0f172a' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1A435A' }}>
             <FileSignature size={18} className="icon-teal" />
-            <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a', fontWeight: 600 }}>Assign Report</h3>
+            <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1A435A', fontWeight: 600 }}>Assign Report</h3>
           </div>
           <button 
             type="button" 
@@ -74,7 +74,7 @@ export default function AssignReportModal({
         <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={{ fontSize: '11px', color: 'var(--muted, #64748b)', textTransform: 'uppercase', fontWeight: 600 }}>Report Reference</span>
-            <strong style={{ fontSize: '15px', color: '#0f172a' }}>{reportLabel}</strong>
+            <strong style={{ fontSize: '15px', color: '#1A435A' }}>{reportLabel}</strong>
           </div>
 
           {error ? <div className="user-info-error" style={{ margin: 0 }}>{error}</div> : null}

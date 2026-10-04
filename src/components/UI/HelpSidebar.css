@@ -1,0 +1,138 @@
+/* src/components/UI/HelpSidebar.css */
+
+.help-sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.help-sidebar-container {
+  width: 400px;
+  height: 100%;
+  background: var(--color-white, #FFFFFF);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  animation: slideInRight 0.3s forwards ease-out;
+}
+
+@keyframes slideInRight {
+  to { transform: translateX(0); }
+}
+
+.help-sidebar-header {
+  padding: 24px;
+  border-bottom: 1px solid var(--color-gray-soft, #e2e8f0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-light-neutral, #f8fafc);
+}
+
+.help-sidebar-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-primary-dark, #1A435A);
+}
+
+.help-sidebar-title-wrap h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.help-sidebar-icon {
+  color: var(--color-primary-accent, #4987A4);
+}
+
+.help-sidebar-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.help-sidebar-close:hover {
+  background: #e2e8f0;
+  color: #1A435A;
+}
+
+.help-sidebar-content {
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.help-section-title {
+  color: var(--color-primary-dark, #1A435A);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.help-text {
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.help-list {
+  padding-left: 20px;
+  margin-bottom: 24px;
+}
+
+.help-list li {
+  color: #475569;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.help-list li strong {
+  color: var(--color-primary-dark, #1A435A);
+}
+
+.help-divider {
+  border: none;
+  border-top: 1px solid var(--color-gray-soft, #e2e8f0);
+  margin: 24px 0;
+}
+
+.help-quick-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--color-light-neutral, #f8fafc);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--color-primary-dark, #1A435A);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.help-quick-link:hover {
+  border-color: var(--color-primary-accent, #4987A4);
+  background: #f1f5f9;
+  color: var(--color-primary-accent, #4987A4);
+}

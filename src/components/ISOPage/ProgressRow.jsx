@@ -22,7 +22,7 @@ export const ProgressRow = ({ label, tone, percent, icon }) => {
     >
       <div className="progress-label-container iso-progress-label-container" style={{ width: '130px', flexShrink: 0 }}>
         <span className={`progress-icon progress-icon-${tone} iso-progress-icon`}>{icon}</span>
-        <span className="progress-label-text iso-progress-label-text" style={{ color: '#0f172a' }}>{label}:</span>
+        <span className="progress-label-text iso-progress-label-text" style={{ color: '#1A435A' }}>{label}:</span>
       </div>
       <div className="progress-bar-container iso-progress-bar-container" style={{ flex: 1 }}>
         <div className={`progress-bar-fill progress-fill-${tone} iso-progress-bar-fill`} style={{ width: `${percent}%`, height: '100%' }} />

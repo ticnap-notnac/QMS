@@ -32,6 +32,11 @@ export default function SettingsPage(props) {
     passwords,
     setPasswords,
     handleUpdateChanges,
+    isDirty,
+    showConfirmModal,
+    setShowConfirmModal,
+    handleCancel,
+    confirmRevert,
   } = useSettingsPageLogic({ authUserId, onProfileUpdate })
 
   const [highContrast, setHighContrast] = useState(false)
@@ -103,15 +108,35 @@ export default function SettingsPage(props) {
                   <div className="settings-content settings-content--profile">
                     <SettingsProfileForm {...{ userProfile, setUserProfile }} />
                     <PasswordSection {...{ passwords, setPasswords }} />
-                    <button className="btn-primary mt-24 settings-save-button" onClick={handleUpdateChanges} disabled={saving}>
-                      {saving ? 'Saving...' : 'Update Changes'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
+                      <button className="btn-primary settings-save-button" onClick={handleUpdateChanges} disabled={saving || !isDirty}>
+                        {saving ? 'Saving...' : 'Update Changes'}
+                      </button>
+                      {isDirty && (
+                        <button className="btn-outline settings-cancel-button" onClick={() => handleCancel()} disabled={saving} style={{ color: '#4987A4', borderColor: '#4987A4' }}>
+                          Revert Changes
+                        </button>
+                      )}
+                    </div>
+                    
+                    {showConfirmModal && (
+                      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                        <div style={{ background: '#fff', padding: '32px', borderRadius: '16px', maxWidth: '400px', width: '100%', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
+                          <h3 style={{ margin: '0 0 16px 0', color: '#1A435A', fontSize: '18px' }}>Unsaved Changes</h3>
+                          <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>You have unsaved changes to your profile. Are you sure you want to revert them? This action cannot be undone.</p>
+                          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button className="btn-secondary-light" onClick={() => setShowConfirmModal(false)}>Cancel</button>
+                            <button className="btn-primary" style={{ background: '#ef4444', border: 'none' }} onClick={confirmRevert}>Revert</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {activeSection === 'Accessibility' && (
                   <div className="settings-content settings-content--profile">
-                    <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a', margin: '0 0 4px 0' }}>Accessibility Settings</h2>
+                    <h2 style={{ fontSize: '16px', fontWeight: 600, color: '#1A435A', margin: '0 0 4px 0' }}>Accessibility Settings</h2>
                     <p style={{ color: '#64748b', fontSize: '13px', margin: '0 0 20px 0' }}>
                       Configure display and navigation helper options to fit your preference.
                     </p>
@@ -120,7 +145,7 @@ export default function SettingsPage(props) {
                       {/* Contrast Setting */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
                         <div>
-                          <strong style={{ fontSize: '14px', color: '#0f172a' }}>High Contrast Mode</strong>
+                          <strong style={{ fontSize: '14px', color: '#1A435A' }}>High Contrast Mode</strong>
                           <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Increase contrast of text and borders for readability.</div>
                         </div>
                         <input 
@@ -134,7 +159,7 @@ export default function SettingsPage(props) {
                       {/* Font Size Setting */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
                         <div>
-                          <strong style={{ fontSize: '14px', color: '#0f172a' }}>Text Scaling</strong>
+                          <strong style={{ fontSize: '14px', color: '#1A435A' }}>Text Scaling</strong>
                           <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Scales font sizes across dashboard containers.</div>
                         </div>
                         <select 
@@ -152,7 +177,7 @@ export default function SettingsPage(props) {
                       {/* Animations Setting */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
                         <div>
-                          <strong style={{ fontSize: '14px', color: '#0f172a' }}>Reduce Motion</strong>
+                          <strong style={{ fontSize: '14px', color: '#1A435A' }}>Reduce Motion</strong>
                           <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Disables translation transitions and page micro-animations.</div>
                         </div>
                         <input 

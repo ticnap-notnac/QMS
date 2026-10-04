@@ -5,9 +5,9 @@ import { SEVERITY_LEVELS, AUDIT_STATUS, REPORT_STATUS } from '../../../shared/co
 
 export function useComplianceData() {
   const [compliantCount, setCompliantCount] = useState(0)
-  const [partialCount, setPartialCount] = useState(0)
-  const [gapCount, setGapCount] = useState(0)
-  const [overallScore, setOverallScore] = useState(100)
+  const [ofiCount, setOfiCount] = useState(0)
+  const [minorNcCount, setMinorNcCount] = useState(0)
+  const [majorNcCount, setMajorNcCount] = useState(0)
   const [nonCompliantFindings, setNonCompliantFindings] = useState([])
   const [createdCars, setCreatedCars] = useState({})
 
@@ -16,26 +16,21 @@ export function useComplianceData() {
       const results = await isoService.fetchAuditResults()
       
       let comp = 0
-      let part = 0
-      let gp = 0
+      let ofi = 0
+      let minor = 0
+      let major = 0
 
       results.forEach(row => {
         if (row.status === AUDIT_STATUS.COMPLIANT) comp++
-        else if (row.status === AUDIT_STATUS.PARTIAL) part++
-        else if (row.status === AUDIT_STATUS.NON_COMPLIANT) gp++
+        else if (row.status === AUDIT_STATUS.OFI) ofi++
+        else if (row.status === AUDIT_STATUS.MINOR_NC) minor++
+        else if (row.status === AUDIT_STATUS.MAJOR_NC) major++
       })
 
-      const total = comp + part + gp
-      
       setCompliantCount(comp)
-      setPartialCount(part)
-      setGapCount(gp)
-
-      if (total > 0) {
-        setOverallScore(Math.round((comp / total) * 100))
-      } else {
-        setOverallScore(100)
-      }
+      setOfiCount(ofi)
+      setMinorNcCount(minor)
+      setMajorNcCount(major)
 
       // Fetch non-compliant findings
       const findingsData = await isoService.fetchNonCompliantFindings()
@@ -200,9 +195,9 @@ export function useComplianceData() {
 
   return {
     compliantCount,
-    partialCount,
-    gapCount,
-    overallScore,
+    ofiCount,
+    minorNcCount,
+    majorNcCount,
     nonCompliantFindings,
     createdCars,
     setCreatedCars,

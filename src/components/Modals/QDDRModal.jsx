@@ -166,7 +166,7 @@ function QDDRModal({
                         />
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '6px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: '#0f172a', fontWeight: '500' }}>{report.reference_no || `NCR #${report.id}`}</span>
+                            <span style={{ color: '#1A435A', fontWeight: '500' }}>{report.reference_no || `NCR #${report.id}`}</span>
                             <span style={{ color: 'var(--muted)', fontSize: '13px' }}>{new Date(report.created_at).toLocaleDateString()}</span>
                           </div>
                           {report.description && (
@@ -333,7 +333,7 @@ function QDDRModal({
 
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
 
-              <h4 style={{ color: '#0f172a', fontSize: '13px', margin: '0 0 4px 0', textAlign: 'center', letterSpacing: '0.05em' }}>TYPE OF DISCREPANCY</h4>
+              <h4 style={{ color: '#1A435A', fontSize: '13px', margin: '0 0 4px 0', textAlign: 'center', letterSpacing: '0.05em' }}>TYPE OF DISCREPANCY</h4>
               
               {/* Discrepancies Grid & Others */}
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '12px' }}>
@@ -446,7 +446,7 @@ function QDDRModal({
                           }}
                         >
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
-                            <span style={{ fontSize: '13px', color: '#0f172a', fontWeight: isConfirmed ? '600' : '400' }}>
+                            <span style={{ fontSize: '13px', color: '#1A435A', fontWeight: isConfirmed ? '600' : '400' }}>
                               <span style={{ color: '#0891b2', fontWeight: 'bold', marginRight: '6px' }}>Clause {suggestion.clause_number}</span>
                               {suggestion.title}
                             </span>
@@ -477,7 +477,7 @@ function QDDRModal({
 
               {/* Actions & Analysis Header with CBR Suggest Actions Button */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ color: '#0f172a', fontSize: '13px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions & Analysis</span>
+                <span style={{ color: '#1A435A', fontSize: '13px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions & Analysis</span>
                 <button
                   type="button"
                   onClick={suggestActions}

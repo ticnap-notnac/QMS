@@ -19,7 +19,7 @@
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background: #ffffff;
-  color: #0f172a;
+  color: #1A435A;
   outline: none;
   font-size: 17px;
   transition: all 0.2s ease;
@@ -51,7 +51,7 @@
   margin: 0 0 8px 0;
   font-size: 31px;
   font-weight: 600;
-  color: #0f172a;
+  color: #1A435A;
 }
 
 /* ==========================================================================
@@ -85,14 +85,14 @@
   margin: 0 0 24px 0;
   font-size: 23px;
   font-weight: 600;
-  color: #0f172a;
+  color: #1A435A;
 }
 
 .settings-password-title {
   margin: 0 0 16px 0;
   font-size: 19px;
   font-weight: 600;
-  color: #0f172a;
+  color: #1A435A;
 }
 
 /* ==========================================================================
@@ -136,8 +136,8 @@
 }
 
 .sidebar-button.active {
-  background: #0f172a;
-  border-color: #0f172a;
+  background: #1A435A;
+  border-color: #1A435A;
   color: #ffffff;
 }
 
@@ -308,7 +308,7 @@
 }
 
 .iso-table td strong {
-  color: #0f172a !important;
+  color: #1A435A !important;
   font-weight: 600 !important;
 }
 
@@ -318,8 +318,8 @@
 
 /* Customize Actions Buttons inside the checklist template table */
 .iso-table td .btn-primary {
-  background: #0f172a !important;
-  border: 1px solid #0f172a !important;
+  background: #1A435A !important;
+  border: 1px solid #1A435A !important;
   color: #ffffff !important;
   border-radius: 6px !important;
   padding: 6px 12px !important;
@@ -376,7 +376,7 @@
   margin: 0 0 8px 0;
   font-size: 31px;
   font-weight: 600;
-  color: #0f172a;
+  color: #1A435A;
 }
 
 .user-info-container--profile {
@@ -428,7 +428,7 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: #0f172a;
+  background: #1A435A;
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -437,7 +437,7 @@
   font-weight: 700;
 }
 
-.user-info-name--profile { margin: 0 0 4px 0; font-size: 23px; font-weight: 600; color: #0f172a; }
+.user-info-name--profile { margin: 0 0 4px 0; font-size: 23px; font-weight: 600; color: #1A435A; }
 .user-info-role--profile { margin: 0; color: #64748b; font-size: 16px; }
 
 .user-info-fields--profile { display: flex; flex-direction: column; gap: 16px; }
@@ -455,7 +455,7 @@
   letter-spacing: 0.5px;
 }
 
-.user-info-field-value--profile { color: #0f172a; font-size: 17px; }
+.user-info-field-value--profile { color: #1A435A; font-size: 17px; }
 
 .two-column-row {
   display: flex;
@@ -482,7 +482,7 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background: #0f172a;
+  background: #1A435A;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -529,7 +529,7 @@
 .profile-field-value {
   flex: 1;
   font-size: 17px;
-  color: #0f172a;
+  color: #1A435A;
   font-weight: 500;
   text-align: left;
 }
@@ -567,13 +567,13 @@
 .user-info-tab-button:hover {
   background: #f8fafc;
   border-color: #94a3b8;
-  color: #0f172a;
+  color: #1A435A;
 }
 
 .user-info-tab-button.active {
   background: #cbd5e1;
   border-color: #cbd5e1;
-  color: #0f172a;
+  color: #1A435A;
   font-weight: 600;
 }
 
@@ -736,4 +736,4 @@
   justify-content: flex-end !important;
   gap: 12px !important;
 }
-
+

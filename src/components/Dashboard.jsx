@@ -212,7 +212,9 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
         >
           <div className="metric-card-header">
             <p className="metric-card-title">Open Complaints</p>
-            <AlertCircle size={18} color="#0f172a" />
+            <div className="metric-icon-badge">
+              <AlertCircle size={18} color="#1A435A" />
+            </div>
           </div>
           <h3 className="metric-card-value">
             {metrics?.openComplaints || 0}
@@ -225,7 +227,9 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
         >
           <div className="metric-card-header">
             <p className="metric-card-title">ISO Compliance Rate</p>
-            <Shield size={18} color="#0f172a" />
+            <div className="metric-icon-badge">
+              <Shield size={18} color="#1A435A" />
+            </div>
           </div>
           <h3 className="metric-card-value">
             {metrics?.isoCompliance ?? 0}%
@@ -238,7 +242,9 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
         >
           <div className="metric-card-header">
             <p className="metric-card-title">QDDR Defect Rate</p>
-            <TrendingUp size={18} color="#0f172a" />
+            <div className="metric-icon-badge">
+              <TrendingUp size={18} color="#1A435A" />
+            </div>
           </div>
           <h3 className="metric-card-value">
             {metrics?.defectRate ?? 0}%
@@ -281,8 +287,9 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
                 </div>
               ))
             ) : (
-              <div className="chart-empty" style={{ height: '60px' }}>
-                No upcoming audits scheduled.
+              <div className="chart-empty flex-column align-center justify-center" style={{ padding: '24px', background: '#F8FAFC', borderRadius: '12px', border: '1px dashed #E2E8F0', color: '#64748B' }}>
+                <Calendar size={24} style={{ opacity: 0.5, marginBottom: '8px' }} />
+                <span>No upcoming audits scheduled.</span>
               </div>
             )}
           </div>
@@ -319,8 +326,9 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
                 </div>
               ))
             ) : (
-              <div className="chart-empty" style={{ height: '60px' }}>
-                No CAR activities recently.
+              <div className="chart-empty flex-column align-center justify-center" style={{ padding: '24px', background: '#F8FAFC', borderRadius: '12px', border: '1px dashed #E2E8F0', color: '#64748B' }}>
+                <FileText size={24} style={{ opacity: 0.5, marginBottom: '8px' }} />
+                <span>No CAR activities recently.</span>
               </div>
             )}
           </div>
@@ -338,7 +346,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
             title="A breakdown showing the latest compliance score percentages for each distinct ISO standard currently audited."
           >
             <div className="chart-header">
-              <BarChart2 size={15} color="#0f172a" />
+              <BarChart2 size={15} color="#1A435A" />
               <h4 className="chart-title">Standard Compliance Breakdown</h4>
             </div>
             <div className="chart-container">
@@ -349,7 +357,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
                     <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} />
                     <YAxis domain={[0, 100]} stroke="#64748b" fontSize={11} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0, 0, 0, 0.02)' }} />
-                    <Bar dataKey="Compliance" fill="#0f172a" radius={[4, 4, 0, 0]} maxBarSize={45} />
+                    <Bar dataKey="Compliance" fill="#1A435A" radius={[4, 4, 0, 0]} maxBarSize={45} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -365,7 +373,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
             title="A chronological trend chart tracking overall audit compliance scores from oldest to newest."
           >
             <div className="chart-header">
-              <TrendingUp size={15} color="#0f172a" />
+              <TrendingUp size={15} color="#1A435A" />
               <h4 className="chart-title">Audit Compliance Trend</h4>
             </div>
             <div className="chart-container">
@@ -376,7 +384,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
                     <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} />
                     <YAxis domain={[0, 100]} stroke="#64748b" fontSize={11} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Line type="monotone" dataKey="Score" stroke="#0f172a" strokeWidth={2} dot={{ fill: '#0f172a', r: 4 }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="Score" stroke="#1A435A" strokeWidth={2} dot={{ fill: '#1A435A', r: 4 }} activeDot={{ r: 6 }} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
@@ -392,7 +400,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
             title="A monthly historical analysis monitoring the average number of hours taken to close NCR, CAR, and QDDR records."
           >
             <div className="chart-header">
-              <Clock size={15} color="#0f172a" />
+              <Clock size={15} color="#1A435A" />
               <h4 className="chart-title">Average Resolution Time Trend (Hours)</h4>
             </div>
             <div className="chart-container">
@@ -405,7 +413,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
                     <Tooltip content={<CustomResolutionTooltip />} />
                     <Legend verticalAlign="top" height={36} iconType="circle" />
                     <Line type="monotone" name="NCR" dataKey="NCR" stroke="#52525b" strokeWidth={2} dot={{ fill: '#52525b', r: 4 }} activeDot={{ r: 6 }} connectNulls />
-                    <Line type="monotone" name="CAR" dataKey="CAR" stroke="#0f172a" strokeWidth={2} dot={{ fill: '#0f172a', r: 4 }} activeDot={{ r: 6 }} connectNulls />
+                    <Line type="monotone" name="CAR" dataKey="CAR" stroke="#1A435A" strokeWidth={2} dot={{ fill: '#1A435A', r: 4 }} activeDot={{ r: 6 }} connectNulls />
                     <Line type="monotone" name="QDDR" dataKey="QDDR" stroke="#a1a1aa" strokeWidth={2} dot={{ fill: '#a1a1aa', r: 4 }} activeDot={{ r: 6 }} connectNulls />
                   </LineChart>
                 </ResponsiveContainer>

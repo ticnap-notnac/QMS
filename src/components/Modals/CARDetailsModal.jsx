@@ -129,15 +129,15 @@ export default function CARDetailsModal({
             gap: '12px',
             fontSize: '13px'
           }}>
-            <div><span style={{ color: 'var(--muted)' }}>Requesting Dept:</span> <strong style={{ color: '#0f172a' }}>{car.requesting_department || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Responsible Dept:</span> <strong style={{ color: '#0f172a' }}>{car.responsible_department || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Requestor:</span> <strong style={{ color: '#0f172a' }}>{car.requestor || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Recipient:</span> <strong style={{ color: '#0f172a' }}>{car.recipient || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Product / Material:</span> <strong style={{ color: '#0f172a' }}>{car.product_material_name || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Model / Type:</span> <strong style={{ color: '#0f172a' }}>{car.model_type || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Control No.:</span> <strong style={{ color: '#0f172a' }}>{car.control_no || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Affected Qty:</span> <strong style={{ color: '#0f172a' }}>{car.affected_quantity || '—'}</strong></div>
-            <div style={{ gridColumn: 'span 2' }}><span style={{ color: 'var(--muted)' }}>Request Date:</span> <strong style={{ color: '#0f172a' }}>{car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Requesting Dept:</span> <strong style={{ color: '#1A435A' }}>{car.requesting_department || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Responsible Dept:</span> <strong style={{ color: '#1A435A' }}>{car.responsible_department || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Requestor:</span> <strong style={{ color: '#1A435A' }}>{car.requestor || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Recipient:</span> <strong style={{ color: '#1A435A' }}>{car.recipient || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Product / Material:</span> <strong style={{ color: '#1A435A' }}>{car.product_material_name || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Model / Type:</span> <strong style={{ color: '#1A435A' }}>{car.model_type || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Control No.:</span> <strong style={{ color: '#1A435A' }}>{car.control_no || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Affected Qty:</span> <strong style={{ color: '#1A435A' }}>{car.affected_quantity || '—'}</strong></div>
+            <div style={{ gridColumn: 'span 2' }}><span style={{ color: 'var(--muted)' }}>Request Date:</span> <strong style={{ color: '#1A435A' }}>{car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}</strong></div>
           </div>
 
           {/* Details of Nonconformance */}
@@ -149,7 +149,7 @@ export default function CARDetailsModal({
               padding: '12px',
               borderRadius: '6px',
               fontSize: '13px',
-              color: '#0f172a',
+              color: '#1A435A',
               lineHeight: '1.5',
               whiteSpace: 'pre-wrap'
             }}>{car.details_of_nonconformance}</div>
@@ -164,7 +164,7 @@ export default function CARDetailsModal({
               padding: '12px',
               borderRadius: '6px',
               fontSize: '13px',
-              color: '#0f172a',
+              color: '#1A435A',
               lineHeight: '1.5'
             }}>
               {loadingClauses ? (
@@ -315,21 +315,21 @@ export default function CARDetailsModal({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span style={{ fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase' }}>Root Cause Analysis</span>
-                    <div style={{ padding: '10px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#0f172a' }}>
+                    <div style={{ padding: '10px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#1A435A' }}>
                       {car.root_cause_analysis}
                     </div>
                   </div>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span style={{ fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase' }}>Immediate Corrective Action</span>
-                    <div style={{ padding: '10px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#0f172a' }}>
+                    <div style={{ padding: '10px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#1A435A' }}>
                       {car.corrective_action}
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span style={{ fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase' }}>Preventive Action</span>
-                    <div style={{ padding: '10px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#0f172a' }}>
+                    <div style={{ padding: '10px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#1A435A' }}>
                       {car.preventive_action}
                     </div>
                   </div>

@@ -32,9 +32,9 @@ export default function RecurringReportsModal({ isOpen, onClose, reports = [] })
             borderBottom: '1px solid #e2e8f0'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#0f172a' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1A435A' }}>
             <FileText size={18} />
-            <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a', fontWeight: 600 }}>
+            <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1A435A', fontWeight: 600 }}>
               Recurring Reports ({reports.length})
             </h3>
           </div>

@@ -55,14 +55,14 @@ export default function Toast({
                 <button 
                   onClick={onConfirm}
                   className="btn-gradient-primary"
-                  style={{ padding: '4px 12px', fontSize: '12px', minHeight: 'auto' }}
+                  style={{ padding: '8px 24px', fontSize: '15px', minHeight: '38px' }}
                 >
                   {confirmText}
                 </button>
                 <button 
                   onClick={handleDismiss}
                   className="btn-secondary-light"
-                  style={{ padding: '4px 12px', fontSize: '12px', minHeight: 'auto', borderRadius: '8px' }}
+                  style={{ padding: '8px 24px', fontSize: '15px', minHeight: '38px', borderRadius: '8px' }}
                 >
                   {cancelText}
                 </button>

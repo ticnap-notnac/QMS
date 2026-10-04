@@ -58,7 +58,7 @@ function AddCategoryModal({
           </label>
 
           <div className="modal-submit-row">
-            <button className="btn-add-action" type="submit" disabled={loading} style={{ background: '#0f172a', border: 'none', padding: '8px 24px', borderRadius: '4px', color: '#ffffff', fontWeight: 600, cursor: 'pointer' }}>
+            <button className="btn-add-action" type="submit" disabled={loading} style={{ background: '#1A435A', border: 'none', padding: '8px 24px', borderRadius: '4px', color: '#ffffff', fontWeight: 600, cursor: 'pointer' }}>
               {loading ? 'Saving...' : submitLabel}
             </button>
           </div>

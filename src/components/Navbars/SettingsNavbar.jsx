@@ -9,4 +9,4 @@ function SettingsNavbar() {
   return null
 }
 
-export default SettingsNavbar
+export default SettingsNavbar

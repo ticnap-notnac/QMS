@@ -33,19 +33,19 @@ export default function IntroModal({ isOpen, onClose }) {
               <FileText size={16} color="#0891b2" />
             </div>
             <div>
-              <strong style={{ color: '#0f172a', fontSize: '14px', display: 'block', marginBottom: '4px' }}>1. Quality & ISO Standard Adherence</strong>
+              <strong style={{ color: '#1A435A', fontSize: '14px', display: 'block', marginBottom: '4px' }}>1. Quality & ISO Standard Adherence</strong>
               <p style={paragraphStyle}>
                 All Quality Defect Reports (NCR, CAR, QDDR) submitted into QFlow must accurately reflect verified operational data and comply with active ISO 22000 food safety and quality management standards.
               </p>
             </div>
           </div>
 
-          <div style={accentBoxStyle('#0f172a', '#f8fafc')}>
+          <div style={accentBoxStyle('#1A435A', '#f8fafc')}>
             <div style={iconHeaderStyle}>
-              <ShieldCheck size={16} color="#0f172a" />
+              <ShieldCheck size={16} color="#1A435A" />
             </div>
             <div>
-              <strong style={{ color: '#0f172a', fontSize: '14px', display: 'block', marginBottom: '4px' }}>2. Data Integrity & Verification</strong>
+              <strong style={{ color: '#1A435A', fontSize: '14px', display: 'block', marginBottom: '4px' }}>2. Data Integrity & Verification</strong>
               <p style={paragraphStyle}>
                 Users agree that all reported non-conformances, investigation details, and root-cause evidence provided are genuine, non-falsified, and subject to audit verification.
               </p>
@@ -63,7 +63,7 @@ export default function IntroModal({ isOpen, onClose }) {
               style={{ accentColor: '#0891b2', width: '16px', height: '16px', cursor: 'pointer' }}
             />
             <span style={{ fontSize: '13px', color: '#334155', fontWeight: 500 }}>
-              I have read and agree to comply with the <strong style={{ color: '#0f172a' }}>ISO Compliance Terms & Conditions</strong>.
+              I have read and agree to comply with the <strong style={{ color: '#1A435A' }}>ISO Compliance Terms & Conditions</strong>.
             </span>
           </label>
 
@@ -145,7 +145,7 @@ const titleStyle = {
   fontWeight: '700',
   letterSpacing: '0.5px',
   textAlign: 'left',
-  color: '#0f172a',
+  color: '#1A435A',
   borderBottom: '1px solid #e2e8f0',
   paddingBottom: '16px'
 };

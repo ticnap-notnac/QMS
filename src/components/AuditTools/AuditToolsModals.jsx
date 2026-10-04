@@ -85,7 +85,7 @@ export function AuditChecklistSection({
       {/* Header Info */}
       <div className="iso-card" style={{ marginBottom: '24px', padding: '16px 20px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', color: '#0f172a' }}>
+          <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', color: '#1A435A' }}>
             Audit Checklist: {activeRun?.audit_schedules?.audit_checklist_templates?.title || 'Custom'}
           </h3>
           <span style={{ fontSize: '13px', color: '#64748b' }}>
@@ -202,7 +202,7 @@ export function AuditChecklistSection({
                       <td className="valign-top" style={{ fontSize: '13.5px', paddingRight: '20px', wordBreak: 'break-word', whiteSpace: 'normal', lineHeight: '1.5' }}>
                         {clause.requirement && (
                           <div style={{ marginBottom: '12px' }}>
-                            <strong style={{ color: '#0f172a' }}>Requirement:</strong><br/>
+                            <strong style={{ color: '#1A435A' }}>Requirement:</strong><br/>
                             <span style={{ color: '#334155', whiteSpace: 'pre-wrap', display: 'block', textAlign: 'justify' }}>{formatTextWithLists(clause.requirement)}</span>
                           </div>
                         )}
@@ -313,20 +313,24 @@ export function AuditChecklistSection({
                             border: '1px solid',
                             outline: 'none',
                             backgroundColor: answer.status === 'compliant' ? '#f0fdf4' : 
-                                             answer.status === 'non_compliant' ? '#fef2f2' : 
-                                             answer.status === 'partial' ? '#fffbeb' : '#f8fafc',
+                                             answer.status === 'major_nc' ? '#fef2f2' : 
+                                             answer.status === 'minor_nc' ? '#fffbeb' : 
+                                             answer.status === 'ofi' ? '#eff6ff' : '#f8fafc',
                             borderColor: answer.status === 'compliant' ? '#bbf7d0' : 
-                                         answer.status === 'non_compliant' ? '#fecaca' : 
-                                         answer.status === 'partial' ? '#fde68a' : '#cbd5e1',
+                                         answer.status === 'major_nc' ? '#fecaca' : 
+                                         answer.status === 'minor_nc' ? '#fde68a' : 
+                                         answer.status === 'ofi' ? '#bfdbfe' : '#cbd5e1',
                             color: answer.status === 'compliant' ? '#16a34a' : 
-                                   answer.status === 'non_compliant' ? '#dc2626' : 
-                                   answer.status === 'partial' ? '#d97706' : '#64748b'
+                                   answer.status === 'major_nc' ? '#dc2626' : 
+                                   answer.status === 'minor_nc' ? '#d97706' : 
+                                   answer.status === 'ofi' ? '#2563eb' : '#64748b'
                           }}
                         >
-                          <option value="compliant" style={{ background: '#ffffff', color: '#0f172a', fontWeight: '500' }}>Compliant</option>
-                          <option value="partial" style={{ background: '#ffffff', color: '#0f172a', fontWeight: '500' }}>Partial</option>
-                          <option value="non_compliant" style={{ background: '#ffffff', color: '#0f172a', fontWeight: '500' }}>Non-Compliant</option>
-                          <option value="na" style={{ background: '#ffffff', color: '#0f172a', fontWeight: '500' }}>N/A</option>
+                          <option value="compliant" style={{ background: '#ffffff', color: '#1A435A', fontWeight: '500' }}>Compliant</option>
+                          <option value="ofi" style={{ background: '#ffffff', color: '#1A435A', fontWeight: '500' }}>OFI</option>
+                          <option value="minor_nc" style={{ background: '#ffffff', color: '#1A435A', fontWeight: '500' }}>Minor NC</option>
+                          <option value="major_nc" style={{ background: '#ffffff', color: '#1A435A', fontWeight: '500' }}>Major NC</option>
+                          <option value="na" style={{ background: '#ffffff', color: '#1A435A', fontWeight: '500' }}>N/A</option>
                         </select>
                       </td>
                     </tr>
@@ -450,7 +454,7 @@ export function AuditRunDetailsModal({
         >
         <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '18px', color: '#0f172a' }}>
+            <h3 style={{ margin: 0, fontSize: '18px', color: '#1A435A' }}>
               Audit Details: {selectedRunDetails.title}
             </h3>
             <p style={{ margin: '4px 0 0 0', fontSize: '12.5px', color: '#64748b' }}>
@@ -505,7 +509,7 @@ export function AuditRunDetailsModal({
                       <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#0891b2', marginRight: '8px' }}>
                         Clause {clause.clause_number}
                       </span>
-                      <strong style={{ fontSize: '13.5px', color: '#0f172a' }}>
+                      <strong style={{ fontSize: '13.5px', color: '#1A435A' }}>
                         {clause.title}
                       </strong>
                     </div>

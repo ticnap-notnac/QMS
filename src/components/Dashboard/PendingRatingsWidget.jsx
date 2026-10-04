@@ -60,8 +60,9 @@ export default function PendingRatingsWidget({ currentUserId, userRole, userDepa
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(34,211,238,0.1) 0%, rgba(13,148,136,0.1) 100%)',
-      border: '1px solid rgba(34,211,238,0.2)',
+      background: 'linear-gradient(135deg, #E6F3FA 0%, #FFFFFF 100%)',
+      border: '1px solid #BCE0F5',
+      borderLeft: '4px solid #4987A4',
       borderRadius: '8px',
       padding: '16px',
       marginBottom: '16px',
@@ -73,7 +74,7 @@ export default function PendingRatingsWidget({ currentUserId, userRole, userDepa
       transform: isSuccess ? 'translateY(-10px)' : 'translateY(0)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, fontSize: '16px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <h3 style={{ margin: 0, fontSize: '16px', color: '#1A435A', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '20px' }}>👋</span>
           Your feedback is requested!
         </h3>
@@ -95,7 +96,7 @@ export default function PendingRatingsWidget({ currentUserId, userRole, userDepa
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '6px' }}>
-        <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#0f172a' }}>
+        <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#1A435A' }}>
           How effective was this fix?
         </span>
         <div style={{ pointerEvents: isSubmitting || isSuccess ? 'none' : 'auto', opacity: isSubmitting ? 0.6 : 1 }}>

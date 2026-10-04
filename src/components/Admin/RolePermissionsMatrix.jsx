@@ -149,7 +149,7 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
     <div className="permissions-matrix-container" style={{ marginTop: '24px' }}>
       <div className="glass-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', paddingBottom: '16px', borderBottom: '1px solid rgba(226, 232, 240, 0.6)' }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1A435A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Shield size={22} color="#2563eb" /> Role Access & Permission Rights
           </h2>
           <p className="glass-card-subtext" style={{ margin: '4px 0 0 0' }}>
@@ -195,7 +195,7 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
             {/* Section 1: Page Access */}
             <div className="glass-panel" style={{ padding: '20px', borderRadius: '12px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#0f172a', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1A435A', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Layout size={18} color="#0284c7" /> Page Access
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -234,7 +234,7 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
 
             {/* Section 2: Rights & Actions */}
             <div className="glass-panel" style={{ padding: '20px', borderRadius: '12px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#0f172a', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1A435A', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <CheckSquare size={18} color="#16a34a" /> Action Rights
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

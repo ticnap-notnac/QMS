@@ -28,7 +28,7 @@ export default function RecurringIssuesAlert({ clusters, onGenerateCar, onViewRe
         }}>
           Clause Trend
         </span>
-        <span style={{ color: '#0f172a', fontWeight: '600', fontSize: '15px' }}>
+        <span style={{ color: '#1A435A', fontWeight: '600', fontSize: '15px' }}>
           Recurring Unlinked Issues Detected ({totalClusters} trend{totalClusters > 1 ? 's' : ''})
         </span>
       </div>

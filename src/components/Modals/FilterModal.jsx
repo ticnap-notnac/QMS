@@ -78,9 +78,9 @@ export default function FilterModal({
             boxSizing: 'border-box'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#0f172a' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1A435A' }}>
             <Filter size={18} />
-            <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a', fontWeight: 600 }}>
+            <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1A435A', fontWeight: 600 }}>
               Filter Reports
             </h3>
           </div>
@@ -158,8 +158,8 @@ export default function FilterModal({
                       fontSize: '13px',
                       fontWeight: 500,
                       cursor: 'pointer',
-                      border: isActive ? '1px solid #0f172a' : '1px solid #cbd5e1',
-                      background: isActive ? '#0f172a' : '#f8fafc',
+                      border: isActive ? '1px solid #1A435A' : '1px solid #cbd5e1',
+                      background: isActive ? '#1A435A' : '#f8fafc',
                       color: isActive ? '#ffffff' : '#475569',
                       transition: 'all 0.2s ease',
                       flex: 1
@@ -192,8 +192,8 @@ export default function FilterModal({
                         fontSize: '13px',
                         fontWeight: 500,
                         cursor: 'pointer',
-                        border: isActive ? '1px solid #0f172a' : '1px solid #cbd5e1',
-                        background: isActive ? '#0f172a' : '#f8fafc',
+                        border: isActive ? '1px solid #1A435A' : '1px solid #cbd5e1',
+                        background: isActive ? '#1A435A' : '#f8fafc',
                         color: isActive ? '#ffffff' : '#475569',
                         transition: 'all 0.2s ease',
                         textAlign: 'center'

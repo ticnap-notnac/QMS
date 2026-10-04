@@ -110,8 +110,9 @@ export function useAuditRunDetails() {
             th { background-color: #f1f5f9; color: #475569; }
             .status { font-weight: bold; text-transform: uppercase; font-size: 12px; padding: 3px 8px; border-radius: 4px; display: inline-block; }
             .status-compliant { background: #dcfce7; color: #15803d; }
-            .status-partial { background: #fef9c3; color: #a16207; }
-            .status-non-compliant { background: #fee2e2; color: #b91c1c; }
+            .status-ofi { background: #eff6ff; color: #2563eb; }
+            .status-minor-nc { background: #fffbeb; color: #d97706; }
+            .status-major-nc { background: #fef2f2; color: #b91c1c; }
             .status-na { background: #f1f5f9; color: #475569; }
           </style>
         </head>
@@ -121,7 +122,7 @@ export function useAuditRunDetails() {
             <div class="meta-item"><strong>ISO Standard:</strong> ${run.standard_name}</div>
             <div class="meta-item"><strong>Assigned Auditor:</strong> ${run.auditor_name}</div>
             <div class="meta-item"><strong>Completion Date:</strong> ${new Date(run.completed_at).toLocaleDateString()}</div>
-            <div class="meta-item"><strong>Compliance Score:</strong> <span class="score-badge">${run.score}%</span></div>
+            <div class="meta-item"><strong>Status:</strong> <span class="score-badge" style="color: ${run.statusText === 'Failed / Critical' ? '#ef4444' : '#10b981'}">${run.statusText}</span></div>
           </div>
           <h3>Checklist Results</h3>
           <p>Loading results...</p>
@@ -164,10 +165,11 @@ export function useAuditRunDetails() {
                       const evidence = res?.evidence || 'No notes added.'
                       const statusLabel = {
                         compliant: 'Compliant',
-                        partial: 'Partial',
-                        non_compliant: 'Non-Compliant',
+                        ofi: 'OFI',
+                        minor_nc: 'Minor NC',
+                        major_nc: 'Major NC',
                         na: 'N/A'
-                      }[status]
+                      }[status] || 'Unknown'
                       
                       tableRows += `
                         <tr>
@@ -185,13 +187,14 @@ export function useAuditRunDetails() {
                         <div class="meta-item"><strong>ISO Standard:</strong> ${run.standard_name}</div>
                         <div class="meta-item"><strong>Assigned Auditor:</strong> ${run.auditor_name}</div>
                         <div class="meta-item"><strong>Completion Date:</strong> ${new Date(run.completed_at).toLocaleString()}</div>
-                        <div class="meta-item"><strong>Compliance Score:</strong> <span class="score-badge">${run.score}%</span></div>
+                        <div class="meta-item"><strong>Status:</strong> <span class="score-badge" style="color: ${run.statusText === 'Failed / Critical' ? '#ef4444' : '#10b981'}">${run.statusText}</span></div>
                       </div>
                       <h3>Audit Findings Breakdown</h3>
-                      <div class="meta-section" style="grid-template-columns: repeat(4, 1fr); text-align: center;">
+                      <div class="meta-section" style="grid-template-columns: repeat(5, 1fr); text-align: center;">
                         <div><strong>Compliant</strong><br/>${run.compliantClauses}</div>
-                        <div><strong>Partial</strong><br/>${run.partialClauses}</div>
-                        <div><strong>Non-Compliant</strong><br/>${run.nonCompliantClauses}</div>
+                        <div><strong>OFI</strong><br/>${run.ofiClauses}</div>
+                        <div><strong>Minor NC</strong><br/>${run.minorNcClauses}</div>
+                        <div><strong>Major NC</strong><br/>${run.majorNcClauses}</div>
                         <div><strong>N/A</strong><br/>${run.naClauses}</div>
                       </div>
                       <table>

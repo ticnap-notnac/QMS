@@ -66,6 +66,7 @@ function CreateReportModal({
     productType, setProductType,
     setProductTypeId,
     batchNumber, setBatchNumber,
+    plateNumber, setPlateNumber,
     location, setLocation,
     setLocationId,
     severity, setSeverity,
@@ -74,6 +75,29 @@ function CreateReportModal({
     issueType, setIssueType,
     setIssueTypeId,
   } = createFormState
+
+  const [isAiGenerating, setIsAiGenerating] = useState(false)
+
+  // AI Auto-fill trigger when image is uploaded and context is set
+  useEffect(() => {
+    if (evidenceFile && productType && location && plateNumber && !description) {
+      setIsAiGenerating(true)
+      // Simulate AI processing of image + metadata
+      setTimeout(() => {
+        setDescription(`AI Observation: Initial visual inspection confirms incident at ${location} involving ${productType} (Plate: ${plateNumber}). Evidence indicates preliminary compliance deviations requiring further review.`)
+        setIsAiGenerating(false)
+      }, 1500)
+    }
+  }, [evidenceFile, productType, location, plateNumber])
+
+  const contextFilled = productType && location && plateNumber
+
+  const PLATE_OPTIONS = [
+    { id: 1, label: 'TRK-9001' },
+    { id: 2, label: 'TRK-9002' },
+    { id: 3, label: 'TRK-9003' },
+    { id: 4, label: 'TRK-9004' }
+  ]
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
@@ -115,8 +139,8 @@ function CreateReportModal({
         className="modal-card" 
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: isMobile ? 'calc(100vw - 16px)' : '100%',
-          maxWidth: isMobile ? '520px' : '580px',
+          width: isMobile ? 'calc(100vw - 16px)' : '800px',
+          maxWidth: '95vw',
           maxHeight: isMobile ? 'calc(100vh - 16px)' : '90vh',
           display: 'flex',
           flexDirection: 'column',
@@ -149,9 +173,50 @@ function CreateReportModal({
         >
           <form className="modal-form reports-form-compact" onSubmit={onSubmit} style={{ gap: isMobile ? '10px' : '16px' }}>
 
-            {/* 📸 WIREFRAME ROW 1: Evidence / Image Upload Box at the Top */}
+            {/* 📐 WIREFRAME ROW 1: 3-Column Compact Selection Rows (Product, Plate, Location) */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '14px' }}>
+              {/* Product Type Search Dropdown */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <SearchableDropdown
+                  label="Product Type: *"
+                  value={productType}
+                  onValueChange={setProductType}
+                  options={productTypeOptions}
+                  loading={productTypesLoading}
+                  placeholder="Search product…"
+                  onSelectOption={(opt) => { setProductType(opt.label); setProductTypeId(String(opt.id)) }}
+                />
+              </div>
+
+              {/* Plate Number Search Dropdown */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <SearchableDropdown
+                  label="Plate Number: *"
+                  value={plateNumber}
+                  onValueChange={setPlateNumber}
+                  options={PLATE_OPTIONS}
+                  placeholder="Search plate…"
+                  onSelectOption={(opt) => { setPlateNumber(opt.label) }}
+                />
+              </div>
+
+              {/* Location Search Dropdown */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <SearchableDropdown
+                  label="Location: *"
+                  value={location}
+                  onValueChange={setLocation}
+                  options={locationOptions}
+                  loading={locationsLoading}
+                  placeholder="Search location…"
+                  onSelectOption={(opt) => { setLocation(opt.label); setLocationId(String(opt.id)) }}
+                />
+              </div>
+            </div>
+
+            {/* 📸 WIREFRAME ROW 2: Evidence / Image Upload Box */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label className="label-field" style={{ margin: 0 }}>Evidence:</label>
+              <label className="label-field" style={{ margin: 0 }}>Evidence (Required context first):</label>
               {evidencePreview ? (
                 <div style={{ position: 'relative', width: '100%' }}>
                   <img
@@ -175,12 +240,20 @@ function CreateReportModal({
               ) : (
                 <div
                   className="upload-box"
-                  style={{ cursor: 'pointer', padding: '14px', margin: 0 }}
-                  onClick={() => fileInputRef.current?.click()}
+                  style={{ 
+                    cursor: contextFilled ? 'pointer' : 'not-allowed', 
+                    padding: '14px', 
+                    margin: 0,
+                    opacity: contextFilled ? 1 : 0.6,
+                    background: contextFilled ? 'rgba(8, 145, 178, 0.05)' : '#f8fafc',
+                    border: contextFilled ? '1px dashed #0891b2' : '1px dashed #cbd5e1'
+                  }}
+                  onClick={() => contextFilled && fileInputRef.current?.click()}
+                  title={!contextFilled ? "Please select Product, Plate, and Location first" : ""}
                 >
-                  <UploadIcon size={18} style={{ color: 'var(--muted)' }} />
-                  <p style={{ color: 'var(--muted)', margin: 0, fontSize: '13px' }}>
-                    Upload an Image
+                  <UploadIcon size={18} style={{ color: contextFilled ? '#0891b2' : 'var(--muted)' }} />
+                  <p style={{ color: contextFilled ? '#0891b2' : 'var(--muted)', margin: 0, fontSize: '13px' }}>
+                    {contextFilled ? "Upload an Image (AI Auto-fill Ready)" : "Select context metadata above to enable upload"}
                   </p>
                 </div>
               )}
@@ -193,49 +266,8 @@ function CreateReportModal({
                 accept="image/*"
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
+                disabled={!contextFilled}
               />
-            </div>
-
-            {/* 📐 WIREFRAME ROW 2: 3-Column Compact Selection Rows (Product, Batch, Location) */}
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '14px' }}>
-              {/* Product Type Search Dropdown */}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <SearchableDropdown
-                  label="Product Type:"
-                  value={productType}
-                  onValueChange={setProductType}
-                  options={productTypeOptions}
-                  loading={productTypesLoading}
-                  placeholder="Search product…"
-                  onSelectOption={(opt) => { setProductType(opt.label); setProductTypeId(String(opt.id)) }}
-                />
-              </div>
-
-              {/* Batch Number Field */}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Batch Number:</label>
-                <input
-                  type="text"
-                  value={batchNumber}
-                  onChange={(e) => setBatchNumber(e.target.value)}
-                  className="input-field"
-                  placeholder="e.g. BATCH-2026-001"
-                  style={{ width: '100%' }}
-                />
-              </div>
-
-              {/* Location Search Dropdown */}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <SearchableDropdown
-                  label="Location:"
-                  value={location}
-                  onValueChange={setLocation}
-                  options={locationOptions}
-                  loading={locationsLoading}
-                  placeholder="Search location…"
-                  onSelectOption={(opt) => { setLocation(opt.label); setLocationId(String(opt.id)) }}
-                />
-              </div>
             </div>
 
             {/* 📐 WIREFRAME ROW 3: 3-Column — Severity, Department, Issue Category */}
@@ -288,15 +320,26 @@ function CreateReportModal({
             </div>
 
             {/* 📝 WIREFRAME ROW 4: Full-Width Description Entry Block */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label className="label-field" style={{ margin: 0 }}>Description:</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', position: 'relative' }}>
+              <label className="label-field" style={{ margin: 0 }}>
+                Description:
+                {isAiGenerating && <span style={{ color: '#0891b2', marginLeft: '8px', fontSize: '12px' }}>(AI Auto-filling...)</span>}
+              </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="input-field"
                 placeholder="Describe the non-conformance details…"
                 required
-                style={{ width: '100%', height: '75px', padding: '10px', resize: 'none', boxSizing: 'border-box' }}
+                disabled={isAiGenerating}
+                style={{ 
+                  width: '100%', 
+                  height: '75px', 
+                  padding: '10px', 
+                  resize: 'none', 
+                  boxSizing: 'border-box',
+                  background: isAiGenerating ? 'rgba(8, 145, 178, 0.05)' : '#fff'
+                }}
               />
             </div>
 

@@ -44,7 +44,7 @@ export function AuditLogsTab({
               type="button"
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className="sidebar-button"
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '36px', padding: '0 16px', background: filterSource !== 'ALL' ? '#f0f9ff' : '#ffffff', border: filterSource !== 'ALL' ? '1px solid #0ea5e9' : '1px solid #cbd5e1', color: filterSource !== 'ALL' ? '#0ea5e9' : '#0f172a', borderRadius: '6px', fontWeight: '500', fontSize: '13.5px', cursor: 'pointer', transition: 'all 0.2s', marginTop: '4px' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '36px', padding: '0 16px', background: filterSource !== 'ALL' ? '#f0f9ff' : '#ffffff', border: filterSource !== 'ALL' ? '1px solid #0ea5e9' : '1px solid #cbd5e1', color: filterSource !== 'ALL' ? '#0ea5e9' : '#1A435A', borderRadius: '6px', fontWeight: '500', fontSize: '13.5px', cursor: 'pointer', transition: 'all 0.2s', marginTop: '4px' }}
               title="Filter Audit Logs"
             >
               <Filter size={14} />
@@ -106,7 +106,7 @@ export function AuditLogsTab({
                           </span>
                         </td>
                         <td style={{ maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '13px' }}>
-                          <div style={{ fontWeight: '500', color: '#0f172a' }}>
+                          <div style={{ fontWeight: '500', color: '#1A435A' }}>
                             {typeof log.action === 'string' ? log.action : JSON.stringify(log.action)}
                           </div>
                           {log.details && Object.keys(log.details).length > 0 && (
@@ -183,10 +183,8 @@ export function AuditReportsTab({
   fetchRunDetails,
   handlePrintReport
 }) {
-  const avgScore = completedRuns.length > 0 
-    ? Math.round(completedRuns.reduce((acc, curr) => acc + curr.score, 0) / completedRuns.length) 
-    : 100
-  const totalDeficiencies = completedRuns.reduce((acc, curr) => acc + curr.nonCompliantClauses, 0)
+  const totalGaps = completedRuns.reduce((acc, curr) => acc + curr.minorNcClauses + curr.majorNcClauses + curr.ofiClauses, 0)
+  const failedRunsCount = completedRuns.filter(r => r.statusText === 'Failed / Critical').length
 
   return (
     <div className="tab-content" style={isInsideSettings ? { marginTop: '20px' } : {}}>
@@ -205,15 +203,15 @@ export function AuditReportsTab({
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', width: '100%', marginBottom: '12px' }}>
           <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold' }}>Total Audits</span>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#0f172a' }}>{completedRuns.length}</span>
+            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#1A435A' }}>{completedRuns.length}</span>
           </div>
           <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold' }}>Average Score</span>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#0891b2' }}>{avgScore}%</span>
+            <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold' }}>Critical / Failed Runs</span>
+            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444' }}>{failedRunsCount}</span>
           </div>
           <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold' }}>Total Gaps Found</span>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444' }}>{totalDeficiencies}</span>
+            <span style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold' }}>Total Findings Found</span>
+            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#f59e0b' }}>{totalGaps}</span>
           </div>
         </div>
 
@@ -238,8 +236,8 @@ export function AuditReportsTab({
                   <th style={{ width: '25%' }}>Audit Run</th>
                   <th style={{ width: '20%' }}>ISO Standard</th>
                   <th style={{ width: '20%' }}>Conducted By</th>
-                  <th style={{ width: '15%' }} className="text-center">Compliance Score</th>
-                  <th style={{ width: '20%' }} className="text-center">Actions</th>
+                  <th style={{ width: '25%' }} className="text-center">Status / Findings</th>
+                  <th style={{ width: '10%' }} className="text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -257,14 +255,23 @@ export function AuditReportsTab({
                       <span 
                         style={{ 
                           fontWeight: 'bold', 
-                          color: run.score >= 90 ? '#10b981' : run.score >= 70 ? '#f59e0b' : '#ef4444',
-                          fontSize: '15px'
+                          color: run.statusText === 'Failed / Critical' ? '#ef4444' : '#10b981',
+                          fontSize: '14px',
+                          display: 'inline-block',
+                          background: run.statusText === 'Failed / Critical' ? '#fef2f2' : '#f0fdf4',
+                          padding: '4px 10px',
+                          borderRadius: '16px',
+                          border: `1px solid ${run.statusText === 'Failed / Critical' ? '#fecaca' : '#bbf7d0'}`,
+                          marginBottom: '6px'
                         }}
                       >
-                        {run.score}%
+                        {run.statusText}
                       </span>
-                      <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>
-                        {run.compliantClauses} Compliant / {run.nonCompliantClauses} Gap
+                      <div style={{ fontSize: '11px', color: '#64748b', display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        {run.majorNcClauses > 0 && <span style={{ color: '#dc2626', fontWeight: '600' }}>{run.majorNcClauses} Major NC</span>}
+                        {run.minorNcClauses > 0 && <span style={{ color: '#d97706', fontWeight: '600' }}>{run.minorNcClauses} Minor NC</span>}
+                        {run.ofiClauses > 0 && <span style={{ color: '#2563eb', fontWeight: '600' }}>{run.ofiClauses} OFI</span>}
+                        {run.majorNcClauses === 0 && run.minorNcClauses === 0 && run.ofiClauses === 0 && <span>No findings</span>}
                       </div>
                     </td>
                     <td className="text-center">
@@ -823,7 +830,7 @@ export function AuditTemplatesTab({
             </div>
 
             <div style={{ marginTop: '24px', marginBottom: '24px' }}>
-              <h4 style={{ color: '#0f172a', marginBottom: '12px', fontSize: '15px' }}>Checklist Requirements & Instructions</h4>
+              <h4 style={{ color: '#1A435A', marginBottom: '12px', fontSize: '15px' }}>Checklist Requirements & Instructions</h4>
               
               {loadingClauses ? (
                 <div style={{ textAlign: 'center', padding: '24px 0', color: '#64748b' }}>

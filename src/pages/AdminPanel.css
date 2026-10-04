@@ -1,6 +1,6 @@
 /* src/pages/AdminPanel.css */
 .admin-panel-main { padding: 24px; max-width: 100%; margin: 0 auto; }
-.admin-panel-title { margin-bottom: 24px; color: #0f172a; font-size: 31px; font-weight: 600; }
+.admin-panel-title { margin-bottom: 24px; color: #1A435A; font-size: 31px; font-weight: 600; }
 
 .admin-tab-navigation { 
   display: flex; 
@@ -22,16 +22,16 @@
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  color: #0f172a;
+  color: #1A435A;
   font-size: 17px;
   box-sizing: border-box;
 }
-.admin-search-input:focus { outline: none; border-color: #0f172a; background: #ffffff; }
+.admin-search-input:focus { outline: none; border-color: #1A435A; background: #ffffff; }
 .admin-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; }
 
 .admin-add-button {
   padding: 10px 20px;
-  background: #0f172a;
+  background: #1A435A;
   color: #ffffff;
   border: none;
   border-radius: 6px;
@@ -84,7 +84,7 @@
 }
 
 .admin-users-table td { 
-  color: #0f172a; 
+  color: #1A435A; 
 }
 
 .admin-users-table tbody tr:hover { 
@@ -147,7 +147,7 @@
 .btn-edit-user:hover {
   background: #f1f5f9;
   border-color: #94a3b8;
-  color: #0f172a;
+  color: #1A435A;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
@@ -303,7 +303,7 @@
 
 /* 🧼 Clean Edit Icon Style: Sleek active accent */
 .edit-btn {
-  color: #0f172a !important;
+  color: #1A435A !important;
 }
 
 /* Subtle hover background tint for the Edit button */
@@ -472,7 +472,7 @@
    📚 ISO STANDARDS PAGE CONFIGURATIONS
    ========================================================================== */
 .iso-standards-page {
-  color: #0f172a;
+  color: #1A435A;
 }
 
 .iso-standards-panel {
@@ -514,13 +514,13 @@
 .iso-section-tab:hover,
 .iso-subtab:hover {
   border-color: #94a3b8;
-  color: #0f172a;
+  color: #1A435A;
 }
 
 .iso-section-tab.active,
 .iso-subtab.active {
-  background: #0f172a;
-  border-color: #0f172a;
+  background: #1A435A;
+  border-color: #1A435A;
   color: #ffffff;
 }
 
@@ -543,7 +543,7 @@
 .iso-section-header h2 {
   margin: 0;
   font-size: 23px;
-  color: #0f172a;
+  color: #1A435A;
 }
 
 .iso-section-header p {
@@ -598,14 +598,14 @@
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   padding: 10px 12px;
-  color: #0f172a;
+  color: #1A435A;
   font-size: 17px;
   box-sizing: border-box;
 }
 
 .iso-input:focus {
   outline: none;
-  border-color: #0f172a;
+  border-color: #1A435A;
   background: #ffffff;
 }
 
@@ -635,7 +635,7 @@
   padding: 10px 16px;
   border: none;
   border-radius: 10px;
-  background: #0f172a;
+  background: #1A435A;
   color: #ffffff;
   font-size: 17px;
   font-weight: 600;
@@ -720,7 +720,7 @@
 }
 
 .iso-table td {
-  color: #0f172a;
+  color: #1A435A;
   font-size: 16px;
 }
 
@@ -730,7 +730,7 @@
 
 .iso-table-title {
   font-weight: 700;
-  color: #0f172a;
+  color: #1A435A;
 }
 
 .iso-table-subtext {
@@ -767,7 +767,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: #0f172a;
+  color: #1A435A;
   cursor: pointer;
 }
 
@@ -787,7 +787,7 @@
 }
 
 .iso-toggle.is-on .iso-toggle-track {
-  background: #0f172a;
+  background: #1A435A;
 }
 
 .iso-toggle.is-off .iso-toggle-track {
@@ -825,7 +825,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #0f172a;
+  color: #1A435A;
   font-size: 15px;
   font-weight: 700;
 }
@@ -943,7 +943,7 @@
 
 .admin-users-count {
   background: rgba(15, 23, 42, 0.05);
-  color: #0f172a;
+  color: #1A435A;
   padding: 6px 12px;
   border-radius: 20px;
   font-weight: 700;
@@ -952,7 +952,7 @@
 }
 
 .btn-add-action {
-  background: #0f172a;
+  background: #1A435A;
   color: white;
   border: none;
   padding: 8px 12px;
@@ -1013,7 +1013,7 @@
   padding: 0 10px;
   border-radius: 999px;
   background: #f1f5f9;
-  color: #0f172a;
+  color: #1A435A;
   border: 1px solid #cbd5e1;
   font-size: 15px;
   font-weight: 700;
@@ -1034,7 +1034,7 @@
   border-radius: 8px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
-  color: #0f172a;
+  color: #1A435A;
   transition: all 0.2s ease;
 }
 
@@ -1046,7 +1046,7 @@
 .admin-list-item span {
   font-size: 17px;
   font-weight: 500;
-  color: #0f172a;
+  color: #1A435A;
 }
 
 .admin-list-panel .action-btn {
@@ -1076,7 +1076,7 @@
   border-radius: 8px;
   border: 1px solid #cbd5e1;
   background-color: #ffffff;
-  color: #0f172a;
+  color: #1A435A;
   font-size: 17px;
   font-weight: 500;
   outline: none;
@@ -1089,13 +1089,13 @@
 }
 
 .admin-status-select:focus {
-  border-color: #0f172a;
+  border-color: #1A435A;
   box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.05);
 }
 
 .admin-status-select option {
   background-color: #ffffff;
-  color: #0f172a;
+  color: #1A435A;
   padding: 8px;
 }
 

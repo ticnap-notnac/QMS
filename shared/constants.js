@@ -18,6 +18,8 @@ export const CAR_STATUS = {
 
 export const AUDIT_STATUS = {
   COMPLIANT: 'compliant',
-  PARTIAL: 'partial',
-  NON_COMPLIANT: 'non_compliant'
+  OFI: 'ofi',
+  MINOR_NC: 'minor_nc',
+  MAJOR_NC: 'major_nc',
+  NA: 'na'
 };

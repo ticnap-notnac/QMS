@@ -1,7 +1,8 @@
 import { useRef } from 'react'
-import { Calendar, FileSearch, Upload as UploadIcon, LoaderCircle } from 'lucide-react'
+import { Calendar, FileSearch, Upload as UploadIcon, LoaderCircle, Download } from 'lucide-react'
 import SearchableDropdown from '@/components/Forms/SearchableDropdown'
 import { REPORT_STATUS } from '../../../shared/constants'
+import html2pdf from 'html2pdf.js'
 function FieldCard({ label, value }) {
   return (
     <div>
@@ -45,10 +46,23 @@ export default function UpdateReportModal({
   loadSuggestion
 }) {
   const fileInputRef = useRef(null)
+  const printRef = useRef(null)
 
   if (!isOpen) return null
 
   const isClosed = String(report?.status || '').toUpperCase() === REPORT_STATUS.CLOSED.toUpperCase()
+
+  const handleDownloadPDF = async () => {
+    if (!printRef.current) return
+    const opt = {
+      margin: 0.5,
+      filename: `NCR_Report_${report?.reference_no || report?.id || 'Details'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    }
+    await html2pdf().from(printRef.current).set(opt).save()
+  }
 
   return (
     <div className="modal-overlay">
@@ -60,9 +74,19 @@ export default function UpdateReportModal({
             <FileSearch size={18} className="icon-teal" />
             <h3 className="reports-update-title">{isClosed ? 'Report Details' : 'Update Report'}</h3>
           </div>
+          <button 
+            type="button" 
+            onClick={handleDownloadPDF} 
+            className="btn-secondary-light"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', marginRight: '32px' }}
+          >
+            <Download size={14} />
+            Download PDF
+          </button>
         </div>
 
         <form
+          ref={printRef}
           className="modal-form-content reports-form-compact"
           onSubmit={async (event) => {
             event.preventDefault()
@@ -219,7 +243,7 @@ export default function UpdateReportModal({
                   {/* Corrective Action Section */}
                   <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                     <div style={{ fontSize: '11px', color: '#0284c7', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Suggested Corrective Action</div>
-                    <div style={{ color: '#0f172a', fontSize: '13px', lineHeight: '1.4' }}>{suggestion.text}</div>
+                    <div style={{ color: '#1A435A', fontSize: '13px', lineHeight: '1.4' }}>{suggestion.text}</div>
                     <button
                       type="button"
                       className="btn-gradient-primary"
@@ -234,7 +258,7 @@ export default function UpdateReportModal({
                   {suggestion.preventiveAction && (
                     <div style={{ background: '#f8fafc', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                       <div style={{ fontSize: '11px', color: '#059669', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>Suggested Preventive Action</div>
-                      <div style={{ color: '#0f172a', fontSize: '13px', lineHeight: '1.4' }}>{suggestion.preventiveAction}</div>
+                      <div style={{ color: '#1A435A', fontSize: '13px', lineHeight: '1.4' }}>{suggestion.preventiveAction}</div>
                       <button
                         type="button"
                         className="btn-gradient-primary"
