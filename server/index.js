@@ -26,7 +26,6 @@ import siteRoutes from './routes/siteRoutes.js'
 import auditChecklistRoutes from './routes/auditChecklistRoutes.js'
 import notificationRoutes from './routes/notificationRoutes.js'
 import dashboardRoutes from './routes/dashboardRoutes.js'
-import chatbotRoutes from './routes/chatbotRoutes.js'
 import { authMiddleware } from './middlewares/authMiddleware.js'
 import { errorHandler } from './middlewares/errorMiddleware.js'
 import { logClientError } from './controllers/logController.js'
@@ -96,7 +95,6 @@ app.use('/api', authMiddleware, siteRoutes)
 app.use('/api', authMiddleware, auditChecklistRoutes)
 app.use('/api/notifications', authMiddleware, notificationRoutes)
 app.use('/api/dashboard', authMiddleware, dashboardRoutes)
-app.use('/api', authMiddleware, chatbotRoutes)
 
 app.use(errorHandler)
 
