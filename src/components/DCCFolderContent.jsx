@@ -124,11 +124,12 @@ export default function DCCFolderContent({
 }) {
   const normRole = String(userRole || '').trim().toLowerCase()
   const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
-  const canAccessCar = isAdminRole(userRole) || rights.includes('create_car_report') || ['team leader', 'auditor'].includes(normRole)
-  const canAccessQddr = isAdminRole(userRole) || rights.includes('create_qddr_report')
+  const canAccessNcr = isAdminRole(userRole) || rights.includes('view_ncr_reports') || rights.includes('create_ncr_report') || rights.includes('create_report') || rights.length === 0
+  const canAccessCar = isAdminRole(userRole) || rights.includes('view_car_reports') || rights.includes('create_car_report') || ['team leader', 'auditor'].includes(normRole)
+  const canAccessQddr = isAdminRole(userRole) || rights.includes('view_qddr_reports') || rights.includes('create_qddr_report')
 
   const TASK_REPORT_SUBFOLDERS = [
-    { id: 'ncr', label: 'NCR' },
+    ...(canAccessNcr ? [{ id: 'ncr', label: 'NCR' }] : []),
     ...(canAccessQddr ? [{ id: 'qddr', label: 'QDDR' }] : []),
     ...(canAccessCar ? [{ id: 'car', label: 'CAR' }] : []),
     ...(isAdminRole(userRole) || normRole === 'auditor' ? [
@@ -663,20 +664,24 @@ export default function DCCFolderContent({
           {selectedFolder?.id === 'task_reports' && !selectedTaskFolder && (
             <div>
               <h3 className="recently-viewed-heading">Report Folders</h3>
-              <div className="dcc-document-grid">
-                {filteredTaskSubfolders.map((item) => (
-                  <div
-                    key={item.id}
-                    className="dcc-document-card"
-                    onClick={() => onOpenTaskFolder(item)}
-                  >
-                    <div className="document-card-icon-wrap folder">
-                      <Folder size={24} />
+              {!filteredTaskSubfolders.length ? (
+                <div className="empty-state">No report folders are available based on your role permissions.</div>
+              ) : (
+                <div className="dcc-document-grid">
+                  {filteredTaskSubfolders.map((item) => (
+                    <div
+                      key={item.id}
+                      className="dcc-document-card"
+                      onClick={() => onOpenTaskFolder(item)}
+                    >
+                      <div className="document-card-icon-wrap folder">
+                        <Folder size={24} />
+                      </div>
+                      <span className="document-card-label">{item.label}</span>
                     </div>
-                    <span className="document-card-label">{item.label}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -684,23 +689,53 @@ export default function DCCFolderContent({
           {selectedFolder?.id === 'task_reports' && selectedTaskFolder && (
             <div className="flex-column" style={{ gap: '16px', height: 'auto' }}>
               {selectedTaskFolder.id === 'ncr' && (
-                loadingNcr ? <div>Loading NCR reports...</div> : renderGroupedReports(filteredNcrReports, 'NCR')
+                !canAccessNcr ? (
+                  <div className="empty-state">You do not have permission to access NCR reports.</div>
+                ) : loadingNcr ? (
+                  <div>Loading NCR reports...</div>
+                ) : (
+                  renderGroupedReports(filteredNcrReports, 'NCR')
+                )
               )}
 
               {selectedTaskFolder.id === 'car' && (
-                loadingCar ? <div>Loading CAR reports...</div> : renderGroupedReports(filteredCarReports, 'CAR')
+                !canAccessCar ? (
+                  <div className="empty-state">You do not have permission to access CAR reports.</div>
+                ) : loadingCar ? (
+                  <div>Loading CAR reports...</div>
+                ) : (
+                  renderGroupedReports(filteredCarReports, 'CAR')
+                )
               )}
 
               {selectedTaskFolder.id === 'qddr' && (
-                loadingQddr ? <div>Loading QDDR reports...</div> : renderGroupedReports(filteredQddrReports, 'QDDR')
+                !canAccessQddr ? (
+                  <div className="empty-state">You do not have permission to access QDDR reports.</div>
+                ) : loadingQddr ? (
+                  <div>Loading QDDR reports...</div>
+                ) : (
+                  renderGroupedReports(filteredQddrReports, 'QDDR')
+                )
               )}
 
               {selectedTaskFolder.id === 'audit' && (
-                loadingAudit ? <div>Loading Audit reports...</div> : renderGroupedReports(filteredAuditReports, 'AUDIT_RUN')
+                !(isAdminRole(userRole) || normRole === 'auditor') ? (
+                  <div className="empty-state">You do not have permission to access Audit reports.</div>
+                ) : loadingAudit ? (
+                  <div>Loading Audit reports...</div>
+                ) : (
+                  renderGroupedReports(filteredAuditReports, 'AUDIT_RUN')
+                )
               )}
 
               {selectedTaskFolder.id === 'audit_schedules' && (
-                loadingAuditSchedules ? <div>Loading Schedules...</div> : renderGroupedReports(filteredAuditSchedules, 'AUDIT_SCHED')
+                !(isAdminRole(userRole) || normRole === 'auditor') ? (
+                  <div className="empty-state">You do not have permission to access Audit schedules.</div>
+                ) : loadingAuditSchedules ? (
+                  <div>Loading Schedules...</div>
+                ) : (
+                  renderGroupedReports(filteredAuditSchedules, 'AUDIT_SCHED')
+                )
               )}
             </div>
           )}

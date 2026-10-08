@@ -1,7 +1,18 @@
 import { supabase } from '../lib/supabase.js'
 
-function buildQddrReferenceNumber(referenceNo) {
-  const match = String(referenceNo || '').match(/^QDDR-(\d{3,})$/i)
+function buildQddrReferenceNumber(recordsOrLatestRef) {
+  if (Array.isArray(recordsOrLatestRef)) {
+    let maxSeq = 0
+    for (const r of recordsOrLatestRef) {
+      const match = String(r?.reference_no || '').match(/^QDDR-(\d+)$/i)
+      if (match) {
+        const seq = parseInt(match[1], 10)
+        if (seq > maxSeq) maxSeq = seq
+      }
+    }
+    return maxSeq
+  }
+  const match = String(recordsOrLatestRef || '').match(/^QDDR-(\d+)$/i)
   if (!match) return 0
   return Number(match[1]) || 0
 }
@@ -93,8 +104,6 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     .from('qddr_reports')
     .select('reference_no')
     .ilike('reference_no', 'QDDR-%')
-    .order('reference_no', { ascending: false })
-    .limit(50)
 
   if (latestError) {
     const customErr = new Error(`Database error getting latest QDDR ref: ${latestError.message}`)
@@ -102,8 +111,8 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     throw customErr
   }
 
-  const latestNumeric = (records || []).find(r => /^QDDR-\d+$/i.test(r.reference_no))
-  const generatedReferenceNo = `QDDR-${String(buildQddrReferenceNumber(latestNumeric?.reference_no) + 1).padStart(3, '0')}`
+  const maxSeq = buildQddrReferenceNumber(records || [])
+  const generatedReferenceNo = `QDDR-${String(maxSeq + 1).padStart(3, '0')}`
 
   const payload = {
     reference_no: generatedReferenceNo,

@@ -53,25 +53,36 @@ async function request(path, options = {}) {
   }
 
   if (!response.ok) {
-    if (typeof payload === 'string') {
-      let parsed = []
-      try {
-        parsed = JSON.parse(payload.details)
-      } catch {
-        // Just fallback to returning the whole detail string if not JSON
-        parsed = [{ message: payload.details }]
+    if (typeof payload === 'object' && payload !== null) {
+      if (Array.isArray(payload.details) && payload.details.length > 0) {
+        const detailStr = payload.details.map(d => d.message || JSON.stringify(d)).filter(Boolean).join('\n• ')
+        throw new Error(`Please check the following:\n• ${detailStr}`)
       }
-      
-      // Instead of hiding it, we map the Zod errors into a readable list
-      const detailedErrors = parsed.map(err => err.message)
-      throw new Error(`Please check the following:\n• ` + detailedErrors.join('\n• '))
-    } else if (payload?.details && Array.isArray(payload.details) && payload.details.length > 0) {
-      // Extract specific field errors from Zod validation
-      const detailStr = payload.details.map(d => d.message).join('\n• ')
-      throw new Error(`Please check the following:\n• ${detailStr}`)
-    } else {
-      throw new Error(toPlainLanguageError(payload?.error || 'We could not complete this action. Please try again.'))
+      throw new Error(toPlainLanguageError(payload.error || payload.message || 'We could not complete this action. Please try again.'))
     }
+
+    if (typeof payload === 'string' && payload.trim()) {
+      try {
+        const parsed = JSON.parse(payload)
+        if (Array.isArray(parsed.details) && parsed.details.length > 0) {
+          const detailStr = parsed.details.map(d => d.message || JSON.stringify(d)).filter(Boolean).join('\n• ')
+          throw new Error(`Please check the following:\n• ${detailStr}`)
+        }
+        if (parsed.error || parsed.message) {
+          throw new Error(toPlainLanguageError(parsed.error || parsed.message))
+        }
+      } catch (jsonErr) {
+        if (jsonErr.message && jsonErr.message.startsWith('Please check') || jsonErr.message !== payload) {
+          // Rethrow formatted Error if it was thrown above
+          if (jsonErr instanceof Error && !jsonErr.message.includes('JSON.parse')) {
+            throw jsonErr
+          }
+        }
+      }
+      throw new Error(toPlainLanguageError(payload))
+    }
+
+    throw new Error('We could not complete this action. Please try again.')
   }
 
   return payload

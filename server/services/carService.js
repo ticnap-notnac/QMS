@@ -67,8 +67,19 @@ async function resolveDepartmentIdByName(preferredNames = []) {
   return match?.id ?? null
 }
 
-function buildCarReferenceNumber(referenceNo) {
-  const match = String(referenceNo || '').match(/^CAR-(\d{3,})$/i)
+function buildCarReferenceNumber(recordsOrLatestRef) {
+  if (Array.isArray(recordsOrLatestRef)) {
+    let maxSeq = 0
+    for (const r of recordsOrLatestRef) {
+      const match = String(r?.reference_no || '').match(/^CAR-(\d+)$/i)
+      if (match) {
+        const seq = parseInt(match[1], 10)
+        if (seq > maxSeq) maxSeq = seq
+      }
+    }
+    return maxSeq
+  }
+  const match = String(recordsOrLatestRef || '').match(/^CAR-(\d+)$/i)
   if (!match) return 0
   return Number(match[1]) || 0
 }
@@ -121,8 +132,6 @@ export async function createCarReport({ body, reportedByAuthId }) {
     .from('car_reports')
     .select('reference_no')
     .ilike('reference_no', 'CAR-%')
-    .order('reference_no', { ascending: false })
-    .limit(50)
 
   if (latestError) {
     const customErr = new Error(`Database error getting latest CAR ref: ${latestError.message}`)
@@ -130,8 +139,8 @@ export async function createCarReport({ body, reportedByAuthId }) {
     throw customErr
   }
 
-  const latestNumeric = (records || []).find(r => /^CAR-\d+$/i.test(r.reference_no))
-  const generatedReferenceNo = `CAR-${String(buildCarReferenceNumber(latestNumeric?.reference_no) + 1).padStart(3, '0')}`
+  const maxSeq = buildCarReferenceNumber(records || [])
+  const generatedReferenceNo = `CAR-${String(maxSeq + 1).padStart(3, '0')}`
 
   const payload = {
     reference_no: generatedReferenceNo,

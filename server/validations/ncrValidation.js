@@ -4,9 +4,9 @@ export const createReportSchema = z.object({
   body: z.object({
     batch_number: z.string().min(1, 'Batch number is required'),
     severity: z.string().min(1, 'Severity is required'),
-    department_id: z.string().min(1, 'Department ID is required'),
+    department_id: z.union([z.string(), z.number()]).transform(String).refine(val => val.trim().length > 0, 'Department is required'),
     description: z.string().min(1, 'Description is required'),
-  })
+  }).passthrough()
 })
 
 export const assignReportSchema = z.object({

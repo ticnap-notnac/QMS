@@ -42,9 +42,24 @@ export default function ReportsPage({
   const canCreateCar = isAdminRole(userRole) || rights.includes('create_car_report') || ['team leader', 'auditor'].includes(normalizedRole)
   const canCreateQddr = isAdminRole(userRole) || rights.includes('create_qddr_report')
 
-  const canAccessCar = isAdminRole(userRole) || canCreateCar
-  const canAccessQddr = isAdminRole(userRole) || canCreateQddr
-  const availableTabs = ['ncr', ...(canAccessCar ? ['car'] : []), ...(canAccessQddr ? ['qddr'] : [])]
+  const canViewNcr = isAdminRole(userRole) || rights.includes('view_ncr_reports') || canCreateNcr || rights.length === 0
+  const canViewCar = isAdminRole(userRole) || rights.includes('view_car_reports') || canCreateCar
+  const canViewQddr = isAdminRole(userRole) || rights.includes('view_qddr_reports') || canCreateQddr
+
+  const canAccessNcr = canViewNcr || canCreateNcr
+  const canAccessCar = canViewCar || canCreateCar
+  const canAccessQddr = canViewQddr || canCreateQddr
+  const availableTabs = [
+    ...(canAccessNcr ? ['ncr'] : []),
+    ...(canAccessCar ? ['car'] : []),
+    ...(canAccessQddr ? ['qddr'] : [])
+  ]
+
+  useEffect(() => {
+    if (availableTabs.length > 0 && !availableTabs.includes(logic.activeTab)) {
+      logic.setActiveTab(availableTabs[0])
+    }
+  }, [availableTabs, logic.activeTab, logic.setActiveTab])
 
   const [carToDelete, setCarToDelete] = useState(null)
   const [qddrToDelete, setQddrToDelete] = useState(null)

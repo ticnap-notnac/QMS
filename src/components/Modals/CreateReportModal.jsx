@@ -66,7 +66,6 @@ function CreateReportModal({
     productType, setProductType,
     setProductTypeId,
     batchNumber, setBatchNumber,
-    plateNumber, setPlateNumber,
     location, setLocation,
     setLocationId,
     severity, setSeverity,
@@ -80,24 +79,17 @@ function CreateReportModal({
 
   // AI Auto-fill trigger when image is uploaded and context is set
   useEffect(() => {
-    if (evidenceFile && productType && location && plateNumber && !description) {
+    if (evidenceFile && productType && location && batchNumber && !description) {
       setIsAiGenerating(true)
       // Simulate AI processing of image + metadata
       setTimeout(() => {
-        setDescription(`AI Observation: Initial visual inspection confirms incident at ${location} involving ${productType} (Plate: ${plateNumber}). Evidence indicates preliminary compliance deviations requiring further review.`)
+        setDescription(`AI Observation: Initial visual inspection confirms incident at ${location} involving ${productType} (Batch: ${batchNumber}). Evidence indicates preliminary compliance deviations requiring further review.`)
         setIsAiGenerating(false)
       }, 1500)
     }
-  }, [evidenceFile, productType, location, plateNumber])
+  }, [evidenceFile, productType, location, batchNumber])
 
-  const contextFilled = productType && location && plateNumber
-
-  const PLATE_OPTIONS = [
-    { id: 1, label: 'TRK-9001' },
-    { id: 2, label: 'TRK-9002' },
-    { id: 3, label: 'TRK-9003' },
-    { id: 4, label: 'TRK-9004' }
-  ]
+  const contextFilled = Boolean(productType && location && batchNumber)
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
@@ -158,7 +150,7 @@ function CreateReportModal({
           <h3 className="reports-update-title" style={{ margin: 0 }}>Submit NCR Report</h3>
         </div>
 
-        {error && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: isMobile ? '16px' : '28px', marginRight: isMobile ? '16px' : '28px' }}>{error}</div>}
+        {error && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: isMobile ? '16px' : '28px', marginRight: isMobile ? '16px' : '28px', whiteSpace: 'pre-line' }}>{error}</div>}
 
         {/* 📜 SCROLLABLE CANVAS BODY TRACK ── */}
         <div 
@@ -173,7 +165,7 @@ function CreateReportModal({
         >
           <form className="modal-form reports-form-compact" onSubmit={onSubmit} style={{ gap: isMobile ? '10px' : '16px' }}>
 
-            {/* 📐 WIREFRAME ROW 1: 3-Column Compact Selection Rows (Product, Plate, Location) */}
+            {/* 📐 WIREFRAME ROW 1: 3-Column Compact Selection Rows (Product, Batch, Location) */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '14px' }}>
               {/* Product Type Search Dropdown */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -188,15 +180,17 @@ function CreateReportModal({
                 />
               </div>
 
-              {/* Plate Number Search Dropdown */}
+              {/* Batch / Lot Number Input */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <SearchableDropdown
-                  label="Plate Number: *"
-                  value={plateNumber}
-                  onValueChange={setPlateNumber}
-                  options={PLATE_OPTIONS}
-                  placeholder="Search plate…"
-                  onSelectOption={(opt) => { setPlateNumber(opt.label) }}
+                <label className="label-field" style={{ margin: 0, marginBottom: '6px' }}>Batch / Lot Number: *</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={batchNumber}
+                  onChange={(e) => setBatchNumber(e.target.value)}
+                  placeholder="e.g. BATCH-2026-001"
+                  required
+                  style={{ width: '100%', height: '38px', boxSizing: 'border-box' }}
                 />
               </div>
 

@@ -27,20 +27,31 @@ export function normalizeId(value) {
  * @returns {number} The numeric sequence, or 0 if not matched.
  */
 export function buildReferenceNumber(referenceNo) {
-  const match = String(referenceNo || '').match(/^NCR-(\d{4})-(\d{3,})$/i)
+  const match = String(referenceNo || '').match(/^NCR-(\d{4})-(\d+)$/i)
   if (!match) return 0
   return Number(match[2]) || 0
 }
 
 /**
  * Generates the next NCR reference number.
- * @param {string} latestRef - The latest reference number.
+ * @param {string|Array} recordsOrLatestRef - The array of records or latest reference number.
  * @returns {string} The next reference number.
  */
-export function generateNextNcrReferenceNo(latestRef) {
+export function generateNextNcrReferenceNo(recordsOrLatestRef) {
   const currentYear = new Date().getFullYear()
-  const nextSeq = buildReferenceNumber(latestRef) + 1
-  return `NCR-${currentYear}-${String(nextSeq).padStart(3, '0')}`
+  if (Array.isArray(recordsOrLatestRef)) {
+    let maxSeq = 0
+    for (const r of recordsOrLatestRef) {
+      const match = String(r?.reference_no || '').match(new RegExp(`^NCR-${currentYear}-(\\d+)$`, 'i'))
+      if (match) {
+        const seq = parseInt(match[1], 10)
+        if (seq > maxSeq) maxSeq = seq
+      }
+    }
+    return `NCR-${currentYear}-${String(maxSeq + 1).padStart(4, '0')}`
+  }
+  const nextSeq = buildReferenceNumber(recordsOrLatestRef) + 1
+  return `NCR-${currentYear}-${String(nextSeq).padStart(4, '0')}`
 }
 
 /**
@@ -629,16 +640,14 @@ export async function submitNcrMultipart({ body, files, reportedByAuthId }) {
     throw err
   }
 
+  const year = new Date().getFullYear()
   const { data: records, error: latestError } = await supabase
     .from('ncr_reports')
     .select('reference_no')
-    .ilike('reference_no', 'NCR-%')
-    .order('reference_no', { ascending: false })
-    .limit(50)
+    .ilike('reference_no', `NCR-${year}-%`)
 
   if (latestError) throw new Error(`Database error getting latest NCR ref: ${latestError.message}`)
-  const latestNumeric = (records || []).find(r => /^NCR-\d{4}-\d{3}$/i.test(r.reference_no))
-  const referenceNo = generateNextNcrReferenceNo(latestNumeric?.reference_no)
+  const referenceNo = generateNextNcrReferenceNo(records || [])
 
   const normalizedSeverity = String(severity || '').trim().toLowerCase()
   const status = (normalizedSeverity === 'critical' || normalizedSeverity === 'high')
@@ -757,12 +766,9 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     .from('ncr_reports')
     .select('reference_no')
     .ilike('reference_no', `NCR-${year}-%`)
-    .order('reference_no', { ascending: false })
-    .limit(50)
   if (latestError) throw latestError
 
-  const latestNumeric = (records || []).find(r => /^NCR-\d{4}-\d{3,}$/i.test(r.reference_no))
-  const referenceNo = `NCR-${year}-${String(buildReferenceNumber(latestNumeric?.reference_no) + 1).padStart(4, '0')}`
+  const referenceNo = generateNextNcrReferenceNo(records || [])
 
   const { id: resolvedLocationId, name: resolvedLocationName } = await resolveCatalogEntry({
     table: 'locations', idColumn: 'id', nameColumn: 'location_name',
@@ -853,12 +859,9 @@ export async function createNcrReportWithUpload({ body, files, reportedByAuthId 
     .from('ncr_reports')
     .select('reference_no')
     .ilike('reference_no', `NCR-${year}-%`)
-    .order('reference_no', { ascending: false })
-    .limit(50)
   if (latestError) throw latestError
 
-  const latestNumeric = (records || []).find(r => /^NCR-\d{4}-\d{3,}$/i.test(r.reference_no))
-  const referenceNo = `NCR-${year}-${String(buildReferenceNumber(latestNumeric?.reference_no) + 1).padStart(4, '0')}`
+  const referenceNo = generateNextNcrReferenceNo(records || [])
 
   const { id: resolvedLocationId, name: resolvedLocationName } = await resolveCatalogEntry({
     table: 'locations', idColumn: 'id', nameColumn: 'location_name',

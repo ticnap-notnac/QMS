@@ -557,7 +557,39 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   // ─── Submit report ─────────────────────────────────────────────────────────
 
   const handleSubmitReport = async (event) => {
-    event.preventDefault()
+    if (event) event.preventDefault()
+    setError(null)
+
+    const cState = formState.createFormState
+    if (!cState.productType) {
+      setError('Please select a Product Type.')
+      return
+    }
+    if (!cState.batchNumber || !cState.batchNumber.trim()) {
+      setError('Batch / Lot Number is required.')
+      return
+    }
+    if (!cState.location) {
+      setError('Please select a Location.')
+      return
+    }
+    if (!cState.severity) {
+      setError('Please select a Severity Level.')
+      return
+    }
+    if (!cState.department) {
+      setError('Please select a Department.')
+      return
+    }
+    if (!cState.issueType) {
+      setError('Please select an Issue Category.')
+      return
+    }
+    if (!cState.description || cState.description.trim().length < 10) {
+      setError('Please provide a description of at least 10 characters.')
+      return
+    }
+
     setIsNcrSubmitting(true)
     try {
       const resolvedProductType = await resolveCatalogSelection({
@@ -588,7 +620,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         if (!currentAuthId) throw new Error('Missing authenticated user. Please log in again.')
         const fd = new FormData()
         fd.append('product_type_id', resolvedProductType.id)
-        fd.append('batch_number', formState.createFormState.batchNumber)
+        fd.append('batch_number', formState.createFormState.batchNumber.trim())
         fd.append('location_id', resolvedLocation.id)
         fd.append('severity', formState.createFormState.severity)
         fd.append('department_id', formState.createFormState.department)
@@ -605,7 +637,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       } else {
         await createReport({
           product_type_id: resolvedProductType.id,
-          batch_number: formState.createFormState.batchNumber,
+          batch_number: formState.createFormState.batchNumber.trim(),
           location_id: resolvedLocation.id,
           severity: formState.createFormState.severity,
           department_id: formState.createFormState.department,
@@ -619,13 +651,17 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         })
       }
 
+      setError(null)
       modalsState.setIsModalOpen(false)
       formState.clearEvidenceState()
       formState.resetCreateForm()
+      setToast({ message: 'NCR report submitted successfully!', type: 'success' })
       await dataState.loadLookupData()
       await dataState.refreshReportsList()
     } catch (err) {
-      setToast({ message: err?.message || 'Failed to submit NCR report.', type: 'error' })
+      const errMsg = err?.message || 'Failed to submit NCR report.'
+      setError(errMsg)
+      setToast({ message: errMsg, type: 'error' })
     } finally {
       setIsNcrSubmitting(false)
     }
@@ -955,10 +991,13 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     },
     createModalProps: {
       isOpen: modalsState.isModalOpen,
-      onClose: modalsState.closeCreateModal,
+      onClose: () => {
+        setError(null)
+        modalsState.closeCreateModal()
+      },
       onSubmit: handleSubmitReport,
-      error: null,
-      isLoading: dataState.isLoading,
+      error,
+      isLoading: isNcrSubmitting,
       createFormState: formState.createFormState,
       locationOptions: dataState.locationOptions,
       productTypeOptions: dataState.productTypeOptions,
