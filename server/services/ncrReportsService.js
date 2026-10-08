@@ -392,20 +392,26 @@ export async function buildEnrichedReports(reports) {
 
   const locationIds = [...new Set(reportList.map((r) => r.location_id).filter(Boolean))]
   const productTypeIds = [...new Set(reportList.map((r) => r.product_type_id).filter(Boolean))]
+  const issueTypeIds = [...new Set(reportList.map((r) => r.issue_type_id).filter(Boolean))]
 
-  const [locationsResult, productTypesResult] = await Promise.all([
+  const [locationsResult, productTypesResult, issueTypesResult] = await Promise.all([
     locationIds.length > 0
       ? supabase.from('locations').select('id, location_name').in('id', locationIds)
       : Promise.resolve({ data: [], error: null }),
     productTypeIds.length > 0
-      ? supabase.from('product_types').select('id, product_name').in('id', productTypeIds)
+      ? supabase.from('product_types').select('id, product_name, product_type_name').in('id', productTypeIds)
+      : Promise.resolve({ data: [], error: null }),
+    issueTypeIds.length > 0
+      ? supabase.from('issue_types').select('id, issue_type_name').in('id', issueTypeIds)
       : Promise.resolve({ data: [], error: null }),
   ])
   if (locationsResult.error) throw locationsResult.error
   if (productTypesResult.error) throw productTypesResult.error
+  if (issueTypesResult.error) throw issueTypesResult.error
 
   const locationById = new Map((locationsResult.data || []).map((l) => [String(l.id), l.location_name]))
-  const productTypeById = new Map((productTypesResult.data || []).map((p) => [String(p.id), p.product_name]))
+  const productTypeById = new Map((productTypesResult.data || []).map((p) => [String(p.id), p.product_name || p.product_type_name]))
+  const issueTypeById = new Map((issueTypesResult.data || []).map((i) => [String(i.id), i.issue_type_name]))
 
   const pathsToSign = new Set()
   reportList.forEach((report) => {
@@ -462,6 +468,10 @@ export async function buildEnrichedReports(reports) {
       ? report.investigation_evidence_files.map(resolveUrl)
       : []
 
+    const resolvedIssueName = report.issue_type_id
+      ? issueTypeById.get(String(report.issue_type_id)) || null
+      : null
+
     return {
       ...report,
       reporter_full_name: reporterFullName,
@@ -473,6 +483,8 @@ export async function buildEnrichedReports(reports) {
       product_type_name: report.product_type_id
         ? productTypeById.get(String(report.product_type_id)) || null
         : report.product_type || null,
+      issue_type_name: resolvedIssueName,
+      issue_type: resolvedIssueName,
       evidence_url: resolveUrl(report.evidence_url),
       evidence_files: signedEvidenceFiles,
       investigation_evidence_url: resolveUrl(report.investigation_evidence_url),
@@ -996,7 +1008,7 @@ export async function updateNcrReport({ id, body }) {
   if (resolvedProductType) { updates.product_type = resolvedProductType.name; updates.product_type_id = resolvedProductType.id }
   if (batch_number !== undefined) updates.batch_number = batch_number
   if (resolvedLocation) { updates.complaint_location = resolvedLocation.name; updates.location_id = resolvedLocation.id }
-  if (resolvedIssueType) { updates.issue_type = resolvedIssueType.name; updates.issue_type_id = resolvedIssueType.id }
+  if (resolvedIssueType) { updates.issue_type_id = resolvedIssueType.id }
   if (severity !== undefined) updates.severity = normalizeSeverityValue(severity)
   if (department_id !== undefined) updates.department_id = normalizeId(department_id)
   if (description !== undefined) updates.description = description
@@ -1026,7 +1038,7 @@ export async function updateNcrReport({ id, body }) {
 export async function updateNcrInvestigation({ id, body, files }) {
   const {
     investigation_details, resolution_details, corrective_action,
-    verification_date, issue_type, preventive_rating,
+    verification_date, issue_type, issue_type_id, preventive_rating,
   } = body
 
   const { data: existing, error: existingError } = await supabase
@@ -1075,7 +1087,13 @@ export async function updateNcrInvestigation({ id, body, files }) {
     updated_at: new Date().toISOString(),
   }
 
-  if (issue_type) updates.issue_type = issue_type
+  if (issue_type || issue_type_id) {
+    const resolved = await resolveCatalogEntry({
+      table: 'issue_types', idColumn: 'id', nameColumn: 'issue_type_name',
+      rawId: issue_type_id, rawName: issue_type,
+    })
+    if (resolved?.id) updates.issue_type_id = resolved.id
+  }
 
   const { data, error } = await supabase
     .from('ncr_reports').update(updates).eq('id', id).select('*').maybeSingle()
