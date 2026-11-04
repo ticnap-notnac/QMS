@@ -77,9 +77,18 @@ function CreateReportModal({
 
   const [isAiGenerating, setIsAiGenerating] = useState(false)
 
+  const contextFilled = Boolean(
+    productType &&
+    batchNumber &&
+    location &&
+    severity &&
+    department &&
+    issueType
+  )
+
   // AI Auto-fill trigger when image is uploaded and context is set
   useEffect(() => {
-    if (evidenceFile && productType && location && batchNumber && !description) {
+    if (evidenceFile && contextFilled && !description) {
       setIsAiGenerating(true)
       // Simulate AI processing of image + metadata
       setTimeout(() => {
@@ -87,9 +96,7 @@ function CreateReportModal({
         setIsAiGenerating(false)
       }, 1500)
     }
-  }, [evidenceFile, productType, location, batchNumber])
-
-  const contextFilled = Boolean(productType && location && batchNumber)
+  }, [evidenceFile, contextFilled])
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
@@ -208,7 +215,58 @@ function CreateReportModal({
               </div>
             </div>
 
-            {/* 📸 WIREFRAME ROW 2: Evidence / Image Upload Box */}
+            {/* 📐 WIREFRAME ROW 2: 3-Column — Severity, Department, Issue Category */}
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '14px' }}>
+              {/* Severity Dropdown Select */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label className="label-field">Severity Level: *</label>
+                <select
+                  value={severity}
+                  onChange={(e) => setSeverity(e.target.value)}
+                  className="input-field"
+                  required
+                  style={{ width: '100%', height: '38px' }}
+                >
+                  <option value="">Select Severity…</option>
+                  {SEVERITY_OPTIONS.map((s) => (
+                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Department Dropdown Select */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label className="label-field">Department: *</label>
+                <select
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  className="input-field"
+                  disabled={departmentsLoading}
+                  required
+                  style={{ width: '100%', height: '38px' }}
+                >
+                  <option value="">{departmentsLoading ? 'Loading…' : 'Select Department…'}</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={String(d.id)}>{d.department_name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Issue Category Dropdown */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <SearchableDropdown
+                  label="Issue Category: *"
+                  value={issueType}
+                  onValueChange={setIssueType}
+                  options={issueTypeOptions}
+                  loading={issueTypesLoading}
+                  placeholder="Search category…"
+                  onSelectOption={(opt) => { setIssueType(opt.label); setIssueTypeId(String(opt.id)) }}
+                />
+              </div>
+            </div>
+
+            {/* 📸 WIREFRAME ROW 3: Evidence / Image Upload Box */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label className="label-field" style={{ margin: 0 }}>Evidence (Required context first):</label>
               {evidencePreview ? (
@@ -243,7 +301,7 @@ function CreateReportModal({
                     border: contextFilled ? '1px dashed #0891b2' : '1px dashed #cbd5e1'
                   }}
                   onClick={() => contextFilled && fileInputRef.current?.click()}
-                  title={!contextFilled ? "Please select Product, Plate, and Location first" : ""}
+                  title={!contextFilled ? "Please fill in Product Type, Batch Number, Location, Severity Level, Department, and Issue Category first" : ""}
                 >
                   <UploadIcon size={18} style={{ color: contextFilled ? '#0891b2' : 'var(--muted)' }} />
                   <p style={{ color: contextFilled ? '#0891b2' : 'var(--muted)', margin: 0, fontSize: '13px' }}>
@@ -262,55 +320,6 @@ function CreateReportModal({
                 onChange={handleFileChange}
                 disabled={!contextFilled}
               />
-            </div>
-
-            {/* 📐 WIREFRAME ROW 3: 3-Column — Severity, Department, Issue Category */}
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '14px' }}>
-              {/* Severity Dropdown Select */}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Severity Level:</label>
-                <select
-                  value={severity}
-                  onChange={(e) => setSeverity(e.target.value)}
-                  className="input-field"
-                  style={{ width: '100%', height: '38px' }}
-                >
-                  <option value="">Select Severity…</option>
-                  {SEVERITY_OPTIONS.map((s) => (
-                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Department Dropdown Select */}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Department:</label>
-                <select
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  className="input-field"
-                  disabled={departmentsLoading}
-                  style={{ width: '100%', height: '38px' }}
-                >
-                  <option value="">{departmentsLoading ? 'Loading…' : 'Select Department…'}</option>
-                  {departments.map((d) => (
-                    <option key={d.id} value={String(d.id)}>{d.department_name}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Issue Category Dropdown */}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <SearchableDropdown
-                  label="Issue Category:"
-                  value={issueType}
-                  onValueChange={setIssueType}
-                  options={issueTypeOptions}
-                  loading={issueTypesLoading}
-                  placeholder="Search category…"
-                  onSelectOption={(opt) => { setIssueType(opt.label); setIssueTypeId(String(opt.id)) }}
-                />
-              </div>
             </div>
 
             {/* 📝 WIREFRAME ROW 4: Full-Width Description Entry Block */}
