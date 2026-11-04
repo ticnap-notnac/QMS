@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS public.positions (
 
 ALTER TABLE public.positions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow read access to all authenticated users" ON public.positions FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow all actions for service role" ON public.positions USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all actions for service role" ON public.positions FOR ALL TO service_role USING (true) WITH CHECK (true);

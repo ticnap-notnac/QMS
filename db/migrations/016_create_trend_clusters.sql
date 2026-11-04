@@ -18,4 +18,4 @@ ADD COLUMN IF NOT EXISTS trend_cluster_id bigint REFERENCES public.trend_cluster
 -- Enable RLS
 ALTER TABLE public.trend_clusters ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow read access to all authenticated users" ON public.trend_clusters FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow all actions for service role" ON public.trend_clusters USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all actions for service role" ON public.trend_clusters FOR ALL TO service_role USING (true) WITH CHECK (true);
