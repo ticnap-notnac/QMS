@@ -9,7 +9,10 @@ import './ISOPage.css'
 
 import { isAdminRole } from '@/utils/roleUtils.js'
 
-export default function ISOPage({ userRole, userName }) {
+export default function ISOPage({ userRole, userPermissions, userName }) {
+  const hasExplicitRights = Array.isArray(userPermissions?.rights)
+  const rights = hasExplicitRights ? userPermissions.rights : []
+  const canManageIso = hasExplicitRights ? rights.includes('manage_iso') : (isAdminRole(userRole) || String(userRole || '').toLowerCase() === 'auditor')
   const {
     toast, setToast, totalFindings, fetchActiveModules, compliantCount, ofiCount, minorNcCount, majorNcCount, nonCompliantFindings,
     createdCars, handleOpenCarModal, modulesModalProps, taskSelectionModalProps, carModalProps, isAuditTaskModalOpen,
@@ -31,10 +34,12 @@ export default function ISOPage({ userRole, userName }) {
               <h2 style={{ margin: 0, fontSize: '24px', color: '#0f172a' }}>ISO Compliance Overview</h2>
               <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>Monitor your quality management metrics and findings.</p>
             </div>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button type="button" className="btn-metric-card" style={{ background: '#090d16', color: '#fff' }} onClick={fetchActiveModules}>ISO Modules</button>
-              <button type="button" className="btn-metric-card" style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1' }} onClick={fetchAndOpenTemplates}>ISO Templates</button>
-            </div>
+            {canManageIso && (
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button type="button" className="btn-metric-card" style={{ background: '#090d16', color: '#fff' }} onClick={fetchActiveModules}>ISO Modules</button>
+                <button type="button" className="btn-metric-card" style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1' }} onClick={fetchAndOpenTemplates}>ISO Templates</button>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
@@ -95,9 +100,9 @@ export default function ISOPage({ userRole, userName }) {
                   <div>
                     {createdCars[finding.id] ? (
                       <div className="iso-car-generated"><CheckCircle2 size={14} />CAR Generated ({createdCars[finding.id]})</div>
-                    ) : (
+                    ) : canManageIso ? (
                       <button type="button" onClick={() => handleOpenCarModal(finding)} className="btn-gradient-primary iso-btn-generate-car">Generate CAR</button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               ))}

@@ -14,21 +14,37 @@ const AVAILABLE_PAGES = [
 ]
 
 const AVAILABLE_RIGHTS = [
-  { key: 'view_ncr_reports', label: 'View NCR Reports', description: 'Access and view Non-Conformance Reports (NCR)' },
-  { key: 'view_car_reports', label: 'View CAR Reports', description: 'Access and view Corrective Action Requests (CAR)' },
-  { key: 'view_qddr_reports', label: 'View QDDR Reports', description: 'Access and view Quality Defect & Deviation Reports (QDDR)' },
-  { key: 'accept_decline_report', label: 'Accept / Decline Reports', description: 'Approve, accept, or decline submitted quality reports' },
-  { key: 'assign_report', label: 'Assign Reports', description: 'Assign reports to investigators or reviewers' },
-  { key: 'create_ncr_report', label: 'Create NCR Reports', description: 'Create new Non-Conformance Reports (NCR)' },
-  { key: 'create_car_report', label: 'Create CAR Reports', description: 'Create new Corrective Action Requests (CAR)' },
-  { key: 'create_qddr_report', label: 'Create QDDR Reports', description: 'Create new Quality Defect & Deviation Reports (QDDR)' },
-  { key: 'edit_delete_report', label: 'Update / Delete Reports', description: 'Update or remove existing quality reports' },
-  { key: 'submit_capa', label: 'Submit CAPA Actions', description: 'Submit corrective and preventive actions for CARs' },
-  { key: 'verify_car', label: 'Verify CAR Actions', description: 'Perform verification on completed CAR actions' },
-  { key: 'manage_iso', label: 'Manage ISO Standards', description: 'Add, update, or remove ISO standards and clauses' },
-  { key: 'manage_users', label: 'Manage Users & Config', description: 'Add, edit, or remove user accounts and system configuration' },
-  { key: 'manage_audit_schedules', label: 'Manage Audit Schedules', description: 'Create, schedule, and assign audit runs' },
+  { key: 'view_ncr_reports', pageKey: 'dcc', label: 'View NCR Reports', description: 'Access and view Non-Conformance Reports (NCR)' },
+  { key: 'view_car_reports', pageKey: 'dcc', label: 'View CAR Reports', description: 'Access and view Corrective Action Requests (CAR)' },
+  { key: 'view_qddr_reports', pageKey: 'dcc', label: 'View QDDR Reports', description: 'Access and view Quality Defect & Deviation Reports (QDDR)' },
+  { key: 'accept_decline_report', pageKey: 'reports', label: 'Accept / Decline Reports', description: 'Approve, accept, or decline submitted quality reports' },
+  { key: 'assign_report', pageKey: 'reports', label: 'Assign Reports', description: 'Assign reports to investigators or reviewers' },
+  { key: 'create_ncr_report', pageKey: 'reports', label: 'Create NCR Reports', description: 'Create new Non-Conformance Reports (NCR)' },
+  { key: 'create_car_report', pageKey: 'reports', label: 'Create CAR Reports', description: 'Create new Corrective Action Requests (CAR)' },
+  { key: 'create_qddr_report', pageKey: 'reports', label: 'Create QDDR Reports', description: 'Create new Quality Defect & Deviation Reports (QDDR)' },
+  { key: 'edit_delete_report', pageKey: 'reports', label: 'Update / Delete Reports', description: 'Update or remove existing quality reports' },
+  { key: 'submit_capa', pageKey: 'reports', label: 'Submit CAPA Actions', description: 'Submit corrective and preventive actions for CARs' },
+  { key: 'verify_car', pageKey: 'reports', label: 'Verify CAR Actions', description: 'Perform verification on completed CAR actions' },
+  { key: 'manage_iso', pageKey: 'iso', label: 'Manage ISO Standards', description: 'Add, update, or remove ISO standards and clauses' },
+  { key: 'manage_users', pageKey: 'admin_panel', label: 'Manage Users & Config', description: 'Add, edit, or remove user accounts and system configuration' },
+  { key: 'manage_audit_schedules', pageKey: 'audit_tools', label: 'Manage Audit Schedules', description: 'Create, schedule, and assign audit runs' },
 ]
+
+const PAGE_RIGHTS_MAP = AVAILABLE_RIGHTS.reduce((acc, right) => {
+  if (right.pageKey) {
+    if (!acc[right.pageKey]) acc[right.pageKey] = []
+    acc[right.pageKey].push(right.key)
+  }
+  return acc
+}, {})
+
+const filterRightsByActivePages = (pages, rights) => {
+  return rights.filter(rightKey => {
+    const rightDef = AVAILABLE_RIGHTS.find(r => r.key === rightKey)
+    if (!rightDef || !rightDef.pageKey) return true
+    return pages.includes(rightDef.pageKey)
+  })
+}
 
 const DEFAULT_ROLE_PERMISSIONS = {
   admin: {
@@ -122,18 +138,29 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
       parsedRights = [...fallback.rights]
     }
 
-    setPermissions({ pages: parsedPages, rights: parsedRights })
+    setPermissions({
+      pages: parsedPages,
+      rights: filterRightsByActivePages(parsedPages, parsedRights),
+    })
   }, [selectedRole])
 
   const togglePage = (pageKey) => {
     setPermissions(prev => {
       const exists = prev.pages.includes(pageKey)
       const newPages = exists ? prev.pages.filter(p => p !== pageKey) : [...prev.pages, pageKey]
-      return { ...prev, pages: newPages }
+      const dependentRights = PAGE_RIGHTS_MAP[pageKey] || []
+      const newRights = exists
+        ? prev.rights.filter(r => !dependentRights.includes(r))
+        : prev.rights
+      return { ...prev, pages: newPages, rights: newRights }
     })
   }
 
   const toggleRight = (rightKey) => {
+    const rightDef = AVAILABLE_RIGHTS.find(r => r.key === rightKey)
+    if (rightDef?.pageKey && !permissions.pages.includes(rightDef.pageKey)) {
+      return
+    }
     setPermissions(prev => {
       const exists = prev.rights.includes(rightKey)
       const newRights = exists ? prev.rights.filter(r => r !== rightKey) : [...prev.rights, rightKey]
@@ -156,7 +183,10 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
     if (!selectedRole) return
     const roleKey = String(selectedRole.role_name || '').toLowerCase()
     const fallback = DEFAULT_ROLE_PERMISSIONS[roleKey] || DEFAULT_ROLE_PERMISSIONS.default
-    setPermissions({ pages: [...fallback.pages], rights: [...fallback.rights] })
+    setPermissions({
+      pages: [...fallback.pages],
+      rights: filterRightsByActivePages(fallback.pages, fallback.rights),
+    })
   }
 
   const handleSave = async () => {
@@ -269,7 +299,8 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {AVAILABLE_RIGHTS.map(right => {
-                  const isChecked = permissions.rights.includes(right.key)
+                  const isPageEnabled = !right.pageKey || permissions.pages.includes(right.pageKey)
+                  const isChecked = isPageEnabled && permissions.rights.includes(right.key)
                   return (
                     <label
                       key={right.key}
@@ -281,15 +312,17 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
                         borderRadius: '8px',
                         border: `1px solid ${isChecked ? '#86efac' : '#f1f5f9'}`,
                         background: isChecked ? '#f0fdf4' : '#f8fafc',
-                        cursor: 'pointer',
+                        cursor: isPageEnabled ? 'pointer' : 'not-allowed',
+                        opacity: isPageEnabled ? 1 : 0.55,
                         transition: 'all 0.15s ease'
                       }}
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
+                        disabled={!isPageEnabled}
                         onChange={() => toggleRight(right.key)}
-                        style={{ marginTop: '3px', width: '16px', height: '16px', accentColor: '#16a34a', cursor: 'pointer' }}
+                        style={{ marginTop: '3px', width: '16px', height: '16px', accentColor: '#16a34a', cursor: isPageEnabled ? 'pointer' : 'not-allowed' }}
                       />
                       <div>
                         <div style={{ fontWeight: '600', fontSize: '0.875rem', color: '#1e293b' }}>{right.label}</div>

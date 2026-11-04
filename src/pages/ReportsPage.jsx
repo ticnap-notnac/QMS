@@ -36,15 +36,33 @@ export default function ReportsPage({
 }) {
   const logic = useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId })
   const normalizedRole = String(userRole || '').trim().toLowerCase()
-  const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
+  const hasExplicitRights = Array.isArray(userPermissions?.rights)
+  const rights = hasExplicitRights ? userPermissions.rights : []
   const hasLegacyCreate = rights.includes('create_report')
-  const canCreateNcr = isAdminRole(userRole) || hasLegacyCreate || rights.includes('create_ncr_report')
-  const canCreateCar = isAdminRole(userRole) || rights.includes('create_car_report') || ['team leader', 'auditor'].includes(normalizedRole)
-  const canCreateQddr = isAdminRole(userRole) || rights.includes('create_qddr_report')
 
-  const canViewNcr = isAdminRole(userRole) || rights.includes('view_ncr_reports') || canCreateNcr || rights.length === 0
-  const canViewCar = isAdminRole(userRole) || rights.includes('view_car_reports') || canCreateCar
-  const canViewQddr = isAdminRole(userRole) || rights.includes('view_qddr_reports') || canCreateQddr
+  const canCreateNcr = hasExplicitRights
+    ? rights.includes('create_ncr_report')
+    : (isAdminRole(userRole) || hasLegacyCreate)
+  const canCreateCar = hasExplicitRights
+    ? rights.includes('create_car_report')
+    : (isAdminRole(userRole) || ['team leader', 'auditor'].includes(normalizedRole))
+  const canCreateQddr = hasExplicitRights
+    ? rights.includes('create_qddr_report')
+    : isAdminRole(userRole)
+
+  const canViewNcr = hasExplicitRights
+    ? rights.includes('view_ncr_reports')
+    : (isAdminRole(userRole) || canCreateNcr)
+  const canViewCar = hasExplicitRights
+    ? rights.includes('view_car_reports')
+    : (isAdminRole(userRole) || canCreateCar)
+  const canViewQddr = hasExplicitRights
+    ? rights.includes('view_qddr_reports')
+    : (isAdminRole(userRole) || canCreateQddr)
+
+  const canEditDeleteReports = hasExplicitRights
+    ? rights.includes('edit_delete_report')
+    : (isAdminRole(userRole) || normalizedRole === 'auditor')
 
   const canAccessNcr = canViewNcr || canCreateNcr
   const canAccessCar = canViewCar || canCreateCar
@@ -206,6 +224,11 @@ export default function ReportsPage({
     onCancel: cancelDeleteQddr,
   }
 
+  const canViewActiveTab =
+    (logic.activeTab === 'ncr' && canViewNcr) ||
+    (logic.activeTab === 'car' && canViewCar) ||
+    (logic.activeTab === 'qddr' && canViewQddr)
+
   return (
     <main className="dashboard page-root">
       {logic.toast && (
@@ -265,137 +288,142 @@ export default function ReportsPage({
         )}
 
         <div className="reports-main-wrap">
-          <div className="reports-action-header-row">
-          <div className="reports-header-controls-left">
-            <button type="button" onClick={() => logic.setIsFilterModalOpen(true)} className="btn-glass-action" title="Open Filters"><SlidersHorizontal size={18} /></button>
-            {logic.activeTab === 'ncr' && logic.canAssignReports && (
-              <button type="button" className={`btn-quick-toggle ${logic.isApprovalQueueMode ? 'active' : ''}`} onClick={() => logic.setIsApprovalQueueMode((c) => !c)}>{logic.isApprovalQueueMode ? 'Show All' : `Needs Approval (${logic.approvalQueueReports.length})`}</button>
-            )}
-            <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>{logic.isClosedMode ? 'Show Open' : `Closed (${logic.activeTab === 'ncr' ? logic.closedReports.length : logic.carReports.filter(c => c.status === CAR_STATUS.CLOSED).length})`}</button>
-            {logic.activeTab === 'ncr' && trendClusters.length > 0 && (
-              <button 
-                type="button" 
-                className={`btn-quick-toggle ${isRecurringMode ? 'active recurring-active' : 'recurring-inactive'}`} 
-                onClick={() => {
-                  setIsRecurringMode(!isRecurringMode)
-                  // Turn off other modes
-                  if (!isRecurringMode) {
-                    logic.setIsApprovalQueueMode(false)
-                    logic.setIsClosedMode(false)
-                  }
-                }}
-              >
-                Recurring Issues ({allRecurringReportIds.length})
-              </button>
-            )}
+          {availableTabs.length > 0 && (
+            <div className="reports-action-header-row">
+              <div className="reports-header-controls-left">
+                {canViewActiveTab && (
+                  <>
+                    <button type="button" onClick={() => logic.setIsFilterModalOpen(true)} className="btn-glass-action" title="Open Filters"><SlidersHorizontal size={18} /></button>
+                    {logic.activeTab === 'ncr' && logic.canAssignReports && (
+                      <button type="button" className={`btn-quick-toggle ${logic.isApprovalQueueMode ? 'active' : ''}`} onClick={() => logic.setIsApprovalQueueMode((c) => !c)}>{logic.isApprovalQueueMode ? 'Show All' : `Needs Approval (${logic.approvalQueueReports.length})`}</button>
+                    )}
+                    <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>{logic.isClosedMode ? 'Show Open' : `Closed (${logic.activeTab === 'ncr' ? logic.closedReports.length : logic.carReports.filter(c => c.status === CAR_STATUS.CLOSED).length})`}</button>
+                    {logic.activeTab === 'ncr' && trendClusters.length > 0 && (
+                      <button 
+                        type="button" 
+                        className={`btn-quick-toggle ${isRecurringMode ? 'active recurring-active' : 'recurring-inactive'}`} 
+                        onClick={() => {
+                          setIsRecurringMode(!isRecurringMode)
+                          // Turn off other modes
+                          if (!isRecurringMode) {
+                            logic.setIsApprovalQueueMode(false)
+                            logic.setIsClosedMode(false)
+                          }
+                        }}
+                      >
+                        Recurring Issues ({allRecurringReportIds.length})
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+              <div className="reports-action-buttons-right">
+                {((logic.activeTab === 'ncr' && canCreateNcr) ||
+                  (logic.activeTab === 'car' && canCreateCar) ||
+                  (logic.activeTab === 'qddr' && canCreateQddr)) && (
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      if (logic.activeTab === 'ncr') logic.openCreateModal()
+                      else if (logic.activeTab === 'car') logic.openCARModal()
+                      else if (logic.activeTab === 'qddr') logic.openQDDRModal()
+                    }} 
+                    className="btn-gradient-primary reports-submit-primary"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                    title={`Submit a new ${logic.activeTab.toUpperCase()}`}
+                  >
+                    Submit {logic.activeTab.toUpperCase()}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
-          </div>
-          <div className="reports-action-buttons-right">
-            {((logic.activeTab === 'ncr' && canCreateNcr) ||
-              (logic.activeTab === 'car' && canCreateCar) ||
-              (logic.activeTab === 'qddr' && canCreateQddr)) && (
-              <button 
-                type="button" 
-                onClick={() => {
-                  if (logic.activeTab === 'ncr') logic.openCreateModal()
-                  else if (logic.activeTab === 'car') logic.openCARModal()
-                  else if (logic.activeTab === 'qddr') logic.openQDDRModal()
-                }} 
-                className="btn-gradient-primary reports-submit-primary"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-                title={`Submit a new ${logic.activeTab.toUpperCase()}`}
-              >
-                Submit {logic.activeTab.toUpperCase()}
-              </button>
+          {availableTabs.length > 1 && logic.activeTab !== 'ncr' && canViewActiveTab && (
+            <div className="reports-tab-nav-container" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px' }}>
+              {logic.activeTab === 'car' && (
+                <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
+                  <button
+                    type="button"
+                    className={`btn-quick-toggle reports-tab-nav-btn ${carViewMode === 'feed' ? 'active' : ''}`}
+                    onClick={() => setCarViewMode('feed')}
+                    title="Card View"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <LayoutGrid size={18} /> FEED
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn-quick-toggle reports-tab-nav-btn ${carViewMode === 'table' ? 'active' : ''}`}
+                    onClick={() => setCarViewMode('table')}
+                    title="Table View"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <List size={18} /> TABLE
+                  </button>
+                </div>
+              )}
+              {logic.activeTab === 'qddr' && (
+                <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
+                  <button
+                    type="button"
+                    className={`btn-quick-toggle reports-tab-nav-btn ${qddrViewMode === 'feed' ? 'active' : ''}`}
+                    onClick={() => setQddrViewMode('feed')}
+                    title="Card View"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <LayoutGrid size={18} /> FEED
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn-quick-toggle reports-tab-nav-btn ${qddrViewMode === 'table' ? 'active' : ''}`}
+                    onClick={() => setQddrViewMode('table')}
+                    title="Table View"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <List size={18} /> TABLE
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {logic.error && <div className="user-info-error">{logic.error}</div>}
+          <div className="facebook-feed-layout-wrapper">
+            {logic.activeTab === 'ncr' && canViewNcr && (
+              <ReportsFeedList
+                isRecurringMode={isRecurringMode} isApprovalQueueMode={logic.isApprovalQueueMode} isClosedMode={logic.isClosedMode} isLoading={logic.isLoading}
+                displayedInvestigatedReports={filteredInvestigated} closedReports={filteredClosed} reports={filteredReports}
+                trendClusters={trendClusters}
+                departmentNameById={logic.departmentNameById} userNameById={logic.userNameById} canAssignReports={logic.canAssignReports} canApproveReport={logic.canApproveReport} canUpdateReport={logic.canUpdateReport}
+                canDeleteReport={logic.canDeleteReport} onApprove={(r) => logic.handleReviewReport(r, 'approve')} onReject={logic.openRejectModal}
+                onUpdate={logic.openUpdateModal} onAssign={logic.openAssignModal} onDelete={logic.handleDeleteReport}
+              />
+            )}
+            {logic.activeTab === 'car' && canViewCar && (
+              <CARReportsList 
+                carReports={displayedCars} 
+                isLoading={logic.loadingCar} 
+                onSelectCar={logic.openCarDetails} 
+                canEdit={canEditDeleteReports}
+                onEditCar={logic.openEditCarModal}
+                onDeleteCar={handleDeleteCar}
+                viewMode={carViewMode}
+              />
+            )}
+            {logic.activeTab === 'qddr' && canViewQddr && (
+              <QDDRReportsList 
+                qddrReports={displayedQddrs} 
+                isLoading={logic.loadingQddr} 
+                onSelectQddr={logic.openQddrDetails} 
+                canEdit={canEditDeleteReports}
+                onEditQddr={logic.openEditQddrModal}
+                onDeleteQddr={handleDeleteQddr}
+                viewMode={qddrViewMode}
+              />
             )}
           </div>
         </div>
-
-        {availableTabs.length > 1 && logic.activeTab !== 'ncr' && (
-          <div className="reports-tab-nav-container" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px' }}>
-            {logic.activeTab === 'car' && (
-              <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
-                <button
-                  type="button"
-                  className={`btn-quick-toggle reports-tab-nav-btn ${carViewMode === 'feed' ? 'active' : ''}`}
-                  onClick={() => setCarViewMode('feed')}
-                  title="Card View"
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                  <LayoutGrid size={18} /> FEED
-                </button>
-                <button
-                  type="button"
-                  className={`btn-quick-toggle reports-tab-nav-btn ${carViewMode === 'table' ? 'active' : ''}`}
-                  onClick={() => setCarViewMode('table')}
-                  title="Table View"
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                  <List size={18} /> TABLE
-                </button>
-              </div>
-            )}
-            {logic.activeTab === 'qddr' && (
-              <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
-                <button
-                  type="button"
-                  className={`btn-quick-toggle reports-tab-nav-btn ${qddrViewMode === 'feed' ? 'active' : ''}`}
-                  onClick={() => setQddrViewMode('feed')}
-                  title="Card View"
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                  <LayoutGrid size={18} /> FEED
-                </button>
-                <button
-                  type="button"
-                  className={`btn-quick-toggle reports-tab-nav-btn ${qddrViewMode === 'table' ? 'active' : ''}`}
-                  onClick={() => setQddrViewMode('table')}
-                  title="Table View"
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                  <List size={18} /> TABLE
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {logic.error && <div className="user-info-error">{logic.error}</div>}
-        <div className="facebook-feed-layout-wrapper">
-          {logic.activeTab === 'ncr' && (
-            <ReportsFeedList
-              isRecurringMode={isRecurringMode} isApprovalQueueMode={logic.isApprovalQueueMode} isClosedMode={logic.isClosedMode} isLoading={logic.isLoading}
-              displayedInvestigatedReports={filteredInvestigated} closedReports={filteredClosed} reports={filteredReports}
-              trendClusters={trendClusters}
-              departmentNameById={logic.departmentNameById} userNameById={logic.userNameById} canAssignReports={logic.canAssignReports} canApproveReport={logic.canApproveReport} canUpdateReport={logic.canUpdateReport}
-              canDeleteReport={logic.canDeleteReport} onApprove={(r) => logic.handleReviewReport(r, 'approve')} onReject={logic.openRejectModal}
-              onUpdate={logic.openUpdateModal} onAssign={logic.openAssignModal} onDelete={logic.handleDeleteReport}
-            />
-          )}
-          {logic.activeTab === 'car' && (
-            <CARReportsList 
-              carReports={displayedCars} 
-              isLoading={logic.loadingCar} 
-              onSelectCar={logic.openCarDetails} 
-              canEdit={isAdminRole(userRole) || normalizedRole === 'auditor'}
-              onEditCar={logic.openEditCarModal}
-              onDeleteCar={handleDeleteCar}
-              viewMode={carViewMode}
-            />
-          )}
-          {logic.activeTab === 'qddr' && (
-            <QDDRReportsList 
-              qddrReports={displayedQddrs} 
-              isLoading={logic.loadingQddr} 
-              onSelectQddr={logic.openQddrDetails} 
-              canEdit={canAccessCar}
-              onEditQddr={logic.openEditQddrModal}
-              onDeleteQddr={handleDeleteQddr}
-              viewMode={qddrViewMode}
-            />
-          )}
-        </div>
-      </div>
       </div>
 
       <FilterModal {...logic.filterModalProps} activeTab={logic.activeTab} />

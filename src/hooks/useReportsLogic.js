@@ -357,44 +357,49 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
 
   // ─── Derived / memoised ────────────────────────────────────────────────────
 
+  const hasExplicitRights = Array.isArray(userPermissions?.rights)
+
   const canAssignReports = useMemo(
-    () => isAdminRole(userRole) || ['manager', 'department manager', 'auditor', 'warehouse supervisor'].includes(String(userRole || '').trim().toLowerCase()) || rights.includes('assign_report'),
-    [userRole, rights],
+    () => hasExplicitRights
+      ? rights.includes('assign_report')
+      : (isAdminRole(userRole) || ['manager', 'department manager', 'auditor', 'warehouse supervisor'].includes(String(userRole || '').trim().toLowerCase())),
+    [hasExplicitRights, userRole, rights],
   )
 
   const canApproveReport = useCallback((report) => {
     if (!report) return false;
+    if (hasExplicitRights) return rights.includes('accept_decline_report');
     if (isAdminRole(userRole)) return true;
-    if (rights.includes('accept_decline_report')) return true;
     const role = String(userRole || '').trim().toLowerCase();
     if (role === 'department manager' || role === 'manager') {
       return String(report.department_id) === String(userDepartmentId);
     }
     return false;
-  }, [userRole, userDepartmentId, rights])
+  }, [hasExplicitRights, userRole, userDepartmentId, rights])
 
   const canUpdateReport = useCallback(
     (report) => {
       if (!report) return false
       if (String(report.status || '').trim().toUpperCase() === 'CLOSED') return false
-      
-      if (isAdminRole(userRole) || rights.includes('edit_delete_report')) return true
+      if (hasExplicitRights) return rights.includes('edit_delete_report')
+      if (isAdminRole(userRole)) return true
       const role = String(userRole || '').trim().toLowerCase()
       if (role === 'manager' || role === 'department manager') return true
 
       return String(report.assigned_to || '') !== '' &&
         String(report.assigned_to) === String(currentUserId)
     },
-    [currentUserId, userRole, rights],
+    [hasExplicitRights, currentUserId, userRole, rights],
   )
 
   const canDeleteReport = useCallback(
     (report) => {
       if (!report) return false
-      if (isAdminRole(userRole) || rights.includes('edit_delete_report')) return true
+      if (hasExplicitRights) return rights.includes('edit_delete_report')
+      if (isAdminRole(userRole)) return true
       return Number(report.reported_by) === Number(currentUserId)
     },
-    [userRole, rights, currentUserId]
+    [hasExplicitRights, userRole, rights, currentUserId]
   )
 
   const handleDeleteReport = useCallback((report) => {
@@ -1095,6 +1100,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       onSubmitCapa: handleCapaSubmit,
       onVerify: handleCarVerify,
       userRole,
+      userPermissions,
       userDepartmentId,
       authUserId: currentAuthId,
       rootCause: carDetails.rootCause,

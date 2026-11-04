@@ -123,10 +123,17 @@ export default function DCCFolderContent({
   onFetchRunDetails
 }) {
   const normRole = String(userRole || '').trim().toLowerCase()
-  const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
-  const canAccessNcr = isAdminRole(userRole) || rights.includes('view_ncr_reports') || rights.includes('create_ncr_report') || rights.includes('create_report') || rights.length === 0
-  const canAccessCar = isAdminRole(userRole) || rights.includes('view_car_reports') || rights.includes('create_car_report') || ['team leader', 'auditor'].includes(normRole)
-  const canAccessQddr = isAdminRole(userRole) || rights.includes('view_qddr_reports') || rights.includes('create_qddr_report')
+  const hasExplicitRights = Array.isArray(userPermissions?.rights)
+  const rights = hasExplicitRights ? userPermissions.rights : []
+  const canAccessNcr = hasExplicitRights
+    ? rights.includes('view_ncr_reports')
+    : (isAdminRole(userRole) || rights.length === 0)
+  const canAccessCar = hasExplicitRights
+    ? rights.includes('view_car_reports')
+    : (isAdminRole(userRole) || ['team leader', 'auditor'].includes(normRole))
+  const canAccessQddr = hasExplicitRights
+    ? rights.includes('view_qddr_reports')
+    : isAdminRole(userRole)
 
   const TASK_REPORT_SUBFOLDERS = [
     ...(canAccessNcr ? [{ id: 'ncr', label: 'NCR' }] : []),

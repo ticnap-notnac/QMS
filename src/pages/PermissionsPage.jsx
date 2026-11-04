@@ -7,13 +7,13 @@ import Toast from '@/components/UI/Toast.jsx'
 import { loadRoles } from '@/services/roleService'
 import './AdminPanel.css'
 
-export default function PermissionsPage({ userRole }) {
+export default function PermissionsPage({ userRole, onPermissionsUpdated }) {
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const fetchRoles = useCallback(async () => {
-    setLoading(true)
+  const fetchRoles = useCallback(async (showSpinner = false) => {
+    if (showSpinner) setLoading(true)
     setError(null)
     try {
       const data = await loadRoles()
@@ -22,13 +22,20 @@ export default function PermissionsPage({ userRole }) {
       console.error('Failed to load roles for permissions:', err)
       setError(err.message || 'Failed to load roles.')
     } finally {
-      setLoading(false)
+      if (showSpinner) setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    fetchRoles()
+    fetchRoles(true)
   }, [fetchRoles])
+
+  const handlePermissionsSaved = useCallback(async () => {
+    await fetchRoles(false)
+    if (onPermissionsUpdated) {
+      await onPermissionsUpdated()
+    }
+  }, [fetchRoles, onPermissionsUpdated])
 
   return (
     <div className="page-root">
@@ -54,7 +61,7 @@ export default function PermissionsPage({ userRole }) {
                     Loading role permissions...
                   </div>
                 ) : (
-                  <RolePermissionsMatrix roles={roles} onPermissionsUpdated={fetchRoles} />
+                  <RolePermissionsMatrix roles={roles} onPermissionsUpdated={handlePermissionsSaved} />
                 )}
               </div>
             </div>

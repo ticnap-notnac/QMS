@@ -6,6 +6,7 @@ export default function CARDetailsModal({
   onClose,
   car,
   userRole,
+  userPermissions,
   userDepartmentName,
   userDepartmentId,
   readOnly = false,
@@ -40,7 +41,12 @@ export default function CARDetailsModal({
   const normalize = (value) => String(value || '').trim().toLowerCase()
   const resolvedUserDepartmentName = normalize(userDepartmentName || userDepartmentId)
   const carDepartmentName = normalize(car.responsible_department || car.requesting_department)
-  const isWarehouseVerifier = normalize(userRole) === 'warehouse staff' && Boolean(resolvedUserDepartmentName) && resolvedUserDepartmentName === carDepartmentName
+  const hasExplicitRights = Array.isArray(userPermissions?.rights)
+  const rights = hasExplicitRights ? userPermissions.rights : []
+  const canSubmitCapa = hasExplicitRights ? rights.includes('submit_capa') : true
+  const isWarehouseVerifier = hasExplicitRights
+    ? rights.includes('verify_car')
+    : (normalize(userRole) === 'warehouse staff' && Boolean(resolvedUserDepartmentName) && resolvedUserDepartmentName === carDepartmentName)
 
   const getStatusBadgeClass = (status) => {
     const s = String(status || '').toLowerCase()
@@ -187,7 +193,7 @@ export default function CARDetailsModal({
 
           {/* CAPA SECTION */}
           {car.status === 'open' && !readOnly ? (
-            true ? (
+            canSubmitCapa ? (
               <form onSubmit={handleCapaSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid #cbd5e1', paddingTop: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 4px 0' }}>
                   <h4 style={{ color: '#0891b2', fontSize: '14px', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>

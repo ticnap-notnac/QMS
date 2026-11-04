@@ -88,22 +88,37 @@ function AppInner() {
       if (normalized === 'admin') {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'admin_panel', 'settings'],
-          rights: ['accept_decline_report', 'assign_report', 'create_report', 'edit_delete_report', 'submit_capa', 'verify_car', 'manage_iso', 'manage_users', 'manage_audit_schedules'],
+          rights: [
+            'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+            'accept_decline_report', 'assign_report',
+            'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
+            'edit_delete_report', 'submit_capa', 'verify_car',
+            'manage_iso', 'manage_users', 'manage_audit_schedules'
+          ],
         })
       } else if (normalized === 'auditor') {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
-          rights: ['accept_decline_report', 'assign_report', 'create_report', 'submit_capa', 'manage_iso', 'manage_audit_schedules'],
+          rights: [
+            'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+            'accept_decline_report', 'assign_report',
+            'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
+            'submit_capa', 'manage_iso', 'manage_audit_schedules'
+          ],
         })
       } else if (['team leader', 'warehouse executive', 'warehouse supervisor'].includes(normalized)) {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'dcc', 'settings'],
-          rights: ['create_report', 'accept_decline_report', 'assign_report'],
+          rights: [
+            'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+            'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
+            'accept_decline_report', 'assign_report'
+          ],
         })
       } else {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'dcc', 'settings'],
-          rights: ['create_report'],
+          rights: ['view_ncr_reports', 'create_ncr_report', 'create_report'],
         })
       }
     }

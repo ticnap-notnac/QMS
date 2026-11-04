@@ -10,11 +10,17 @@ import SubmissionLoadingOverlay from '../components/UI/SubmissionLoadingOverlay.
 import './SettingsPage.css'
 
 
-export default function AuditToolsPage({ authUserId, userRole }) {
+export default function AuditToolsPage({ authUserId, userRole, userPermissions }) {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const isInsideSettings = location.pathname.startsWith('/settings')
   const tabParam = searchParams.get('tab')
+  const hasExplicitRights = Array.isArray(userPermissions?.rights)
+  const rights = hasExplicitRights ? userPermissions.rights : []
+  const canManageAuditSchedules = hasExplicitRights ? rights.includes('manage_audit_schedules') : true
+  const availableAuditTabs = canManageAuditSchedules
+    ? ['Logs', 'Reports', 'Schedules', 'Templates']
+    : ['Logs', 'Reports']
 
   const logic = useAuditToolsLogic({ authUserId, activeTabParam: tabParam || 'Logs' })
   const { activeTab, setActiveTab, activeRun } = logic
@@ -35,7 +41,7 @@ export default function AuditToolsPage({ authUserId, userRole }) {
 
   const renderTabs = () => (
     <div className="tab-navigation">
-      {['Logs', 'Reports', 'Schedules', 'Templates'].map(tab => (
+      {availableAuditTabs.map(tab => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab)}
