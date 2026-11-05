@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../utils/supabase'
 import { fetchLogs } from '../services/logService'
 import { useCARDetails } from './useCARDetails'
@@ -35,6 +35,10 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
   const [activeClauses, setActiveClauses] = useState([])
   const [resultsMap, setResultsMap] = useState({})
   const [savingProgress, setSavingProgress] = useState(false)
+  const lastSavedSnapshotRef = useRef('')
+  const resultsMapRef = useRef({})
+  const activeRunRef = useRef(null)
+  const isAutoSavingRef = useRef(false)
   const [linkedCarsMap, setLinkedCarsMap] = useState({})  // { [clause_id]: [{ id, reference_no, status }] }
   const [linkedQddrsMap, setLinkedQddrsMap] = useState({}) // { [clause_id]: [{ id, reference_no, status }] }
 
@@ -198,6 +202,30 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
         standard_name: schedule.standard_name
       })
       setActiveClauses(itemsList)
+      let dbSnapshot = JSON.stringify(initialResults)
+      try {
+        const rawDraft = localStorage.getItem(`audit_draft_${activeRunData.id}`)
+        if (rawDraft) {
+          const parsedDraft = JSON.parse(rawDraft)
+          if (parsedDraft && typeof parsedDraft === 'object') {
+            Object.keys(initialResults).forEach(clauseId => {
+              if (parsedDraft[clauseId]) {
+                initialResults[clauseId] = {
+                  ...initialResults[clauseId],
+                  status: parsedDraft[clauseId].status || initialResults[clauseId].status,
+                  evidence: parsedDraft[clauseId].evidence ?? initialResults[clauseId].evidence,
+                  notes: parsedDraft[clauseId].notes ?? initialResults[clauseId].notes,
+                  attachment_url: parsedDraft[clauseId].attachment_url ?? initialResults[clauseId].attachment_url,
+                  id: initialResults[clauseId].id || parsedDraft[clauseId].id || null
+                }
+              }
+            })
+          }
+        }
+      } catch (draftErr) {
+        console.warn('[useAuditToolsLogic] Failed to restore local audit draft:', draftErr)
+      }
+      lastSavedSnapshotRef.current = dbSnapshot
       setResultsMap(initialResults)
 
       // Batch-fetch all CARs linked to the clauses in this audit
@@ -301,6 +329,12 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
           attachment_url: row.attachment_url || ''
         }
       })
+      lastSavedSnapshotRef.current = JSON.stringify(updatedResultsMap)
+      try {
+        localStorage.setItem(`audit_draft_${activeRun.id}`, lastSavedSnapshotRef.current)
+      } catch {
+        // Ignore storage quota errors
+      }
       setResultsMap(updatedResultsMap)
 
       if (complete) {
@@ -353,6 +387,12 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
         if (schedErr) throw schedErr
 
+        try {
+          localStorage.removeItem(`audit_draft_${activeRun.id}`)
+        } catch {
+          // Ignore storage errors
+        }
+        lastSavedSnapshotRef.current = ''
         setSuccess('Audit completed and saved successfully!')
         setActiveRun(null)
         setActiveClauses([])
@@ -368,6 +408,93 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       setSavingProgress(false)
     }
   }
+
+  useEffect(() => {
+    resultsMapRef.current = resultsMap
+    activeRunRef.current = activeRun
+  }, [resultsMap, activeRun])
+
+  const autoSaveResultsQuietly = useCallback(async (runToSave, mapToSave) => {
+    if (!runToSave?.id || !mapToSave || Object.keys(mapToSave).length === 0) return
+    if (isAutoSavingRef.current) return
+    const currentSnapshot = JSON.stringify(mapToSave)
+    if (currentSnapshot === lastSavedSnapshotRef.current) return
+
+    isAutoSavingRef.current = true
+    try {
+      const upsertData = Object.keys(mapToSave).map(clauseId => {
+        const payload = {
+          run_id: runToSave.id,
+          clause_id: clauseId,
+          status: mapToSave[clauseId].status,
+          evidence: mapToSave[clauseId].evidence || null,
+          notes: mapToSave[clauseId].notes || null,
+          attachment_url: mapToSave[clauseId].attachment_url || null
+        }
+        if (mapToSave[clauseId].id) {
+          payload.id = mapToSave[clauseId].id
+        }
+        return payload
+      })
+
+      const { error: upsertError } = await supabase
+        .from('audit_results')
+        .upsert(upsertData)
+
+      if (!upsertError) {
+        lastSavedSnapshotRef.current = currentSnapshot
+      }
+    } catch (err) {
+      console.warn('[useAuditToolsLogic] Background auto-save warning:', err?.message || err)
+    } finally {
+      isAutoSavingRef.current = false
+    }
+  }, [])
+
+  // Layer 1 & 2: Instant localStorage mirror + 2s debounced Supabase auto-save
+  useEffect(() => {
+    if (!activeRun?.id || Object.keys(resultsMap).length === 0) return
+
+    const currentSnapshot = JSON.stringify(resultsMap)
+    try {
+      localStorage.setItem(`audit_draft_${activeRun.id}`, currentSnapshot)
+    } catch {
+      // Ignore storage quota errors
+    }
+
+    if (currentSnapshot === lastSavedSnapshotRef.current) return
+
+    const timer = setTimeout(() => {
+      autoSaveResultsQuietly(activeRunRef.current, resultsMapRef.current)
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [activeRun?.id, resultsMap, autoSaveResultsQuietly])
+
+  // Layer 3: Immediate cloud auto-save when switching windows/tabs (blur or visibilitychange)
+  useEffect(() => {
+    if (!activeRun?.id) return
+
+    const flushOnSwitch = () => {
+      if (activeRunRef.current?.id) {
+        autoSaveResultsQuietly(activeRunRef.current, resultsMapRef.current)
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        flushOnSwitch()
+      }
+    }
+
+    window.addEventListener('blur', flushOnSwitch)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('blur', flushOnSwitch)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [activeRun?.id, autoSaveResultsQuietly])
 
   // Fetch initial schedules/auditors/standards data
   const fetchData = async () => {
