@@ -75,6 +75,15 @@ function AppInner() {
   }, [currentUserId, user])
 
   const applyUserRoleData = (profile) => {
+    if (profile.status && String(profile.status).toUpperCase() !== 'ACTIVE') {
+      setUser(null)
+      setCurrentUserId(null)
+      setUserDepartmentId(null)
+      clearCachedAuthId()
+      supabase.auth.signOut().catch(console.error)
+      setToast({ message: 'Your account is deactivated or inactive. Please contact an administrator.', type: 'error' })
+      return
+    }
     const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
     // Prefer full name for display (first + last). Fall back to username, then email.
     const displayName = fullName || profile.user_name || profile.email || 'Name of the User'
@@ -151,7 +160,7 @@ function AppInner() {
         if (user) {
           const { data } = await supabase
             .from('users')
-            .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name, permissions)')
+            .select('id, first_name, last_name, user_name, role_id, department_id, status, roles(role_name, permissions)')
             .eq('auth_id', user.id)
             .maybeSingle()
 
@@ -180,7 +189,7 @@ function AppInner() {
         if (newUser) {
           supabase
             .from('users')
-            .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name, permissions)')
+            .select('id, first_name, last_name, user_name, role_id, department_id, status, roles(role_name, permissions)')
             .eq('auth_id', newUser.id)
             .maybeSingle()
             .then(({ data }) => {
@@ -221,7 +230,7 @@ function AppInner() {
         try {
           const { data } = await supabase
             .from('users')
-            .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name, permissions)')
+            .select('id, first_name, last_name, user_name, role_id, department_id, status, roles(role_name, permissions)')
             .eq('auth_id', authData.user.id)
             .maybeSingle()
 
@@ -249,7 +258,7 @@ function AppInner() {
     if (user) {
       const { data } = await supabase
         .from('users')
-        .select('id, first_name, last_name, user_name, role_id, department_id, roles(role_name, permissions)')
+        .select('id, first_name, last_name, user_name, role_id, department_id, status, roles(role_name, permissions)')
         .eq('auth_id', user.id)
         .maybeSingle()
 

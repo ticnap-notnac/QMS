@@ -396,10 +396,11 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
     updatedProfile = profileData || updatedProfile
   }
 
-  if (hasServiceRole && existing.auth_id && (password || (email && email !== existing.email))) {
+  if (hasServiceRole && existing.auth_id && (password || (email && email !== existing.email) || updates.status)) {
     const adminUpdate = {}
     if (password) adminUpdate.password = password
     if (email && email !== existing.email) adminUpdate.email = email
+    if (updates.status) adminUpdate.ban_duration = updates.status === 'ACTIVE' ? 'none' : '876000h'
 
     const { error: authErr } = await supabase.auth.admin.updateUserById(existing.auth_id, adminUpdate)
     if (authErr) return { profile: null, error: authErr.message, status: 500 }
@@ -434,19 +435,38 @@ export async function updateUserStatusById(id, status, actorAuthId) {
     return { success: false, error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}.`, status: 400 }
   }
 
+  const normalisedStatus = status.toUpperCase()
+  const { data: existing, error: fetchError } = await supabase
+    .from('users')
+    .select('id, auth_id, status')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (fetchError) return { success: false, error: fetchError.message, status: 500 }
+  if (!existing) return { success: false, error: 'User not found.', status: 404 }
+
   const { error: dbError } = await supabase
     .from('users')
-    .update({ status: status.toUpperCase() })
+    .update({ status: normalisedStatus })
     .eq('id', id)
 
   if (dbError) return { success: false, error: dbError.message, status: 500 }
+
+  if (hasServiceRole && existing.auth_id) {
+    const { error: authErr } = await supabase.auth.admin.updateUserById(existing.auth_id, {
+      ban_duration: normalisedStatus === 'ACTIVE' ? 'none' : '876000h'
+    })
+    if (authErr) {
+      console.warn('Failed to update Supabase Auth ban_duration:', authErr.message)
+    }
+  }
 
   try {
     await writeAudit({
       source: 'users',
       action: 'user_status_update',
       userAuthId: actorAuthId,
-      details: { id, status: status.toUpperCase() },
+      details: { id, status: normalisedStatus },
     })
   } catch (logErr) {
     console.warn('Failed to record user_status_update log:', logErr?.message || logErr)

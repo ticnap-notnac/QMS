@@ -7,20 +7,34 @@ import logger from '../utils/logger.js'
 async function fetchUserRoleAndPermissions(authId) {
   const { data: profile, error } = await supabase
     .from('users')
-    .select('id, auth_id, role_id, user_name, first_name, last_name')
+    .select('id, auth_id, role_id, position_id, department_id, site_id, status, user_name, first_name, last_name')
     .eq('auth_id', authId)
     .maybeSingle()
 
   if (error || !profile) return { profile: null, roleName: null, permissions: null }
 
+  let resolvedRoleId = profile.role_id || null
+
+  if (!resolvedRoleId && profile.position_id) {
+    const { data: posData } = await supabase
+      .from('positions')
+      .select('role_id')
+      .eq('id', profile.position_id)
+      .maybeSingle()
+    if (posData?.role_id) {
+      resolvedRoleId = posData.role_id
+      profile.role_id = resolvedRoleId
+    }
+  }
+
   let roleName = null
   let permissions = null
 
-  if (profile.role_id) {
+  if (resolvedRoleId) {
     const { data: roleData } = await supabase
       .from('roles')
       .select('role_name, permissions')
-      .eq('id', profile.role_id)
+      .eq('id', resolvedRoleId)
       .maybeSingle()
     roleName = roleData?.role_name || null
     permissions = roleData?.permissions || null
@@ -58,6 +72,10 @@ export function requirePermission(requiredRight) {
       const { profile, roleName, permissions } = await fetchUserRoleAndPermissions(authId)
       if (!profile) {
         return res.status(403).json({ error: 'We could not find your user profile. Please contact support.' })
+      }
+
+      if (profile.status && String(profile.status).toUpperCase() !== 'ACTIVE') {
+        return res.status(403).json({ error: 'Your account is deactivated or inactive. Please contact an administrator.' })
       }
 
       const normalizedRole = String(roleName || '').trim().toLowerCase()
@@ -104,16 +122,26 @@ export function requireRoles(allowedRoles = [], requiredRight = null) {
         return res.status(403).json({ error: 'We could not find your user profile. Please contact support.' })
       }
 
+      if (profile.status && String(profile.status).toUpperCase() !== 'ACTIVE') {
+        return res.status(403).json({ error: 'Your account is deactivated or inactive. Please contact an administrator.' })
+      }
+
       const normalizedRole = String(roleName || '').trim().toLowerCase()
       let isAllowed = false
 
       if (isAdminRole(roleName)) {
         isAllowed = true
-      } else if (requiredRight && permissions && typeof permissions === 'object' && Array.isArray(permissions.rights)) {
-        isAllowed = permissions.rights.includes(requiredRight)
       } else {
+        const hasRight = Boolean(
+          requiredRight &&
+          permissions &&
+          typeof permissions === 'object' &&
+          Array.isArray(permissions.rights) &&
+          permissions.rights.includes(requiredRight)
+        )
         const normalizedAllowed = (allowedRoles || []).map(r => String(r).trim().toLowerCase())
-        isAllowed = normalizedAllowed.includes(normalizedRole)
+        const hasRole = normalizedAllowed.includes(normalizedRole)
+        isAllowed = hasRight || hasRole
       }
 
       logger.info('Role & Permission check', { authId, roleName, normalizedRole, allowedRoles, requiredRight, isAllowed })
