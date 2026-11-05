@@ -128,52 +128,80 @@ export async function createCarReport({ body, reportedByAuthId }) {
     .eq('auth_id', reportedByAuthId)
     .maybeSingle()
 
-  const { data: records, error: latestError } = await supabase
-    .from('car_reports')
-    .select('reference_no')
-    .ilike('reference_no', 'CAR-%')
+  const getNextRef = async () => {
+    if (typeof supabase.rpc === 'function') {
+      const { data: rpcRef, error: rpcErr } = await supabase.rpc('next_report_reference', {
+        p_type: 'CAR',
+      })
+      if (!rpcErr && rpcRef) return rpcRef
+    }
 
-  if (latestError) {
-    const customErr = new Error(`Database error getting latest CAR ref: ${latestError.message}`)
-    customErr.status = 500
-    throw customErr
+    const { data: records, error: latestError } = await supabase
+      .from('car_reports')
+      .select('reference_no')
+      .ilike('reference_no', 'CAR-%')
+      .order('id', { ascending: false })
+      .limit(1000)
+
+    if (latestError) {
+      const customErr = new Error(`Database error getting latest CAR ref: ${latestError.message}`)
+      customErr.status = 500
+      throw customErr
+    }
+
+    const maxSeq = buildCarReferenceNumber(records || [])
+    return `CAR-${String(maxSeq + 1).padStart(3, '0')}`
   }
 
-  const maxSeq = buildCarReferenceNumber(records || [])
-  const generatedReferenceNo = `CAR-${String(maxSeq + 1).padStart(3, '0')}`
+  let generatedReferenceNo = await getNextRef()
+  let data = null
+  let error = null
 
-  const payload = {
-    reference_no: generatedReferenceNo,
-    requesting_department,
-    responsible_department,
-    requestor,
-    recipient,
-    date: date ? date : null,
-    reason_reissue,
-    no_reply: Boolean(no_reply),
-    re_corrective_action: Boolean(re_corrective_action),
-    quality_food_safety: Boolean(quality_food_safety),
-    environment_health_safety: Boolean(environment_health_safety),
-    security_issue: Boolean(security_issue),
-    internal_audit: Boolean(internal_audit),
-    customer_complaint: Boolean(customer_complaint),
-    government_agency_audit: Boolean(government_agency_audit),
-    customer_audit_nonconformance: Boolean(customer_audit_nonconformance),
-    vendor_nonconformance: Boolean(vendor_nonconformance),
-    others,
-    product_material_name,
-    model_type,
-    control_no,
-    affected_quantity: affected_quantity ? parseInt(affected_quantity, 10) : null,
-    details_of_nonconformance,
-    request_date: request_date ? request_date : null,
-    ncr_id: Array.isArray(ncr_ids) && ncr_ids.length > 0 ? ncr_ids.map(id => parseInt(id, 10)) : null,
-    audit_schedule_id: audit_schedule_id || null,
-    status: CAR_STATUS.OPEN,
-    site_id: creatorObj?.site_id || null
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1) {
+      generatedReferenceNo = await getNextRef()
+    }
+
+    const payload = {
+      reference_no: generatedReferenceNo,
+      requesting_department,
+      responsible_department,
+      requestor,
+      recipient,
+      date: date ? date : null,
+      reason_reissue,
+      no_reply: Boolean(no_reply),
+      re_corrective_action: Boolean(re_corrective_action),
+      quality_food_safety: Boolean(quality_food_safety),
+      environment_health_safety: Boolean(environment_health_safety),
+      security_issue: Boolean(security_issue),
+      internal_audit: Boolean(internal_audit),
+      customer_complaint: Boolean(customer_complaint),
+      government_agency_audit: Boolean(government_agency_audit),
+      customer_audit_nonconformance: Boolean(customer_audit_nonconformance),
+      vendor_nonconformance: Boolean(vendor_nonconformance),
+      others,
+      product_material_name,
+      model_type,
+      control_no,
+      affected_quantity: affected_quantity ? parseInt(affected_quantity, 10) : null,
+      details_of_nonconformance,
+      request_date: request_date ? request_date : null,
+      ncr_id: Array.isArray(ncr_ids) && ncr_ids.length > 0 ? ncr_ids.map(id => parseInt(id, 10)) : null,
+      audit_schedule_id: audit_schedule_id || null,
+      status: CAR_STATUS.OPEN,
+      site_id: creatorObj?.site_id || null
+    }
+
+    const res = await supabase.from('car_reports').insert(payload).select('*').maybeSingle()
+    if (!res.error) {
+      data = res.data
+      error = null
+      break
+    }
+    error = res.error
+    if (res.error.code !== '23505') break
   }
-
-  const { data, error } = await supabase.from('car_reports').insert(payload).select('*').maybeSingle()
 
   if (error) {
     const customErr = new Error(`Database error creating CAR: ${error.message}`)

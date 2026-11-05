@@ -41,6 +41,7 @@ export async function fetchCarReports() {
   const { data, error } = await supabase
     .from('car_reports')
     .select('*, audit_schedules(id, title, scheduled_date)')
+    .eq('status', 'closed')
     .order('created_at', { ascending: false })
   if (error) throw error
   return data || []
@@ -50,7 +51,7 @@ export async function fetchQddrReports() {
   const { data, error } = await supabase
     .from('qddr_reports')
     .select('*')
-    .neq('is_deleted', true)
+    .eq('status', 'closed')
     .order('created_at', { ascending: false })
   if (error) throw error
   return data || []

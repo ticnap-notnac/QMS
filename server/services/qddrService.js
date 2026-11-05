@@ -100,65 +100,93 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     findUserIdByName(leader)
   ])
 
-  const { data: records, error: latestError } = await supabase
-    .from('qddr_reports')
-    .select('reference_no')
-    .ilike('reference_no', 'QDDR-%')
+  const getNextRef = async () => {
+    if (typeof supabase.rpc === 'function') {
+      const { data: rpcRef, error: rpcErr } = await supabase.rpc('next_report_reference', {
+        p_type: 'QDDR',
+      })
+      if (!rpcErr && rpcRef) return rpcRef
+    }
 
-  if (latestError) {
-    const customErr = new Error(`Database error getting latest QDDR ref: ${latestError.message}`)
-    customErr.status = 500
-    throw customErr
+    const { data: records, error: latestError } = await supabase
+      .from('qddr_reports')
+      .select('reference_no')
+      .ilike('reference_no', 'QDDR-%')
+      .order('id', { ascending: false })
+      .limit(1000)
+
+    if (latestError) {
+      const customErr = new Error(`Database error getting latest QDDR ref: ${latestError.message}`)
+      customErr.status = 500
+      throw customErr
+    }
+
+    const maxSeq = buildQddrReferenceNumber(records || [])
+    return `QDDR-${String(maxSeq + 1).padStart(3, '0')}`
   }
 
-  const maxSeq = buildQddrReferenceNumber(records || [])
-  const generatedReferenceNo = `QDDR-${String(maxSeq + 1).padStart(3, '0')}`
+  let generatedReferenceNo = await getNextRef()
+  let data = null
+  let error = null
 
-  const payload = {
-    reference_no: generatedReferenceNo,
-    location,
-    date: date ? date : null,
-    time: time ? time : null,
-    trucker_broker,
-    plate_number,
-    container_number,
-    po_reference,
-    drwb_number,
-    brand_supplier,
-    material_description,
-    material_code,
-    batch_code_su_number,
-    holes_punctures: Boolean(holes_punctures),
-    deformed_torn: Boolean(deformed_torn),
-    open_carton: Boolean(open_carton),
-    crushed_dented: Boolean(crushed_dented),
-    wet_leaked: Boolean(wet_leaked),
-    stain_graffiti: Boolean(stain_graffiti),
-    bulging: Boolean(bulging),
-    improper_stretch_wrapping: Boolean(improper_stretch_wrapping),
-    wrong_no_batchcode: Boolean(wrong_no_batchcode),
-    opened_seal: Boolean(opened_seal),
-    no_label_broken_label: Boolean(no_label_broken_label),
-    short_pack: Boolean(short_pack),
-    excess_shipment: Boolean(excess_shipment),
-    documentation_error: Boolean(documentation_error),
-    picking_discrepancy: Boolean(picking_discrepancy),
-    others,
-    qty: qty ? parseInt(qty, 10) : null,
-    reason_of_discrepancy,
-    corrective_action,
-    preventive_action,
-    reported_by: reporter.id,
-    approved_by: approvedById,
-    noted_by: notedById,
-    leader: leaderId,
-    ncr_id: ncr_id ? (Array.isArray(ncr_id) ? ncr_id.map(id => parseInt(id, 10)) : [parseInt(ncr_id, 10)]) : null,
-    audit_schedule_id: audit_schedule_id || null,
-    status: 'open',
-    site_id: reporter.site_id || null
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1) {
+      generatedReferenceNo = await getNextRef()
+    }
+
+    const payload = {
+      reference_no: generatedReferenceNo,
+      location,
+      date: date ? date : null,
+      time: time ? time : null,
+      trucker_broker,
+      plate_number,
+      container_number,
+      po_reference,
+      drwb_number,
+      brand_supplier,
+      material_description,
+      material_code,
+      batch_code_su_number,
+      holes_punctures: Boolean(holes_punctures),
+      deformed_torn: Boolean(deformed_torn),
+      open_carton: Boolean(open_carton),
+      crushed_dented: Boolean(crushed_dented),
+      wet_leaked: Boolean(wet_leaked),
+      stain_graffiti: Boolean(stain_graffiti),
+      bulging: Boolean(bulging),
+      improper_stretch_wrapping: Boolean(improper_stretch_wrapping),
+      wrong_no_batchcode: Boolean(wrong_no_batchcode),
+      opened_seal: Boolean(opened_seal),
+      no_label_broken_label: Boolean(no_label_broken_label),
+      short_pack: Boolean(short_pack),
+      excess_shipment: Boolean(excess_shipment),
+      documentation_error: Boolean(documentation_error),
+      picking_discrepancy: Boolean(picking_discrepancy),
+      others,
+      qty: qty ? parseInt(qty, 10) : null,
+      reason_of_discrepancy,
+      corrective_action,
+      preventive_action,
+      reported_by: reporter.id,
+      approved_by: approvedById,
+      noted_by: notedById,
+      leader: leaderId,
+      ncr_id: ncr_id ? (Array.isArray(ncr_id) ? ncr_id.map(id => parseInt(id, 10)) : [parseInt(ncr_id, 10)]) : null,
+      audit_schedule_id: audit_schedule_id || null,
+      status: 'open',
+      site_id: reporter.site_id || null
+    }
+
+    const res = await supabase.from('qddr_reports').insert(payload).select('*').maybeSingle()
+    if (!res.error) {
+      data = res.data
+      error = null
+      break
+    }
+    error = res.error
+    if (res.error.code !== '23505') break
   }
-
-  const { data, error } = await supabase.from('qddr_reports').insert(payload).select('*').maybeSingle()
 
   if (error) {
     const customErr = new Error(`Database error creating QDDR: ${error.message}`)

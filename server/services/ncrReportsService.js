@@ -55,6 +55,30 @@ export function generateNextNcrReferenceNo(recordsOrLatestRef) {
 }
 
 /**
+ * Atomically generates the next NCR reference number via database RPC (with fallback).
+ * @param {number} [year] - Target year.
+ * @returns {Promise<string>} The next NCR reference number.
+ */
+export async function fetchNextNcrReferenceNo(year = new Date().getFullYear()) {
+  if (typeof supabase.rpc === 'function') {
+    const { data: rpcRef, error: rpcErr } = await supabase.rpc('next_report_reference', {
+      p_type: 'NCR',
+      p_year: year,
+    })
+    if (!rpcErr && rpcRef) return rpcRef
+  }
+
+  const { data: records, error: latestError } = await supabase
+    .from('ncr_reports')
+    .select('reference_no')
+    .ilike('reference_no', `NCR-${year}-%`)
+    .order('id', { ascending: false })
+    .limit(1000)
+  if (latestError) throw latestError
+  return generateNextNcrReferenceNo(records || [])
+}
+
+/**
  * Normalizes text by trimming whitespace.
  * @param {any} value - The text value to normalize.
  * @returns {string} The normalized text.
@@ -774,13 +798,7 @@ export async function createNcrReport({ body, reportedByAuthId }) {
   if (!reporter) throw Object.assign(new Error('Reporter profile not found.'), { status: 404 })
 
   const year = new Date().getFullYear()
-  const { data: records, error: latestError } = await supabase
-    .from('ncr_reports')
-    .select('reference_no')
-    .ilike('reference_no', `NCR-${year}-%`)
-  if (latestError) throw latestError
-
-  const referenceNo = generateNextNcrReferenceNo(records || [])
+  let referenceNo = await fetchNextNcrReferenceNo(year)
 
   const { id: resolvedLocationId, name: resolvedLocationName } = await resolveCatalogEntry({
     table: 'locations', idColumn: 'id', nameColumn: 'location_name',
@@ -806,25 +824,40 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     throw Object.assign(new Error('Location and product type are required.'), { status: 400 })
   }
 
-  const payload = {
-    reference_no: referenceNo,
-    reported_by: reporter.id,
-    status: REPORT_STATUS.OPEN,
-    issue_type_id: resolvedIssueTypeId,
-    occurrence_date: occurrence_date || getLocalDateString(),
-    product_type_id: resolvedProductTypeId,
-    batch_number,
-    complaint_location: resolvedLocationName,
-    location_id: resolvedLocationId,
-    severity: normalizeSeverityValue(severity),
-    department_id: normalizeId(department_id),
-    description,
-    evidence_url,
-    site_id: reporter.site_id || null,
-  }
+  let data = null
+  let lastInsertError = null
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1) {
+      referenceNo = await fetchNextNcrReferenceNo(year)
+    }
+    const payload = {
+      reference_no: referenceNo,
+      reported_by: reporter.id,
+      status: REPORT_STATUS.OPEN,
+      issue_type_id: resolvedIssueTypeId,
+      occurrence_date: occurrence_date || getLocalDateString(),
+      product_type_id: resolvedProductTypeId,
+      batch_number,
+      complaint_location: resolvedLocationName,
+      location_id: resolvedLocationId,
+      severity: normalizeSeverityValue(severity),
+      department_id: normalizeId(department_id),
+      description,
+      evidence_url,
+      clause_id: clause_id || null,
+      site_id: reporter.site_id || null,
+    }
 
-  const { data, error } = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()
-  if (error) throw error
+    const res = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()
+    if (!res.error) {
+      data = res.data
+      lastInsertError = null
+      break
+    }
+    lastInsertError = res.error
+    if (res.error.code !== '23505') break
+  }
+  if (lastInsertError) throw lastInsertError
 
   if (data && data.id) {
     analyzeAndClusterReportInBackground(data.id).catch(err => {
@@ -867,13 +900,7 @@ export async function createNcrReportWithUpload({ body, files, reportedByAuthId 
   if (!reporter) throw Object.assign(new Error('Reporter profile not found.'), { status: 404 })
 
   const year = new Date().getFullYear()
-  const { data: records, error: latestError } = await supabase
-    .from('ncr_reports')
-    .select('reference_no')
-    .ilike('reference_no', `NCR-${year}-%`)
-  if (latestError) throw latestError
-
-  const referenceNo = generateNextNcrReferenceNo(records || [])
+  let referenceNo = await fetchNextNcrReferenceNo(year)
 
   const { id: resolvedLocationId, name: resolvedLocationName } = await resolveCatalogEntry({
     table: 'locations', idColumn: 'id', nameColumn: 'location_name',
@@ -934,25 +961,40 @@ export async function createNcrReportWithUpload({ body, files, reportedByAuthId 
     }
   }
 
-  const payload = {
-    reference_no: referenceNo,
-    reported_by: reporter.id,
-    status: REPORT_STATUS.OPEN,
-    issue_type_id: resolvedIssueTypeId,
-    occurrence_date: occurrence_date || getLocalDateString(),
-    product_type_id: resolvedProductTypeId,
-    batch_number,
-    complaint_location: resolvedLocationName,
-    location_id: resolvedLocationId,
-    severity: normalizeSeverityValue(severity),
-    department_id: normalizeId(department_id),
-    description,
-    evidence_files: evidenceUrls.length > 0 ? evidenceUrls : [],
-    site_id: reporter.site_id || null,
-  }
+  let data = null
+  let lastInsertError = null
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1) {
+      referenceNo = await fetchNextNcrReferenceNo(year)
+    }
+    const payload = {
+      reference_no: referenceNo,
+      reported_by: reporter.id,
+      status: REPORT_STATUS.OPEN,
+      issue_type_id: resolvedIssueTypeId,
+      occurrence_date: occurrence_date || getLocalDateString(),
+      product_type_id: resolvedProductTypeId,
+      batch_number,
+      complaint_location: resolvedLocationName,
+      location_id: resolvedLocationId,
+      severity: normalizeSeverityValue(severity),
+      department_id: normalizeId(department_id),
+      description,
+      evidence_files: evidenceUrls.length > 0 ? evidenceUrls : [],
+      clause_id: clause_id || null,
+      site_id: reporter.site_id || null,
+    }
 
-  const { data, error } = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()
-  if (error) throw error
+    const res = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()
+    if (!res.error) {
+      data = res.data
+      lastInsertError = null
+      break
+    }
+    lastInsertError = res.error
+    if (res.error.code !== '23505') break
+  }
+  if (lastInsertError) throw lastInsertError
 
   return { data, referenceNo, reporter }
 }
