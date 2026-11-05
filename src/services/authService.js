@@ -2,6 +2,14 @@ import { supabase } from '@/utils/supabase'
 
 let cachedAuthId = null
 
+supabase.auth.onAuthStateChange((_event, session) => {
+  cachedAuthId = session?.user?.id || null
+})
+
+export function clearCachedAuthId() {
+  cachedAuthId = null
+}
+
 export async function getCurrentAuthId() {
   try {
     if (!cachedAuthId) {
@@ -14,4 +22,4 @@ export async function getCurrentAuthId() {
   }
 }
 
-export default { getCurrentAuthId }
+export default { getCurrentAuthId, clearCachedAuthId }

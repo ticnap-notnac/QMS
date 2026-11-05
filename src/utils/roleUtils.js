@@ -11,6 +11,7 @@ export function isAdminOrSuperAdminRole(roleName) {
     norm === 'super_admin' ||
     norm === 'superadmin' ||
     norm === 'system administrator' ||
+    norm === 'system_administrator' ||
     norm === 'administrator'
   )
 }
@@ -18,5 +19,5 @@ export function isAdminOrSuperAdminRole(roleName) {
 export function isAdminRole(roleName) {
   const norm = String(roleName || '').trim().toLowerCase()
   if (!norm) return false
-  return isAdminOrSuperAdminRole(norm) || norm.includes('admin')
+  return isAdminOrSuperAdminRole(norm)
 }

@@ -11,6 +11,7 @@ import { logAction } from '@/services/logService'
 import { useIdleTimeout } from './hooks/useIdleTimeout'
 import Toast from './components/UI/Toast.jsx'
 import { friendlyError } from './utils/friendlyError.js'
+import { clearCachedAuthId } from './services/authService.js'
 
 function normalizeRoleValue(value) {
   return String(value || '').trim().toLowerCase()
@@ -136,9 +137,6 @@ function AppInner() {
     // Fallbacks when role couldn't be resolved
     if (!resolvedRoleName) {
       setUserPosition(profile.user_name || 'Position')
-      if (profile.user_name && profile.user_name.toLowerCase().includes('admin')) {
-        setUserRole('admin')
-      }
     }
   }
 
@@ -296,6 +294,7 @@ function AppInner() {
 
       // Perform actual network signout
       await supabase.auth.signOut()
+      clearCachedAuthId()
       setToast({ message: 'You have been successfully logged out.', type: 'success' })
     } catch (err) {
       setToast({ message: friendlyError(err, 'Sign-out failed. Please refresh the page and try again.'), type: 'error' })

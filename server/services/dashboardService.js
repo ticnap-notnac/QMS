@@ -119,7 +119,7 @@ function isAdminRole(roleName) {
     norm === 'system administrator' ||
     norm === 'system_administrator' ||
     norm === 'administrator' ||
-    norm.includes('admin')
+    norm === 'superadmin'
   )
 }
 
