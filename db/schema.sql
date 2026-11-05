@@ -541,6 +541,25 @@ AS $$
   SELECT site_id FROM public.users WHERE auth_id = auth.uid() LIMIT 1;
 $$;
 
+CREATE OR REPLACE FUNCTION public.current_user_has_right(required_right text)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT public.is_current_user_admin() OR EXISTS (
+    SELECT 1
+    FROM public.users u
+    INNER JOIN public.roles r ON r.id = u.role_id
+    WHERE u.auth_id = auth.uid()
+      AND coalesce(u.status, 'ACTIVE')::text <> 'DEACTIVATED'
+      AND r.permissions IS NOT NULL
+      AND jsonb_typeof(r.permissions -> 'rights') = 'array'
+      AND (r.permissions -> 'rights') ? required_right
+  );
+$$;
+
 -- =============================================================================
 -- 3. ROW LEVEL SECURITY (RLS) POLICIES (Live Database State)
 -- =============================================================================
@@ -577,14 +596,10 @@ CREATE POLICY "Allow authenticated select on departments" ON public.departments 
 
 -- audit_schedules
 ALTER TABLE public.audit_schedules ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "audit_schedules_update_authenticated" ON public.audit_schedules FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "audit_schedules_select_authenticated" ON public.audit_schedules FOR SELECT TO authenticated USING (true);
-CREATE POLICY "audit_schedules_insert_authenticated" ON public.audit_schedules FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "audit_schedules_delete_authenticated" ON public.audit_schedules FOR DELETE TO authenticated USING (true);
-CREATE POLICY "Site-scoped select audit_schedules" ON public.audit_schedules FOR SELECT TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
-CREATE POLICY "Site-scoped insert audit_schedules" ON public.audit_schedules FOR INSERT TO authenticated WITH CHECK ((site_id = current_user_site_id()));
-CREATE POLICY "Site-scoped update audit_schedules" ON public.audit_schedules FOR UPDATE TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
-CREATE POLICY "Site-scoped delete audit_schedules" ON public.audit_schedules FOR DELETE TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
+CREATE POLICY "Site-scoped select audit_schedules" ON public.audit_schedules FOR SELECT TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped insert audit_schedules" ON public.audit_schedules FOR INSERT TO authenticated WITH CHECK (((site_id IS NOT DISTINCT FROM public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped update audit_schedules" ON public.audit_schedules FOR UPDATE TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin())) WITH CHECK (((site_id IS NOT DISTINCT FROM public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped delete audit_schedules" ON public.audit_schedules FOR DELETE TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin()));
 
 -- system_logs
 ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
@@ -594,22 +609,23 @@ CREATE POLICY "select_admins" ON public.system_logs FOR SELECT TO public USING (
 -- iso_standards
 ALTER TABLE public.iso_standards ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "auth_select_iso_standards" ON public.iso_standards FOR SELECT TO authenticated USING (true);
-CREATE POLICY "auth_insert_iso_standards" ON public.iso_standards FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "auth_update_iso_standards" ON public.iso_standards FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_delete_iso_standards" ON public.iso_standards FOR DELETE TO authenticated USING (true);
+CREATE POLICY "admin_insert_iso_standards" ON public.iso_standards FOR INSERT TO authenticated WITH CHECK (public.current_user_has_right('manage_iso'));
+CREATE POLICY "admin_update_iso_standards" ON public.iso_standards FOR UPDATE TO authenticated USING (public.current_user_has_right('manage_iso')) WITH CHECK (public.current_user_has_right('manage_iso'));
+CREATE POLICY "admin_delete_iso_standards" ON public.iso_standards FOR DELETE TO authenticated USING (public.current_user_has_right('manage_iso'));
 
 -- iso_clauses
 ALTER TABLE public.iso_clauses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "auth_select_iso_clauses" ON public.iso_clauses FOR SELECT TO authenticated USING (true);
-CREATE POLICY "auth_insert_iso_clauses" ON public.iso_clauses FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "auth_update_iso_clauses" ON public.iso_clauses FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_delete_iso_clauses" ON public.iso_clauses FOR DELETE TO authenticated USING (true);
+CREATE POLICY "admin_insert_iso_clauses" ON public.iso_clauses FOR INSERT TO authenticated WITH CHECK (public.current_user_has_right('manage_iso'));
+CREATE POLICY "admin_update_iso_clauses" ON public.iso_clauses FOR UPDATE TO authenticated USING (public.current_user_has_right('manage_iso')) WITH CHECK (public.current_user_has_right('manage_iso'));
+CREATE POLICY "admin_delete_iso_clauses" ON public.iso_clauses FOR DELETE TO authenticated USING (public.current_user_has_right('manage_iso'));
 
 -- iso_clause_groups
 ALTER TABLE public.iso_clause_groups ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "auth_select_iso_clause_groups" ON public.iso_clause_groups FOR SELECT TO authenticated USING (true);
-CREATE POLICY "auth_insert_iso_clause_groups" ON public.iso_clause_groups FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "auth_update_iso_clause_groups" ON public.iso_clause_groups FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "admin_insert_iso_clause_groups" ON public.iso_clause_groups FOR INSERT TO authenticated WITH CHECK (public.current_user_has_right('manage_iso'));
+CREATE POLICY "admin_update_iso_clause_groups" ON public.iso_clause_groups FOR UPDATE TO authenticated USING (public.current_user_has_right('manage_iso')) WITH CHECK (public.current_user_has_right('manage_iso'));
+CREATE POLICY "admin_delete_iso_clause_groups" ON public.iso_clause_groups FOR DELETE TO authenticated USING (public.current_user_has_right('manage_iso'));
 
 -- locations
 ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
@@ -621,13 +637,10 @@ CREATE POLICY "Allow authenticated select on product_types" ON public.product_ty
 
 -- qddr_reports
 ALTER TABLE public.qddr_reports ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow authenticated select on qddr_reports" ON public.qddr_reports FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow authenticated insert on qddr_reports" ON public.qddr_reports FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Allow authenticated update on qddr_reports" ON public.qddr_reports FOR UPDATE TO authenticated USING (true);
-CREATE POLICY "Site-scoped select qddr_reports" ON public.qddr_reports FOR SELECT TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
-CREATE POLICY "Site-scoped insert qddr_reports" ON public.qddr_reports FOR INSERT TO authenticated WITH CHECK ((site_id = current_user_site_id()));
-CREATE POLICY "Site-scoped update qddr_reports" ON public.qddr_reports FOR UPDATE TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
-CREATE POLICY "Site-scoped delete qddr_reports" ON public.qddr_reports FOR DELETE TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
+CREATE POLICY "Site-scoped select qddr_reports" ON public.qddr_reports FOR SELECT TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped insert qddr_reports" ON public.qddr_reports FOR INSERT TO authenticated WITH CHECK (((site_id IS NOT DISTINCT FROM public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped update qddr_reports" ON public.qddr_reports FOR UPDATE TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin())) WITH CHECK (((site_id IS NOT DISTINCT FROM public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped delete qddr_reports" ON public.qddr_reports FOR DELETE TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin()));
 
 -- notifications
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
@@ -637,21 +650,17 @@ CREATE POLICY "Users update own notifications" ON public.notifications FOR UPDAT
 
 -- ncr_reports
 ALTER TABLE public.ncr_reports ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "authenticated users can read closed ncr reports" ON public.ncr_reports FOR SELECT TO authenticated USING (((status)::text = 'CLOSED'::text));
-CREATE POLICY "Site-scoped select ncr_reports" ON public.ncr_reports FOR SELECT TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
-CREATE POLICY "Site-scoped insert ncr_reports" ON public.ncr_reports FOR INSERT TO authenticated WITH CHECK ((site_id = current_user_site_id()));
-CREATE POLICY "Site-scoped update ncr_reports" ON public.ncr_reports FOR UPDATE TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
-CREATE POLICY "Site-scoped delete ncr_reports" ON public.ncr_reports FOR DELETE TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
+CREATE POLICY "Site-scoped select ncr_reports" ON public.ncr_reports FOR SELECT TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped insert ncr_reports" ON public.ncr_reports FOR INSERT TO authenticated WITH CHECK (((site_id IS NOT DISTINCT FROM public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped update ncr_reports" ON public.ncr_reports FOR UPDATE TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin())) WITH CHECK (((site_id IS NOT DISTINCT FROM public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped delete ncr_reports" ON public.ncr_reports FOR DELETE TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin()));
 
 -- car_reports
 ALTER TABLE public.car_reports ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "car_reports_select_authenticated" ON public.car_reports FOR SELECT TO authenticated USING (true);
-CREATE POLICY "car_reports_insert_authenticated" ON public.car_reports FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "car_reports_update_authenticated" ON public.car_reports FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Site-scoped select car_reports" ON public.car_reports FOR SELECT TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
-CREATE POLICY "Site-scoped insert car_reports" ON public.car_reports FOR INSERT TO authenticated WITH CHECK ((site_id = current_user_site_id()));
-CREATE POLICY "Site-scoped update car_reports" ON public.car_reports FOR UPDATE TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
-CREATE POLICY "Site-scoped delete car_reports" ON public.car_reports FOR DELETE TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
+CREATE POLICY "Site-scoped select car_reports" ON public.car_reports FOR SELECT TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped insert car_reports" ON public.car_reports FOR INSERT TO authenticated WITH CHECK (((site_id IS NOT DISTINCT FROM public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped update car_reports" ON public.car_reports FOR UPDATE TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin())) WITH CHECK (((site_id IS NOT DISTINCT FROM public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped delete car_reports" ON public.car_reports FOR DELETE TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin()));
 
 -- audit_runs
 ALTER TABLE public.audit_runs ENABLE ROW LEVEL SECURITY;
@@ -669,7 +678,9 @@ CREATE POLICY "audit_results_delete" ON public.audit_results FOR DELETE TO authe
 
 -- car_clause_links
 ALTER TABLE public.car_clause_links ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow admin and auditor read access to car_clause_links" ON public.car_clause_links FOR SELECT TO authenticated USING ((( SELECT users.role_id FROM users WHERE (users.auth_id = auth.uid()) LIMIT 1) = ANY (ARRAY[(1)::bigint, (2)::bigint])));
+CREATE POLICY "Allow authenticated select on car_clause_links" ON public.car_clause_links FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow authorized delete on car_clause_links" ON public.car_clause_links FOR DELETE TO authenticated USING ((public.current_user_has_right('manage_audit_schedules') OR public.current_user_has_right('edit_delete_report')));
+CREATE POLICY "Allow all actions for service role on car_clause_links" ON public.car_clause_links FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- sites
 ALTER TABLE public.sites ENABLE ROW LEVEL SECURITY;
@@ -677,10 +688,10 @@ CREATE POLICY "Authenticated users can read sites" ON public.sites FOR SELECT TO
 
 -- audit_checklist_templates
 ALTER TABLE public.audit_checklist_templates ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Site-scoped select templates" ON public.audit_checklist_templates FOR SELECT TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
-CREATE POLICY "Site-scoped insert templates" ON public.audit_checklist_templates FOR INSERT TO authenticated WITH CHECK ((site_id = current_user_site_id()));
-CREATE POLICY "Site-scoped update templates" ON public.audit_checklist_templates FOR UPDATE TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
-CREATE POLICY "Site-scoped delete templates" ON public.audit_checklist_templates FOR DELETE TO authenticated USING (((site_id IS NULL) OR (site_id = current_user_site_id())));
+CREATE POLICY "Site-scoped select templates" ON public.audit_checklist_templates FOR SELECT TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped insert templates" ON public.audit_checklist_templates FOR INSERT TO authenticated WITH CHECK (((site_id IS NOT DISTINCT FROM public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped update templates" ON public.audit_checklist_templates FOR UPDATE TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin())) WITH CHECK (((site_id IS NOT DISTINCT FROM public.current_user_site_id()) OR public.is_current_user_admin()));
+CREATE POLICY "Site-scoped delete templates" ON public.audit_checklist_templates FOR DELETE TO authenticated USING (((site_id IS NULL) OR (site_id = public.current_user_site_id()) OR public.is_current_user_admin()));
 
 -- audit_checklist_items
 ALTER TABLE public.audit_checklist_items ENABLE ROW LEVEL SECURITY;
@@ -698,3 +709,64 @@ CREATE POLICY "Allow all actions for service role" ON public.trend_clusters FOR 
 ALTER TABLE public.positions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow read access to all authenticated users" ON public.positions FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Allow all actions for service role" ON public.positions FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- issue_types
+ALTER TABLE public.issue_types ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated select on issue_types" ON public.issue_types FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow all actions for service role on issue_types" ON public.issue_types FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- qddr_clause_links
+ALTER TABLE public.qddr_clause_links ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated select on qddr_clause_links" ON public.qddr_clause_links FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow authorized delete on qddr_clause_links" ON public.qddr_clause_links FOR DELETE TO authenticated USING ((public.current_user_has_right('manage_audit_schedules') OR public.current_user_has_right('edit_delete_report')));
+CREATE POLICY "Allow all actions for service role on qddr_clause_links" ON public.qddr_clause_links FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- car_ncr_links
+ALTER TABLE public.car_ncr_links ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated select on car_ncr_links" ON public.car_ncr_links FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow all actions for service role on car_ncr_links" ON public.car_ncr_links FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- qddr_ncr_links
+ALTER TABLE public.qddr_ncr_links ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated select on qddr_ncr_links" ON public.qddr_ncr_links FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow all actions for service role on qddr_ncr_links" ON public.qddr_ncr_links FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- corrective_actions
+ALTER TABLE public.corrective_actions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated select on corrective_actions" ON public.corrective_actions FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow all actions for service role on corrective_actions" ON public.corrective_actions FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- preventive_actions
+ALTER TABLE public.preventive_actions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated select on preventive_actions" ON public.preventive_actions FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow all actions for service role on preventive_actions" ON public.preventive_actions FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- ncr_report_ratings
+ALTER TABLE public.ncr_report_ratings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated select on ncr_report_ratings" ON public.ncr_report_ratings FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow all actions for service role on ncr_report_ratings" ON public.ncr_report_ratings FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- case_repository
+ALTER TABLE public.case_repository ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated select on case_repository" ON public.case_repository FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow all actions for service role on case_repository" ON public.case_repository FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- ai_predictions
+ALTER TABLE public.ai_predictions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated select on ai_predictions" ON public.ai_predictions FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow all actions for service role on ai_predictions" ON public.ai_predictions FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- documents
+ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow authenticated select on documents" ON public.documents FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow all actions for service role on documents" ON public.documents FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- audit_logs
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins can view audit_logs" ON public.audit_logs FOR SELECT TO authenticated USING (public.is_current_user_admin());
+CREATE POLICY "Allow all actions for service role on audit_logs" ON public.audit_logs FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- system_log_reads
+ALTER TABLE public.system_log_reads ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins can view system_log_reads" ON public.system_log_reads FOR SELECT TO authenticated USING (public.is_current_user_admin());
+CREATE POLICY "Allow all actions for service role on system_log_reads" ON public.system_log_reads FOR ALL TO service_role USING (true) WITH CHECK (true);
