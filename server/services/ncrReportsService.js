@@ -1373,6 +1373,19 @@ export async function assignReportToEmployee({ reportId, assignedToId, currentUs
   return { report: updatedReport || null, assignedTo: assignee }
 }
 
+// ncr_reports stores FK ids; case_repository stores readable names.
+async function resolveCaseIssueTypeName(issueTypeId) {
+  if (!issueTypeId) return 'ncr'
+  const { data } = await supabase.from('issue_types').select('issue_type_name').eq('id', issueTypeId).maybeSingle()
+  return data?.issue_type_name || 'ncr'
+}
+
+async function resolveCaseProductTypeName(productTypeId) {
+  if (!productTypeId) return null
+  const { data } = await supabase.from('product_types').select('*').eq('id', productTypeId).maybeSingle()
+  return data?.product_name || data?.product_type_name || null
+}
+
 /**
  * Submits an effectiveness rating for a closed NCR report.
  * @param {Object} params - Rating parameters.
@@ -1395,7 +1408,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
 
   const { data: report, error: reportError } = await supabase
     .from('ncr_reports')
-    .select('id, reference_no, status, department_id, issue_type, investigation_details, resolution_details')
+    .select('id, reference_no, status, department_id, severity, issue_type_id, product_type_id, corrective_action, investigation_details, resolution_details')
     .eq('id', normalizedReportId)
     .maybeSingle()
   if (reportError) throw reportError
@@ -1484,13 +1497,13 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
 
       if (!existingCase && !existingCaseError && (report.corrective_action || report.investigation_details)) {
         await supabase.from('case_repository').insert([{
-          issue_type: report.issue_type || 'ncr',
+          issue_type: await resolveCaseIssueTypeName(report.issue_type_id),
           corrective_action: report.corrective_action || report.investigation_details || 'None provided',
           preventive_action: report.resolution_details || 'None provided',
           effectiveness_score: effectivenessScore,
           severity: report.severity || null,
           department_id: report.department_id || null,
-          product_type: report.product_type || null,
+          product_type: await resolveCaseProductTypeName(report.product_type_id),
           times_used: 1
         }])
       } else if (existingCase) {
