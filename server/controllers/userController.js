@@ -6,7 +6,8 @@ import {
   createUserWithAuth,
   deleteUserById,
   updateUserById,
-  updateUserStatusById, 
+  updateUserStatusById,
+  assignTeamRoster,
 } from '../services/userService.js'
 
 import { isAdminOrSuperAdminRole } from '../utils/roleUtils.js'
@@ -19,7 +20,7 @@ export async function getUsers(_req, res) {
 }
 
 export async function createUser(req, res) {
-  const { firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId, positionId } = req.body || {}
+  const { firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId, positionId, teamLeaderId } = req.body || {}
   const actorRoleName = req.dbUser?.role_name || ''
 
   // Basic input validation
@@ -52,6 +53,7 @@ export async function createUser(req, res) {
     departmentId: departmentId ? Number(departmentId) : null,
     siteId: siteId ? Number(siteId) : null,
     positionId: positionId ? Number(positionId) : null,
+    teamLeaderId: teamLeaderId ? Number(teamLeaderId) : null,
   })
 
   if (error) {
@@ -83,7 +85,6 @@ export async function deleteUser(req, res) {
 export async function updateUser(req, res) {
   const { id } = req.params
   const actorAuthId = getRequestActor(req)
-  const actorRoleName = req.dbUser?.role_name || ''
 
   // Basic validation: ensure body is not empty
   if (!req.body || Object.keys(req.body).length === 0) {
@@ -119,7 +120,20 @@ export async function updateUserStatus(req, res) {
 
   if (!status) return res.status(400).json({ error: 'Status is required.' })
 
-  const { success, error, status: httpStatus } = await updateUserStatusById(id, status, actorAuthId)
+  const { success, error, status: httpStatus } = await updateUserStatusById(id, status, actorAuthId, req.dbUser)
   if (!success) return res.status(httpStatus).json({ error })
+  return res.json({ success })
+}
+
+export async function updateTeamRoster(req, res) {
+  const { teamLeaderId, memberIds } = req.body || {}
+  const actorAuthId = getRequestActor(req)
+
+  if (!teamLeaderId) {
+    return res.status(400).json({ error: 'Team Leader ID is required.' })
+  }
+
+  const { success, error, status: httpStatus } = await assignTeamRoster(teamLeaderId, memberIds, actorAuthId)
+  if (!success) return res.status(httpStatus || 400).json({ error })
   return res.json({ success })
 }

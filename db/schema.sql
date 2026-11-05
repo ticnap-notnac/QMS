@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS public.users (
   created_at timestamp NULL DEFAULT now(),
   auth_id uuid UNIQUE NULL,
   site_id bigint NULL REFERENCES public.sites(id) ON DELETE SET NULL,
-  position_id bigint NULL REFERENCES public.positions(id) ON DELETE SET NULL
+  position_id bigint NULL REFERENCES public.positions(id) ON DELETE SET NULL,
+  team_leader_id bigint NULL REFERENCES public.users(id) ON DELETE SET NULL
 );
 
 -- Table: locations
@@ -517,6 +518,7 @@ BEGIN
      OR NEW.site_id IS DISTINCT FROM OLD.site_id
      OR NEW.department_id IS DISTINCT FROM OLD.department_id
      OR NEW.position_id IS DISTINCT FROM OLD.position_id
+     OR NEW.team_leader_id IS DISTINCT FROM OLD.team_leader_id
      OR NEW.status IS DISTINCT FROM OLD.status
      OR NEW.password_hash IS DISTINCT FROM OLD.password_hash
      OR NEW.auth_id IS DISTINCT FROM OLD.auth_id

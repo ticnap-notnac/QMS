@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 
 function EditUserModal({
@@ -15,11 +15,23 @@ function EditUserModal({
   sitesLoading,
   availablePositions = [],
   positionsLoading,
+  availableTeamLeaders = [],
   loading,
   error,
   message,
 }) {
   const [showPassword, setShowPassword] = useState(false)
+  const [tlSearch, setTlSearch] = useState('')
+
+  const filteredTeamLeaders = useMemo(() => {
+    const q = tlSearch.trim().toLowerCase()
+    const list = (availableTeamLeaders || []).filter((tl) => String(tl.id) !== String(formData?.id))
+    if (!q) return list
+    return list.filter((tl) => {
+      const label = `${tl.first_name || ''} ${tl.last_name || ''} ${tl.user_name || ''} ${tl.department_name || ''}`.toLowerCase()
+      return label.includes(q)
+    })
+  }, [availableTeamLeaders, tlSearch, formData?.id])
 
   if (!isOpen) return null
 
@@ -74,8 +86,6 @@ function EditUserModal({
           </div>
 
           <div className="modal-grid-3">
-
-
             <label className="panel-column">
               <span className="small-label">Department: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <select name="departmentId" value={formData.departmentId} onChange={onChange} className="form-input-reports" disabled={departmentsLoading || availableDepartments.length === 0}>
@@ -154,10 +164,40 @@ function EditUserModal({
                 </button>
               </div>
             </label>
+
+            <label className="panel-column">
+              <span className="small-label">Assigned Team Leader (Searchable):</span>
+              <input
+                type="text"
+                value={tlSearch}
+                onChange={(e) => setTlSearch(e.target.value)}
+                className="form-input-reports"
+                placeholder="Filter Team Leaders..."
+                style={{ marginBottom: '6px' }}
+              />
+              <select
+                name="teamLeaderId"
+                value={formData.teamLeaderId || ''}
+                onChange={onChange}
+                className="form-input-reports"
+              >
+                <option value="">No Team Leader (Unassigned)</option>
+                {filteredTeamLeaders.map((tl) => {
+                  const fullName = `${tl.first_name || ''} ${tl.last_name || ''}`.trim() || tl.user_name || tl.email
+                  return (
+                    <option key={tl.id} value={tl.id}>
+                      {fullName} {tl.department_name ? `(${tl.department_name})` : ''}
+                    </option>
+                  )
+                })}
+              </select>
+            </label>
           </div>
 
           <div className="modal-submit-row">
-            <button className="btn-add-action" type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</button>
+            <button className="btn-add-action" type="submit" disabled={loading}>
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
           </div>
         </form>
       </div>

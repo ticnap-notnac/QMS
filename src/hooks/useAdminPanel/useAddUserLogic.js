@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useLookup } from '@/context/LookupContext'
 import useUserManager from '@/hooks/useUserManager'
-import { createUser, updateUser } from '@/services/userService'
+import { createUser, updateUser, assignTeamRoster } from '@/services/userService'
 import { supabase } from '@/utils/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { isSuperAdminRole, isAdminOrSuperAdminRole } from '@/utils/roleUtils.js'
@@ -30,6 +30,13 @@ export default function useAddUserLogic() {
   const [editFormError, setEditFormError] = useState('')
   const [editFormMessage, setEditFormMessage] = useState('')
   const [editSubmitting, setEditSubmitting] = useState(false)
+
+  // Manage Team Roster Modal state
+  const [isManageRosterModalOpen, setIsManageRosterModalOpen] = useState(false)
+  const [rosterTeamLeaderId, setRosterTeamLeaderId] = useState('')
+  const [rosterSelectedIds, setRosterSelectedIds] = useState([])
+  const [rosterSaving, setRosterSaving] = useState(false)
+  const [rosterError, setRosterError] = useState('')
   
   const [newUser, setNewUser] = useState({
     firstName: '',
@@ -42,6 +49,7 @@ export default function useAddUserLogic() {
     departmentId: '',
     siteId: '',
     positionId: '',
+    teamLeaderId: '',
   })
 
   // useUserManager orchestrates the DB interface
@@ -79,6 +87,7 @@ export default function useAddUserLogic() {
       departmentId: '',
       siteId: '',
       positionId: '',
+      teamLeaderId: '',
     })
     setIsAddUserModalOpen(true)
   }
@@ -128,6 +137,7 @@ export default function useAddUserLogic() {
         departmentId: newUser.departmentId || null,
         siteId: newUser.siteId || null,
         positionId: newUser.positionId || null,
+        teamLeaderId: newUser.teamLeaderId || null,
       })
 
       setFormMessage(`Created ${result.authUser.email} successfully.`)
@@ -143,6 +153,7 @@ export default function useAddUserLogic() {
         departmentId: '',
         siteId: '',
         positionId: '',
+        teamLeaderId: '',
       })
       setIsAddUserModalOpen(false)
       await reloadUsers()
@@ -192,6 +203,7 @@ export default function useAddUserLogic() {
       departmentId: user.department_id ? String(user.department_id) : '',
       siteId: user.site_id ? String(user.site_id) : '',
       positionId: user.position_id ? String(user.position_id) : '',
+      teamLeaderId: user.team_leader_id ? String(user.team_leader_id) : '',
       status: user.status || 'ACTIVE',
       password: '',
     })
@@ -249,6 +261,7 @@ export default function useAddUserLogic() {
 
       if (editingUser.departmentId !== undefined) payload.departmentId = editingUser.departmentId || null
       if (editingUser.siteId !== undefined) payload.siteId = editingUser.siteId || null
+      if (editingUser.teamLeaderId !== undefined) payload.teamLeaderId = editingUser.teamLeaderId || null
       if (editingUser.status !== undefined) payload.status = editingUser.status
       if (editingUser.password && editingUser.password.trim().length > 0) {
         if (editingUser.password.trim().length < 6) {
@@ -289,6 +302,84 @@ export default function useAddUserLogic() {
   const siteNameById = useMemo(() => new Map((sites || []).map((site) => [String(site.id), site.site_name])), [sites])
   const positionNameById = useMemo(() => new Map((positions || []).map((position) => [String(position.id), position.position_name])), [positions])
 
+  const teamLeaderNameById = useMemo(
+    () =>
+      new Map(
+        (adminUsers || []).map((u) => [
+          String(u.id),
+          `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.user_name || u.email || 'Unnamed',
+        ])
+      ),
+    [adminUsers]
+  )
+
+  const availableTeamLeaders = useMemo(() => {
+    return (adminUsers || []).filter((u) => {
+      const rName = String(u.role_name || roleNameById.get(String(u.role_id)) || '').trim().toLowerCase()
+      return rName === 'team leader' && String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE'
+    })
+  }, [adminUsers, roleNameById])
+
+  // Manage Team Roster Handlers
+  const openManageRosterModal = () => {
+    setRosterError('')
+    const defaultTlId = availableTeamLeaders[0]?.id ? String(availableTeamLeaders[0].id) : ''
+    setRosterTeamLeaderId(defaultTlId)
+    if (defaultTlId) {
+      const currentMembers = (adminUsers || [])
+        .filter((u) => String(u.team_leader_id) === defaultTlId)
+        .map((u) => String(u.id))
+      setRosterSelectedIds(currentMembers)
+    } else {
+      setRosterSelectedIds([])
+    }
+    setIsManageRosterModalOpen(true)
+  }
+
+  const closeManageRosterModal = () => {
+    if (!rosterSaving) setIsManageRosterModalOpen(false)
+  }
+
+  const handleSelectRosterTeamLeader = (tlId) => {
+    setRosterTeamLeaderId(tlId)
+    setRosterError('')
+    if (tlId) {
+      const currentMembers = (adminUsers || [])
+        .filter((u) => String(u.team_leader_id) === String(tlId))
+        .map((u) => String(u.id))
+      setRosterSelectedIds(currentMembers)
+    } else {
+      setRosterSelectedIds([])
+    }
+  }
+
+  const handleToggleRosterMember = (userId) => {
+    const idStr = String(userId)
+    setRosterSelectedIds((prev) =>
+      prev.includes(idStr) ? prev.filter((id) => id !== idStr) : [...prev, idStr]
+    )
+  }
+
+  const handleSaveTeamRoster = async (e) => {
+    if (e) e.preventDefault()
+    if (!rosterTeamLeaderId) {
+      setRosterError('Please select a Team Leader.')
+      return
+    }
+    try {
+      setRosterSaving(true)
+      setRosterError('')
+      await assignTeamRoster(rosterTeamLeaderId, rosterSelectedIds)
+      await reloadUsers()
+      setIsManageRosterModalOpen(false)
+      setToast({ message: 'Team Leader roster updated successfully.', type: 'success' })
+    } catch (err) {
+      setRosterError(err?.message || 'Failed to update team roster.')
+    } finally {
+      setRosterSaving(false)
+    }
+  }
+
   const filteredUsers = useMemo(() => {
     let result = adminUsers || []
 
@@ -316,6 +407,7 @@ export default function useAddUserLogic() {
     departmentNameById,
     siteNameById,
     positionNameById,
+    teamLeaderNameById,
     onEdit: openEditUserModal,
     onDelete: handleDeleteUser,
   }
@@ -334,6 +426,7 @@ export default function useAddUserLogic() {
     sitesLoading: lookupsLoading,
     availablePositions: positions,
     positionsLoading: lookupsLoading,
+    availableTeamLeaders,
     loading: submitting,
     error: formError,
     message: formMessage,
@@ -353,42 +446,62 @@ export default function useAddUserLogic() {
     sitesLoading: lookupsLoading,
     availablePositions: positions,
     positionsLoading: lookupsLoading,
+    availableTeamLeaders,
     loading: editSubmitting,
     error: editFormError,
     message: editFormMessage,
   }
 
-    const confirmDialogProps = {
-      isOpen: !!userToDelete,
-      title: 'Delete User',
-      message: userToDelete 
-        ? `This will delete ${`${userToDelete.first_name || ''} ${userToDelete.last_name || ''}`.trim() || userToDelete.user_name || userToDelete.email} from the users table.\n\nThis does not remove the Supabase auth account unless you also delete it from Auth separately. Continue?`
-        : '',
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      isDestructive: true,
-      isLoading: !!deletingUserId,
-      onConfirm: confirmDeleteUser,
-      onCancel: cancelDeleteUser,
-    }
+  const manageRosterModalProps = {
+    isOpen: isManageRosterModalOpen,
+    onClose: closeManageRosterModal,
+    teamLeaders: availableTeamLeaders,
+    allUsers: adminUsers || [],
+    selectedTeamLeaderId: rosterTeamLeaderId,
+    onSelectTeamLeader: handleSelectRosterTeamLeader,
+    selectedMemberIds: rosterSelectedIds,
+    onToggleMember: handleToggleRosterMember,
+    onSetSelectedMembers: setRosterSelectedIds,
+    onSubmit: handleSaveTeamRoster,
+    saving: rosterSaving,
+    error: rosterError,
+    departmentNameById,
+    roleNameById,
+  }
 
-    return {
-      searchQuery,
-      setSearchQuery,
-      statusFilter,
-      setStatusFilter,
-      reloadUsers,
-      openAddUserModal,
-      usersLoading,
-      usersError,
-      filteredUsers,
-      usersTableProps,
-      addUserModalProps,
-      editUserModalProps,
-      confirmDialogProps,
-      isEditUserModalOpen,
-      closeEditUserModal,
-      toast,
-      setToast,
-    }
+  const confirmDialogProps = {
+    isOpen: !!userToDelete,
+    title: 'Delete User',
+    message: userToDelete 
+      ? `This will delete ${`${userToDelete.first_name || ''} ${userToDelete.last_name || ''}`.trim() || userToDelete.user_name || userToDelete.email} from the users table.\n\nThis does not remove the Supabase auth account unless you also delete it from Auth separately. Continue?`
+      : '',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    isDestructive: true,
+    isLoading: !!deletingUserId,
+    onConfirm: confirmDeleteUser,
+    onCancel: cancelDeleteUser,
+  }
+
+  return {
+    searchQuery,
+    setSearchQuery,
+    statusFilter,
+    setStatusFilter,
+    reloadUsers,
+    openAddUserModal,
+    openManageRosterModal,
+    usersLoading,
+    usersError,
+    filteredUsers,
+    usersTableProps,
+    addUserModalProps,
+    editUserModalProps,
+    manageRosterModalProps,
+    confirmDialogProps,
+    isEditUserModalOpen,
+    closeEditUserModal,
+    toast,
+    setToast,
+  }
 }

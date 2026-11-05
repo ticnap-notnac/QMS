@@ -112,7 +112,7 @@ export async function fetchDepartments() {
 export async function fetchUsers() {
   const { data, error } = await supabase
     .from('users')
-    .select('id, first_name, last_name, user_name')
+    .select('id, first_name, last_name, user_name, status')
   if (error) throw error
   return data || []
 }

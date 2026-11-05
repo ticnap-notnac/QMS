@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 
 function AddUserModal({
@@ -15,11 +15,23 @@ function AddUserModal({
   sitesLoading,
   availablePositions = [],
   positionsLoading,
+  availableTeamLeaders = [],
   loading,
   error,
   message,
 }) {
   const [showPassword, setShowPassword] = useState(false)
+  const [tlSearch, setTlSearch] = useState('')
+
+  const filteredTeamLeaders = useMemo(() => {
+    const q = tlSearch.trim().toLowerCase()
+    if (!q) return availableTeamLeaders || []
+    return (availableTeamLeaders || []).filter((tl) => {
+      const label = `${tl.first_name || ''} ${tl.last_name || ''} ${tl.user_name || ''} ${tl.department_name || ''}`.toLowerCase()
+      return label.includes(q)
+    })
+  }, [availableTeamLeaders, tlSearch])
+
   if (!isOpen) {
     return null
   }
@@ -156,8 +168,6 @@ function AddUserModal({
           </div>
 
           <div className="modal-grid-3">
-
-
             <label className="panel-column">
               <span className="small-label">Department: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
               <select
@@ -220,6 +230,36 @@ function AddUserModal({
                     {pos.position_name}
                   </option>
                 ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="modal-grid-3">
+            <label className="panel-column">
+              <span className="small-label">Assigned Team Leader (Searchable):</span>
+              <input
+                type="text"
+                value={tlSearch}
+                onChange={(e) => setTlSearch(e.target.value)}
+                className="form-input-reports"
+                placeholder="Filter Team Leaders..."
+                style={{ marginBottom: '6px' }}
+              />
+              <select
+                name="teamLeaderId"
+                value={formData.teamLeaderId || ''}
+                onChange={onChange}
+                className="form-input-reports"
+              >
+                <option value="">No Team Leader (Unassigned)</option>
+                {filteredTeamLeaders.map((tl) => {
+                  const fullName = `${tl.first_name || ''} ${tl.last_name || ''}`.trim() || tl.user_name || tl.email
+                  return (
+                    <option key={tl.id} value={tl.id}>
+                      {fullName} {tl.department_name ? `(${tl.department_name})` : ''}
+                    </option>
+                  )
+                })}
               </select>
             </label>
           </div>

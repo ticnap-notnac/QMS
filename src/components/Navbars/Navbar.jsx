@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { 
   Bell, 
   LayoutDashboard, 
@@ -8,12 +8,14 @@ import {
   Settings, 
   LogOut,
   User,
+  Users,
   Shield,
   ClipboardCheck,
   HelpCircle
 } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import NotificationsModal from '../Modals/NotificationsModal.jsx'
+import MyTeamModal from '../Modals/MyTeamModal.jsx'
 import '../components.css'
 
 import { isAdminRole } from '@/utils/roleUtils.js'
@@ -42,8 +44,10 @@ export default function Navbar({
   const navigate = useNavigate()
   const desktopMenuContainerRef = useRef(null)
   const mobileMenuContainerRef = useRef(null)
+  const [isMyTeamModalOpen, setIsMyTeamModalOpen] = useState(false)
   const location = useLocation()
   const normalizedRole = String(userRole || '').trim().toLowerCase()
+  const canManageTeamRoster = normalizedRole === 'team leader' || isAdminRole(userRole)
   const shouldShowNotifications = typeof canViewNotifications === 'boolean'
     ? canViewNotifications
     : true
@@ -124,6 +128,14 @@ export default function Navbar({
       >
         <User size={16} /> User Information
       </button>
+      {canManageTeamRoster && (
+        <button
+          onClick={() => { setIsMyTeamModalOpen(true); onToggleMenu(); }}
+          className="user-menu-item"
+        >
+          <Users size={16} /> My Team
+        </button>
+      )}
       {hasPageAccess('audit_tools') && (
         <button 
           onClick={() => { navigate('/audit-tools'); onToggleMenu(); }} 
@@ -275,6 +287,13 @@ export default function Navbar({
         onUnreadCountChange={onUnreadCountChange}
         onRefreshUnreadCount={onRefreshUnreadCount}
         onOpenReport={onOpenReport}
+      />
+
+      <MyTeamModal
+        isOpen={isMyTeamModalOpen}
+        onClose={() => setIsMyTeamModalOpen(false)}
+        currentUserId={currentUserId}
+        userRole={userRole}
       />
     </>
   )

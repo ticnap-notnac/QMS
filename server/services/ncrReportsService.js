@@ -1298,14 +1298,21 @@ export async function assignReportToEmployee({ reportId, assignedToId, currentUs
   if (!currentUserAuthId) throw new Error('Missing x-user-auth-id header.')
 
   const { data: currentUser, error: currentUserError } = await supabase
-    .from('users').select('id, user_name').eq('auth_id', currentUserAuthId).maybeSingle()
+    .from('users').select('id, user_name, role_id, roles(role_name)').eq('auth_id', currentUserAuthId).maybeSingle()
   if (currentUserError) throw currentUserError
   if (!currentUser) throw new Error('Current user profile not found.')
 
   const { data: assignee, error: assigneeError } = await supabase
-    .from('users').select('id, user_name').eq('id', normalizedAssignedToId).maybeSingle()
+    .from('users').select('id, user_name, status, team_leader_id').eq('id', normalizedAssignedToId).maybeSingle()
   if (assigneeError) throw assigneeError
   if (!assignee) throw new Error('Assigned employee not found.')
+  if (String(assignee.status || 'ACTIVE').toUpperCase() !== 'ACTIVE') {
+    throw new Error('Cannot assign report to an inactive or deactivated employee.')
+  }
+  const assignerRole = String(currentUser.roles?.role_name || '').trim().toLowerCase()
+  if (assignerRole === 'team leader' && Number(assignee.team_leader_id) !== Number(currentUser.id)) {
+    throw new Error('Team Leaders can only assign reports to active employees under their own team.')
+  }
 
   const { data: report, error: reportError } = await supabase
     .from('ncr_reports')

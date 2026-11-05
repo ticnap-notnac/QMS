@@ -806,7 +806,9 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   const assignModalState = useAssignReportModal({
     report: modalsState.selectedAssignmentReport,
     onSuccess: handleAssignSuccess,
-    onClose: modalsState.closeAssignModal
+    onClose: modalsState.closeAssignModal,
+    currentUserId,
+    userRole
   })
 
   const ncrSubmitModalState = useNCRSubmitModal({
@@ -985,6 +987,8 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     assignModalProps: {
       isOpen: modalsState.isAssignModalOpen,
       onClose: modalsState.closeAssignModal,
+    currentUserId,
+    userRole,
       report: modalsState.selectedAssignmentReport,
       onSuccess: handleAssignSuccess,
       ...assignModalState,

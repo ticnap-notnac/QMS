@@ -1,16 +1,17 @@
 // src/service/UserService.js
 import { hasServiceRole, supabase } from '../lib/supabase.js'
 import { writeAudit } from '../lib/audit.js'
+import { isAdminRole } from '../utils/roleUtils.js'
 
 /**
- * Fetches all users enriched with role, department, and site information.
+ * Fetches all users enriched with role, department, site, and team leader information.
  * @returns {Promise<{ data: object[]|null, error: string|null }>} A promise that resolves to an object containing either the enriched user data array or an error message.
  */
 export async function fetchAllUsers() {
   const [usersResult, rolesResult, departmentsResult] = await Promise.all([
     supabase
       .from('users')
-      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, created_at, status, site_id, position_id')
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, created_at, status, site_id, position_id, team_leader_id')
       .order('created_at', { ascending: false })
       .limit(1000),
     supabase.from('roles').select('id, role_name'),
@@ -33,12 +34,21 @@ export async function fetchAllUsers() {
     (sitesData || []).map((s) => [String(s.id), { site_name: s.site_name, site_code: s.site_code }])
   )
 
-  const data = (usersResult.data || []).map((user) => ({
+  const allRows = usersResult.data || []
+  const userMap = new Map(
+    allRows.map((u) => [
+      String(u.id),
+      `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.user_name || u.email || 'Unnamed',
+    ])
+  )
+
+  const data = allRows.map((user) => ({
     ...user,
     role_name: roleMap.get(String(user.role_id)) || null,
     department_name: departmentMap.get(String(user.department_id)) || null,
     site_name: siteMap.get(String(user.site_id))?.site_name || null,
     site_code: siteMap.get(String(user.site_id))?.site_code || null,
+    team_leader_name: user.team_leader_id ? (userMap.get(String(user.team_leader_id)) || null) : null,
   }))
 
   return { data, error: null }
@@ -46,20 +56,8 @@ export async function fetchAllUsers() {
 
 /**
  * Creates a new user in Supabase Auth and links it to a public user profile.
- * @param {object} fields - The user details.
- * @param {string} fields.firstName - User's first name.
- * @param {string} fields.lastName - User's last name.
- * @param {string} fields.email - User's email address.
- * @param {string} fields.password - User's password.
- * @param {string} [fields.userName] - Optional username.
- * @param {string} [fields.contactNumber] - Optional contact number.
- * @param {number|string} [fields.roleId] - Optional role ID.
- * @param {number|string} [fields.departmentId] - Optional department ID.
- * @param {number|string} [fields.siteId] - Optional site ID.
- * @param {number|string} [fields.positionId] - Optional position ID.
- * @returns {Promise<{ authUser: object|null, profile: object|null, error: string|null, status: number }>} An object containing the created auth user, public profile, error message, and HTTP status code.
  */
-export async function createUserWithAuth({ firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId, positionId }) {
+export async function createUserWithAuth({ firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId, positionId, teamLeaderId }) {
   const describeAuthCreateError = (authError) => {
     const message = String(authError?.message || '').toLowerCase()
     const code = String(authError?.code || '').toLowerCase()
@@ -125,7 +123,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
     if (code === '23503' || message.includes('foreign key')) {
       return {
         status: 422,
-        error: 'One of the selected values is not available in the database. Please choose a valid role, department, or site.',
+        error: 'One of the selected values is not available in the database. Please choose a valid role, department, site, or team leader.',
       }
     }
 
@@ -151,9 +149,6 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
     }
   }
 
-  let authData = null
-  let authError = null
-
   const adminRes = await supabase.auth.admin.createUser({
     email,
     password,
@@ -167,38 +162,11 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
       department_id: departmentId ? Number(departmentId) : null,
       site_id: siteId ? Number(siteId) : null,
       position_id: positionId ? Number(positionId) : null,
+      team_leader_id: teamLeaderId ? Number(teamLeaderId) : null,
     },
   })
-  authData = adminRes.data
-  authError = adminRes.error
-
-  if (authError || !authData?.user) {
-    const errStr = String(authError?.message || '').toLowerCase()
-    if (!errStr.includes('already registered') && !errStr.includes('already exists')) {
-      const signUpRes = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            user_name: userName,
-            contact_number: contactNumber || null,
-            role_id: roleId ? Number(roleId) : null,
-            department_id: departmentId ? Number(departmentId) : null,
-            site_id: siteId ? Number(siteId) : null,
-            position_id: positionId ? Number(positionId) : null,
-          }
-        }
-      })
-      if (!signUpRes.error && signUpRes.data?.user) {
-        authData = signUpRes.data
-        authError = null
-      } else if (signUpRes.error) {
-        authError = signUpRes.error
-      }
-    }
-  }
+  const authData = adminRes.data
+  const authError = adminRes.error
 
   if (authError || !authData?.user) {
     const normalized = describeAuthCreateError(authError)
@@ -210,6 +178,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
   if (roleId) profileUpdates.role_id = Number(roleId)
   if (departmentId) profileUpdates.department_id = Number(departmentId)
   if (positionId) profileUpdates.position_id = Number(positionId)
+  if (teamLeaderId !== undefined) profileUpdates.team_leader_id = teamLeaderId ? Number(teamLeaderId) : null
   if (contactNumber) profileUpdates.contact_number = contactNumber
   if (userName) profileUpdates.user_name = userName
 
@@ -219,7 +188,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
 
   let { data: profileData, error: profileError } = await supabase
     .from('users')
-    .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id')
+    .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id, team_leader_id')
     .eq('auth_id', authData.user.id)
     .maybeSingle()
 
@@ -237,11 +206,10 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
         department_id: departmentId ? Number(departmentId) : null,
         site_id: siteId ? Number(siteId) : null,
         position_id: positionId ? Number(positionId) : null,
+        team_leader_id: teamLeaderId ? Number(teamLeaderId) : null,
         status: 'ACTIVE'
       }])
-      .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id')
-      .maybeSingle()
-      .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id')
+      .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id, team_leader_id')
       .maybeSingle()
 
     if (!insertErr && createdProfile) {
@@ -280,13 +248,11 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
 
 /**
  * Fetches a single user profile by their unique ID.
- * @param {string} id - The unique identifier of the user.
- * @returns {Promise<{ data: object|null, error: string|null }>} A promise resolving to the user profile data or an error message.
  */
 export async function fetchUserById(id) {
   const { data, error } = await supabase
     .from('users')
-    .select('id, first_name, last_name, user_name, email, auth_id, position_id')
+    .select('id, first_name, last_name, user_name, email, auth_id, position_id, team_leader_id')
     .eq('id', id)
     .maybeSingle()
 
@@ -295,9 +261,6 @@ export async function fetchUserById(id) {
 
 /**
  * Deletes a user from both the public profile table and Supabase Auth, and records an audit log.
- * @param {string} id - The unique identifier of the user to delete.
- * @param {string} actorAuthId - The Auth ID of the user performing the deletion.
- * @returns {Promise<{ success: boolean, error: string|null, status: number }>} A promise resolving to an object indicating success, error message, and HTTP status code.
  */
 export async function deleteUserById(id, actorAuthId) {
   const { data: existing, error: fetchError } = await fetchUserById(id)
@@ -339,26 +302,11 @@ export async function deleteUserById(id, actorAuthId) {
 
 /**
  * Updates a user's profile and conditionally updates their Supabase Auth credentials.
- * @param {string} id - The unique identifier of the user to update.
- * @param {object} fields - The fields to update.
- * @param {string} [fields.firstName] - Updated first name.
- * @param {string} [fields.lastName] - Updated last name.
- * @param {string} [fields.email] - Updated email.
- * @param {string} [fields.userName] - Updated username.
- * @param {string} [fields.contactNumber] - Updated contact number.
- * @param {number|string} [fields.roleId] - Updated role ID.
- * @param {number|string} [fields.departmentId] - Updated department ID.
- * @param {number|string} [fields.siteId] - Updated site ID.
- * @param {number|string} [fields.positionId] - Updated position ID.
- * @param {string} [fields.password] - Updated password.
- * @param {string} [fields.status] - Updated account status.
- * @param {string} actorAuthId - The Auth ID of the user performing the update.
- * @returns {Promise<{ profile: object|null, error: string|null, status: number }>} A promise resolving to the updated profile, error message, and HTTP status code.
  */
-export async function updateUserById(id, { firstName, lastName, email, userName, contactNumber, roleId, departmentId, siteId, positionId, password, status }, actorAuthId) {
+export async function updateUserById(id, { firstName, lastName, email, userName, contactNumber, roleId, departmentId, siteId, positionId, teamLeaderId, password, status }, actorAuthId) {
   const { data: existing, error: fetchError } = await supabase
     .from('users')
-    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id, position_id')
+    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id, position_id, team_leader_id')
     .eq('id', id)
     .maybeSingle()
 
@@ -374,6 +322,12 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
   if (departmentId !== undefined && String(departmentId) !== String(existing.department_id)) updates.department_id = departmentId || null
   if (siteId !== undefined && String(siteId) !== String(existing.site_id ?? '')) updates.site_id = siteId || null
   if (positionId !== undefined && String(positionId) !== String(existing.position_id ?? '')) updates.position_id = positionId || null
+  if (teamLeaderId !== undefined) {
+    const nextTlId = teamLeaderId && String(teamLeaderId) !== String(id) ? Number(teamLeaderId) : null
+    if (String(nextTlId ?? '') !== String(existing.team_leader_id ?? '')) {
+      updates.team_leader_id = nextTlId
+    }
+  }
   if (email !== undefined && email !== (existing.email || '')) updates.email = email
   if (status !== undefined && status !== (existing.status || '')) {
     const VALID_STATUSES = ['ACTIVE', 'INACTIVE', 'DEACTIVATED', 'Active', 'Inactive', 'Deactivated']
@@ -389,7 +343,7 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
       .from('users')
       .update(updates)
       .eq('id', id)
-      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id, position_id')
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id, position_id, team_leader_id')
       .maybeSingle()
 
     if (profileError) return { profile: null, error: profileError.message, status: 500 }
@@ -423,12 +377,9 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
 
 /**
  * Updates the status of a specific user.
- * @param {string} id - The unique identifier of the user.
- * @param {string} status - The new status to apply to the user.
- * @param {string} actorAuthId - The Auth ID of the user performing the status update.
- * @returns {Promise<{ success: boolean, error: string|null, status: number }>} A promise resolving to an object indicating success, error message, and HTTP status code.
+ * Supports both Administrators (any status) and Team Leaders (ACTIVE <-> INACTIVE for their own subordinates).
  */
-export async function updateUserStatusById(id, status, actorAuthId) {
+export async function updateUserStatusById(id, status, actorAuthId, actorDbUser = null) {
   const VALID_STATUSES = ['Active', 'Inactive', 'Deactivated', 'ACTIVE', 'INACTIVE', 'DEACTIVATED']
 
   if (!VALID_STATUSES.includes(status)) {
@@ -438,12 +389,38 @@ export async function updateUserStatusById(id, status, actorAuthId) {
   const normalisedStatus = status.toUpperCase()
   const { data: existing, error: fetchError } = await supabase
     .from('users')
-    .select('id, auth_id, status')
+    .select('id, auth_id, status, team_leader_id')
     .eq('id', id)
     .maybeSingle()
 
   if (fetchError) return { success: false, error: fetchError.message, status: 500 }
   if (!existing) return { success: false, error: 'User not found.', status: 404 }
+
+  const actorIsAdminOrUserMgr = Boolean(
+    actorDbUser &&
+    (
+      isAdminRole(actorDbUser.role_name) ||
+      (Array.isArray(actorDbUser.permissions?.rights) && actorDbUser.permissions.rights.includes('manage_users'))
+    )
+  )
+
+  if (actorDbUser && !actorIsAdminOrUserMgr) {
+    // Caller is a Team Leader: must only manage their own subordinates and only ACTIVE <-> INACTIVE
+    if (Number(existing.team_leader_id) !== Number(actorDbUser.id)) {
+      return {
+        success: false,
+        error: 'You can only change the status of employees assigned under your team.',
+        status: 403,
+      }
+    }
+    if (String(existing.status || '').toUpperCase() === 'DEACTIVATED' || normalisedStatus === 'DEACTIVATED') {
+      return {
+        success: false,
+        error: 'Only an Administrator can deactivate or reactivate a deactivated account.',
+        status: 403,
+      }
+    }
+  }
 
   const { error: dbError } = await supabase
     .from('users')
@@ -470,6 +447,53 @@ export async function updateUserStatusById(id, status, actorAuthId) {
     })
   } catch (logErr) {
     console.warn('Failed to record user_status_update log:', logErr?.message || logErr)
+  }
+
+  return { success: true, error: null, status: 200 }
+}
+
+/**
+ * Bulk-assigns a roster of employees to a Team Leader.
+ * Any user currently assigned to `teamLeaderId` not in `memberIds` is unassigned (`team_leader_id = null`),
+ * and all users in `memberIds` are assigned `team_leader_id = Number(teamLeaderId)`.
+ */
+export async function assignTeamRoster(teamLeaderId, memberIds = [], actorAuthId) {
+  const tlId = Number(teamLeaderId)
+  if (!Number.isFinite(tlId) || tlId <= 0) {
+    return { success: false, error: 'Valid Team Leader ID is required.', status: 400 }
+  }
+
+  const normalizedMemberIds = (Array.isArray(memberIds) ? memberIds : [])
+    .map((id) => Number(id))
+    .filter((id) => Number.isFinite(id) && id > 0 && id !== tlId)
+
+  // 1. Clear existing members assigned to this TL
+  const { error: clearErr } = await supabase
+    .from('users')
+    .update({ team_leader_id: null })
+    .eq('team_leader_id', tlId)
+
+  if (clearErr) return { success: false, error: clearErr.message, status: 500 }
+
+  // 2. Assign selected members to this TL
+  if (normalizedMemberIds.length > 0) {
+    const { error: assignErr } = await supabase
+      .from('users')
+      .update({ team_leader_id: tlId })
+      .in('id', normalizedMemberIds)
+
+    if (assignErr) return { success: false, error: assignErr.message, status: 500 }
+  }
+
+  try {
+    await writeAudit({
+      source: 'users',
+      action: 'team_roster_update',
+      userAuthId: actorAuthId,
+      details: { teamLeaderId: tlId, memberIds: normalizedMemberIds },
+    })
+  } catch (logErr) {
+    console.warn('Failed to record team_roster_update log:', logErr?.message || logErr)
   }
 
   return { success: true, error: null, status: 200 }

@@ -516,7 +516,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       if (audError) throw audError
       
       const auditorsData = (allUsersData || []).filter(u => 
-        u.roles?.role_name === 'Team Leader' || u.roles?.role_name === 'QA Officer'
+        String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE' && (u.roles?.role_name === 'Team Leader' || u.roles?.role_name === 'QA Officer')
       )
       
       setAuditors(auditorsData)

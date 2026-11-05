@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { assignReportToEmployee } from '@/services/ncrService'
 import { fetchUsers } from '@/services/userService'
 
-export default function useAssignReportModal({ report, onSuccess, onClose }) {
+export default function useAssignReportModal({ report, onSuccess, onClose, currentUserId = null, userRole = '' }) {
   const [selectedUserId, setSelectedUserId] = useState('')
   const [users, setUsers] = useState([])
   const [loadingUsers, setLoadingUsers] = useState(false)
@@ -12,7 +12,7 @@ export default function useAssignReportModal({ report, onSuccess, onClose }) {
   const userOptions = useMemo(() => {
     return (users || []).map((user) => ({
       id: user.id,
-      label: `${user.user_name || 'Unnamed User'} — ${user.role || user.role_name || 'Unknown'}`,
+      label: `${user.user_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unnamed User'} — ${user.role || user.role_name || 'Unknown'}`,
     }))
   }, [users])
 
@@ -39,7 +39,14 @@ export default function useAssignReportModal({ report, onSuccess, onClose }) {
       try {
         const data = await fetchUsers()
         if (!active) return
-        const activeUsers = (Array.isArray(data) ? data : []).filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
+        const isTeamLeader = String(userRole || '').trim().toLowerCase() === 'team leader'
+        const activeUsers = (Array.isArray(data) ? data : []).filter((u) => {
+          if (String(u.status || 'ACTIVE').toUpperCase() !== 'ACTIVE') return false
+          if (isTeamLeader && currentUserId) {
+            return Number(u.team_leader_id) === Number(currentUserId)
+          }
+          return true
+        })
         setUsers(activeUsers)
       } catch (err) {
         if (active) {
@@ -57,7 +64,7 @@ export default function useAssignReportModal({ report, onSuccess, onClose }) {
     return () => {
       active = false
     }
-  }, [report])
+  }, [report, currentUserId, userRole])
 
   const handleAssign = useCallback(async () => {
     if (!report?.id) {
@@ -85,12 +92,12 @@ export default function useAssignReportModal({ report, onSuccess, onClose }) {
       }
       return { success: true }
     } catch (assignError) {
-      setError('The report could not be assigned. Please try again.')
+      setError(assignError?.message || 'The report could not be assigned. Please try again.')
       return { success: false }
     } finally {
       setIsSubmitting(false)
     }
-  }, [onSuccess, report, selectedUserId])
+  }, [onSuccess, report, selectedUserId, users])
 
   return {
     selectedUserId,
@@ -102,5 +109,6 @@ export default function useAssignReportModal({ report, onSuccess, onClose }) {
     error,
     setError,
     handleAssign,
+    onClose,
   }
 }

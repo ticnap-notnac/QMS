@@ -29,5 +29,9 @@ export function translateAuthError(err, fallback = 'We could not sign you in rig
     return '❌ No account found with that email address.';
   }
 
+  if (lowerMsg.includes('user is banned') || lowerMsg.includes('deactivated') || lowerMsg.includes('inactive')) {
+    return '🚫 Your account is currently inactive or deactivated. Please contact your Team Leader or Administrator.';
+  }
+
   return fallback;
 }
