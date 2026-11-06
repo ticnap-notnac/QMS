@@ -33,7 +33,10 @@ export const updateUserSchema = z.object({
     siteId: z.union([z.string(), z.number()]).optional().nullable(),
     positionId: z.union([z.string(), z.number()]).optional().nullable(),
     teamLeaderId: z.union([z.string(), z.number()]).optional().nullable(),
-    status: z.string().trim().optional(),
+    status: z.string().trim().toUpperCase().refine(
+      (val) => ['ACTIVE', 'INACTIVE', 'DEACTIVATED'].includes(val),
+      { message: "Status must be either 'ACTIVE', 'INACTIVE', or 'DEACTIVATED'" }
+    ).optional(),
     password: z.string().min(6).optional().or(z.literal('')),
   }).refine(data => Object.keys(data).length > 0, {
     message: "Request body cannot be empty"
