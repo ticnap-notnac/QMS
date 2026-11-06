@@ -4,7 +4,7 @@ import logger from '../utils/logger.js'
 /**
  * Helper to fetch profile and role permissions for an authenticated user.
  */
-async function fetchUserRoleAndPermissions(authId) {
+export async function fetchUserRoleAndPermissions(authId) {
   const { data: profile, error } = await supabase
     .from('users')
     .select('id, auth_id, role_id, position_id, department_id, site_id, status, user_name, first_name, last_name')
@@ -81,18 +81,21 @@ export function requirePermission(requiredRight) {
       const normalizedRole = String(roleName || '').trim().toLowerCase()
       let isAllowed = false
 
+      const requiredList = Array.isArray(requiredRight) ? requiredRight : [requiredRight]
+
       if (isAdminRole(roleName)) {
         isAllowed = true
       } else if (permissions && typeof permissions === 'object') {
         const rights = Array.isArray(permissions.rights) ? permissions.rights : []
         const pages = Array.isArray(permissions.pages) ? permissions.pages : []
-        isAllowed = rights.includes(requiredRight) || pages.includes(requiredRight)
+        isAllowed = requiredList.some(r => rights.includes(r) || pages.includes(r))
       }
 
       logger.info('Permission check', { authId, roleName, requiredRight, isAllowed })
 
       if (!isAllowed) {
-        return res.status(403).json({ error: `You do not have permission (${requiredRight}) to perform this action.` })
+        const label = Array.isArray(requiredRight) ? requiredRight.join(' or ') : requiredRight
+        return res.status(403).json({ error: `You do not have permission (${label}) to perform this action.` })
       }
 
       req.dbUser = { ...profile, role_name: roleName, permissions }

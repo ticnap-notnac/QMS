@@ -14,13 +14,14 @@ export async function fetchAllDepartments() {
 
 // Create---------------------------------------------------------------------------
 export async function createDepartment({ departmentName, actorAuthId }) {
-  if (!departmentName?.trim()) {
+  const trimmedName = String(departmentName || '').trim()
+  if (!trimmedName) {
     return { data: null, error: null, validationError: 'Department name is required.' }
   }
 
   const { data, error } = await supabase
     .from('departments')
-    .insert([{ department_name: departmentName }])
+    .insert([{ department_name: trimmedName }])
     .select('id, department_name')
 
   if (error) return { data: null, error, validationError: null }
@@ -28,7 +29,7 @@ export async function createDepartment({ departmentName, actorAuthId }) {
   await _auditSafe({
     action: 'department_create',
     actorAuthId,
-    details: _buildAuditDetails(data?.[0], null, departmentName),
+    details: _buildAuditDetails(data?.[0], null, trimmedName),
   })
 
   return { data: data ?? [], error: null, validationError: null }
@@ -36,7 +37,8 @@ export async function createDepartment({ departmentName, actorAuthId }) {
 
 // Update---------------------------------------------------------------------------
 export async function updateDepartment({ id, department_name, actorAuthId }) {
-  if (!department_name?.trim()) {
+  const trimmedName = String(department_name || '').trim()
+  if (!trimmedName) {
     return { data: null, error: null, validationError: 'Department name is required.' }
   }
 
@@ -51,7 +53,7 @@ export async function updateDepartment({ id, department_name, actorAuthId }) {
 
   const { data, error } = await supabase
     .from('departments')
-    .update({ department_name })
+    .update({ department_name: trimmedName })
     .eq('id', id)
     .select('id, department_name')
 
@@ -60,12 +62,11 @@ export async function updateDepartment({ id, department_name, actorAuthId }) {
   await _auditSafe({
     action: 'department_update',
     actorAuthId,
-    details: _buildAuditDetails(data?.[0], null, department_name),
+    details: _buildAuditDetails(data?.[0], null, trimmedName),
   })
 
   return { data: data ?? [], error: null, validationError: null }
 }
-
 
 // Delete---------------------------------------------------------------------------
 export async function deleteDepartment({ id, actorAuthId }) {

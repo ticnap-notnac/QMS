@@ -72,6 +72,8 @@ export async function deleteIssueType({ id, userAuthId }) {
     userAuthId,
     details: { id: existing.id, issue_type_name: existing.issue_type_name || null },
   })
+
+  return { success: true }
 }
 
 export async function updateIssueType({ id, issue_type_name, actorAuthId }) {

@@ -16,14 +16,15 @@ export async function fetchAllProductTypes() {
 }
 
 export async function createProductType({ productTypeName, actorAuthId }) {
-  if (!productTypeName?.trim()) {
+  const trimmedName = String(productTypeName || '').trim()
+  if (!trimmedName) {
     return { data: null, error: null, validationError: 'Product type name is required.' }
   }
 
   const { data: existing, error: lookupError } = await supabase
     .from('product_types')
     .select('id, product_name')
-    .ilike('product_name', productTypeName.trim())
+    .ilike('product_name', trimmedName)
     .maybeSingle()
 
   if (lookupError) return { data: null, error: lookupError }
@@ -35,7 +36,7 @@ export async function createProductType({ productTypeName, actorAuthId }) {
 
   const { data, error } = await supabase
     .from('product_types')
-    .insert([{ product_name: productTypeName.trim() }])
+    .insert([{ product_name: trimmedName }])
     .select('id, product_name')
     .maybeSingle()
 
@@ -87,7 +88,8 @@ export async function deleteProductType({ id, actorAuthId }) {
 }
 
 export async function updateProductType({ id, product_type_name, actorAuthId }) {
-  if (!product_type_name?.trim()) {
+  const trimmedName = String(product_type_name || '').trim()
+  if (!trimmedName) {
     return { data: null, error: null, validationError: 'Product type name is required.' }
   }
 
@@ -102,7 +104,7 @@ export async function updateProductType({ id, product_type_name, actorAuthId }) 
 
   const { data, error } = await supabase
     .from('product_types')
-    .update({ product_name: product_type_name.trim() })
+    .update({ product_name: trimmedName })
     .eq('id', id)
     .select('id, product_name')
     .maybeSingle()

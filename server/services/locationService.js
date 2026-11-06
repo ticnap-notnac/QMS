@@ -11,14 +11,15 @@ export async function fetchAllLocations() {
 }
 
 export async function createLocation({ locationName, actorAuthId }) {
-  if (!locationName?.trim()) {
+  const trimmedName = String(locationName || '').trim()
+  if (!trimmedName) {
     return { data: null, error: null, validationError: 'Location name is required.' }
   }
 
   const { data: existing, error: lookupError } = await supabase
     .from('locations')
     .select('id, location_name')
-    .ilike('location_name', locationName.trim())
+    .ilike('location_name', trimmedName)
     .maybeSingle()
 
   if (lookupError) return { data: null, error: lookupError }
@@ -26,7 +27,7 @@ export async function createLocation({ locationName, actorAuthId }) {
 
   const { data, error } = await supabase
     .from('locations')
-    .insert([{ location_name: locationName.trim() }])
+    .insert([{ location_name: trimmedName }])
     .select('id, location_name')
     .maybeSingle()
 
@@ -38,7 +39,7 @@ export async function createLocation({ locationName, actorAuthId }) {
       source: 'locations',
       action: 'location_create',
       userAuthId: actorAuthId,
-      details: { id: data?.id ?? null, location_name: locationName.trim() }
+      details: { id: data?.id ?? null, location_name: trimmedName }
     })
   } catch (auditError) {
     console.warn('Failed to record location_create audit:', auditError?.message || auditError)
@@ -76,7 +77,8 @@ export async function deleteLocation({ id, actorAuthId }) {
 }
 
 export async function updateLocation({ id, location_name, actorAuthId }) {
-  if (!location_name?.trim()) {
+  const trimmedName = String(location_name || '').trim()
+  if (!trimmedName) {
     return { data: null, error: null, validationError: 'Location name is required.' }
   }
 
@@ -91,7 +93,7 @@ export async function updateLocation({ id, location_name, actorAuthId }) {
 
   const { data, error } = await supabase
     .from('locations')
-    .update({ location_name: location_name.trim() })
+    .update({ location_name: trimmedName })
     .eq('id', id)
     .select('id, location_name')
     .maybeSingle()
@@ -104,7 +106,7 @@ export async function updateLocation({ id, location_name, actorAuthId }) {
       source: 'locations',
       action: 'location_update',
       userAuthId: actorAuthId,
-      details: { id: data?.id ?? null, location_name: location_name.trim() }
+      details: { id: data?.id ?? null, location_name: trimmedName }
     })
   } catch (auditError) {
     console.warn('Failed to record location_update audit:', auditError?.message || auditError)

@@ -13,11 +13,11 @@ export default function useAddUserLogic({ currentUserRole } = {}) {
   const { userRole: authUserRole } = useAuth()
   const userRole = currentUserRole || authUserRole
 
-  const isSuperAdmin = isSuperAdminRole(userRole)
+  const isAdmin = isAdminOrSuperAdminRole(userRole)
   const availableRolesForActor = useMemo(() => {
-    if (isSuperAdmin) return roles
+    if (isAdmin) return roles
     return (roles || []).filter(r => !isAdminOrSuperAdminRole(r.role_name))
-  }, [roles, isSuperAdmin])
+  }, [roles, isAdmin])
 
   const adminRoleIdSet = useMemo(() => {
     return new Set(
@@ -28,9 +28,9 @@ export default function useAddUserLogic({ currentUserRole } = {}) {
   }, [roles])
 
   const availablePositionsForActor = useMemo(() => {
-    if (isSuperAdmin) return positions
+    if (isAdmin) return positions
     return (positions || []).filter((p) => !p.role_id || !adminRoleIdSet.has(String(p.role_id)))
-  }, [positions, isSuperAdmin, adminRoleIdSet])
+  }, [positions, isAdmin, adminRoleIdSet])
   
   const [formMessage, setFormMessage] = useState('')
   const [formError, setFormError] = useState('')

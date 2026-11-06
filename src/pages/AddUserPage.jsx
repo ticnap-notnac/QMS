@@ -32,7 +32,7 @@ export default function AddUserPage({ userRole }) {
     confirmDialogProps,
     toast,
     setToast
-  } = useAddUserLogic()
+  } = useAddUserLogic({ currentUserRole: userRole })
 
   const isOverlayLoading = addUserModalProps.loading || editUserModalProps.loading || manageRosterModalProps?.saving
   const overlayMessage = addUserModalProps.loading

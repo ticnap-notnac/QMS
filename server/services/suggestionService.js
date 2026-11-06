@@ -11,14 +11,32 @@ async function fetchReportById(ncrId) {
   const { data, error } = await supabase
     .from('ncr_reports')
     .select(
-      'issue_type_id, department_id, description, severity, ' +
+      'id, issue_type_id, department_id, description, severity, ' +
       'investigation_details, corrective_action, resolution_details, product_type_id'
     )
     .eq('id', ncrId)
     .single()
 
   if (error) throw error
-  return data
+  if (!data) return null
+
+  let issueTypeName = null
+  let productTypeName = null
+
+  if (data.issue_type_id) {
+    const { data: it } = await supabase.from('issue_types').select('issue_type_name').eq('id', data.issue_type_id).maybeSingle()
+    issueTypeName = it?.issue_type_name || null
+  }
+  if (data.product_type_id) {
+    const { data: pt } = await supabase.from('product_types').select('*').eq('id', data.product_type_id).maybeSingle()
+    productTypeName = pt?.product_name || pt?.product_type_name || null
+  }
+
+  return {
+    ...data,
+    issue_type: issueTypeName,
+    product_type: productTypeName,
+  }
 }
 
 async function fetchCaseRepositoryCandidates(issueType, embedding = null) {
@@ -82,7 +100,7 @@ async function fetchRatedNcrCandidates() {
   const { data, error } = await supabase
     .from('ncr_reports')
     .select(
-      'id, description, issue_type, severity, department_id, product_type, ' +
+      'id, description, issue_type_id, severity, department_id, product_type_id, ' +
       'investigation_details, corrective_action, resolution_details'
     )
     .in('id', qualifiedIds)
@@ -91,7 +109,28 @@ async function fetchRatedNcrCandidates() {
     .limit(30)
 
   if (error) throw error
-  return data || []
+  if (!data || data.length === 0) return []
+
+  const issueTypeIds = [...new Set(data.map(d => d.issue_type_id).filter(Boolean))]
+  const productTypeIds = [...new Set(data.map(d => d.product_type_id).filter(Boolean))]
+
+  const [issueTypesResult, productTypesResult] = await Promise.all([
+    issueTypeIds.length > 0
+      ? supabase.from('issue_types').select('id, issue_type_name').in('id', issueTypeIds)
+      : Promise.resolve({ data: [] }),
+    productTypeIds.length > 0
+      ? supabase.from('product_types').select('*').in('id', productTypeIds)
+      : Promise.resolve({ data: [] }),
+  ])
+
+  const issueTypeMap = new Map((issueTypesResult.data || []).map(i => [String(i.id), i.issue_type_name]))
+  const productTypeMap = new Map((productTypesResult.data || []).map(p => [String(p.id), p.product_name || p.product_type_name]))
+
+  return data.map(ncr => ({
+    ...ncr,
+    issue_type: issueTypeMap.get(String(ncr.issue_type_id)) || null,
+    product_type: productTypeMap.get(String(ncr.product_type_id)) || null,
+  }))
 }
 
 async function fetchCarReports(departmentId) {

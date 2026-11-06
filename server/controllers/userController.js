@@ -11,6 +11,7 @@ import {
 } from '../services/userService.js'
 
 import { isAdminOrSuperAdminRole } from '../utils/roleUtils.js'
+import { fetchUserRoleAndPermissions } from '../middlewares/roleMiddleware.js'
 import { supabase } from '../lib/supabase.js'
 
 /**
@@ -29,8 +30,15 @@ async function isTargetRoleAdmin(roleId, positionId) {
 }
 
 export async function getUsers(req, res) {
-  const actorRoleName = req.dbUser?.role_name || ''
-  const actorSiteId = req.dbUser?.site_id || null
+  let actorRoleName = req.dbUser?.role_name || ''
+  let actorSiteId = req.dbUser?.site_id ?? null
+
+  if (!req.dbUser && req.user?.id) {
+    const { profile, roleName } = await fetchUserRoleAndPermissions(req.user.id)
+    actorRoleName = roleName || ''
+    actorSiteId = profile?.site_id ?? null
+  }
+
   const { data, error } = await fetchAllUsers({ actorRoleName, actorSiteId })
   if (error) return res.status(500).json({ error })
   return res.json(data)
@@ -111,14 +119,14 @@ export async function deleteUser(req, res) {
   // SEC-07: Role hierarchy - only Admins can delete Admin accounts
   const { data: targetUser, error: targetError } = await supabase
     .from('users')
-    .select('id, role_id, roles(role_name)')
+    .select('id, role_id, position_id')
     .eq('id', id)
     .maybeSingle()
 
   if (targetError) return res.status(500).json({ error: targetError.message })
   if (!targetUser) return res.status(404).json({ error: 'User not found.' })
 
-  const isTargetAdmin = isAdminOrSuperAdminRole(targetUser.roles?.role_name)
+  const isTargetAdmin = await isTargetRoleAdmin(targetUser.role_id, targetUser.position_id)
   if (isTargetAdmin && !isAdminOrSuperAdminRole(actorRoleName)) {
     return res.status(403).json({ error: 'Only Administrators can delete Administrator accounts.' })
   }
@@ -138,7 +146,7 @@ export async function updateUser(req, res) {
     return res.status(400).json({ error: 'Request body cannot be empty.' })
   }
 
-  const { firstName, lastName, contactNumber, roleId, positionId } = req.body
+  const { firstName, lastName, contactNumber, roleId, positionId, status: nextStatus } = req.body
   const invalidNameRegex = /[^a-zA-Z\s\-']/
   if (
     (firstName && invalidNameRegex.test(firstName)) || 
@@ -151,17 +159,27 @@ export async function updateUser(req, res) {
     return res.status(400).json({ error: 'Contact number must be exactly 11 digits.' })
   }
 
-  // SEC-07: Role hierarchy - check target user's current role
+  // SEC-07: Self-protection - cannot deactivate or suspend own account via updateUser
+  if (
+    nextStatus !== undefined &&
+    req.dbUser?.id &&
+    String(req.dbUser.id) === String(id) &&
+    String(nextStatus).trim().toUpperCase() !== 'ACTIVE'
+  ) {
+    return res.status(400).json({ error: 'You cannot deactivate or suspend your own account.' })
+  }
+
+  // SEC-07: Role hierarchy - check target user's current role (including position_id fallback)
   const { data: targetUser, error: targetError } = await supabase
     .from('users')
-    .select('id, role_id, position_id, roles(role_name)')
+    .select('id, role_id, position_id')
     .eq('id', id)
     .maybeSingle()
 
   if (targetError) return res.status(500).json({ error: targetError.message })
   if (!targetUser) return res.status(404).json({ error: 'User not found.' })
 
-  const isTargetAdmin = isAdminOrSuperAdminRole(targetUser.roles?.role_name)
+  const isTargetAdmin = await isTargetRoleAdmin(targetUser.role_id, targetUser.position_id)
   if (isTargetAdmin && !isAdminOrSuperAdminRole(actorRoleName)) {
     return res.status(403).json({ error: 'Only Administrators can modify Administrator accounts.' })
   }
@@ -201,14 +219,14 @@ export async function updateUserStatus(req, res) {
   // SEC-07: Role hierarchy - only Admins can modify Admin account status
   const { data: targetUser, error: targetError } = await supabase
     .from('users')
-    .select('id, role_id, roles(role_name)')
+    .select('id, role_id, position_id')
     .eq('id', id)
     .maybeSingle()
 
   if (targetError) return res.status(500).json({ error: targetError.message })
   if (!targetUser) return res.status(404).json({ error: 'User not found.' })
 
-  const isTargetAdmin = isAdminOrSuperAdminRole(targetUser.roles?.role_name)
+  const isTargetAdmin = await isTargetRoleAdmin(targetUser.role_id, targetUser.position_id)
   if (isTargetAdmin && !isAdminOrSuperAdminRole(actorRoleName)) {
     return res.status(403).json({ error: 'Only Administrators can modify Administrator account status.' })
   }
