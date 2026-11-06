@@ -360,9 +360,9 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   const hasExplicitRights = Array.isArray(userPermissions?.rights)
 
   const canAssignReports = useMemo(
-    () => hasExplicitRights
+    () => isAdminRole(userRole) || (hasExplicitRights
       ? rights.includes('assign_report')
-      : (isAdminRole(userRole) || ['manager', 'department manager', 'auditor', 'warehouse supervisor'].includes(String(userRole || '').trim().toLowerCase())),
+      : ['manager', 'department manager', 'auditor', 'warehouse supervisor'].includes(String(userRole || '').trim().toLowerCase())),
     [hasExplicitRights, userRole, rights],
   )
 
