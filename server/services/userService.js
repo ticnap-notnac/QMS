@@ -7,13 +7,21 @@ import { isAdminRole } from '../utils/roleUtils.js'
  * Fetches all users enriched with role, department, site, and team leader information.
  * @returns {Promise<{ data: object[]|null, error: string|null }>} A promise that resolves to an object containing either the enriched user data array or an error message.
  */
-export async function fetchAllUsers() {
+export async function fetchAllUsers({ actorRoleName, actorSiteId } = {}) {
+  const isActorAdmin = isAdminRole(actorRoleName)
+  let usersQuery = supabase
+    .from('users')
+    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, created_at, status, site_id, position_id, team_leader_id')
+    .order('created_at', { ascending: false })
+    .limit(1000)
+
+  // SEC-15: Scope by site for non-administrators
+  if (!isActorAdmin && actorSiteId) {
+    usersQuery = usersQuery.or(`site_id.eq.${actorSiteId},site_id.is.null`)
+  }
+
   const [usersResult, rolesResult, departmentsResult] = await Promise.all([
-    supabase
-      .from('users')
-      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, created_at, status, site_id, position_id, team_leader_id')
-      .order('created_at', { ascending: false })
-      .limit(1000),
+    usersQuery,
     supabase.from('roles').select('id, role_name'),
     supabase.from('departments').select('id, department_name'),
   ])
@@ -44,6 +52,8 @@ export async function fetchAllUsers() {
 
   const data = allRows.map((user) => ({
     ...user,
+    // SEC-15: Do not leak internal auth_id to non-administrators
+    auth_id: isActorAdmin ? user.auth_id : undefined,
     role_name: roleMap.get(String(user.role_id)) || null,
     department_name: departmentMap.get(String(user.department_id)) || null,
     site_name: siteMap.get(String(user.site_id))?.site_name || null,

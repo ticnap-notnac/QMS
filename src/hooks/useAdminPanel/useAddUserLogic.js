@@ -6,17 +6,31 @@ import { supabase } from '@/utils/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { isSuperAdminRole, isAdminOrSuperAdminRole } from '@/utils/roleUtils.js'
 
-export default function useAddUserLogic() {
+export default function useAddUserLogic({ currentUserRole } = {}) {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL') // 'ALL', 'ACTIVE', 'INACTIVE', 'DEACTIVATED'
   const { roles, departments, sites, positions, loading: lookupsLoading } = useLookup()
-  const { userRole } = useAuth()
+  const { userRole: authUserRole } = useAuth()
+  const userRole = currentUserRole || authUserRole
 
   const isSuperAdmin = isSuperAdminRole(userRole)
   const availableRolesForActor = useMemo(() => {
     if (isSuperAdmin) return roles
     return (roles || []).filter(r => !isAdminOrSuperAdminRole(r.role_name))
   }, [roles, isSuperAdmin])
+
+  const adminRoleIdSet = useMemo(() => {
+    return new Set(
+      (roles || [])
+        .filter((r) => isAdminOrSuperAdminRole(r.role_name))
+        .map((r) => String(r.id))
+    )
+  }, [roles])
+
+  const availablePositionsForActor = useMemo(() => {
+    if (isSuperAdmin) return positions
+    return (positions || []).filter((p) => !p.role_id || !adminRoleIdSet.has(String(p.role_id)))
+  }, [positions, isSuperAdmin, adminRoleIdSet])
   
   const [formMessage, setFormMessage] = useState('')
   const [formError, setFormError] = useState('')
@@ -424,7 +438,7 @@ export default function useAddUserLogic() {
     departmentsLoading: lookupsLoading,
     availableSites: sites,
     sitesLoading: lookupsLoading,
-    availablePositions: positions,
+    availablePositions: availablePositionsForActor,
     positionsLoading: lookupsLoading,
     availableTeamLeaders,
     loading: submitting,
@@ -444,7 +458,7 @@ export default function useAddUserLogic() {
     departmentsLoading: lookupsLoading,
     availableSites: sites,
     sitesLoading: lookupsLoading,
-    availablePositions: positions,
+    availablePositions: availablePositionsForActor,
     positionsLoading: lookupsLoading,
     availableTeamLeaders,
     loading: editSubmitting,
