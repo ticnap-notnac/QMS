@@ -2,38 +2,38 @@ import { z } from 'zod'
 
 export const createUserSchema = z.object({
   body: z.object({
-    firstName: z.string().min(1, 'First name is required'),
-    lastName: z.string().min(1, 'Last name is required'),
+    firstName: z.string().trim().min(1, 'First name is required'),
+    lastName: z.string().trim().min(1, 'Last name is required'),
     email: z.string().trim().email('Invalid email address').refine((value) => /@gmail\.com$/i.test(value), {
       message: 'Only Gmail addresses are allowed',
     }),
     password: z.string().min(6, 'Password must be at least 6 characters'),
-    userName: z.string().min(3, 'Username must be at least 3 characters'),
-    contactNumber: z.string().optional().nullable(),
-    roleId: z.string().or(z.number()).optional().nullable(),
-    departmentId: z.string().or(z.number()).optional().nullable(),
-    siteId: z.string().or(z.number()).optional().nullable(),
-    positionId: z.string().or(z.number()).optional().nullable(),
-    teamLeaderId: z.string().or(z.number()).optional().nullable(),
+    userName: z.string().trim().min(3, 'Username must be at least 3 characters'),
+    contactNumber: z.string().trim().optional().nullable(),
+    roleId: z.union([z.string(), z.number()]).optional().nullable(),
+    departmentId: z.union([z.string(), z.number()]).optional().nullable(),
+    siteId: z.union([z.string(), z.number()]).optional().nullable(),
+    positionId: z.union([z.string(), z.number()]).optional().nullable(),
+    teamLeaderId: z.union([z.string(), z.number()]).optional().nullable(),
   })
 })
 
 export const updateUserSchema = z.object({
   params: z.object({
-    id: z.string().min(1, 'User ID is required')
+    id: z.union([z.string(), z.number()]).transform(val => String(val).trim()).refine(val => val.length > 0, 'User ID is required')
   }),
   body: z.object({
-    firstName: z.string().min(1).optional(),
-    lastName: z.string().min(1).optional(),
-    email: z.string().email().optional(),
-    userName: z.string().min(3).optional(),
-    contactNumber: z.string().optional().nullable(),
-    roleId: z.string().or(z.number()).optional().nullable(),
-    departmentId: z.string().or(z.number()).optional().nullable(),
-    siteId: z.string().or(z.number()).optional().nullable(),
-    positionId: z.string().or(z.number()).optional().nullable(),
-    teamLeaderId: z.string().or(z.number()).optional().nullable(),
-    status: z.string().optional(),
+    firstName: z.string().trim().min(1).optional(),
+    lastName: z.string().trim().min(1).optional(),
+    email: z.string().trim().email().optional(),
+    userName: z.string().trim().min(3).optional(),
+    contactNumber: z.string().trim().optional().nullable(),
+    roleId: z.union([z.string(), z.number()]).optional().nullable(),
+    departmentId: z.union([z.string(), z.number()]).optional().nullable(),
+    siteId: z.union([z.string(), z.number()]).optional().nullable(),
+    positionId: z.union([z.string(), z.number()]).optional().nullable(),
+    teamLeaderId: z.union([z.string(), z.number()]).optional().nullable(),
+    status: z.string().trim().optional(),
     password: z.string().min(6).optional().or(z.literal('')),
   }).refine(data => Object.keys(data).length > 0, {
     message: "Request body cannot be empty"
@@ -42,16 +42,19 @@ export const updateUserSchema = z.object({
 
 export const updateUserStatusSchema = z.object({
   params: z.object({
-    id: z.string().min(1, 'User ID is required')
+    id: z.union([z.string(), z.number()]).transform(val => String(val).trim()).refine(val => val.length > 0, 'User ID is required')
   }),
   body: z.object({
-    status: z.string().min(1, 'Status is required')
+    status: z.string().trim().toUpperCase().refine(
+      (val) => ['ACTIVE', 'INACTIVE', 'DEACTIVATED'].includes(val),
+      { message: "Status must be either 'ACTIVE', 'INACTIVE', or 'DEACTIVATED'" }
+    )
   })
 })
 
 export const assignTeamRosterSchema = z.object({
   body: z.object({
-    teamLeaderId: z.string().or(z.number()),
-    memberIds: z.array(z.string().or(z.number())),
+    teamLeaderId: z.union([z.string(), z.number()]),
+    memberIds: z.array(z.union([z.string(), z.number()])),
   })
 })

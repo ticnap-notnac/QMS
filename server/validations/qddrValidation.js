@@ -4,7 +4,7 @@ export const createQddrSchema = z.object({
   body: z.object({
     material_description: z.string().min(1, 'Material description is required'),
     reason_of_discrepancy: z.string().min(1, 'Reason of discrepancy is required'),
-  })
+  }).passthrough()
 })
 
 export const updateQddrSchema = z.object({
@@ -17,5 +17,5 @@ export const updateQddrSchema = z.object({
     noted_by: z.string().optional().nullable(),
     leader: z.string().optional().nullable(),
     status: z.string().optional().nullable(),
-  })
+  }).passthrough()
 })

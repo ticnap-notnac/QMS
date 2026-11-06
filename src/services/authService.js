@@ -2,9 +2,11 @@ import { supabase } from '@/utils/supabase'
 
 let cachedAuthId = null
 
-supabase.auth.onAuthStateChange((_event, session) => {
-  cachedAuthId = session?.user?.id || null
-})
+if (typeof supabase?.auth?.onAuthStateChange === 'function') {
+  supabase.auth.onAuthStateChange((_event, session) => {
+    cachedAuthId = session?.user?.id || null
+  })
+}
 
 export function clearCachedAuthId() {
   cachedAuthId = null
