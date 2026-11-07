@@ -7,7 +7,6 @@ function CARModal({
   onClose,
   form,
   handleChange,
-  toggleNcrSelection,
   toggleClauseSelection,
   fetchClauseSuggestions,
   clausesLoading,
@@ -19,11 +18,8 @@ function CARModal({
   departments,
   departmentsLoading,
   users,
-  usersLoading,
-  allReports
+  usersLoading
 }) {
-  const [isLinkingMode, setIsLinkingMode] = useState(false)
-  const [ncrSearchQuery, setNcrSearchQuery] = useState('')
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -49,7 +45,7 @@ function CARModal({
 
   const filteredUsers = users?.filter((user) => {
     const userRole = String(user.label || '').toUpperCase()
-    return !userRole.includes('WAREHOUSE STAFF') && !userRole.includes('DEPARTMENT MANAGER')
+    return !userRole.includes('WAREHOUSE STAFF')
   }) || []
 
   return (
@@ -59,7 +55,7 @@ function CARModal({
         onClick={(e) => e.stopPropagation()}
         style={{
           maxHeight: isMobile ? 'calc(100vh - 16px)' : '90vh',
-          width: isMobile ? 'calc(100vw - 16px)' : (isLinkingMode ? '600px' : '800px'),
+          width: isMobile ? 'calc(100vw - 16px)' : '800px',
           maxWidth: '95vw',
           display: 'flex',
           flexDirection: 'column',
@@ -103,77 +99,14 @@ function CARModal({
           }}
         >
           <h3 className="reports-update-title" style={{ margin: 0 }}>
-            {isLinkingMode ? 'Select NCRs to Link' : 'Corrective Action Request (CAR)'}
+            Corrective Action Request (CAR)
           </h3>
-          
-          {!isLinkingMode && (
-            <button 
-              type="button" 
-              className="btn-secondary-light" 
-              onClick={() => setIsLinkingMode(true)}
-              style={{ margin: 0, whiteSpace: 'nowrap' }}
-            >
-              {form.ncr_ids?.length > 0 ? `Linked NCRs: ${form.ncr_ids.length} (Change)` : 'Link NCR'}
-            </button>
-          )}
         </div>
 
-        {error && !isLinkingMode && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: isMobile ? '16px' : '28px', marginRight: isMobile ? '16px' : '28px' }}>{error}</div>}
+        {error && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: isMobile ? '16px' : '28px', marginRight: isMobile ? '16px' : '28px' }}>{error}</div>}
 
         <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', paddingLeft: isMobile ? '14px' : '28px', paddingRight: isMobile ? '14px' : '28px', paddingBottom: isMobile ? '14px' : '24px' }}>
-          {isLinkingMode ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <input
-                type="text"
-                placeholder="Search reference no..."
-                value={ncrSearchQuery}
-                onChange={(e) => setNcrSearchQuery(e.target.value)}
-                className="input-field"
-                style={{ width: '100%' }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {allReports
-                  .filter(r => !ncrSearchQuery || String(r.reference_no || r.id).toLowerCase().includes(ncrSearchQuery.toLowerCase()))
-                  .map(report => {
-                    const isSelected = form.ncr_ids?.includes(String(report.id));
-                    return (
-                      <label 
-                        key={report.id}
-                        style={{
-                          padding: '12px',
-                          background: isSelected ? 'rgba(59, 130, 246, 0.1)' : '#f8fafc',
-                          border: isSelected ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid #e2e8f0',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '12px'
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleNcrSelection(report.id, report.reference_no || String(report.id), report)}
-                          style={{ marginTop: '4px' }}
-                        />
-                        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '6px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: '#1A435A', fontWeight: '500' }}>{report.reference_no || `NCR #${report.id}`}</span>
-                            <span style={{ color: 'var(--muted)', fontSize: '13px' }}>{new Date(report.created_at).toLocaleDateString()}</span>
-                          </div>
-                          {report.description && (
-                            <span style={{ color: 'var(--muted)', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                              {report.description}
-                            </span>
-                          )}
-                        </div>
-                      </label>
-                    );
-                  })}
-              </div>
-            </div>
-          ) : (
-            <form className="modal-form" onSubmit={onSubmit} style={{ gap: isMobile ? '10px' : '16px', display: 'flex', flexDirection: 'column' }}>
+          <form className="modal-form" onSubmit={onSubmit} style={{ gap: isMobile ? '10px' : '16px', display: 'flex', flexDirection: 'column' }}>
 
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '14px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -454,7 +387,6 @@ function CARModal({
               </div>
 
             </form>
-          )}
         </div>
 
         {/* ── MODAL FOOTER ACTION BAR ── */}
@@ -472,30 +404,22 @@ function CARModal({
             marginTop: '12px'
           }}
         >
-          {isLinkingMode ? (
-            <button type="button" className="btn-gradient-primary" onClick={() => setIsLinkingMode(false)} style={{ margin: 0, padding: '8px 24px', fontSize: '13px', height: 'auto', boxShadow: 'none' }}>
-              Done
-            </button>
-          ) : (
-            <>
-              <button type="button" className="btn-secondary-light" onClick={onClose} disabled={isSubmitting} style={{ margin: 0, padding: '8px 20px', fontSize: '13px' }}>
-                Cancel
-              </button>
-              <button 
-                type="button" 
-                className="btn-gradient-primary" 
-                disabled={isSubmitting}
-                onClick={onSubmit}
-                style={{ margin: 0, padding: '8px 24px', fontSize: '13px', height: 'auto', boxShadow: 'none' }}
-              >
-                {isSubmitting ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <LoaderCircle size={16} className="iso-spinner" /> Submitting…
-                  </span>
-                ) : (form.id ? 'Update CAR' : 'Submit CAR')}
-              </button>
-            </>
-          )}
+          <button type="button" className="btn-secondary-light" onClick={onClose} disabled={isSubmitting} style={{ margin: 0, padding: '8px 20px', fontSize: '13px' }}>
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            className="btn-gradient-primary" 
+            disabled={isSubmitting}
+            onClick={onSubmit}
+            style={{ margin: 0, padding: '8px 24px', fontSize: '13px', height: 'auto', boxShadow: 'none' }}
+          >
+            {isSubmitting ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <LoaderCircle size={16} className="iso-spinner" /> Submitting…
+              </span>
+            ) : (form.id ? 'Update CAR' : 'Submit CAR')}
+          </button>
         </div>
 
       </div>

@@ -33,3 +33,10 @@ export async function generateAiSuggestionFromText({ description, issueType, dep
         body: JSON.stringify({ description, issueType, deptName }),
     })
 }
+
+export async function classifyIssueTags(description, reportType = 'CAR') {
+    return await request('/suggestions/classify-tags', {
+        method: 'POST',
+        body: JSON.stringify({ description, reportType }),
+    })
+}

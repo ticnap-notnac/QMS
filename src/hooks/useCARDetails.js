@@ -145,7 +145,7 @@ export function useCARDetails() {
       }
       closeCarDetails()
     } catch (err) {
-      setError('The CAPA plan could not be submitted. Please try again.')
+      setError(err?.message || 'The CAPA plan could not be submitted. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -157,8 +157,8 @@ export function useCARDetails() {
       setError('Verification notes are required to resolve this audit.')
       return
     }
-    if (!verificationRating.trim()) {
-      setError('Verification rating is required.')
+    if (outcome === 'effective' && !String(verificationRating || '').trim()) {
+      setError('Verification rating is required when marking a CAR as effective.')
       return
     }
 
@@ -168,7 +168,7 @@ export function useCARDetails() {
       const updated = await onVerify(selectedCar.id, {
         outcome,
         notes: verificationNotes,
-        verificationRating
+        verificationRating: String(verificationRating || '').trim() || null
       }, authUserId)
       
       if (updated) {
@@ -176,7 +176,7 @@ export function useCARDetails() {
       }
       closeCarDetails()
     } catch (err) {
-      setError('The verification could not be submitted. Please try again.')
+      setError(err?.message || 'The verification could not be submitted. Please try again.')
     } finally {
       setSubmitting(false)
     }

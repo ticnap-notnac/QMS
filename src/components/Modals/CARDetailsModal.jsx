@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
 import { X as CloseIcon, Clipboard, CheckCircle, AlertTriangle, User, Calendar, Sparkles } from 'lucide-react'
+import { isAdminRole } from '@/utils/roleUtils.js'
 
 export default function CARDetailsModal({
   isOpen,
@@ -43,10 +44,13 @@ export default function CARDetailsModal({
   const carDepartmentName = normalize(car.responsible_department || car.requesting_department)
   const hasExplicitRights = Array.isArray(userPermissions?.rights)
   const rights = hasExplicitRights ? userPermissions.rights : []
-  const canSubmitCapa = hasExplicitRights ? rights.includes('submit_capa') : true
-  const isWarehouseVerifier = hasExplicitRights
-    ? rights.includes('verify_car')
-    : (normalize(userRole) === 'warehouse staff' && Boolean(resolvedUserDepartmentName) && resolvedUserDepartmentName === carDepartmentName)
+  const normalizedRole = normalize(userRole)
+  const canSubmitCapa = isAdminRole(userRole) || (hasExplicitRights ? rights.includes('submit_capa') : true)
+  const isWarehouseVerifier = isAdminRole(userRole) ||
+    ['qa officer', 'auditor', 'quality assurance'].includes(normalizedRole) ||
+    (hasExplicitRights
+      ? rights.includes('verify_car')
+      : (normalizedRole === 'warehouse staff' && Boolean(resolvedUserDepartmentName) && resolvedUserDepartmentName === carDepartmentName))
 
   const getStatusBadgeClass = (status) => {
     const s = String(status || '').toLowerCase()
@@ -190,6 +194,26 @@ export default function CARDetailsModal({
               )}
             </div>
           </div>
+
+          {/* Previous VoE Rejection Banner when Re-Opened */}
+          {car.status === 'open' && car.verification_notes && (
+            <div style={{
+              background: 'rgba(239, 68, 68, 0.06)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '8px',
+              padding: '12px 14px',
+              fontSize: '13px',
+              color: '#991b1b',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px'
+            }}>
+              <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <AlertTriangle size={15} /> Re-opened from Verification (Ineffective)
+              </strong>
+              <div>"{car.verification_notes}"</div>
+            </div>
+          )}
 
           {/* CAPA SECTION */}
           {car.status === 'open' && !readOnly ? (

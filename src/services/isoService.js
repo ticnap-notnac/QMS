@@ -36,17 +36,6 @@ export async function fetchNonCompliantFindings() {
 }
 
 /**
- * Fetches ncr_id lists from all CAR reports to check which NCRs are already linked.
- */
-export async function fetchLinkedCarNcrIds() {
-  const { data, error } = await supabase
-    .from('car_ncr_links')
-    .select('ncr_id')
-  if (error) throw error
-  return data || []
-}
-
-/**
  * Fetches all NCR reports (both open and closed) for ISO page compliance grouping.
  */
 export async function fetchNcrReportsForISO() {
@@ -58,6 +47,8 @@ export async function fetchNcrReportsForISO() {
       severity,
       description,
       status,
+      car_filed,
+      clause_id,
       department_id,
       product_type_id,
       location_id,

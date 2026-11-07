@@ -4,11 +4,18 @@ import './print.css'
 const CARPrintTemplate = forwardRef(({ report }, ref) => {
   if (!report) return null
 
-  const occurrenceDate = report.request_date
-    ? new Date(report.request_date).toLocaleDateString()
-    : (report.created_at ? new Date(report.created_at).toLocaleDateString() : '')
+  const occurrenceDate = report.date
+    ? new Date(report.date).toLocaleDateString()
+    : (report.request_date
+      ? new Date(report.request_date).toLocaleDateString()
+      : (report.created_at ? new Date(report.created_at).toLocaleDateString() : ''))
 
-  const typeOfNC = (report.type_of_nonconformance || report.issue_type || '').toUpperCase()
+  const requestDateFormatted = report.request_date
+    ? new Date(report.request_date).toLocaleDateString()
+    : occurrenceDate
+
+  const isNoReply = Boolean(report.no_reply) || report.reason_for_reissue === 'No Reply' || report.reason_reissue === 'No Reply'
+  const isReCorrectiveAction = Boolean(report.re_corrective_action) || report.reason_for_reissue === 'Re-Corrective Action' || report.reason_reissue === 'Re-Corrective Action'
 
   return (
     <div ref={ref} className="print-template-container">
@@ -53,10 +60,10 @@ const CARPrintTemplate = forwardRef(({ report }, ref) => {
                 <span className="print-label" style={{ marginBottom: 0 }}>Reason for Re – issue:</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                   <div className="checkbox-item" style={{ marginBottom: 0 }}>
-                    <div className={`checkbox-box ${report.reason_for_reissue === 'No Reply' ? 'checked' : ''}`}></div> No Reply
+                    <div className={`checkbox-box ${isNoReply ? 'checked' : ''}`}></div> No Reply
                   </div>
                   <div className="checkbox-item" style={{ marginBottom: 0 }}>
-                    <div className={`checkbox-box ${report.reason_for_reissue === 'Re-Corrective Action' ? 'checked' : ''}`}></div> Re-Corrective Action
+                    <div className={`checkbox-box ${isReCorrectiveAction ? 'checked' : ''}`}></div> Re-Corrective Action
                   </div>
                 </div>
               </div>
@@ -155,11 +162,57 @@ const CARPrintTemplate = forwardRef(({ report }, ref) => {
               </div>
             </td>
           </tr>
+          {(report.root_cause_analysis || report.corrective_action || report.preventive_action) && (
+            <>
+              <tr>
+                <td colSpan="3" className="print-section-title-dark">
+                  CORRECTIVE &amp; PREVENTIVE ACTION PLAN (CAPA)
+                </td>
+              </tr>
+              <tr>
+                <td colSpan="3" style={{ padding: '12px 15px' }}>
+                  <div style={{ marginBottom: '8px' }}>
+                    <span className="print-label">Root Cause Analysis:</span>
+                    <div className="details-text" style={{ minHeight: '30px' }}>{report.root_cause_analysis || '—'}</div>
+                  </div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <span className="print-label">Immediate Corrective Action:</span>
+                    <div className="details-text" style={{ minHeight: '30px' }}>{report.corrective_action || '—'}</div>
+                  </div>
+                  <div>
+                    <span className="print-label">Preventive Action:</span>
+                    <div className="details-text" style={{ minHeight: '30px' }}>{report.preventive_action || '—'}</div>
+                  </div>
+                </td>
+              </tr>
+            </>
+          )}
+          {report.verification_notes && (
+            <>
+              <tr>
+                <td colSpan="3" className="print-section-title">
+                  VERIFICATION OF EFFECTIVENESS (VoE)
+                </td>
+              </tr>
+              <tr>
+                <td colSpan="3" style={{ padding: '12px 15px' }}>
+                  <div style={{ marginBottom: '6px' }}>
+                    <span className="print-label">Verification Notes:</span>
+                    <div className="details-text" style={{ minHeight: '24px' }}>{report.verification_notes}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '24px', fontSize: '12px' }}>
+                    <span><strong>Effectiveness Rating:</strong> {report.verification_rating || '—'}</span>
+                    <span><strong>Verified Date:</strong> {report.verification_date ? new Date(report.verification_date).toLocaleDateString() : '—'}</span>
+                  </div>
+                </td>
+              </tr>
+            </>
+          )}
           <tr>
             <td style={{ padding: '10px' }}>
               <span className="print-label">Request Date:</span>
               <div style={{ marginTop: '20px', borderBottom: '1px solid #000', width: '80%' }}>
-                {occurrenceDate}
+                {requestDateFormatted}
               </div>
             </td>
             <td style={{ padding: '10px', textAlign: 'center' }}>

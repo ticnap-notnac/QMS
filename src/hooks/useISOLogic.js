@@ -68,7 +68,6 @@ export default function useISOLogic({ userName }) {
     clausesError,
     loadDropdownOptions,
     handleCarChange,
-    toggleNcrSelection,
     toggleClauseSelection,
     fetchClauseSuggestions,
     handleOpenCarModal,
@@ -128,7 +127,6 @@ export default function useISOLogic({ userName }) {
     onClose: () => setIsCarModalOpen(false),
     form: carForm,
     handleChange: handleCarChange,
-    toggleNcrSelection,
     toggleClauseSelection,
     fetchClauseSuggestions,
     clausesLoading,
@@ -140,8 +138,7 @@ export default function useISOLogic({ userName }) {
     departments,
     departmentsLoading: loadingDropdowns,
     users,
-    usersLoading: loadingDropdowns,
-    allReports
+    usersLoading: loadingDropdowns
   }
 
   return {

@@ -52,32 +52,17 @@ export function useComplianceData() {
       
       const linksList = linksData || []
 
-      // Fetch NCR links
-      const { data: ncrLinksData } = await supabase
-        .from('car_ncr_links')
-        .select('car_report_id, ncr_id')
-      
-      const ncrLinksList = ncrLinksData || []
-
       // Merge links into carsList manually
       if (carsList) {
         carsList.forEach(car => {
           car.car_clause_links = (linksList || []).filter(l => l.car_report_id === car.id)
-          car.ncr_id = (ncrLinksList || []).filter(l => l.car_report_id === car.id).map(l => l.ncr_id)
         })
       }
 
-      const linkedNcrIds = new Set()
-      ;(ncrLinksList || []).forEach(link => {
-        if (link.ncr_id) {
-          linkedNcrIds.add(Number(link.ncr_id))
-        }
-      })
-
-      // Fetch NCRs
+      // Fetch NCRs (exclude closed or those with car_filed = true)
       const rawNcrData = await isoService.fetchNcrReportsForISO()
       const ncrData = (rawNcrData || []).filter(ncr => 
-        !linkedNcrIds.has(Number(ncr.id)) && 
+        !ncr.car_filed && 
         String(ncr.status || '').toUpperCase() !== REPORT_STATUS.CLOSED
       )
 
@@ -165,12 +150,6 @@ export function useComplianceData() {
       if (carsList && carsList.length > 0) {
         allFindings.forEach(finding => {
           const matchingCar = carsList.find(car => {
-            // Match unlinked escalations by checking if NCR ID matches
-            if (finding.isNcrGap && !finding.clause_id) {
-              const carNcrIds = Array.isArray(car.ncr_id) ? car.ncr_id.map(Number) : []
-              return finding.ncr_ids.some(nid => carNcrIds.includes(Number(nid)))
-            }
-            
             // Match audit result gaps or trend gaps by clause_id via links
             const linkedClauseIds = (car.car_clause_links || []).map(l => l.clause_id)
             if (finding.clause_id && linkedClauseIds.includes(finding.clause_id)) {

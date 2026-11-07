@@ -6,7 +6,6 @@ export const createCarSchema = z.object({
     details_of_nonconformance: z.string().min(1, 'Details of non-conformance is required'),
     department_id: z.union([z.string(), z.number()]).optional().nullable(),
     issue_type_id: z.union([z.string(), z.number()]).optional().nullable(),
-    ncr_ids: z.array(z.union([z.string(), z.number()])).optional().nullable(),
     clause_ids: z.array(z.union([z.string(), z.number()])).optional().nullable(),
   }).passthrough()
 })
@@ -25,5 +24,13 @@ export const verifyCarSchema = z.object({
     outcome: z.enum(['effective', 'ineffective']),
     notes: z.string().optional().nullable(),
     verificationRating: z.union([z.string(), z.number()]).optional().nullable(),
-  }).passthrough()
+  }).passthrough().superRefine((data, ctx) => {
+    if (data.outcome === 'effective' && (!data.verificationRating || String(data.verificationRating).trim() === '')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Verification rating is required when marking a CAR as effective.',
+        path: ['verificationRating'],
+      })
+    }
+  })
 })

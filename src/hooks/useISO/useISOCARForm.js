@@ -33,7 +33,6 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
     affected_quantity: '',
     details_of_nonconformance: '',
     request_date: new Date().toISOString().split('T')[0],
-    ncr_ids: [],
     linked_clause_ids: [],    // confirmed clause IDs to be saved
     suggested_clauses: [],    // suggestions returned by CBR/keyword
   }
@@ -81,23 +80,6 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
   const handleCarChange = (key, value) => {
     setCarForm(prev => ({ ...prev, [key]: value }))
     if (carError) setCarError('')
-  }
-
-  const toggleNcrSelection = (id) => {
-    setCarForm(prev => {
-      const isSelected = prev.ncr_ids.includes(String(id));
-      if (isSelected) {
-        return {
-          ...prev,
-          ncr_ids: prev.ncr_ids.filter(nid => nid !== String(id))
-        };
-      } else {
-        return {
-          ...prev,
-          ncr_ids: [...prev.ncr_ids, String(id)]
-        };
-      }
-    });
   }
 
   const toggleClauseSelection = (clauseId) => {
@@ -154,18 +136,15 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
     setActiveFinding(finding)
 
     let details = `Audit finding: Deficiency in Clause ${finding.iso_clauses?.clause_number || ''} (${finding.iso_clauses?.title || ''}). Evidence: ${finding.evidence || 'None provided.'}`
-    let ncrIds = []
 
     if (finding.isNcrGap) {
       details = `Escalated NCR Trend: Deficiency in Clause ${finding.iso_clauses?.clause_number || ''} (${finding.iso_clauses?.title || ''}). Active NCRs: ${finding.ncr_references.join(', ')}. Details: ${finding.evidence}`
-      ncrIds = finding.ncr_ids || []
     }
 
     setCarForm({
       ...initialFormState,
       requestor: userName || '',
-      details_of_nonconformance: details,
-      ncr_ids: ncrIds.map(String)
+      details_of_nonconformance: details
     })
     setCarError('')
     setClausesError(null)
@@ -178,10 +157,6 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
     setCarError('')
     try {
       const auditScheduleId = activeFinding?.audit_runs?.schedule_id || null
-
-      const ncrArray = carForm.ncr_ids && carForm.ncr_ids.length > 0
-        ? carForm.ncr_ids.map(id => String(id))
-        : (activeFinding?.isNcrGap ? activeFinding.ncr_ids.map(id => String(id)) : null)
 
       // Link CAR to selected clauses + original triggering clause
       const allClauseIds = new Set(carForm.linked_clause_ids || [])
@@ -214,7 +189,6 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
         details_of_nonconformance: carForm.details_of_nonconformance,
         request_date: carForm.request_date || null,
         audit_schedule_id: auditScheduleId,
-        ncr_ids: ncrArray,
         clause_ids: Array.from(allClauseIds),
         status: CAR_STATUS.OPEN,
         site_id: userSiteId
@@ -254,7 +228,6 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
     clausesError,
     loadDropdownOptions,
     handleCarChange,
-    toggleNcrSelection,
     toggleClauseSelection,
     fetchClauseSuggestions,
     handleOpenCarModal,

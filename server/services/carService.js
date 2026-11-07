@@ -10,27 +10,58 @@ function normalizeRole(value) {
   return normalizeText(value).toLowerCase()
 }
 
+function isAdminRole(roleName) {
+  const norm = normalizeRole(roleName)
+  if (!norm) return false
+  return (
+    norm === 'admin' ||
+    norm === 'super admin' ||
+    norm === 'super_admin' ||
+    norm === 'system administrator' ||
+    norm === 'system_administrator' ||
+    norm === 'administrator' ||
+    norm === 'superadmin'
+  )
+}
+
+function isPrivilegedCarVerifier(roleName) {
+  const norm = normalizeRole(roleName)
+  return isAdminRole(norm) || ['qa officer', 'auditor', 'quality assurance'].includes(norm)
+}
+
 async function getUserProfileByAuthId(authId) {
   if (!authId) return null
 
   const { data: profile, error } = await supabase
     .from('users')
-    .select('id, auth_id, role_id, department_id, user_name, first_name, last_name')
+    .select('id, auth_id, role_id, position_id, department_id, site_id, user_name, first_name, last_name')
     .eq('auth_id', authId)
     .maybeSingle()
 
   if (error) throw error
   if (!profile) return null
 
+  let resolvedRoleId = profile.role_id || null
+  if (!resolvedRoleId && profile.position_id) {
+    const { data: posData } = await supabase
+      .from('positions')
+      .select('role_id')
+      .eq('id', profile.position_id)
+      .maybeSingle()
+    if (posData?.role_id) resolvedRoleId = posData.role_id
+  }
+
   let roleName = null
-  if (profile.role_id) {
+  let permissions = null
+  if (resolvedRoleId) {
     const { data: roleData, error: roleError } = await supabase
       .from('roles')
-      .select('role_name')
-      .eq('id', profile.role_id)
+      .select('role_name, permissions')
+      .eq('id', resolvedRoleId)
       .maybeSingle()
     if (roleError) throw roleError
     roleName = roleData?.role_name || null
+    permissions = roleData?.permissions || null
   }
 
   let departmentName = null
@@ -44,7 +75,7 @@ async function getUserProfileByAuthId(authId) {
     departmentName = departmentData?.department_name || null
   }
 
-  return { ...profile, role_name: roleName, department_name: departmentName }
+  return { ...profile, role_name: roleName, permissions, department_name: departmentName }
 }
 
 async function resolveDepartmentIdByName(preferredNames = []) {
@@ -117,7 +148,6 @@ export async function createCarReport({ body, reportedByAuthId }) {
     affected_quantity,
     details_of_nonconformance,
     request_date,
-    ncr_ids,
     clause_ids,
     audit_schedule_id
   } = body || {}
@@ -187,7 +217,6 @@ export async function createCarReport({ body, reportedByAuthId }) {
       affected_quantity: affected_quantity ? parseInt(affected_quantity, 10) : null,
       details_of_nonconformance,
       request_date: request_date ? request_date : null,
-      ncr_id: Array.isArray(ncr_ids) && ncr_ids.length > 0 ? ncr_ids.map(id => parseInt(id, 10)) : null,
       audit_schedule_id: audit_schedule_id || null,
       status: CAR_STATUS.OPEN,
       site_id: creatorObj?.site_id || null
@@ -226,7 +255,6 @@ export async function createCarReport({ body, reportedByAuthId }) {
     }
   }
 
-
   return { data }
 }
 
@@ -245,7 +273,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
 export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAction, preventiveAction, targetVerificationDate, actorAuthId }) {
   const { data: existing, error: findError } = await supabase
     .from('car_reports')
-    .select('id, reference_no, status, requesting_department, responsible_department')
+    .select('id, reference_no, status, requesting_department, responsible_department, site_id')
     .eq('id', carId)
     .maybeSingle()
 
@@ -253,6 +281,12 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
   if (!existing) {
     const err = new Error('CAR report not found')
     err.status = 404
+    throw err
+  }
+
+  if (String(existing.status || '').toLowerCase() === CAR_STATUS.CLOSED) {
+    const err = new Error('Cannot submit a CAPA plan for a closed CAR report.')
+    err.status = 400
     throw err
   }
 
@@ -314,14 +348,14 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
  * @param {string|number} params.carId
  * @param {string} params.outcome
  * @param {string} params.notes
- * @param {number} params.verificationRating
+ * @param {number|string} params.verificationRating
  * @param {string} params.actorAuthId
  * @returns {Promise<{data: Object}>}
  */
 export async function verifyCarEffectiveness({ carId, outcome, notes, verificationRating, actorAuthId }) {
   const { data: existing, error: findError } = await supabase
     .from('car_reports')
-    .select('id, reference_no, status, requesting_department, responsible_department')
+    .select('id, reference_no, status, requesting_department, responsible_department, site_id')
     .eq('id', carId)
     .maybeSingle()
 
@@ -332,6 +366,12 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, verificati
     throw err
   }
 
+  if (String(existing.status || '').toLowerCase() !== CAR_STATUS.UNDER_VERIFICATION) {
+    const err = new Error('Only CAR reports under verification can be verified.')
+    err.status = 400
+    throw err
+  }
+
   const profile = await getUserProfileByAuthId(actorAuthId)
   if (!profile) {
     const err = new Error('Current user profile not found')
@@ -339,15 +379,24 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, verificati
     throw err
   }
 
-  const userDepartmentName = normalizeText(profile.department_name).toLowerCase()
-  const allowedDepartmentNames = [existing.responsible_department, existing.requesting_department]
-    .map((name) => normalizeText(name).toLowerCase())
-    .filter(Boolean)
-
-  if (!userDepartmentName || allowedDepartmentNames.length === 0 || !allowedDepartmentNames.includes(userDepartmentName)) {
-    const err = new Error('You can only verify CARs in your own department.')
+  if (!isAdminRole(profile.role_name) && profile.site_id && existing.site_id && String(profile.site_id) !== String(existing.site_id)) {
+    const err = new Error('You can only verify CARs belonging to your assigned site.')
     err.status = 403
     throw err
+  }
+
+  const isPrivileged = isPrivilegedCarVerifier(profile.role_name)
+  if (!isPrivileged) {
+    const userDepartmentName = normalizeText(profile.department_name).toLowerCase()
+    const allowedDepartmentNames = [existing.responsible_department, existing.requesting_department]
+      .map((name) => normalizeText(name).toLowerCase())
+      .filter(Boolean)
+
+    if (!userDepartmentName || (allowedDepartmentNames.length > 0 && !allowedDepartmentNames.includes(userDepartmentName))) {
+      const err = new Error('You can only verify CARs in your own department.')
+      err.status = 403
+      throw err
+    }
   }
 
   const status = outcome === 'effective' ? CAR_STATUS.CLOSED : CAR_STATUS.OPEN
@@ -358,7 +407,7 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, verificati
       verification_notes: notes,
       verification_date: new Date().toISOString(),
       verified_by: actorAuthId,
-      verification_rating: verificationRating || null,
+      verification_rating: verificationRating ? String(verificationRating).trim() : null,
       status: status
     })
     .eq('id', carId)
@@ -494,7 +543,7 @@ export async function softDeleteCarReport({ carId, actorAuthId }) {
 }
 
 /**
- * Updates an existing CAR report and its clause links.
+ * Updates an existing CAR report and its clause links (supports partial updates).
  *
  * @param {Object} params
  * @param {string|number} params.carId
@@ -502,41 +551,72 @@ export async function softDeleteCarReport({ carId, actorAuthId }) {
  * @param {string} params.actorAuthId
  * @returns {Promise<{data: Object}>}
  */
-export async function updateCarReport({ carId, body, actorAuthId }) {
-  const payload = {
-    requesting_department: body.requesting_department,
-    responsible_department: body.responsible_department,
-    requestor: body.requestor,
-    recipient: body.recipient,
-    date: body.date ? body.date : null,
-    reason_reissue: body.reason_reissue,
-    no_reply: Boolean(body.no_reply),
-    re_corrective_action: Boolean(body.re_corrective_action),
-    quality_food_safety: Boolean(body.quality_food_safety),
-    environment_health_safety: Boolean(body.environment_health_safety),
-    security_issue: Boolean(body.security_issue),
-    internal_audit: Boolean(body.internal_audit),
-    customer_complaint: Boolean(body.customer_complaint),
-    government_agency_audit: Boolean(body.government_agency_audit),
-    customer_audit_nonconformance: Boolean(body.customer_audit_nonconformance),
-    vendor_nonconformance: Boolean(body.vendor_nonconformance),
-    others: body.others,
-    product_material_name: body.product_material_name,
-    model_type: body.model_type,
-    control_no: body.control_no,
-    affected_quantity: body.affected_quantity ? parseInt(body.affected_quantity, 10) : null,
-    details_of_nonconformance: body.details_of_nonconformance,
-    request_date: body.request_date ? body.request_date : null
+export async function updateCarReport({ carId, body = {}, actorAuthId }) {
+  const payload = {}
+
+  const stringOrNullKeys = [
+    'requesting_department',
+    'responsible_department',
+    'requestor',
+    'recipient',
+    'reason_reissue',
+    'others',
+    'product_material_name',
+    'model_type',
+    'control_no',
+    'details_of_nonconformance',
+  ]
+
+  for (const key of stringOrNullKeys) {
+    if (body[key] !== undefined) {
+      payload[key] = body[key]
+    }
   }
 
-  const { data, error } = await supabase
-    .from('car_reports')
-    .update(payload)
-    .eq('id', carId)
-    .select('*')
-    .maybeSingle()
+  const dateKeys = ['date', 'request_date']
+  for (const key of dateKeys) {
+    if (body[key] !== undefined) {
+      payload[key] = body[key] ? body[key] : null
+    }
+  }
 
-  if (error) throw error
+  const booleanKeys = [
+    'no_reply',
+    're_corrective_action',
+    'quality_food_safety',
+    'environment_health_safety',
+    'security_issue',
+    'internal_audit',
+    'customer_complaint',
+    'government_agency_audit',
+    'customer_audit_nonconformance',
+    'vendor_nonconformance',
+  ]
+
+  for (const key of booleanKeys) {
+    if (body[key] !== undefined) {
+      payload[key] = Boolean(body[key])
+    }
+  }
+
+  if (body.affected_quantity !== undefined) {
+    payload.affected_quantity = body.affected_quantity ? parseInt(body.affected_quantity, 10) : null
+  }
+
+  let data = null
+  if (Object.keys(payload).length > 0) {
+    const { data: updated, error } = await supabase
+      .from('car_reports')
+      .update(payload)
+      .eq('id', carId)
+      .select('*')
+      .maybeSingle()
+
+    if (error) throw error
+    data = updated
+  } else {
+    data = await fetchCarReportById(carId)
+  }
 
   const { clause_ids } = body || {}
   if (Array.isArray(clause_ids)) {

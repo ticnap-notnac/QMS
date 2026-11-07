@@ -133,12 +133,6 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         const userDeptName = dataState.departmentNameById.get(String(userDepartmentId))?.toLowerCase()
         filteredCars = filteredCars.filter(car => {
           if (String(car.created_by) === String(currentUserId) || String(car.requestor) === String(currentUserId)) return true
-          if (Array.isArray(car.ncr_id) && car.ncr_id.length > 0) {
-            return car.ncr_id.some(ncrId => String(ncrDeptMap.get(Number(ncrId))) === String(userDepartmentId))
-          }
-          if (car.ncr_id) {
-            return String(ncrDeptMap.get(Number(car.ncr_id))) === String(userDepartmentId)
-          }
           if (userDeptName) {
             return (
               car.requesting_department?.toLowerCase() === userDeptName ||
@@ -150,12 +144,6 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       } else if (activeDeptFilterId) {
         const filterDeptName = dataState.departmentNameById.get(String(activeDeptFilterId))?.toLowerCase()
         filteredCars = filteredCars.filter(car => {
-          if (Array.isArray(car.ncr_id) && car.ncr_id.length > 0) {
-            return car.ncr_id.some(ncrId => String(ncrDeptMap.get(Number(ncrId))) === String(activeDeptFilterId))
-          }
-          if (car.ncr_id) {
-            return String(ncrDeptMap.get(Number(car.ncr_id))) === String(activeDeptFilterId)
-          }
           if (filterDeptName) {
             return (
               car.requesting_department?.toLowerCase() === filterDeptName ||
@@ -693,13 +681,10 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     carFormState.setError(null)
 
     try {
-      // Build payload including confirmed ISO clause links and attached NCR ID
+      // Build payload including confirmed ISO clause links
       const payload = {
         ...carFormState.form,
-        clause_ids: carFormState.form.linked_clause_ids || [],
-        ncr_ids: modalsState.selectedCARReport?.id
-          ? [String(modalsState.selectedCARReport.id)]
-          : carFormState.form.ncr_ids
+        clause_ids: carFormState.form.linked_clause_ids || []
       }
       
       if (carFormState.form.id) {
@@ -1066,7 +1051,6 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       onClose: modalsState.closeCARModal,
       form: carFormState.form,
       handleChange: carFormState.handleChange,
-      toggleNcrSelection: carFormState.toggleNcrSelection,
       toggleClauseSelection: carFormState.toggleClauseSelection,
       fetchClauseSuggestions: carFormState.fetchClauseSuggestions,
       clausesLoading: carFormState.clausesLoading,
@@ -1080,8 +1064,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       users: dataState.users
         .filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
         .map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
-      usersLoading: dataState.usersLoading,
-      allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      usersLoading: dataState.usersLoading
     },
     qddrModalProps: {
       isOpen: modalsState.isQDDRModalOpen,
