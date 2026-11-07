@@ -9,6 +9,23 @@ export const createReportSchema = z.object({
   }).passthrough()
 })
 
+export const updateReportSchema = z.object({
+  params: z.object({
+    id: z.string().min(1, 'Report ID is required')
+  }).optional(),
+  body: z.object({
+    batch_number: z.string().min(1, 'Batch number cannot be empty').optional(),
+    severity: z.string().min(1, 'Severity cannot be empty').optional(),
+    department_id: z.union([z.string(), z.number()]).transform(String).optional(),
+    description: z.string().min(1, 'Description cannot be empty').optional(),
+    preventive_rating: z.string().optional().nullable(),
+    resolution_details: z.string().optional().nullable(),
+    car_filed: z.boolean().optional(),
+    qddr_filed: z.boolean().optional(),
+    clause_id: z.union([z.string(), z.number()]).optional().nullable(),
+  }).passthrough()
+})
+
 export const assignReportSchema = z.object({
   params: z.object({
     id: z.string().min(1, 'Report ID is required')

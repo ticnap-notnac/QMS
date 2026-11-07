@@ -368,12 +368,14 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
 
   const canApproveReport = useCallback((report) => {
     if (!report) return false;
-    if (hasExplicitRights) return rights.includes('accept_decline_report');
+    if (String(report.status || '').trim().toUpperCase() === 'CLOSED') return false;
     if (isAdminRole(userRole)) return true;
     const role = String(userRole || '').trim().toLowerCase();
-    if (role === 'department manager' || role === 'manager') {
-      return String(report.department_id) === String(userDepartmentId);
+    if (role === 'department manager' || role === 'manager' || role === 'team leader') {
+      const hasRight = hasExplicitRights ? rights.includes('accept_decline_report') : true;
+      return hasRight && String(report.department_id) === String(userDepartmentId);
     }
+    if (hasExplicitRights) return rights.includes('accept_decline_report');
     return false;
   }, [hasExplicitRights, userRole, userDepartmentId, rights])
 
@@ -381,13 +383,15 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     (report) => {
       if (!report) return false
       if (String(report.status || '').trim().toUpperCase() === 'CLOSED') return false
-      if (hasExplicitRights) return rights.includes('edit_delete_report')
       if (isAdminRole(userRole)) return true
+      if (String(report.assigned_to || '') !== '' && String(report.assigned_to) === String(currentUserId)) {
+        return true
+      }
+      if (hasExplicitRights) return rights.includes('edit_delete_report')
       const role = String(userRole || '').trim().toLowerCase()
       if (role === 'manager' || role === 'department manager') return true
 
-      return String(report.assigned_to || '') !== '' &&
-        String(report.assigned_to) === String(currentUserId)
+      return false
     },
     [hasExplicitRights, currentUserId, userRole, rights],
   )
@@ -395,9 +399,15 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   const canDeleteReport = useCallback(
     (report) => {
       if (!report) return false
-      if (hasExplicitRights) return rights.includes('edit_delete_report')
-      if (isAdminRole(userRole)) return true
-      return Number(report.reported_by) === Number(currentUserId)
+      const role = String(userRole || '').trim().toLowerCase()
+      if (isAdminRole(userRole) || role === 'qa officer') return true
+      if (hasExplicitRights && rights.includes('edit_delete_report')) return true
+      const isReporter = Number(report.reported_by) === Number(currentUserId)
+      const isUninvestigatedOpen =
+        String(report.status || '').trim().toUpperCase() !== 'CLOSED' &&
+        !report.assigned_to &&
+        !report.investigation_details
+      return isReporter && isUninvestigatedOpen
     },
     [hasExplicitRights, userRole, rights, currentUserId]
   )

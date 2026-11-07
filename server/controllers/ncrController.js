@@ -1,5 +1,6 @@
 import { getRequestActor } from '../lib/requestUtils.js'
 import { writeAudit } from '../lib/audit.js'
+import logger from '../utils/logger.js'
 import { safeCreateNotificationsForRoles, safeCreateNotificationsForRolesAndDepartment, safeCreateNotification } from '../lib/notificationHelper.js'
 import {
   fetchReports,
@@ -53,7 +54,6 @@ export async function createReport(req, res) {
       userAuthId: reportedByAuthId,
       details: { id: data?.id ?? null, reference_no: referenceNo }
     })
-    const reporterName = `${data?.reporter_first_name || ''} ${data?.reporter_last_name || ''}`.trim() || 'a user'
     await safeCreateNotificationsForRolesAndDepartment({
       globalRoleNames: ['admin'],
       departmentRoleNames: ['manager', 'department manager'],
@@ -72,13 +72,14 @@ export async function createReport(req, res) {
 
 export async function updateReport(req, res) {
   const { id } = req.params
+  const actorAuthId = getRequestActor(req)
   try {
-    const data = await updateNcrReport({ id, body: req.body || {} })
+    const data = await updateNcrReport({ id, body: req.body || {}, actorAuthId })
     await writeAudit({
       level: 'audit',
       source: 'ncr_reports',
       action: 'ncr_update',
-      userAuthId: getRequestActor(req),
+      userAuthId: actorAuthId,
       details: { id, updates: req.body }
     })
     return res.json(data)
@@ -89,13 +90,14 @@ export async function updateReport(req, res) {
 
 export async function updateReportInvestigation(req, res) {
   const { id } = req.params
+  const actorAuthId = getRequestActor(req)
   try {
-    const { data, existing } = await updateNcrInvestigation({ id, body: req.body || {}, files: req.files })
+    const { data, existing } = await updateNcrInvestigation({ id, body: req.body || {}, files: req.files, actorAuthId })
     await writeAudit({
       level: 'audit',
       source: 'ncr_reports',
       action: 'ncr_investigation_update',
-      userAuthId: getRequestActor(req),
+      userAuthId: actorAuthId,
       details: { id, updates: req.body }
     })
     await safeCreateNotificationsForRoles({
@@ -235,16 +237,16 @@ export async function rateReport(req, res) {
   const reportedByAuthId = getRequestActor(req)
   if (!reportedByAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
 
-  if (typeof rating !== 'number' || rating < 0.5 || rating > 5.0) {
+  const numericRating = Number(rating)
+  if (!Number.isFinite(numericRating) || numericRating < 0.5 || numericRating > 5.0) {
     return res.status(400).json({ error: 'Rating must be a number between 0.5 and 5.0.' })
   }
 
   try {
-    const roundedRating = Math.round(rating)
-    const data = await submitReportRating({ reportId: id, rating: roundedRating, userAuthId: reportedByAuthId })
+    const data = await submitReportRating({ reportId: id, rating: numericRating, userAuthId: reportedByAuthId })
     return res.status(200).json({ success: true, data })
   } catch (err) {
-    import('fs').then(fs => fs.appendFileSync('backend-error.log', new Date().toISOString() + ' rateReport error: ' + (err.stack || err.message) + '\n'));
+    logger.error('rateReport error', { reportId: id, error: err?.message || String(err), stack: err?.stack })
     return res.status(err.status || 500).json({ error: err?.message || String(err) })
   }
 }
