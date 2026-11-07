@@ -278,7 +278,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Star size={15} color="#eab308" fill="#eab308" />
                   <span style={{ fontSize: '0.85rem', color: '#475569' }}>
-                    Preventive Rating: <strong>{document.preventive_rating} / 5 Stars</strong>
+                    Preventive Rating: <strong>{document.preventive_rating}</strong>
                   </span>
                 </div>
               )}

@@ -124,15 +124,23 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         .select('id, department_id')
 
       const ncrDeptMap = new Map((ncrs || []).map(n => [n.id, n.department_id]))
-      const isStandardUser = !isAdminRole(userRole) && String(userRole || '').trim().toLowerCase() !== 'auditor'
+      const normRole = String(userRole || '').trim().toLowerCase()
+      const isStandardUser = !isAdminRole(userRole) && !['auditor', 'qa officer', 'quality assurance'].includes(normRole)
       const activeDeptFilterId = formState.reportFilters.departmentId
+      const currentUserObj = (dataState.users || []).find(u => Number(u.id) === Number(currentUserId))
+      const currentUserName = String(currentUserObj?.label || '').split(/\s+[—–-]\s+/)[0].trim().toLowerCase()
 
       // 1. CAR department scoping/filtering
       let filteredCars = carData || []
       if (isStandardUser) {
         const userDeptName = dataState.departmentNameById.get(String(userDepartmentId))?.toLowerCase()
         filteredCars = filteredCars.filter(car => {
-          if (String(car.created_by) === String(currentUserId) || String(car.requestor) === String(currentUserId)) return true
+          if (String(car.prepared_by_audited_by) === String(currentUserId)) return true
+          if (currentUserName) {
+            const reqName = String(car.requestor || '').split(/\s+[—–-]\s+/)[0].trim().toLowerCase()
+            const recName = String(car.recipient || '').split(/\s+[—–-]\s+/)[0].trim().toLowerCase()
+            if (reqName === currentUserName || recName === currentUserName) return true
+          }
           if (userDeptName) {
             return (
               car.requesting_department?.toLowerCase() === userDeptName ||
@@ -178,7 +186,6 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
           if (userDeptName && q.issuing_department) {
             return q.issuing_department.toLowerCase() === userDeptName
           }
-          if (!q.ncr_id || (Array.isArray(q.ncr_id) && q.ncr_id.length === 0)) return true
           return false
         })
       } else if (activeDeptFilterId) {
@@ -211,7 +218,17 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       setLoadingCar(false)
       setLoadingQddr(false)
     }
-  }, [setToast, userRole, userDepartmentId, formState.reportFilters.departmentId, dataState.departmentNameById])
+  }, [
+    setToast,
+    currentUserId,
+    userRole,
+    userDepartmentId,
+    formState.reportFilters.departmentId,
+    formState.reportFilters.status,
+    formState.reportFilters.date,
+    dataState.departmentNameById,
+    dataState.users
+  ])
 
   useEffect(() => {
     if (currentAuthId) {

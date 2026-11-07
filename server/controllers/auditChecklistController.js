@@ -39,8 +39,9 @@ export async function editTemplate(req, res, next) {
 
 export async function removeTemplate(req, res, next) {
   const { id } = req.params
+  const actorAuthId = getRequestActor(req)
   try {
-    const result = await deleteTemplate(id)
+    const result = await deleteTemplate(id, actorAuthId)
     return res.json(result)
   } catch (err) {
     next(err)

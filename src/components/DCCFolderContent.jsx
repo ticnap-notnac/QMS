@@ -868,7 +868,7 @@ export default function DCCFolderContent({
                 </div>
 
                 {/* View Details Button */}
-                {['CAR', 'NCR', 'QDDR'].includes(selectedDocument._type) && (
+                {['NCR', 'QDDR'].includes(selectedDocument._type) && (
                   <button 
                     onClick={() => setViewDetailsDoc(selectedDocument)} 
                     className="btn btn-outline dcc-details-action-btn"

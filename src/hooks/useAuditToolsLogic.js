@@ -199,7 +199,9 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
         id: activeRunData.id,
         schedule_id: schedule.id,
         title: schedule.title,
-        standard_name: schedule.standard_name
+        standard_name: schedule.standard_name,
+        template_name: schedule.template_name || null,
+        audit_schedules: schedule
       })
       setActiveClauses(itemsList)
       let dbSnapshot = JSON.stringify(initialResults)
@@ -295,6 +297,13 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
   const handleSaveResults = async (complete = false) => {
     setError('')
     setSuccess('')
+    if (complete) {
+      const missingClause = (activeClauses || []).find(c => !resultsMap[c.id]?.status)
+      if (missingClause) {
+        setError(`Please record a status for Clause ${missingClause.clause_number || ''} before completing the audit.`)
+        return
+      }
+    }
     setSavingProgress(true)
     try {
       const upsertData = Object.keys(resultsMap).map(clauseId => {
@@ -516,7 +525,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       if (audError) throw audError
       
       const auditorsData = (allUsersData || []).filter(u => 
-        String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE' && (u.roles?.role_name === 'Team Leader' || u.roles?.role_name === 'QA Officer')
+        String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE' &&
+        ['team leader', 'qa officer', 'quality assurance', 'auditor', 'admin'].includes(String(u.roles?.role_name || '').trim().toLowerCase())
       )
       
       setAuditors(auditorsData)
@@ -546,7 +556,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
       const mappedSchedules = (schedulesData || []).map(schedule => {
         const std = (standardsData || []).find(s => s.id === schedule.standard_id)
-        const aud = (auditorsData || []).find(a => a.auth_id === schedule.auditor_id)
+        const aud = (allUsersData || []).find(a => a.auth_id === schedule.auditor_id) || (auditorsData || []).find(a => a.auth_id === schedule.auditor_id)
         const temp = (templatesData || []).find(t => String(t.id) === String(schedule.template_id))
         return {
           ...schedule,

@@ -1,5 +1,19 @@
 import { supabase } from '../lib/supabase.js'
 
+function isAdminRole(roleName) {
+  const norm = String(roleName || '').trim().toLowerCase()
+  if (!norm) return false
+  return (
+    norm === 'admin' ||
+    norm === 'super admin' ||
+    norm === 'super_admin' ||
+    norm === 'system administrator' ||
+    norm === 'system_administrator' ||
+    norm === 'administrator' ||
+    norm === 'superadmin'
+  )
+}
+
 const parseResolutionTimeToHours = (resTime, start, end) => {
   if (resTime) {
     const match = String(resTime).match(/(\d+)\s*(day|hour)/i)
@@ -21,28 +35,54 @@ const parseResolutionTimeToHours = (resTime, start, end) => {
   return null
 }
 
-export async function fetchResolutionTrends() {
+export async function fetchResolutionTrends(userAuthId = null) {
+  let callerSiteId = null
+  if (userAuthId) {
+    const { data: currentUser } = await supabase
+      .from('users')
+      .select('id, site_id, role:roles(role_name)')
+      .eq('auth_id', userAuthId)
+      .maybeSingle()
+
+    if (currentUser && !isAdminRole(currentUser.role?.role_name) && currentUser.site_id) {
+      callerSiteId = currentUser.site_id
+    }
+  }
+
   // Only fetch data from the last 12 months to prevent DB slowdowns with large datasets
   const dateOneYearAgo = new Date()
   dateOneYearAgo.setFullYear(dateOneYearAgo.getFullYear() - 1)
   const oneYearAgoStr = dateOneYearAgo.toISOString()
 
+  let ncrQuery = supabase
+    .from('ncr_reports')
+    .select('created_at, updated_at, resolution_time, site_id')
+    .eq('status', 'CLOSED')
+    .gte('created_at', oneYearAgoStr)
+
+  let carQuery = supabase
+    .from('car_reports')
+    .select('created_at, request_date, resolution_time, verification_date, updated_at, site_id')
+    .eq('status', 'closed')
+    .gte('created_at', oneYearAgoStr)
+
+  let qddrQuery = supabase
+    .from('qddr_reports')
+    .select('created_at, updated_at, site_id')
+    .eq('status', 'closed')
+    .gte('created_at', oneYearAgoStr)
+
+  if (callerSiteId) {
+    const siteFilter = `site_id.is.null,site_id.eq.${callerSiteId}`
+    ncrQuery = ncrQuery.or(siteFilter)
+    carQuery = carQuery.or(siteFilter)
+    qddrQuery = qddrQuery.or(siteFilter)
+  }
+
   const [ncrsRes, carsRes, qddrsRes] = await Promise.all([
-    supabase
-      .from('ncr_reports')
-      .select('created_at, updated_at, resolution_time')
-      .eq('status', 'CLOSED')
-      .gte('created_at', oneYearAgoStr),
-    supabase
-      .from('car_reports')
-      .select('created_at, request_date, resolution_time, verification_date, updated_at')
-      .eq('status', 'closed')
-      .gte('created_at', oneYearAgoStr),
-    supabase
-      .from('qddr_reports')
-      .select('created_at, updated_at')
-      .eq('status', 'closed')
-      .gte('created_at', oneYearAgoStr)
+    ncrQuery,
+    carQuery,
+    qddrQuery
   ])
 
   const ncrs = ncrsRes.data || []
@@ -93,7 +133,7 @@ export async function fetchResolutionTrends() {
         NCR: ncrAvg,
         CAR: carAvg,
         QDDR: qddrAvg,
-        rawDate: data.rawDate.toISOString() // convert Date back to string for JSON serialization
+        rawDate: data.rawDate.toISOString()
       }
     })
     .sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate))
@@ -103,35 +143,25 @@ export async function fetchPendingRatings(userAuthId) {
   // 1. Get the current user details
   const { data: currentUser, error: userError } = await supabase
     .from('users')
-    .select('id, department_id, role:roles(role_name)')
+    .select('id, department_id, site_id, role:roles(role_name)')
     .eq('auth_id', userAuthId)
     .maybeSingle()
-  
-  if (userError || !currentUser) throw new Error('User not found.')
 
-function isAdminRole(roleName) {
-  const norm = String(roleName || '').trim().toLowerCase()
-  if (!norm) return false
-  return (
-    norm === 'admin' ||
-    norm === 'super admin' ||
-    norm === 'super_admin' ||
-    norm === 'system administrator' ||
-    norm === 'system_administrator' ||
-    norm === 'administrator' ||
-    norm === 'superadmin'
-  )
-}
+  if (userError || !currentUser) throw new Error('User not found.')
 
   const normalizedRole = String(currentUser.role?.role_name || '').toLowerCase().trim()
   const isAuditorOrAdmin = normalizedRole === 'auditor' || isAdminRole(currentUser.role?.role_name)
   const isManager = normalizedRole === 'department manager' || normalizedRole === 'manager'
 
-  // 2. Query closed reports based on role access
+  // 2. Query closed reports based on role access and site scoping
   let query = supabase
     .from('ncr_reports')
-    .select('id, reference_no, description, corrective_action, department_id, reported_by')
+    .select('id, reference_no, description, corrective_action, department_id, reported_by, site_id')
     .eq('status', 'CLOSED')
+
+  if (!isAdminRole(currentUser.role?.role_name) && currentUser.site_id) {
+    query = query.or(`site_id.is.null,site_id.eq.${currentUser.site_id}`)
+  }
 
   if (!isAuditorOrAdmin) {
     if (isManager && currentUser.department_id) {
@@ -149,7 +179,6 @@ function isAdminRole(roleName) {
   const reportIds = reports.map(r => r.id)
 
   // 3. Find which of these reports the user has ALREADY rated
-  // Since we use the service_role key on the backend, this bypasses RLS safely!
   const { data: ratings, error: ratingsErr } = await supabase
     .from('ncr_report_ratings')
     .select('report_id')

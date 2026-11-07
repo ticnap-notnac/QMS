@@ -77,7 +77,8 @@ export async function getCarById(req, res, next) {
       return res.status(400).json({ error: 'Invalid CAR ID.' })
     }
 
-    const car = await fetchCarReportById(carId)
+    const actorAuthId = getRequestActor(req)
+    const car = await fetchCarReportById(carId, actorAuthId)
     if (!car) {
       return res.status(404).json({ error: 'CAR report not found.' })
     }
@@ -95,7 +96,8 @@ export async function getCarsForClause(req, res, next) {
       return res.status(400).json({ error: 'Invalid clause ID.' })
     }
 
-    const cars = await fetchCarsForClause(clauseId.trim())
+    const actorAuthId = getRequestActor(req)
+    const cars = await fetchCarsForClause(clauseId.trim(), actorAuthId)
     return res.json(cars)
   } catch (err) {
     next(err)

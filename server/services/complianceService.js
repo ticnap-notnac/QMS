@@ -1,5 +1,32 @@
 import { supabase } from '../lib/supabase.js'
 
+function isAdminRole(roleName) {
+  const norm = String(roleName || '').trim().toLowerCase()
+  if (!norm) return false
+  return (
+    norm === 'admin' ||
+    norm === 'super admin' ||
+    norm === 'super_admin' ||
+    norm === 'system administrator' ||
+    norm === 'system_administrator' ||
+    norm === 'administrator' ||
+    norm === 'superadmin'
+  )
+}
+
+async function resolveCallerSiteId(userAuthId) {
+  if (!userAuthId) return null
+  const { data } = await supabase
+    .from('users')
+    .select('site_id, roles(role_name)')
+    .eq('auth_id', userAuthId)
+    .maybeSingle()
+
+  if (!data) return null
+  if (isAdminRole(data.roles?.role_name)) return null
+  return data.site_id || null
+}
+
 /**
  * Calculates the compliance percentage for a list of results in a run.
  */
@@ -22,12 +49,19 @@ function calculateComplianceScore(results, clauseIdSet) {
 /**
  * Fetches the latest compliance score for all active ISO standards.
  */
-export async function fetchComplianceStats() {
+export async function fetchComplianceStats(userAuthId = null) {
+  const callerSiteId = await resolveCallerSiteId(userAuthId)
+
+  let schedQuery = supabase.from('audit_schedules').select('id, standard_id, site_id')
+  if (callerSiteId) {
+    schedQuery = schedQuery.or(`site_id.is.null,site_id.eq.${callerSiteId}`)
+  }
+
   const [stdRes, grpRes, clsRes, schedRes, runRes] = await Promise.all([
     supabase.from('iso_standards').select('id, name, version').eq('is_active', true),
     supabase.from('iso_clause_groups').select('id, standard_id'),
     supabase.from('iso_clauses').select('id, group_id').eq('is_active', true),
-    supabase.from('audit_schedules').select('id, standard_id'),
+    schedQuery,
     supabase.from('audit_runs').select('id, schedule_id, completed_at').not('completed_at', 'is', null).order('completed_at', { ascending: false })
   ])
 
@@ -54,7 +88,7 @@ export async function fetchComplianceStats() {
   })
 
   const runIds = Array.from(latestRunByStandard.values()).map(r => r.id)
-  let resultsByRun = new Map()
+  const resultsByRun = new Map()
   if (runIds.length > 0) {
     const { data: resultsData } = await supabase
       .from('audit_results')
@@ -90,10 +124,17 @@ export async function fetchComplianceStats() {
 /**
  * Fetches historical completed audit runs and their compliance percentages.
  */
-export async function fetchComplianceTrends() {
+export async function fetchComplianceTrends(userAuthId = null) {
+  const callerSiteId = await resolveCallerSiteId(userAuthId)
+
+  let schedQuery = supabase.from('audit_schedules').select('id, title, standard_id, site_id')
+  if (callerSiteId) {
+    schedQuery = schedQuery.or(`site_id.is.null,site_id.eq.${callerSiteId}`)
+  }
+
   const [runRes, schedRes, stdRes, grpRes, clsRes] = await Promise.all([
     supabase.from('audit_runs').select('id, schedule_id, completed_at, started_at').not('completed_at', 'is', null).order('completed_at', { ascending: true }),
-    supabase.from('audit_schedules').select('id, title, standard_id'),
+    schedQuery,
     supabase.from('iso_standards').select('id, name, version'),
     supabase.from('iso_clause_groups').select('id, standard_id'),
     supabase.from('iso_clauses').select('id, group_id').eq('is_active', true)
@@ -116,7 +157,7 @@ export async function fetchComplianceTrends() {
   })
 
   const runIds = runs.map(r => r.id)
-  let resultsByRun = new Map()
+  const resultsByRun = new Map()
   if (runIds.length > 0) {
     const { data: resultsData } = await supabase
       .from('audit_results')

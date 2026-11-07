@@ -1,3 +1,4 @@
+import { getRequestActor } from '../lib/requestUtils.js'
 import { fetchComplianceStats, fetchComplianceTrends } from '../services/complianceService.js'
 
 /**
@@ -6,7 +7,8 @@ import { fetchComplianceStats, fetchComplianceTrends } from '../services/complia
  */
 export async function getComplianceStats(req, res, next) {
   try {
-    const stats = await fetchComplianceStats()
+    const userAuthId = req.user?.id || getRequestActor(req)
+    const stats = await fetchComplianceStats(userAuthId)
     return res.json(stats)
   } catch (err) {
     next(err)
@@ -19,7 +21,8 @@ export async function getComplianceStats(req, res, next) {
  */
 export async function getComplianceTrends(req, res, next) {
   try {
-    const trends = await fetchComplianceTrends()
+    const userAuthId = req.user?.id || getRequestActor(req)
+    const trends = await fetchComplianceTrends(userAuthId)
     return res.json(trends)
   } catch (err) {
     next(err)

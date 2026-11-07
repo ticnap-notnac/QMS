@@ -1,13 +1,38 @@
 import { supabase } from '../lib/supabase.js'
 
-export async function fetchTemplates(actorAuthId) {
-  const { data: userProfile, error: userError } = await supabase
+function isAdminRole(roleName) {
+  const norm = String(roleName || '').trim().toLowerCase()
+  if (!norm) return false
+  return (
+    norm === 'admin' ||
+    norm === 'super admin' ||
+    norm === 'super_admin' ||
+    norm === 'system administrator' ||
+    norm === 'system_administrator' ||
+    norm === 'administrator' ||
+    norm === 'superadmin'
+  )
+}
+
+async function resolveActorProfile(actorAuthId) {
+  if (!actorAuthId) return null
+  const { data, error } = await supabase
     .from('users')
-    .select('site_id')
+    .select('id, site_id, roles(role_name)')
     .eq('auth_id', actorAuthId)
     .maybeSingle()
 
-  if (userError) throw userError
+  if (error) throw error
+  if (!data) return null
+  return {
+    id: data.id,
+    site_id: data.site_id || null,
+    role_name: data.roles?.role_name || null
+  }
+}
+
+export async function fetchTemplates(actorAuthId) {
+  const userProfile = await resolveActorProfile(actorAuthId)
 
   let query = supabase
     .from('audit_checklist_templates')
@@ -23,7 +48,7 @@ export async function fetchTemplates(actorAuthId) {
       )
     `)
 
-  if (userProfile?.site_id) {
+  if (userProfile?.site_id && !isAdminRole(userProfile.role_name)) {
     query = query.or(`site_id.is.null,site_id.eq.${userProfile.site_id}`)
   }
 
@@ -33,13 +58,7 @@ export async function fetchTemplates(actorAuthId) {
 }
 
 export async function createTemplate({ title, description, standardId, items }, actorAuthId) {
-  const { data: userProfile, error: userError } = await supabase
-    .from('users')
-    .select('site_id')
-    .eq('auth_id', actorAuthId)
-    .maybeSingle()
-
-  if (userError) throw userError
+  const userProfile = await resolveActorProfile(actorAuthId)
 
   const { data: template, error: tempError } = await supabase
     .from('audit_checklist_templates')
@@ -74,6 +93,26 @@ export async function createTemplate({ title, description, standardId, items }, 
 }
 
 export async function updateTemplate(id, { title, description, standardId, items }, actorAuthId) {
+  const { data: existing, error: findErr } = await supabase
+    .from('audit_checklist_templates')
+    .select('id, site_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (findErr) throw findErr
+  if (!existing) {
+    const err = new Error('Checklist template not found.')
+    err.status = 404
+    throw err
+  }
+
+  const userProfile = await resolveActorProfile(actorAuthId)
+  if (userProfile && !isAdminRole(userProfile.role_name) && userProfile.site_id && existing.site_id && String(userProfile.site_id) !== String(existing.site_id)) {
+    const err = new Error('You can only update checklist templates belonging to your assigned site.')
+    err.status = 403
+    throw err
+  }
+
   const { data: template, error: tempError } = await supabase
     .from('audit_checklist_templates')
     .update({
@@ -112,7 +151,27 @@ export async function updateTemplate(id, { title, description, standardId, items
   return template
 }
 
-export async function deleteTemplate(id) {
+export async function deleteTemplate(id, actorAuthId = null) {
+  const { data: existing, error: findErr } = await supabase
+    .from('audit_checklist_templates')
+    .select('id, site_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (findErr) throw findErr
+  if (!existing) {
+    const err = new Error('Checklist template not found.')
+    err.status = 404
+    throw err
+  }
+
+  const userProfile = await resolveActorProfile(actorAuthId)
+  if (userProfile && !isAdminRole(userProfile.role_name) && userProfile.site_id && existing.site_id && String(userProfile.site_id) !== String(existing.site_id)) {
+    const err = new Error('You can only delete checklist templates belonging to your assigned site.')
+    err.status = 403
+    throw err
+  }
+
   const { error } = await supabase
     .from('audit_checklist_templates')
     .delete()

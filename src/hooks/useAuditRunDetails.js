@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import { supabase } from '@/utils/supabase'
 
+export function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export function useAuditRunDetails() {
   const [selectedRunDetails, setSelectedRunDetails] = useState(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
@@ -44,13 +53,13 @@ export function useAuditRunDetails() {
           .select('*')
           .in('group_id', groupIds)
           .eq('is_active', true)
-        
+
         if (clauseErr) throw clauseErr
-        
+
         clausesList = (clausesData || []).sort((a, b) =>
           a.clause_number.localeCompare(b.clause_number, undefined, { numeric: true })
         )
-        
+
         // Fetch linked CARs for these clauses to display in details
         const clauseIds = clausesList.map(c => c.id)
         if (clauseIds.length > 0) {
@@ -58,9 +67,8 @@ export function useAuditRunDetails() {
             .from('car_clause_links')
             .select('clause_id, car_reports(*)')
             .in('clause_id', clauseIds)
-            
+
           if (!linkErr && linksData) {
-            console.log('Fetched linksData:', linksData)
             clausesList = clausesList.map(c => {
               const cars = linksData
                 .filter(l => l.clause_id === c.id && l.car_reports)
@@ -93,11 +101,18 @@ export function useAuditRunDetails() {
   }
 
   const handlePrintReport = (run) => {
+    const safeTitle = escapeHtml(run.title || 'Unnamed Audit')
+    const safeTitleUpper = escapeHtml(String(run.title || 'Unnamed Audit').toUpperCase())
+    const safeStandardName = escapeHtml(run.standard_name || 'Unknown Standard')
+    const safeAuditorName = escapeHtml(run.auditor_name || 'Unknown Auditor')
+    const safeStatusText = escapeHtml(run.statusText || 'Completed')
+    const statusColor = run.statusText === 'Failed / Critical' ? '#ef4444' : '#10b981'
+
     const printWindow = window.open('', '_blank', 'width=800,height=600')
     printWindow.document.write(`
       <html>
         <head>
-          <title>Audit Report - ${run.title}</title>
+          <title>Audit Report - ${safeTitle}</title>
           <style>
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; }
             h1 { font-size: 24px; border-bottom: 2px solid #22d3ee; padding-bottom: 10px; margin-bottom: 5px; color: #0f172a; }
@@ -117,12 +132,12 @@ export function useAuditRunDetails() {
           </style>
         </head>
         <body>
-          <h1>AUDIT REPORT: ${run.title.toUpperCase()}</h1>
+          <h1>AUDIT REPORT: ${safeTitleUpper}</h1>
           <div class="meta-section">
-            <div class="meta-item"><strong>ISO Standard:</strong> ${run.standard_name}</div>
-            <div class="meta-item"><strong>Assigned Auditor:</strong> ${run.auditor_name}</div>
-            <div class="meta-item"><strong>Completion Date:</strong> ${new Date(run.completed_at).toLocaleDateString()}</div>
-            <div class="meta-item"><strong>Status:</strong> <span class="score-badge" style="color: ${run.statusText === 'Failed / Critical' ? '#ef4444' : '#10b981'}">${run.statusText}</span></div>
+            <div class="meta-item"><strong>ISO Standard:</strong> ${safeStandardName}</div>
+            <div class="meta-item"><strong>Assigned Auditor:</strong> ${safeAuditorName}</div>
+            <div class="meta-item"><strong>Completion Date:</strong> ${escapeHtml(new Date(run.completed_at).toLocaleDateString())}</div>
+            <div class="meta-item"><strong>Status:</strong> <span class="score-badge" style="color: ${statusColor}">${safeStatusText}</span></div>
           </div>
           <h3>Checklist Results</h3>
           <p>Loading results...</p>
@@ -130,7 +145,7 @@ export function useAuditRunDetails() {
       </html>
     `)
     printWindow.document.close()
-    
+
     supabase
       .from('audit_results')
       .select('clause_id, status, evidence')
@@ -157,12 +172,14 @@ export function useAuditRunDetails() {
                     const sorted = (clauses || []).sort((a, b) =>
                       a.clause_number.localeCompare(b.clause_number, undefined, { numeric: true })
                     )
-                    
+
                     let tableRows = ''
                     sorted.forEach(c => {
                       const res = (results || []).find(r => r.clause_id === c.id)
                       const status = res?.status || 'na'
-                      const evidence = res?.evidence || 'No notes added.'
+                      const safeEvidence = escapeHtml(res?.evidence || 'No notes added.')
+                      const safeClauseNumber = escapeHtml(c.clause_number)
+                      const safeClauseTitle = escapeHtml(c.title)
                       const statusLabel = {
                         compliant: 'Compliant',
                         ofi: 'OFI',
@@ -170,32 +187,33 @@ export function useAuditRunDetails() {
                         major_nc: 'Major NC',
                         na: 'N/A'
                       }[status] || 'Unknown'
-                      
+                      const safeStatusClass = escapeHtml(String(status).replace('_', '-'))
+
                       tableRows += `
                         <tr>
-                          <td><strong>Clause ${c.clause_number}</strong></td>
-                          <td>${c.title}</td>
-                          <td><span class="status status-${status.replace('_', '-')}">${statusLabel}</span></td>
-                          <td>${evidence}</td>
+                          <td><strong>Clause ${safeClauseNumber}</strong></td>
+                          <td>${safeClauseTitle}</td>
+                          <td><span class="status status-${safeStatusClass}">${escapeHtml(statusLabel)}</span></td>
+                          <td>${safeEvidence}</td>
                         </tr>
                       `
                     })
 
                     printWindow.document.body.innerHTML = `
-                      <h1>AUDIT REPORT: ${run.title.toUpperCase()}</h1>
+                      <h1>AUDIT REPORT: ${safeTitleUpper}</h1>
                       <div class="meta-section">
-                        <div class="meta-item"><strong>ISO Standard:</strong> ${run.standard_name}</div>
-                        <div class="meta-item"><strong>Assigned Auditor:</strong> ${run.auditor_name}</div>
-                        <div class="meta-item"><strong>Completion Date:</strong> ${new Date(run.completed_at).toLocaleString()}</div>
-                        <div class="meta-item"><strong>Status:</strong> <span class="score-badge" style="color: ${run.statusText === 'Failed / Critical' ? '#ef4444' : '#10b981'}">${run.statusText}</span></div>
+                        <div class="meta-item"><strong>ISO Standard:</strong> ${safeStandardName}</div>
+                        <div class="meta-item"><strong>Assigned Auditor:</strong> ${safeAuditorName}</div>
+                        <div class="meta-item"><strong>Completion Date:</strong> ${escapeHtml(new Date(run.completed_at).toLocaleString())}</div>
+                        <div class="meta-item"><strong>Status:</strong> <span class="score-badge" style="color: ${statusColor}">${safeStatusText}</span></div>
                       </div>
                       <h3>Audit Findings Breakdown</h3>
                       <div class="meta-section" style="grid-template-columns: repeat(5, 1fr); text-align: center;">
-                        <div><strong>Compliant</strong><br/>${run.compliantClauses}</div>
-                        <div><strong>OFI</strong><br/>${run.ofiClauses}</div>
-                        <div><strong>Minor NC</strong><br/>${run.minorNcClauses}</div>
-                        <div><strong>Major NC</strong><br/>${run.majorNcClauses}</div>
-                        <div><strong>N/A</strong><br/>${run.naClauses}</div>
+                        <div><strong>Compliant</strong><br/>${Number(run.compliantClauses) || 0}</div>
+                        <div><strong>OFI</strong><br/>${Number(run.ofiClauses) || 0}</div>
+                        <div><strong>Minor NC</strong><br/>${Number(run.minorNcClauses) || 0}</div>
+                        <div><strong>Major NC</strong><br/>${Number(run.majorNcClauses) || 0}</div>
+                        <div><strong>N/A</strong><br/>${Number(run.naClauses) || 0}</div>
                       </div>
                       <table>
                         <thead>
@@ -211,7 +229,7 @@ export function useAuditRunDetails() {
                         </tbody>
                       </table>
                       <div style="margin-top: 40px; font-size: 12px; color: #94a3b8; text-align: center;">
-                        Report generated on ${new Date().toLocaleString()} by QFlow System
+                        Report generated on ${escapeHtml(new Date().toLocaleString())} by QFlow System
                       </div>
                     `
                     setTimeout(() => {

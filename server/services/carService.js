@@ -438,7 +438,15 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, verificati
  * @param {string|number} clauseId
  * @returns {Promise<Object[]>}
  */
-export async function fetchCarsForClause(clauseId) {
+export async function fetchCarsForClause(clauseId, actorAuthId = null) {
+  let callerSiteId = null
+  if (actorAuthId) {
+    const profile = await getUserProfileByAuthId(actorAuthId)
+    if (profile && !isAdminRole(profile.role_name) && profile.site_id) {
+      callerSiteId = profile.site_id
+    }
+  }
+
   const { data, error } = await supabase
     .from('car_clause_links')
     .select(`
@@ -447,23 +455,31 @@ export async function fetchCarsForClause(clauseId) {
         reference_no,
         status,
         details_of_nonconformance,
-        created_at
+        created_at,
+        site_id
       )
     `)
     .eq('clause_id', clauseId)
 
   if (error) throw error
 
-  return (data || []).map(row => row.car_reports).filter(Boolean)
+  return (data || [])
+    .map(row => row.car_reports)
+    .filter(car => {
+      if (!car) return false
+      if (callerSiteId && car.site_id && String(car.site_id) !== String(callerSiteId)) return false
+      return true
+    })
 }
 
 /**
  * Fetches a CAR report by its ID.
  *
  * @param {string|number} carId
+ * @param {string|null} [actorAuthId=null]
  * @returns {Promise<Object|null>}
  */
-export async function fetchCarReportById(carId) {
+export async function fetchCarReportById(carId, actorAuthId = null) {
   const { data, error } = await supabase
     .from('car_reports')
     .select('*')
@@ -471,7 +487,18 @@ export async function fetchCarReportById(carId) {
     .maybeSingle()
 
   if (error) throw error
-  return data || null
+  if (!data) return null
+
+  if (actorAuthId) {
+    const profile = await getUserProfileByAuthId(actorAuthId)
+    if (profile && !isAdminRole(profile.role_name) && profile.site_id && data.site_id && String(profile.site_id) !== String(data.site_id)) {
+      const err = new Error('You do not have access to a CAR report from another site.')
+      err.status = 403
+      throw err
+    }
+  }
+
+  return data
 }
 
 /**

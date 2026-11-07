@@ -1,4 +1,5 @@
 import { supabase } from '@/utils/supabase'
+import { submitCarReport } from '@/services/carService'
 
 /**
  * Fetches all audit results to compute overall compliance score.
@@ -60,21 +61,12 @@ export async function fetchNcrReportsForISO() {
   const { data: clausesData } = await supabase
     .from('iso_clauses')
     .select('id, clause_number, title')
-    
-  // Safely fetch QDDR (NCR) to Clause links
-  const { data: ncrClauseLinks } = await supabase
-    .from('qddr_clause_links')
-    .select('qddr_report_id, clause_id')
-    
+
   const ncrs = ncrData || []
   const clausesList = clausesData || []
-  const links = ncrClauseLinks || []
 
-  // Merge the clauses into the ncrData
+  // Merge the clauses into the ncrData using ncr_reports.clause_id directly
   ncrs.forEach(ncr => {
-    const link = links.find(l => l.qddr_report_id === ncr.id)
-    ncr.clause_id = link ? link.clause_id : null
-
     if (ncr.clause_id) {
       const matchedClause = clausesList.find(c => c.id === ncr.clause_id)
       if (matchedClause) {
@@ -124,16 +116,18 @@ export async function fetchLatestCarReferenceNo() {
 }
 
 /**
- * Inserts a new CAR report record.
+ * Inserts a new CAR report record via the validated backend CAR API.
  */
-export async function createCarReport(carPayload) {
-  const { data, error } = await supabase
-    .from('car_reports')
-    .insert(carPayload)
-    .select('id')
-    .maybeSingle()
-  if (error) throw error
-  return data
+export async function createCarReport(carPayload, userAuthId) {
+  if (userAuthId) {
+    return await submitCarReport(carPayload, userAuthId)
+  }
+  const { data: sessionData } = await supabase.auth.getSession()
+  const resolvedAuthId = sessionData?.session?.user?.id
+  if (resolvedAuthId) {
+    return await submitCarReport(carPayload, resolvedAuthId)
+  }
+  throw new Error('Missing authentication. Please log in.')
 }
 
 /**
