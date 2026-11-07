@@ -12,6 +12,7 @@ import { useIdleTimeout } from './hooks/useIdleTimeout'
 import Toast from './components/UI/Toast.jsx'
 import { friendlyError } from './utils/friendlyError.js'
 import { clearCachedAuthId } from './services/authService.js'
+import { isAdminRole } from './utils/roleUtils.js'
 
 function normalizeRoleValue(value) {
   return String(value || '').trim().toLowerCase()

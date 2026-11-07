@@ -220,9 +220,9 @@ export default function ReportsPage({
   }
 
   const canViewActiveTab =
-    (logic.activeTab === 'ncr' && canViewNcr) ||
-    (logic.activeTab === 'car' && canViewCar) ||
-    (logic.activeTab === 'qddr' && canViewQddr)
+    (logic.activeTab === 'ncr' && canAccessNcr) ||
+    (logic.activeTab === 'car' && canAccessCar) ||
+    (logic.activeTab === 'qddr' && canAccessQddr)
 
   return (
     <main className="dashboard page-root">
@@ -385,7 +385,7 @@ export default function ReportsPage({
 
           {logic.error && <div className="user-info-error">{logic.error}</div>}
           <div className="facebook-feed-layout-wrapper">
-            {logic.activeTab === 'ncr' && canViewNcr && (
+            {logic.activeTab === 'ncr' && canAccessNcr && (
               <ReportsFeedList
                 isRecurringMode={isRecurringMode} isApprovalQueueMode={logic.isApprovalQueueMode} isClosedMode={logic.isClosedMode} isLoading={logic.isLoading}
                 displayedInvestigatedReports={filteredInvestigated} closedReports={filteredClosed} reports={filteredReports}
@@ -395,7 +395,7 @@ export default function ReportsPage({
                 onUpdate={logic.openUpdateModal} onAssign={logic.openAssignModal} onDelete={logic.handleDeleteReport}
               />
             )}
-            {logic.activeTab === 'car' && canViewCar && (
+            {logic.activeTab === 'car' && canAccessCar && (
               <CARReportsList 
                 carReports={displayedCars} 
                 isLoading={logic.loadingCar} 
@@ -406,7 +406,7 @@ export default function ReportsPage({
                 viewMode={carViewMode}
               />
             )}
-            {logic.activeTab === 'qddr' && canViewQddr && (
+            {logic.activeTab === 'qddr' && canAccessQddr && (
               <QDDRReportsList 
                 qddrReports={displayedQddrs} 
                 isLoading={logic.loadingQddr} 
