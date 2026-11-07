@@ -996,6 +996,12 @@ export async function createNcrReportWithUpload({ body, files, reportedByAuthId 
   }
   if (lastInsertError) throw lastInsertError
 
+  if (data && data.id) {
+    analyzeAndClusterReportInBackground(data.id).catch(err => {
+      console.error('Background trend clustering failed:', err)
+    })
+  }
+
   return { data, referenceNo, reporter }
 }
 
@@ -1749,20 +1755,36 @@ export async function getReportRatingsStats({ reportId, userAuthId }) {
 }
 
 /**
- * Fetches recurring issues that are not linked to a trend cluster.
+ * Fetches recurring issues that are linked to a trend cluster within the specified timeframe and site.
  * @param {number} [days=14] - The timeframe in days.
+ * @param {string|null} [actorAuthId=null] - Optional auth_id of the requesting user for site scoping.
  * @returns {Promise<Object[][]>} Array of clustered reports.
  */
-export async function fetchRecurringUnlinkedIssues(days = 14) {
+export async function fetchRecurringUnlinkedIssues(days = 14, actorAuthId = null) {
+  const numericDays = Number(days) > 0 ? Number(days) : 14
+  const cutoff = new Date(Date.now() - numericDays * 24 * 60 * 60 * 1000)
+
+  let callerSiteId = null
+  if (actorAuthId) {
+    const caller = await resolveCallerContext(actorAuthId)
+    if (caller?.siteId && !isAdminRole(caller.roleName)) {
+      callerSiteId = caller.siteId
+    } else if (caller?.siteId) {
+      callerSiteId = caller.siteId
+    }
+  }
+
   const { data: trendClusters, error } = await supabase
     .from('trend_clusters')
     .select(`
       id,
       ai_summary,
+      updated_at,
       ncr_reports (
-        id, reference_no, description, created_at, status
+        id, reference_no, description, created_at, status, site_id
       )
     `)
+    .gte('updated_at', cutoff.toISOString())
     .order('updated_at', { ascending: false })
 
   if (error) {
@@ -1773,18 +1795,26 @@ export async function fetchRecurringUnlinkedIssues(days = 14) {
   if (!trendClusters) return []
 
   const clusters = []
-  
+
   for (const cluster of trendClusters) {
     if (cluster.ncr_reports && cluster.ncr_reports.length > 1) {
-      const safeCluster = cluster.ncr_reports.map(r => ({
-        id: r.id,
-        reference_no: r.reference_no,
-        description: r.description,
-        created_at: r.created_at,
-        status: r.status,
-        recurring_reason: cluster.ai_summary || 'Flagged as recurring issue.'
-      }))
-      clusters.push(safeCluster)
+      const filteredReports = cluster.ncr_reports.filter(r => {
+        if (r.created_at && new Date(r.created_at) < cutoff) return false
+        if (callerSiteId && r.site_id && Number(r.site_id) !== Number(callerSiteId)) return false
+        return true
+      })
+
+      if (filteredReports.length > 1) {
+        const safeCluster = filteredReports.map(r => ({
+          id: r.id,
+          reference_no: r.reference_no,
+          description: r.description,
+          created_at: r.created_at,
+          status: r.status,
+          recurring_reason: cluster.ai_summary || 'Flagged as recurring issue.'
+        }))
+        clusters.push(safeCluster)
+      }
     }
   }
 

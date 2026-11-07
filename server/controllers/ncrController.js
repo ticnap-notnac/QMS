@@ -29,7 +29,8 @@ export async function getReports(req, res) {
 export async function getRecurringUnlinkedIssues(req, res) {
   try {
     const days = parseInt(req.query.days, 10) || 14
-    const clusters = await fetchRecurringUnlinkedIssues(days)
+    const actorAuthId = getRequestActor(req)
+    const clusters = await fetchRecurringUnlinkedIssues(days, actorAuthId)
     return res.json(clusters)
   } catch (err) {
     return res.status(500).json({ error: err?.message || String(err) })

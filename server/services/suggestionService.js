@@ -137,7 +137,7 @@ async function fetchCarReports(departmentId) {
   const { data, error } = await supabase
     .from('car_reports')
     .select(
-      'details_of_nonconformance, re_corrective_action, ' +
+      'details_of_nonconformance, corrective_action, preventive_action, root_cause_analysis, ' +
       'requesting_department, responsible_department, status'
     )
     .eq('status', CAR_STATUS.CLOSED)
@@ -364,7 +364,7 @@ ${ratedNcrs.length > 0
 
 CAR Reports:
 ${carReports.length > 0
-        ? carReports.map((c, i) => `${i + 1}. Issue: ${c.details_of_nonconformance || 'N/A'} | Action: ${c.re_corrective_action || 'N/A'}`).join('\n')
+        ? carReports.map((c, i) => `${i + 1}. Issue: ${c.details_of_nonconformance || 'N/A'} | Corrective: ${c.corrective_action || 'N/A'} | Preventive: ${c.preventive_action || 'N/A'}`).join('\n')
         : 'None'}
 
 QDDR Reports:
@@ -518,6 +518,16 @@ ${caseRepoCandidates.length > 0
         ? caseRepoCandidates.slice(0, 10).map((c, i) => `${i + 1}. Corrective Action: ${c.corrective_action} | Preventive Action: ${c.preventive_action || 'N/A'} | Score: ${c.effectiveness_score || 'N/A'}`).join('\n')
         : 'None'}
 
+CAR Reports:
+${carReportsList.length > 0
+        ? carReportsList.map((c, i) => `${i + 1}. Issue: ${c.details_of_nonconformance || 'N/A'} | Corrective: ${c.corrective_action || 'N/A'} | Preventive: ${c.preventive_action || 'N/A'}`).join('\n')
+        : 'None'}
+
+QDDR Reports:
+${qddrReportsList.length > 0
+        ? qddrReportsList.map((q, i) => `${i + 1}. Reason: ${q.reason_of_discrepancy || 'N/A'} | Corrective: ${q.corrective_action || 'N/A'} | Preventive: ${q.preventive_action || 'N/A'}`).join('\n')
+        : 'None'}
+
 Provide a concise, actionable corrective action (for immediately addressing the current issue) and a preventive action (to prevent recurrence in the future). Each action should be 2-4 sentences. Also provide a confidence score between 0.94 and 0.99.
 Respond ONLY in this JSON format with no preamble or markdown:
 {"suggestion": "your corrective action suggestion here", "preventive_suggestion": "your preventive action suggestion here", "confidence": 0.96}`
@@ -571,9 +581,9 @@ const CAR_TAGS = [
 ]
 
 const QDDR_TAGS = [
-  'holes_punctures', 'crushed_or_dented', 'bulging', 'opened_seal',
-  'excess_shipment', 'deformed_or_torn', 'wet_or_leaked', 'improper_stretch_wrapping',
-  'no_label_broken_label', 'documentation_error', 'open_carton', 'stain_or_graffiti',
+  'holes_punctures', 'crushed_dented', 'bulging', 'opened_seal',
+  'excess_shipment', 'deformed_torn', 'wet_leaked', 'improper_stretch_wrapping',
+  'no_label_broken_label', 'documentation_error', 'open_carton', 'stain_graffiti',
   'wrong_no_batchcode', 'short_pack', 'picking_discrepancy'
 ]
 
@@ -595,7 +605,7 @@ Issue: "${description}"
 
 Allowed tags: ${JSON.stringify(tagsList)}
 
-Return ONLY a valid JSON array of the string keys that apply. Do not include markdown or explanations. E.g. ["wet_or_leaked", "open_carton"]`
+Return ONLY a valid JSON array of the string keys that apply. Do not include markdown or explanations. E.g. ["wet_leaked", "open_carton"]`
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
         method: 'POST',
@@ -635,9 +645,9 @@ Return ONLY a valid JSON array of the string keys that apply. Do not include mar
 
     // QDDR flags
     holes_punctures: ['hole', 'puncture', 'pierce', 'torn', 'rip', 'cut', 'burst'],
-    crushed_or_dented: ['crush', 'dent', 'collapsed', 'smashed', 'bent', 'deformed'],
+    crushed_dented: ['crush', 'dent', 'collapsed', 'smashed', 'bent', 'deformed'],
     deformed_torn: ['deform', 'torn', 'distorted', 'warped', 'mangled', 'broken'],
-    wet_or_leaked: ['wet', 'leak', 'water', 'spill', 'soak', 'moisture', 'damp', 'dripping'],
+    wet_leaked: ['wet', 'leak', 'water', 'spill', 'soak', 'moisture', 'damp', 'dripping'],
     open_carton: ['open carton', 'open box', 'unsealed', 'opened', 'loose box'],
     stain_graffiti: ['stain', 'graffiti', 'dirt', 'soiled', 'smudge', 'mark', 'discolored'],
     bulging: ['bulge', 'swollen', 'puffed', 'expanded', 'pressure'],
