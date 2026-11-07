@@ -54,7 +54,7 @@ export default function Navbar({
 
   const hasExplicitPages = Array.isArray(userPermissions?.pages)
   const pagesList = hasExplicitPages ? userPermissions.pages : []
-  const hasPageAccess = (pageKey) => hasExplicitPages ? pagesList.includes(pageKey) : isAdminRole(userRole)
+  const hasPageAccess = (pageKey) => isAdminRole(userRole) || (hasExplicitPages && pagesList.includes(pageKey))
 
   // Close the user dropdown when a click lands outside the reference node bounds
   useEffect(() => {

@@ -13,10 +13,11 @@ import {
   updateRole as updateRoleController,
   deleteRole as deleteRoleController,
 } from '@/services/roleService'
-import { isAdminRole } from '@/utils/roleUtils.js'
+import { hasAdminPanelAccess } from '@/utils/roleUtils.js'
 
 export default function RolesPage({
   userRole,
+  userPermissions,
 }) {
   const {
     items,
@@ -48,11 +49,11 @@ export default function RolesPage({
     editingItem,
   } = useRolesPageLogic({ loadFn: loadRolesController, createFn: createRoleController, updateFn: updateRoleController, deleteFn: deleteRoleController })
 
+  const canAccess = hasAdminPanelAccess(userRole, userPermissions, ['manage_roles', 'manage_users'])
+
   return (
     <div className="page-root">
-
-
-      {isAdminRole(userRole) ? (
+      {canAccess ? (
         <main className="page-main-wide">
           <h1 className="page-title">Manage Roles</h1>
 

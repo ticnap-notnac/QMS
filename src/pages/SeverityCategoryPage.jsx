@@ -5,11 +5,11 @@ import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import { useSeverityCategoryLogic } from '@/hooks/useAdminPanel.js'
-import { isAdminRole } from '@/utils/roleUtils.js'
+import { hasAdminPanelAccess } from '@/utils/roleUtils.js'
 import Toast from '@/components/UI/Toast.jsx'
 import './AdminPanel.css'
 
-export default function SeverityCategoryPage({ userRole }) {
+export default function SeverityCategoryPage({ userRole, userPermissions }) {
   const {
     searchQuery,
     setSearchQuery,
@@ -23,9 +23,11 @@ export default function SeverityCategoryPage({ userRole }) {
     confirmDialogProps
   } = useSeverityCategoryLogic()
 
+  const canAccess = hasAdminPanelAccess(userRole, userPermissions, ['manage_categories', 'manage_users'])
+
   return (
     <div className="page-root">
-      {isAdminRole(userRole) ? (
+      {canAccess ? (
         <main className="page-main-wide">
           <h1 className="page-title">Manage Severity Category</h1>
           <SettingsNavbar userRole={userRole} />

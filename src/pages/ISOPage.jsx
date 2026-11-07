@@ -12,7 +12,7 @@ import { isAdminRole } from '@/utils/roleUtils.js'
 export default function ISOPage({ userRole, userPermissions, userName }) {
   const hasExplicitRights = Array.isArray(userPermissions?.rights)
   const rights = hasExplicitRights ? userPermissions.rights : []
-  const canManageIso = hasExplicitRights ? rights.includes('manage_iso') : (isAdminRole(userRole) || String(userRole || '').toLowerCase() === 'auditor')
+  const canManageIso = isAdminRole(userRole) || (hasExplicitRights ? rights.includes('manage_iso') : String(userRole || '').toLowerCase() === 'auditor')
   const {
     toast, setToast, totalFindings, fetchActiveModules, compliantCount, ofiCount, minorNcCount, majorNcCount, nonCompliantFindings,
     createdCars, handleOpenCarModal, modulesModalProps, taskSelectionModalProps, carModalProps, isAuditTaskModalOpen,

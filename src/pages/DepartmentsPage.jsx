@@ -5,11 +5,11 @@ import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import { useDepartmentsLogic } from '@/hooks/useAdminPanel.js'
-import { isAdminRole } from '@/utils/roleUtils.js'
+import { hasAdminPanelAccess } from '@/utils/roleUtils.js'
 import Toast from '@/components/UI/Toast.jsx'
 import './AdminPanel.css'
 
-export default function DepartmentsPage({ userRole }) {
+export default function DepartmentsPage({ userRole, userPermissions }) {
   const {
     searchQuery,
     setSearchQuery,
@@ -23,9 +23,11 @@ export default function DepartmentsPage({ userRole }) {
     confirmDialogProps
   } = useDepartmentsLogic()
 
+  const canAccess = hasAdminPanelAccess(userRole, userPermissions, ['manage_categories', 'manage_users'])
+
   return (
     <div className="page-root">
-      {isAdminRole(userRole) ? (
+      {canAccess ? (
         <main className="page-main-wide">
           <h1 className="page-title">Manage Departments</h1>
           <SettingsNavbar userRole={userRole} />

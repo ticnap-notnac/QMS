@@ -3,14 +3,14 @@ import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import Toast from '@/components/UI/Toast'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
-import { isAdminRole } from '@/utils/roleUtils.js'
+import { hasAdminPanelAccess } from '@/utils/roleUtils.js'
 import { useISOStandardsLogic } from '@/hooks/useAdminPanel.js'
 import { AddStandardSection, AddClausesSection, ManageClausesSection, ToggleStandardsSection } from '@/components/ISOStandards/ISOStandardsViews'
 import { EditStandardModal, EditClauseModal } from '@/components/ISOPage/ISOModals'
 import './AdminPanel.css'
 import './ISOPage.css'
 
-export default function ISOStandardsPage({ userRole, userName }) {
+export default function ISOStandardsPage({ userRole, userPermissions, userName }) {
   const {
     toast, setToast, activeSection, setActiveSection, addStandardSectionProps,
     addClausesSectionProps, manageClausesSectionProps, toggleStandardsSectionProps,
@@ -19,10 +19,12 @@ export default function ISOStandardsPage({ userRole, userName }) {
     editingClause, setEditingClause, handleUpdateClause, savingEdit
   } = useISOStandardsLogic({ userName })
 
+  const canAccess = hasAdminPanelAccess(userRole, userPermissions, ['manage_iso', 'manage_categories', 'manage_users'])
+
   return (
     <div className="page-root">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-      {isAdminRole(userRole) ? (
+      {canAccess ? (
         <main className="page-main-wide iso-standards-page">
           <h1 className="page-title">Admin - ISO Standards</h1>
           <SettingsNavbar userRole={userRole} />

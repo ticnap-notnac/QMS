@@ -36,9 +36,18 @@ const AccessDenied = () => (
   </div>
 )
 
-const ProtectedRoute = ({ pageKey, sharedProps, children }) => {
+const ProtectedRoute = ({ pageKey, rightKey, sharedProps, children }) => {
+  if (isAdminRole(sharedProps?.userRole)) return children
+
   const hasExplicitPages = Array.isArray(sharedProps?.userPermissions?.pages)
   const pagesList = hasExplicitPages ? sharedProps.userPermissions.pages : []
+  const rightsList = Array.isArray(sharedProps?.userPermissions?.rights)
+    ? sharedProps.userPermissions.rights
+    : []
+
+  if (rightKey && rightsList.includes(rightKey)) {
+    return children
+  }
 
   if (hasExplicitPages) {
     if (pageKey && !pagesList.includes(pageKey)) {
@@ -46,8 +55,6 @@ const ProtectedRoute = ({ pageKey, sharedProps, children }) => {
     }
     return children
   }
-
-  if (isAdminRole(sharedProps?.userRole)) return children
 
   if (pageKey && !pagesList.includes(pageKey)) {
     return <AccessDenied />
@@ -66,15 +73,15 @@ export default function AppRouter({ sharedProps, refreshUserData }) {
         <Route path="/dcc" element={<ProtectedRoute pageKey="dcc" sharedProps={sharedProps}><DCCPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings" element={<SettingsPage {...sharedProps} onProfileUpdate={refreshUserData} />} />
         <Route path="/settings/profile" element={<UserInformationPage {...sharedProps} />} />
-        <Route path="/settings/roles" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><RolesPage {...sharedProps} /></ProtectedRoute>} />
-        <Route path="/settings/permissions" element={<PermissionsPage {...sharedProps} onPermissionsUpdated={refreshUserData} />} />
-        <Route path="/settings/departments" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><DepartmentsPage {...sharedProps} /></ProtectedRoute>} />
-        <Route path="/settings/locations" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><LocationsPage {...sharedProps} /></ProtectedRoute>} />
-        <Route path="/settings/product-types" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><ProductTypesPage {...sharedProps} /></ProtectedRoute>} />
-        <Route path="/settings/iso-standards" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><ISOStandardsPage {...sharedProps} /></ProtectedRoute>} />
-        <Route path="/settings/severity-category" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><SeverityCategoryPage {...sharedProps} /></ProtectedRoute>} />
-        <Route path="/settings/positions" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><PositionsPage {...sharedProps} /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute pageKey="admin_panel" sharedProps={sharedProps}><AddUserPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/roles" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_roles" sharedProps={sharedProps}><RolesPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/permissions" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_roles" sharedProps={sharedProps}><PermissionsPage {...sharedProps} onPermissionsUpdated={refreshUserData} /></ProtectedRoute>} />
+        <Route path="/settings/departments" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><DepartmentsPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/locations" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><LocationsPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/product-types" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><ProductTypesPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/iso-standards" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_iso" sharedProps={sharedProps}><ISOStandardsPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/severity-category" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><SeverityCategoryPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/positions" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><PositionsPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_users" sharedProps={sharedProps}><AddUserPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/audit-tools" element={<ProtectedRoute pageKey="audit_tools" sharedProps={sharedProps}><AuditToolsPage {...sharedProps} /></ProtectedRoute>} />
       </Routes>
     </Suspense>

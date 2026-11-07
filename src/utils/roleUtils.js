@@ -21,3 +21,13 @@ export function isAdminRole(roleName) {
   if (!norm) return false
   return isAdminOrSuperAdminRole(norm)
 }
+
+export function hasAdminPanelAccess(userRole, userPermissions, allowedRights = []) {
+  if (isAdminRole(userRole)) return true
+  const pages = Array.isArray(userPermissions?.pages) ? userPermissions.pages : []
+  const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
+  if (pages.includes('admin_panel')) {
+    return true
+  }
+  return Array.isArray(allowedRights) && allowedRights.some((r) => rights.includes(r))
+}

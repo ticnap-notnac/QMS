@@ -11,9 +11,9 @@ import SubmissionLoadingOverlay from '@/components/UI/SubmissionLoadingOverlay.j
 import Toast from '@/components/UI/Toast.jsx'
 import './AdminPanel.css'
 
-import { isAdminRole } from '@/utils/roleUtils.js'
+import { hasAdminPanelAccess } from '@/utils/roleUtils.js'
 
-export default function AddUserPage({ userRole }) {
+export default function AddUserPage({ userRole, userPermissions }) {
   const {
     searchQuery,
     setSearchQuery,
@@ -41,9 +41,11 @@ export default function AddUserPage({ userRole }) {
       ? 'Updating user account...'
       : 'Updating team roster...'
 
+  const canAccess = hasAdminPanelAccess(userRole, userPermissions, ['manage_users'])
+
   return (
     <div className="page-root">
-      {isAdminRole(userRole) ? (
+      {canAccess ? (
         <main className="page-main-wide">
           <h1 className="page-title">Admin — Add User</h1>
           <SettingsNavbar userRole={userRole} />

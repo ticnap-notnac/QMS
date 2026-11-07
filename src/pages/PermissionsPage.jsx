@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { isAdminRole } from '@/utils/roleUtils.js'
+import { hasAdminPanelAccess } from '@/utils/roleUtils.js'
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import RolePermissionsMatrix from '@/components/Admin/RolePermissionsMatrix'
@@ -7,7 +7,7 @@ import Toast from '@/components/UI/Toast.jsx'
 import { loadRoles } from '@/services/roleService'
 import './AdminPanel.css'
 
-export default function PermissionsPage({ userRole, onPermissionsUpdated }) {
+export default function PermissionsPage({ userRole, userPermissions, onPermissionsUpdated }) {
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -37,9 +37,11 @@ export default function PermissionsPage({ userRole, onPermissionsUpdated }) {
     }
   }, [fetchRoles, onPermissionsUpdated])
 
+  const canAccess = hasAdminPanelAccess(userRole, userPermissions, ['manage_roles', 'manage_users'])
+
   return (
     <div className="page-root">
-      {isAdminRole(userRole) ? (
+      {canAccess ? (
         <main className="page-main-wide">
           <h1 className="page-title">Manage Role Permissions</h1>
 
