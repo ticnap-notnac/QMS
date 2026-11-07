@@ -95,7 +95,7 @@ function AppInner() {
       setUserPermissions(profile.roles.permissions)
     } else {
       const normalized = String(resolvedRoleName || profile.role || '').toLowerCase()
-      if (normalized === 'admin') {
+      if (isAdminRole(normalized)) {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'admin_panel', 'settings'],
           rights: [
@@ -103,17 +103,18 @@ function AppInner() {
             'accept_decline_report', 'assign_report',
             'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
             'edit_delete_report', 'submit_capa', 'verify_car',
-            'manage_iso', 'manage_users', 'manage_audit_schedules'
+            'manage_iso', 'manage_users', 'manage_roles', 'manage_categories',
+            'manage_audit_schedules', 'view_logs'
           ],
         })
-      } else if (normalized === 'auditor') {
+      } else if (['auditor', 'qa officer'].includes(normalized)) {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
           rights: [
             'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
             'accept_decline_report', 'assign_report',
             'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
-            'submit_capa', 'manage_iso', 'manage_audit_schedules'
+            'submit_capa', 'manage_iso', 'manage_audit_schedules', 'view_logs'
           ],
         })
       } else if (['team leader', 'warehouse executive', 'warehouse supervisor'].includes(normalized)) {

@@ -8,7 +8,15 @@ vi.mock('../lib/supabase.js', () => ({
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }),
     },
-    from: vi.fn()
+    from: vi.fn((table) => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue(
+        table === 'roles'
+          ? { data: { role_name: 'Admin', permissions: { pages: ['reports'], rights: ['create_ncr_report'] } }, error: null }
+          : { data: { id: 1, auth_id: 'test-user', role_id: 1, status: 'ACTIVE' }, error: null }
+      ),
+    })),
   }
 }));
 

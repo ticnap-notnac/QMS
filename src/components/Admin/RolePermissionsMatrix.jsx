@@ -14,9 +14,9 @@ const AVAILABLE_PAGES = [
 ]
 
 const AVAILABLE_RIGHTS = [
-  { key: 'view_ncr_reports', pageKey: 'dcc', label: 'View NCR Reports', description: 'Access and view Non-Conformance Reports (NCR)' },
-  { key: 'view_car_reports', pageKey: 'dcc', label: 'View CAR Reports', description: 'Access and view Corrective Action Requests (CAR)' },
-  { key: 'view_qddr_reports', pageKey: 'dcc', label: 'View QDDR Reports', description: 'Access and view Quality Defect & Deviation Reports (QDDR)' },
+  { key: 'view_ncr_reports', pageKey: 'reports', label: 'View NCR Reports', description: 'Access and view Non-Conformance Reports (NCR)' },
+  { key: 'view_car_reports', pageKey: 'reports', label: 'View CAR Reports', description: 'Access and view Corrective Action Requests (CAR)' },
+  { key: 'view_qddr_reports', pageKey: 'reports', label: 'View QDDR Reports', description: 'Access and view Quality Defect & Deviation Reports (QDDR)' },
   { key: 'accept_decline_report', pageKey: 'reports', label: 'Accept / Decline Reports', description: 'Approve, accept, or decline submitted quality reports' },
   { key: 'assign_report', pageKey: 'reports', label: 'Assign Reports', description: 'Assign reports to investigators or reviewers' },
   { key: 'create_ncr_report', pageKey: 'reports', label: 'Create NCR Reports', description: 'Create new Non-Conformance Reports (NCR)' },
@@ -27,7 +27,10 @@ const AVAILABLE_RIGHTS = [
   { key: 'verify_car', pageKey: 'reports', label: 'Verify CAR Actions', description: 'Perform verification on completed CAR actions' },
   { key: 'manage_iso', pageKey: 'iso', label: 'Manage ISO Standards', description: 'Add, update, or remove ISO standards and clauses' },
   { key: 'manage_users', pageKey: 'admin_panel', label: 'Manage Users & Config', description: 'Add, edit, or remove user accounts and system configuration' },
+  { key: 'manage_roles', pageKey: 'admin_panel', label: 'Manage Roles & Permissions', description: 'Create, edit, or delete user roles and permission matrices' },
+  { key: 'manage_categories', pageKey: 'admin_panel', label: 'Manage Master Categories', description: 'Add, edit, or remove departments, locations, products, and issue types' },
   { key: 'manage_audit_schedules', pageKey: 'audit_tools', label: 'Manage Audit Schedules', description: 'Create, schedule, and assign audit runs' },
+  { key: 'view_logs', pageKey: 'audit_tools', label: 'View System Audit Logs', description: 'Access and search system and audit logs in Audit Tools' },
 ]
 
 const PAGE_RIGHTS_MAP = AVAILABLE_RIGHTS.reduce((acc, right) => {
@@ -54,7 +57,8 @@ const DEFAULT_ROLE_PERMISSIONS = {
       'accept_decline_report', 'assign_report',
       'create_ncr_report', 'create_car_report', 'create_qddr_report',
       'edit_delete_report', 'submit_capa', 'verify_car',
-      'manage_iso', 'manage_users', 'manage_audit_schedules'
+      'manage_iso', 'manage_users', 'manage_roles', 'manage_categories',
+      'manage_audit_schedules', 'view_logs'
     ],
   },
   auditor: {
@@ -63,7 +67,17 @@ const DEFAULT_ROLE_PERMISSIONS = {
       'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
       'accept_decline_report', 'assign_report',
       'create_ncr_report', 'create_car_report', 'create_qddr_report',
-      'submit_capa', 'manage_iso', 'manage_audit_schedules'
+      'submit_capa', 'manage_iso', 'manage_audit_schedules', 'view_logs'
+    ],
+  },
+  'qa officer': {
+    pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
+    rights: [
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'accept_decline_report', 'assign_report',
+      'create_ncr_report', 'create_car_report', 'create_qddr_report',
+      'edit_delete_report', 'submit_capa', 'verify_car',
+      'manage_iso', 'manage_audit_schedules', 'view_logs'
     ],
   },
   'team leader': {

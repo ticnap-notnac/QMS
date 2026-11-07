@@ -4,9 +4,9 @@ import { requirePermission } from '../middlewares/roleMiddleware.js'
 
 const router = Router()
 
-router.get('/', requirePermission('view_logs'), getLogs)
+router.get('/', requirePermission(['view_logs', 'audit_tools', 'admin_panel']), getLogs)
 router.post('/', insertLog)
-router.post('/reads', requirePermission('view_logs'), recordLogRead)
+router.post('/reads', requirePermission(['view_logs', 'audit_tools', 'admin_panel']), recordLogRead)
 router.post('/client-error', logClientError)
 
 export default router
