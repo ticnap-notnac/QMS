@@ -24,9 +24,19 @@ function isAdminRole(roleName) {
   )
 }
 
-function isPrivilegedCarVerifier(roleName) {
+function isPrivilegedCarVerifier(roleName, permissions = null) {
   const norm = normalizeRole(roleName)
-  return isAdminRole(norm) || ['qa officer', 'auditor', 'quality assurance'].includes(norm)
+  if (isAdminRole(norm) || ['qa officer', 'auditor', 'quality assurance'].includes(norm)) {
+    return true
+  }
+  const pages = Array.isArray(permissions?.pages) ? permissions.pages : []
+  const rights = Array.isArray(permissions?.rights) ? permissions.rights : []
+  return (
+    pages.includes('audit_tools') ||
+    pages.includes('iso') ||
+    rights.includes('manage_iso') ||
+    rights.includes('edit_delete_report')
+  )
 }
 
 async function getUserProfileByAuthId(authId) {
@@ -385,8 +395,9 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, verificati
     throw err
   }
 
-  const isPrivileged = isPrivilegedCarVerifier(profile.role_name)
-  if (!isPrivileged) {
+  const isPrivileged = isPrivilegedCarVerifier(profile.role_name, profile.permissions)
+  const hasExplicitVerifyRight = Array.isArray(profile.permissions?.rights) && profile.permissions.rights.includes('verify_car')
+  if (!isPrivileged && !hasExplicitVerifyRight) {
     const userDepartmentName = normalizeText(profile.department_name).toLowerCase()
     const allowedDepartmentNames = [existing.responsible_department, existing.requesting_department]
       .map((name) => normalizeText(name).toLowerCase())

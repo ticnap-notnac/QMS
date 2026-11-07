@@ -6,10 +6,10 @@ import { createUserSchema, updateUserSchema, updateUserStatusSchema, assignTeamR
 const router = Router()
 
 router.get('/', getUsers)
-router.post('/', requirePermission('manage_users'), validateRequest(createUserSchema), createUser)
-router.patch('/team-roster', requirePermission('manage_users'), validateRequest(assignTeamRosterSchema), updateTeamRoster)
-router.put('/:id', requirePermission('manage_users'), validateRequest(updateUserSchema), updateUser)
-router.delete('/:id', requirePermission('manage_users'), deleteUser)
-router.patch('/:id/status', requireRoles(['team leader', 'admin', 'super admin', 'system administrator'], 'manage_users'), validateRequest(updateUserStatusSchema), updateUserStatus)
+router.post('/', requirePermission(['manage_users', 'admin_panel']), validateRequest(createUserSchema), createUser)
+router.patch('/team-roster', requirePermission(['manage_users', 'admin_panel']), validateRequest(assignTeamRosterSchema), updateTeamRoster)
+router.put('/:id', requirePermission(['manage_users', 'admin_panel']), validateRequest(updateUserSchema), updateUser)
+router.delete('/:id', requirePermission(['manage_users', 'admin_panel']), deleteUser)
+router.patch('/:id/status', requireRoles(['team leader', 'admin', 'super admin', 'system administrator'], ['manage_users', 'admin_panel']), validateRequest(updateUserStatusSchema), updateUserStatus)
 
 export default router

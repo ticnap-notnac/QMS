@@ -79,6 +79,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     setError,
     setToast,
     userRole,
+    userPermissions,
     userDepartmentId
   })
 
@@ -125,7 +126,16 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
 
       const ncrDeptMap = new Map((ncrs || []).map(n => [n.id, n.department_id]))
       const normRole = String(userRole || '').trim().toLowerCase()
-      const isStandardUser = !isAdminRole(userRole) && !['auditor', 'qa officer', 'quality assurance'].includes(normRole)
+      const pagesList = Array.isArray(userPermissions?.pages) ? userPermissions.pages : []
+      const rightsList = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
+      const isCrossDepartmentRole =
+        isAdminRole(userRole) ||
+        ['auditor', 'qa officer', 'quality assurance'].includes(normRole) ||
+        pagesList.includes('audit_tools') ||
+        pagesList.includes('iso') ||
+        rightsList.includes('manage_iso') ||
+        rightsList.includes('edit_delete_report')
+      const isStandardUser = !isCrossDepartmentRole
       const activeDeptFilterId = formState.reportFilters.departmentId
       const currentUserObj = (dataState.users || []).find(u => Number(u.id) === Number(currentUserId))
       const currentUserName = String(currentUserObj?.label || '').split(/\s+[—–-]\s+/)[0].trim().toLowerCase()
@@ -989,6 +999,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       onClear: handleFilterClear,
       onApply: handleFilterApply,
       userRole,
+      userPermissions,
     },
     updateModalProps: {
       isOpen: modalsState.isUpdateModalOpen,

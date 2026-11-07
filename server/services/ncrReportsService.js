@@ -165,9 +165,18 @@ function isAdminRole(roleName) {
  * @param {string} roleName - The role name to check.
  * @returns {boolean} True if admin or QA Officer, false otherwise.
  */
-export function isAdminOrQA(roleName) {
+export function isAdminOrQA(roleName, permissions = null) {
   const normalized = String(roleName || '').trim().toLowerCase()
-  return isAdminRole(roleName) || normalized === 'qa officer'
+  if (isAdminRole(roleName) || normalized === 'qa officer' || normalized === 'auditor' || normalized === 'quality assurance') {
+    return true
+  }
+  const pages = Array.isArray(permissions?.pages) ? permissions.pages : []
+  const rights = Array.isArray(permissions?.rights) ? permissions.rights : []
+  return (
+    pages.includes('audit_tools') ||
+    rights.includes('manage_iso') ||
+    rights.includes('edit_delete_report')
+  )
 }
 
 // ─── DB Helpers ───────────────────────────────────────────────────────────────
@@ -1620,7 +1629,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
 
   const { data: currentUser, error: currentUserError } = await supabase
     .from('users')
-    .select('id, user_name, department_id, role:roles(role_name)')
+    .select('id, user_name, department_id, role:roles(role_name, permissions)')
     .eq('auth_id', userAuthId)
     .maybeSingle()
   if (currentUserError) throw currentUserError
@@ -1639,7 +1648,9 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
 
   const roleObj = Array.isArray(currentUser.role) ? currentUser.role[0] : currentUser.role
   const userRole = roleObj?.role_name || ''
-  const isPrivileged = isAdminOrQA(userRole)
+  const userPermissions = roleObj?.permissions || null
+  const isPrivileged = isAdminOrQA(userRole, userPermissions) ||
+    (Array.isArray(userPermissions?.rights) && (userPermissions.rights.includes('verify_car') || userPermissions.rights.includes('accept_decline_report')))
   if (!isPrivileged && String(report.department_id) !== String(currentUser.department_id)) {
     throw Object.assign(new Error('You can only rate reports from your own department.'), { status: 403 })
   }

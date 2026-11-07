@@ -17,6 +17,7 @@ export default function FilterModal({
   onClear,
   onApply,
   userRole,
+  userPermissions,
   activeTab = 'ncr'
 }) {
   if (!isOpen) return null
@@ -104,7 +105,16 @@ export default function FilterModal({
 
           {/* 📐 ROW 1: Department & Date Input Fields Side-by-Side */}
           {(() => {
-            const isSuperUser = isAdminRole(userRole) || String(userRole || '').trim().toLowerCase() === 'auditor'
+            const pages = Array.isArray(userPermissions?.pages) ? userPermissions.pages : []
+            const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
+            const normRole = String(userRole || '').trim().toLowerCase()
+            const isSuperUser =
+              isAdminRole(userRole) ||
+              ['auditor', 'qa officer', 'quality assurance'].includes(normRole) ||
+              pages.includes('audit_tools') ||
+              pages.includes('iso') ||
+              rights.includes('manage_iso') ||
+              rights.includes('edit_delete_report')
             return (
               <div style={{ display: 'grid', gridTemplateColumns: isSuperUser ? 'repeat(auto-fit, minmax(200px, 1fr))' : '1fr', gap: '16px' }}>
                 {isSuperUser && (

@@ -124,7 +124,9 @@ export default function DCCFolderContent({
 }) {
   const normRole = String(userRole || '').trim().toLowerCase()
   const hasExplicitRights = Array.isArray(userPermissions?.rights)
+  const hasExplicitPages = Array.isArray(userPermissions?.pages)
   const rights = hasExplicitRights ? userPermissions.rights : []
+  const pages = hasExplicitPages ? userPermissions.pages : []
   const canAccessNcr = hasExplicitRights
     ? rights.includes('view_ncr_reports')
     : (isAdminRole(userRole) || rights.length === 0)
@@ -134,12 +136,19 @@ export default function DCCFolderContent({
   const canAccessQddr = hasExplicitRights
     ? rights.includes('view_qddr_reports')
     : isAdminRole(userRole)
+  const canAccessAuditFolders =
+    isAdminRole(userRole) ||
+    (hasExplicitPages ? pages.includes('audit_tools') : normRole === 'auditor') ||
+    (hasExplicitRights && rights.includes('manage_audit_schedules'))
+  const canViewSystemLogs =
+    isAdminRole(userRole) ||
+    (hasExplicitRights && rights.includes('view_logs'))
 
   const TASK_REPORT_SUBFOLDERS = [
     ...(canAccessNcr ? [{ id: 'ncr', label: 'NCR' }] : []),
     ...(canAccessQddr ? [{ id: 'qddr', label: 'QDDR' }] : []),
     ...(canAccessCar ? [{ id: 'car', label: 'CAR' }] : []),
-    ...(isAdminRole(userRole) || normRole === 'auditor' ? [
+    ...(canAccessAuditFolders ? [
       { id: 'audit', label: 'Audit Reports' },
       { id: 'audit_schedules', label: 'Audit Schedules' },
     ] : [])
@@ -580,7 +589,7 @@ export default function DCCFolderContent({
 
           {/* SYSTEM LOGS TABLE */}
           {selectedFolder?.id === 'system_logs' && (
-            isAdminRole(userRole) ? (
+            canViewSystemLogs ? (
               <SystemLogsPanel onClose={onCloseFolder} searchQuery={searchQuery} />
             ) : (
               <div className="empty-state">
@@ -726,7 +735,7 @@ export default function DCCFolderContent({
               )}
 
               {selectedTaskFolder.id === 'audit' && (
-                !(isAdminRole(userRole) || normRole === 'auditor') ? (
+                !canAccessAuditFolders ? (
                   <div className="empty-state">You do not have permission to access Audit reports.</div>
                 ) : loadingAudit ? (
                   <div>Loading Audit reports...</div>
@@ -736,7 +745,7 @@ export default function DCCFolderContent({
               )}
 
               {selectedTaskFolder.id === 'audit_schedules' && (
-                !(isAdminRole(userRole) || normRole === 'auditor') ? (
+                !canAccessAuditFolders ? (
                   <div className="empty-state">You do not have permission to access Audit schedules.</div>
                 ) : loadingAuditSchedules ? (
                   <div>Loading Schedules...</div>

@@ -54,7 +54,19 @@ export default function Navbar({
 
   const hasExplicitPages = Array.isArray(userPermissions?.pages)
   const pagesList = hasExplicitPages ? userPermissions.pages : []
+  const rightsList = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
   const hasPageAccess = (pageKey) => isAdminRole(userRole) || (hasExplicitPages && pagesList.includes(pageKey))
+  const canAccessAdminPanel =
+    hasPageAccess('admin_panel') ||
+    ['manage_users', 'manage_roles', 'manage_categories', 'manage_iso'].some((r) => rightsList.includes(r))
+
+  const resolveAdminPanelLandingPath = () => {
+    if (isAdminRole(userRole) || hasPageAccess('admin_panel') || rightsList.includes('manage_users')) return '/admin'
+    if (rightsList.includes('manage_roles')) return '/settings/roles'
+    if (rightsList.includes('manage_categories')) return '/settings/departments'
+    if (rightsList.includes('manage_iso')) return '/settings/iso-standards'
+    return '/admin'
+  }
 
   // Close the user dropdown when a click lands outside the reference node bounds
   useEffect(() => {
@@ -144,9 +156,9 @@ export default function Navbar({
           <ClipboardCheck size={16} /> Audit Tools
         </button>
       )}
-      {hasPageAccess('admin_panel') && (
+      {canAccessAdminPanel && (
         <button 
-          onClick={() => { navigate('/admin'); onToggleMenu(); }} 
+          onClick={() => { navigate(resolveAdminPanelLandingPath()); onToggleMenu(); }} 
           className="user-menu-item admin"
         >
           <Shield size={16} /> Admin Panel

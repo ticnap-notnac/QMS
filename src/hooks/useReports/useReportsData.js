@@ -67,7 +67,7 @@ export function toOptionList(items, labelKey) {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export function useReportsData({ currentUserId, currentAuthId, reportFilters, setError, userRole, userDepartmentId }) {
+export function useReportsData({ currentUserId, currentAuthId, reportFilters, setError, userRole, userPermissions, userDepartmentId }) {
   const [isLoading, setIsLoading] = useState(false)
   const [reports, setReports] = useState([])
   const [investigatedReports, setInvestigatedReports] = useState([])
@@ -93,7 +93,16 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
         const allData = await fetchAllReports()
         const allArray = Array.isArray(allData) ? allData : []
         
-        const isStandardUser = !isAdminRole(userRole) && String(userRole || '').trim().toLowerCase() !== 'auditor'
+        const pages = Array.isArray(userPermissions?.pages) ? userPermissions.pages : []
+        const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
+        const isCrossDepartmentRole =
+          isAdminRole(userRole) ||
+          ['auditor', 'qa officer', 'quality assurance'].includes(String(userRole || '').trim().toLowerCase()) ||
+          pages.includes('audit_tools') ||
+          pages.includes('iso') ||
+          rights.includes('manage_iso') ||
+          rights.includes('edit_delete_report')
+        const isStandardUser = !isCrossDepartmentRole
         const scopedArray = isStandardUser
           ? allArray.filter(r => String(r.department_id) === String(userDepartmentId) || isReportAssignedToCurrentUser(r, currentUserId))
           : allArray
@@ -116,7 +125,7 @@ export function useReportsData({ currentUserId, currentAuthId, reportFilters, se
         setIsLoading(false)
       }
     },
-    [reportFilters, currentUserId, setError, userRole, userDepartmentId]
+    [reportFilters, currentUserId, setError, userRole, userPermissions, userDepartmentId]
   )
 
   const loadLookupData = useCallback(async () => {

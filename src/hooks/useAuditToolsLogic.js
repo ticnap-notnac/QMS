@@ -520,14 +520,21 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
       const { data: allUsersData, error: audError } = await supabase
         .from('users')
-        .select('id, first_name, last_name, auth_id, role_id, status, roles(role_name)')
+        .select('id, first_name, last_name, auth_id, role_id, status, roles(role_name, permissions)')
       
       if (audError) throw audError
       
-      const auditorsData = (allUsersData || []).filter(u => 
-        String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE' &&
-        ['team leader', 'qa officer', 'quality assurance', 'auditor', 'admin'].includes(String(u.roles?.role_name || '').trim().toLowerCase())
-      )
+      const auditorsData = (allUsersData || []).filter(u => {
+        if (String(u.status || 'ACTIVE').toUpperCase() !== 'ACTIVE') return false
+        const rName = String(u.roles?.role_name || '').trim().toLowerCase()
+        const rPages = Array.isArray(u.roles?.permissions?.pages) ? u.roles.permissions.pages : []
+        const rRights = Array.isArray(u.roles?.permissions?.rights) ? u.roles.permissions.rights : []
+        return (
+          ['team leader', 'qa officer', 'quality assurance', 'auditor', 'admin'].includes(rName) ||
+          rPages.includes('audit_tools') ||
+          rRights.includes('manage_audit_schedules')
+        )
+      })
       
       setAuditors(auditorsData)
 

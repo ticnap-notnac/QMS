@@ -143,15 +143,31 @@ export async function fetchPendingRatings(userAuthId) {
   // 1. Get the current user details
   const { data: currentUser, error: userError } = await supabase
     .from('users')
-    .select('id, department_id, site_id, role:roles(role_name)')
+    .select('id, department_id, site_id, role:roles(role_name, permissions)')
     .eq('auth_id', userAuthId)
     .maybeSingle()
 
   if (userError || !currentUser) throw new Error('User not found.')
 
-  const normalizedRole = String(currentUser.role?.role_name || '').toLowerCase().trim()
-  const isAuditorOrAdmin = normalizedRole === 'auditor' || isAdminRole(currentUser.role?.role_name)
-  const isManager = normalizedRole === 'department manager' || normalizedRole === 'manager'
+  const roleObj = Array.isArray(currentUser.role) ? currentUser.role[0] : currentUser.role
+  const normalizedRole = String(roleObj?.role_name || '').toLowerCase().trim()
+  const perms = roleObj?.permissions || null
+  const pages = Array.isArray(perms?.pages) ? perms.pages : []
+  const rights = Array.isArray(perms?.rights) ? perms.rights : []
+
+  const isAuditorOrAdmin =
+    normalizedRole === 'auditor' ||
+    normalizedRole === 'qa officer' ||
+    isAdminRole(roleObj?.role_name) ||
+    pages.includes('audit_tools') ||
+    rights.includes('manage_iso') ||
+    rights.includes('edit_delete_report')
+  const isManager =
+    normalizedRole === 'department manager' ||
+    normalizedRole === 'manager' ||
+    normalizedRole === 'team leader' ||
+    rights.includes('accept_decline_report') ||
+    rights.includes('assign_report')
 
   // 2. Query closed reports based on role access and site scoping
   let query = supabase
@@ -159,7 +175,7 @@ export async function fetchPendingRatings(userAuthId) {
     .select('id, reference_no, description, corrective_action, department_id, reported_by, site_id')
     .eq('status', 'CLOSED')
 
-  if (!isAdminRole(currentUser.role?.role_name) && currentUser.site_id) {
+  if (!isAdminRole(roleObj?.role_name) && currentUser.site_id) {
     query = query.or(`site_id.is.null,site_id.eq.${currentUser.site_id}`)
   }
 

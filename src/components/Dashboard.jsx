@@ -58,9 +58,18 @@ const CustomResolutionTooltip = ({ active, payload, label }) => {
   return null
 }
 
-export default function Dashboard({ currentUserId, userRole, userDepartmentId }) {
+export default function Dashboard({ currentUserId, userRole, userPermissions, userDepartmentId }) {
   const navigate = useNavigate()
   const normalizedRole = String(userRole || '').toLowerCase()
+  const pages = Array.isArray(userPermissions?.pages) ? userPermissions.pages : []
+  const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
+  const canViewAuditAndCarWidgets =
+    isAdminRole(userRole) ||
+    normalizedRole === 'auditor' ||
+    pages.includes('audit_tools') ||
+    pages.includes('iso') ||
+    rights.includes('manage_audit_schedules') ||
+    rights.includes('view_car_reports')
   const [metrics, setMetrics] = useState(null)
   const [complianceStats, setComplianceStats] = useState([])
   const [trends, setTrends] = useState([])
@@ -254,7 +263,7 @@ export default function Dashboard({ currentUserId, userRole, userDepartmentId })
       </section>
 
       {/* Double Column Info Widgets Row */}
-      {(isAdminRole(userRole) || normalizedRole === 'auditor') && (
+      {canViewAuditAndCarWidgets && (
         <section className="dashboard-widgets-grid">
         {/* Card 1: Upcoming Regulatory Audits */}
         <div className="dashboard-widget-card">

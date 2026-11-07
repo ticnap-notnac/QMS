@@ -15,10 +15,20 @@ export default function DCCPage({
   authUserId
 }) {
   const normRole = String(userRole || '').trim().toLowerCase()
+  const hasExplicitRights = Array.isArray(userPermissions?.rights)
+  const hasExplicitPages = Array.isArray(userPermissions?.pages)
+  const rights = hasExplicitRights ? userPermissions.rights : []
+  const pages = hasExplicitPages ? userPermissions.pages : []
+
+  const canViewSystemLogs = isAdminRole(userRole) || (hasExplicitRights && rights.includes('view_logs'))
+  const canViewIsoModules =
+    isAdminRole(userRole) ||
+    (hasExplicitPages ? pages.includes('iso') : normRole === 'auditor') ||
+    (hasExplicitRights && rights.includes('manage_iso'))
 
   const FOLDER_ITEMS = [
-    ...(isAdminRole(userRole) ? [{ id: 'system_logs', label: 'System Logs' }] : []),
-    ...(isAdminRole(userRole) || normRole === 'auditor' ? [{ id: 'iso_modules', label: 'ISO Modules' }] : []),
+    ...(canViewSystemLogs ? [{ id: 'system_logs', label: 'System Logs' }] : []),
+    ...(canViewIsoModules ? [{ id: 'iso_modules', label: 'ISO Modules' }] : []),
     { id: 'task_reports', label: 'Task Reports' },
     { id: 'terms_policy', label: 'ISO Terms & Compliance Policy' },
   ]
@@ -55,7 +65,7 @@ export default function DCCPage({
           />
         </div>
       </div>
-      <CARDetailsModal {...carDetailsModalProps} userRole={userRole} authUserId={authUserId} readOnly={true} />
+      <CARDetailsModal {...carDetailsModalProps} userRole={userRole} userPermissions={userPermissions} authUserId={authUserId} readOnly={true} />
       <AuditRunDetailsModal {...auditModalProps} />
     </main>
   )

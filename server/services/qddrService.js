@@ -2,8 +2,17 @@ import { supabase } from '../lib/supabase.js'
 import { resolveEffectivePermissions } from '../middlewares/roleMiddleware.js'
 
 function isAdminRole(roleName) {
-  const normalized = String(roleName || '').trim().toLowerCase()
-  return normalized === 'admin' || normalized === 'super admin'
+  const norm = String(roleName || '').trim().toLowerCase()
+  if (!norm) return false
+  return (
+    norm === 'admin' ||
+    norm === 'super admin' ||
+    norm === 'super_admin' ||
+    norm === 'system administrator' ||
+    norm === 'system_administrator' ||
+    norm === 'administrator' ||
+    norm === 'superadmin'
+  )
 }
 
 async function getCallerQddrProfile(actorAuthId) {

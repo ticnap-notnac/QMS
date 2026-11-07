@@ -8,6 +8,7 @@ function DashboardPage(props) {
         <Dashboard 
           currentUserId={props.currentUserId}
           userRole={props.userRole}
+          userPermissions={props.userPermissions}
           userDepartmentId={props.userDepartmentId}
         />
       </div>
@@ -15,4 +16,4 @@ function DashboardPage(props) {
   )
 }
 
-export default DashboardPage;
+export default DashboardPage

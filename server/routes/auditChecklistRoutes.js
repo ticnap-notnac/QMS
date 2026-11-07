@@ -10,8 +10,8 @@ import { requirePermission } from '../middlewares/roleMiddleware.js'
 const router = Router()
 
 router.get('/audit-templates', getTemplates)
-router.post('/audit-templates', requirePermission('manage_audit_schedules'), addTemplate)
-router.put('/audit-templates/:id', requirePermission('manage_audit_schedules'), editTemplate)
-router.delete('/audit-templates/:id', requirePermission('manage_audit_schedules'), removeTemplate)
+router.post('/audit-templates', requirePermission(['manage_audit_schedules', 'manage_iso', 'audit_tools']), addTemplate)
+router.put('/audit-templates/:id', requirePermission(['manage_audit_schedules', 'manage_iso', 'audit_tools']), editTemplate)
+router.delete('/audit-templates/:id', requirePermission(['manage_audit_schedules', 'manage_iso', 'audit_tools']), removeTemplate)
 
 export default router

@@ -16,6 +16,7 @@ export default function SettingsPage(props) {
   const location = useLocation()
   const {
     userRole,
+    userPermissions,
     authUserId,
     onProfileUpdate,
   } = props
@@ -195,7 +196,7 @@ export default function SettingsPage(props) {
                   </div>
                 )}
 
-                {activeSection === 'Audit Tools' && (isAdminRole(userRole) || userRole === 'auditor') && (
+                {activeSection === 'Audit Tools' && (isAdminRole(userRole) || userRole === 'auditor' || userPermissions?.pages?.includes('audit_tools')) && (
                   <div className="settings-content settings-content--profile" style={{ width: '100%' }}>
                     <AuditToolsPage {...props} />
                   </div>
