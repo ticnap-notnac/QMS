@@ -14,9 +14,14 @@ const AVAILABLE_PAGES = [
 ]
 
 const AVAILABLE_RIGHTS = [
-  { key: 'view_ncr_reports', pageKey: 'reports', label: 'View NCR Reports', description: 'Access and view Non-Conformance Reports (NCR)' },
-  { key: 'view_car_reports', pageKey: 'reports', label: 'View CAR Reports', description: 'Access and view Corrective Action Requests (CAR)' },
-  { key: 'view_qddr_reports', pageKey: 'reports', label: 'View QDDR Reports', description: 'Access and view Quality Defect & Deviation Reports (QDDR)' },
+  // Document Control Center (DCC) Viewing Rights
+  { key: 'view_ncr_reports', pageKey: 'dcc', label: 'View NCR Reports', description: 'Access and view archived Non-Conformance Reports (NCR) in DCC' },
+  { key: 'view_car_reports', pageKey: 'dcc', label: 'View CAR Reports', description: 'Access and view archived Corrective Action Requests (CAR) in DCC' },
+  { key: 'view_qddr_reports', pageKey: 'dcc', label: 'View QDDR Reports', description: 'Access and view archived Quality Defect & Deviation Reports (QDDR) in DCC' },
+  { key: 'view_audit_schedules', pageKey: 'dcc', label: 'View Audit Schedules', description: 'Access and view Audit Schedules in DCC' },
+  { key: 'view_audit_reports', pageKey: 'dcc', label: 'View Audit Reports', description: 'Access and view Audit Summary Reports in DCC' },
+
+  // Reports Actions
   { key: 'accept_decline_report', pageKey: 'reports', label: 'Accept / Decline Reports', description: 'Approve, accept, or decline submitted quality reports' },
   { key: 'assign_report', pageKey: 'reports', label: 'Assign Reports', description: 'Assign reports to investigators or reviewers' },
   { key: 'create_ncr_report', pageKey: 'reports', label: 'Create NCR Reports', description: 'Create new Non-Conformance Reports (NCR)' },
@@ -25,10 +30,16 @@ const AVAILABLE_RIGHTS = [
   { key: 'edit_delete_report', pageKey: 'reports', label: 'Update / Delete Reports', description: 'Update or remove existing quality reports' },
   { key: 'submit_capa', pageKey: 'reports', label: 'Submit CAPA Actions', description: 'Submit corrective and preventive actions for CARs' },
   { key: 'verify_car', pageKey: 'reports', label: 'Verify CAR Actions', description: 'Perform verification on completed CAR actions' },
+
+  // ISO Standards Actions
   { key: 'manage_iso', pageKey: 'iso', label: 'Manage ISO Standards', description: 'Add, update, or remove ISO standards and clauses' },
+
+  // Admin Panel Actions
   { key: 'manage_users', pageKey: 'admin_panel', label: 'Manage Users & Config', description: 'Add, edit, or remove user accounts and system configuration' },
   { key: 'manage_roles', pageKey: 'admin_panel', label: 'Manage Roles & Permissions', description: 'Create, edit, or delete user roles and permission matrices' },
   { key: 'manage_categories', pageKey: 'admin_panel', label: 'Manage Master Categories', description: 'Add, edit, or remove departments, locations, products, and issue types' },
+
+  // Audit Tools Actions
   { key: 'manage_audit_schedules', pageKey: 'audit_tools', label: 'Manage Audit Schedules', description: 'Create, schedule, and assign audit runs' },
   { key: 'view_logs', pageKey: 'audit_tools', label: 'View System Audit Logs', description: 'Access and search system and audit logs in Audit Tools' },
 ]
@@ -53,7 +64,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   admin: {
     pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'admin_panel', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'accept_decline_report', 'assign_report',
       'create_ncr_report', 'create_car_report', 'create_qddr_report',
       'edit_delete_report', 'submit_capa', 'verify_car',
@@ -64,7 +75,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   auditor: {
     pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'accept_decline_report', 'assign_report',
       'create_ncr_report', 'create_car_report', 'create_qddr_report',
       'submit_capa', 'manage_iso', 'manage_audit_schedules', 'view_logs'
@@ -73,7 +84,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   'qa officer': {
     pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'accept_decline_report', 'assign_report',
       'create_ncr_report', 'create_car_report', 'create_qddr_report',
       'edit_delete_report', 'submit_capa', 'verify_car',
@@ -83,14 +94,14 @@ const DEFAULT_ROLE_PERMISSIONS = {
   'team leader': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'create_ncr_report', 'create_car_report', 'accept_decline_report'
     ],
   },
   'warehouse supervisor': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'create_ncr_report', 'create_car_report', 'create_qddr_report',
       'accept_decline_report', 'assign_report'
     ],
@@ -98,27 +109,27 @@ const DEFAULT_ROLE_PERMISSIONS = {
   'warehouse executive': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'create_ncr_report', 'create_qddr_report', 'accept_decline_report'
     ],
   },
   'checker': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_audit_schedules', 'view_audit_reports',
       'create_ncr_report', 'verify_car'
     ],
   },
   'warehouse checker': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_audit_schedules', 'view_audit_reports',
       'create_ncr_report', 'verify_car'
     ],
   },
   default: {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
-    rights: ['view_ncr_reports', 'create_ncr_report'],
+    rights: ['view_ncr_reports', 'create_ncr_report', 'view_audit_schedules', 'view_audit_reports'],
   }
 }
 
@@ -309,40 +320,61 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
             {/* Section 2: Rights & Actions */}
             <div className="glass-panel" style={{ padding: '20px', borderRadius: '12px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
               <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1A435A', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <CheckSquare size={18} color="#16a34a" /> Action Rights
+                <CheckSquare size={18} color="#16a34a" /> Action & Viewing Rights
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {AVAILABLE_RIGHTS.map(right => {
-                  const isPageEnabled = !right.pageKey || permissions.pages.includes(right.pageKey)
-                  const isChecked = isPageEnabled && permissions.rights.includes(right.key)
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                {AVAILABLE_PAGES.map(page => {
+                  const pageRights = AVAILABLE_RIGHTS.filter(r => r.pageKey === page.key)
+                  if (!pageRights.length) return null
+                  const isPageActive = permissions.pages.includes(page.key)
+
                   return (
-                    <label
-                      key={right.key}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '12px',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: `1px solid ${isChecked ? '#86efac' : '#f1f5f9'}`,
-                        background: isChecked ? '#f0fdf4' : '#f8fafc',
-                        cursor: isPageEnabled ? 'pointer' : 'not-allowed',
-                        opacity: isPageEnabled ? 1 : 0.55,
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        disabled={!isPageEnabled}
-                        onChange={() => toggleRight(right.key)}
-                        style={{ marginTop: '3px', width: '16px', height: '16px', accentColor: '#16a34a', cursor: isPageEnabled ? 'pointer' : 'not-allowed' }}
-                      />
-                      <div>
-                        <div style={{ fontWeight: '600', fontSize: '0.875rem', color: '#1e293b' }}>{right.label}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{right.description}</div>
+                    <div key={page.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '6px', borderBottom: '1px dashed #e2e8f0' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', color: isPageActive ? '#0284c7' : '#94a3b8' }}>
+                          {page.label} Rights
+                        </span>
+                        {!isPageActive && (
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                            Requires {page.label} page access
+                          </span>
+                        )}
                       </div>
-                    </label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {pageRights.map(right => {
+                          const isChecked = isPageActive && permissions.rights.includes(right.key)
+                          return (
+                            <label
+                              key={right.key}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '12px',
+                                padding: '10px 12px',
+                                borderRadius: '8px',
+                                border: `1px solid ${isChecked ? '#86efac' : '#f1f5f9'}`,
+                                background: isChecked ? '#f0fdf4' : '#f8fafc',
+                                cursor: isPageActive ? 'pointer' : 'not-allowed',
+                                opacity: isPageActive ? 1 : 0.55,
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                disabled={!isPageActive}
+                                onChange={() => toggleRight(right.key)}
+                                style={{ marginTop: '3px', width: '16px', height: '16px', accentColor: '#16a34a', cursor: isPageActive ? 'pointer' : 'not-allowed' }}
+                              />
+                              <div>
+                                <div style={{ fontWeight: '600', fontSize: '0.875rem', color: '#1e293b' }}>{right.label}</div>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{right.description}</div>
+                              </div>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
                   )
                 })}
               </div>

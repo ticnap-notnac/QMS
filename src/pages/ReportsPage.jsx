@@ -36,9 +36,12 @@ export default function ReportsPage({
 }) {
   const logic = useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId })
   const normalizedRole = String(userRole || '').trim().toLowerCase()
+  const hasExplicitPages = Array.isArray(userPermissions?.pages)
+  const pages = hasExplicitPages ? userPermissions.pages : []
   const hasExplicitRights = Array.isArray(userPermissions?.rights)
   const rights = hasExplicitRights ? userPermissions.rights : []
   const hasLegacyCreate = rights.includes('create_report')
+  const hasReportsPageAccess = isAdminRole(userRole) || (hasExplicitPages ? pages.includes('reports') : true)
 
   const canCreateNcr = hasExplicitRights
     ? rights.includes('create_ncr_report')
@@ -50,23 +53,15 @@ export default function ReportsPage({
     ? rights.includes('create_qddr_report')
     : isAdminRole(userRole)
 
-  const canViewNcr = hasExplicitRights
-    ? rights.includes('view_ncr_reports')
-    : (isAdminRole(userRole) || canCreateNcr)
-  const canViewCar = hasExplicitRights
-    ? rights.includes('view_car_reports')
-    : (isAdminRole(userRole) || canCreateCar)
-  const canViewQddr = hasExplicitRights
-    ? rights.includes('view_qddr_reports')
-    : (isAdminRole(userRole) || canCreateQddr)
+  // In Reports page, NCR timeline is automatically accessible if user has Reports page access or can create NCR
+  const canAccessNcr = hasReportsPageAccess || canCreateNcr || rights.includes('view_ncr_reports')
+  const canAccessCar = isAdminRole(userRole) || canCreateCar || rights.includes('view_car_reports') || rights.includes('submit_capa') || rights.includes('verify_car') || ['team leader', 'auditor'].includes(normalizedRole)
+  const canAccessQddr = isAdminRole(userRole) || canCreateQddr || rights.includes('view_qddr_reports') || ['admin', 'qa officer', 'warehouse supervisor', 'warehouse executive'].includes(normalizedRole)
 
   const canEditDeleteReports = hasExplicitRights
     ? rights.includes('edit_delete_report')
     : (isAdminRole(userRole) || normalizedRole === 'auditor')
 
-  const canAccessNcr = canViewNcr || canCreateNcr
-  const canAccessCar = canViewCar || canCreateCar
-  const canAccessQddr = canViewQddr || canCreateQddr
   const availableTabs = [
     ...(canAccessNcr ? ['ncr'] : []),
     ...(canAccessCar ? ['car'] : []),

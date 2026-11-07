@@ -61,7 +61,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   admin: {
     pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'admin_panel', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'accept_decline_report', 'assign_report',
       'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
       'edit_delete_report', 'submit_capa', 'verify_car',
@@ -72,7 +72,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   auditor: {
     pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'accept_decline_report', 'assign_report',
       'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
       'submit_capa', 'manage_iso', 'manage_audit_schedules', 'view_logs'
@@ -81,7 +81,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   'qa officer': {
     pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'accept_decline_report', 'assign_report',
       'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
       'edit_delete_report', 'submit_capa', 'verify_car',
@@ -91,7 +91,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   'team leader': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
       'accept_decline_report', 'assign_report'
     ],
@@ -99,7 +99,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   'warehouse supervisor': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
       'accept_decline_report', 'assign_report'
     ],
@@ -107,7 +107,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   'warehouse executive': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
       'accept_decline_report', 'assign_report'
     ],
@@ -115,20 +115,20 @@ const DEFAULT_ROLE_PERMISSIONS = {
   checker: {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_audit_schedules', 'view_audit_reports',
       'create_ncr_report', 'create_report', 'verify_car'
     ],
   },
   'warehouse checker': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports',
+      'view_ncr_reports', 'view_car_reports', 'view_audit_schedules', 'view_audit_reports',
       'create_ncr_report', 'create_report', 'verify_car'
     ],
   },
   default: {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
-    rights: ['view_ncr_reports', 'create_ncr_report', 'create_report'],
+    rights: ['view_ncr_reports', 'create_ncr_report', 'create_report', 'view_audit_schedules', 'view_audit_reports'],
   },
 }
 
