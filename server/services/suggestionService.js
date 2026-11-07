@@ -661,3 +661,153 @@ Return ONLY a valid JSON array of the string keys that apply. Do not include mar
 
   return matched
 }
+
+/**
+ * Inspects an uploaded NCR evidence image together with user-supplied metadata
+ * using Gemini Vision (`gemini-2.5-flash-lite`) and generates a concise,
+ * objective Non-Conformance Report description.
+ *
+ * @param {Object} params
+ * @param {string} params.imageBase64 - Base64-encoded image payload (with or without data URI prefix)
+ * @param {string} [params.mimeType='image/jpeg'] - Image MIME type
+ * @param {string} [params.productType]
+ * @param {string} [params.batchNumber]
+ * @param {string} [params.location]
+ * @param {string} [params.severity]
+ * @param {string} [params.department]
+ * @param {string} [params.issueType]
+ * @returns {Promise<{ description: string, source: string }>}
+ */
+export async function generateEvidenceDescription({
+  imageBase64,
+  mimeType = 'image/jpeg',
+  productType = '',
+  batchNumber = '',
+  location = '',
+  severity = '',
+  department = '',
+  issueType = '',
+}) {
+  const cleanBase64 = String(imageBase64 || '').replace(/^data:[^;]+;base64,/, '').trim()
+  const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  const resolvedMimeType = allowedMimes.includes(String(mimeType || '').toLowerCase())
+    ? String(mimeType).toLowerCase()
+    : 'image/jpeg'
+
+  const buildFallbackDescription = () => {
+    const sevLabel = severity ? `${String(severity).toUpperCase()}-severity` : 'reported'
+    const deptClause = department ? ` assigned to the ${department} department` : ''
+    const issueClause = issueType ? ` categorized under ${issueType}` : ''
+    return `Visual inspection at ${location || 'the facility'} identified a ${sevLabel} non-conformance${issueClause} involving ${productType || 'affected material'} (Batch/Lot: ${batchNumber || 'N/A'})${deptClause}. Attached photographic evidence documents the observed condition requiring containment and root-cause investigation.`
+  }
+
+  if (!cleanBase64) {
+    return { description: buildFallbackDescription(), source: 'heuristic' }
+  }
+
+  const prompt = `You are a Quality Assurance (QA) inspector writing an objective Non-Conformance Report (NCR) description for an industrial / warehouse Quality Management System.
+
+Inspect the attached evidence photo carefully and combine what you visually observe in the image with the following report context filled out by the user:
+- Product / Material Type: ${productType || 'N/A'}
+- Batch / Lot Number: ${batchNumber || 'N/A'}
+- Location: ${location || 'N/A'}
+- Severity Level: ${severity || 'N/A'}
+- Responsible Department: ${department || 'N/A'}
+- Issue Category: ${issueType || 'N/A'}
+
+Instructions:
+1. Write a clear, professional, factual 2 to 4 sentence NCR description.
+2. Describe the specific physical defect, damage, hazard, label/packaging discrepancy, or condition visible in the photo and connect it naturally to the Product Type (${productType || 'N/A'}), Batch/Lot Number (${batchNumber || 'N/A'}), Location (${location || 'N/A'}), and Issue Category (${issueType || 'N/A'}).
+3. Do NOT include markdown formatting, bullet points, titles, or introductory filler. Return ONLY the plain-text description paragraph.`
+
+  const geminiApiKey = process.env.GEMINI_API_KEY
+  if (geminiApiKey) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: prompt },
+                  {
+                    inline_data: {
+                      mime_type: resolvedMimeType,
+                      data: cleanBase64,
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.25,
+              maxOutputTokens: 300,
+            },
+          }),
+        }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        const generatedText = (data.candidates?.[0]?.content?.parts?.[0]?.text || '')
+          .replace(/^["']|["']$/g, '')
+          .trim()
+        if (generatedText) {
+          return { description: generatedText, source: 'gemini-vision' }
+        }
+      } else {
+        const errBody = await response.text()
+        console.warn(`[suggestionService] Gemini Vision API returned ${response.status}:`, errBody)
+      }
+    } catch (err) {
+      console.warn('[suggestionService] Gemini Vision call failed:', err.message)
+    }
+  }
+
+  const openRouterKey = process.env.OPENROUTER_API_KEY
+  if (openRouterKey) {
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${openRouterKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.0-flash-001',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                {
+                  type: 'image_url',
+                  image_url: { url: `data:${resolvedMimeType};base64,${cleanBase64}` },
+                },
+              ],
+            },
+          ],
+          temperature: 0.25,
+          max_tokens: 300,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const generatedText = (data.choices?.[0]?.message?.content || '')
+          .replace(/^["']|["']$/g, '')
+          .trim()
+        if (generatedText) {
+          return { description: generatedText, source: 'openrouter-vision' }
+        }
+      }
+    } catch (err) {
+      console.warn('[suggestionService] OpenRouter Vision fallback failed:', err.message)
+    }
+  }
+
+  return { description: buildFallbackDescription(), source: 'heuristic' }
+}

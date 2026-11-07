@@ -11,8 +11,9 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { X as CloseIcon, Upload as UploadIcon } from 'lucide-react'
+import { X as CloseIcon, Upload as UploadIcon, Sparkles } from 'lucide-react'
 import SearchableDropdown from '@/components/Forms/SearchableDropdown'
+import { describeEvidenceWithAi } from '@/services/suggestionService'
 
 const SEVERITY_OPTIONS = ['low', 'medium', 'high']
 
@@ -76,6 +77,7 @@ function CreateReportModal({
   } = createFormState
 
   const [isAiGenerating, setIsAiGenerating] = useState(false)
+  const lastAnalyzedFileRef = useRef(null)
 
   const contextFilled = Boolean(
     productType &&
@@ -86,15 +88,83 @@ function CreateReportModal({
     issueType
   )
 
+  const encodeEvidenceImage = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onerror = () => reject(new Error('Failed to read image file'))
+      reader.onload = () => {
+        const dataUrl = String(reader.result || '')
+        const img = new Image()
+        img.onerror = () => {
+          const base64 = dataUrl.split(',')[1] || ''
+          resolve({ imageBase64: base64, mimeType: file.type || 'image/jpeg' })
+        }
+        img.onload = () => {
+          try {
+            const maxDim = 1280
+            let { width, height } = img
+            if (width > maxDim || height > maxDim) {
+              const ratio = Math.min(maxDim / width, maxDim / height)
+              width = Math.round(width * ratio)
+              height = Math.round(height * ratio)
+            }
+            const canvas = document.createElement('canvas')
+            canvas.width = width
+            canvas.height = height
+            const ctx = canvas.getContext('2d')
+            ctx.drawImage(img, 0, 0, width, height)
+            const compressedUrl = canvas.toDataURL('image/jpeg', 0.82)
+            resolve({
+              imageBase64: compressedUrl.split(',')[1] || '',
+              mimeType: 'image/jpeg',
+            })
+          } catch (_) {
+            const base64 = dataUrl.split(',')[1] || ''
+            resolve({ imageBase64: base64, mimeType: file.type || 'image/jpeg' })
+          }
+        }
+        img.src = dataUrl
+      }
+      reader.readAsDataURL(file)
+    })
+
+  const runAiEvidenceAnalysis = async (fileToAnalyze = evidenceFile) => {
+    if (!fileToAnalyze || !contextFilled || isAiGenerating) return
+    setIsAiGenerating(true)
+    setEvidenceError(null)
+    try {
+      const { imageBase64, mimeType } = await encodeEvidenceImage(fileToAnalyze)
+      const selectedDeptObj = (departments || []).find((d) => String(d.id) === String(department))
+      const resolvedDepartmentName = selectedDeptObj?.department_name || department || ''
+      const result = await describeEvidenceWithAi({
+        imageBase64,
+        mimeType,
+        productType,
+        batchNumber,
+        location,
+        severity,
+        department: resolvedDepartmentName,
+        issueType,
+      })
+      if (result?.description) {
+        setDescription(result.description)
+      }
+    } catch (err) {
+      setEvidenceError(err?.message || 'AI evidence inspection failed. You may enter the description manually.')
+    } finally {
+      setIsAiGenerating(false)
+    }
+  }
+
   // AI Auto-fill trigger when image is uploaded and context is set
   useEffect(() => {
-    if (evidenceFile && contextFilled && !description) {
-      setIsAiGenerating(true)
-      // Simulate AI processing of image + metadata
-      setTimeout(() => {
-        setDescription(`AI Observation: Initial visual inspection confirms incident at ${location} involving ${productType} (Batch: ${batchNumber}). Evidence indicates preliminary compliance deviations requiring further review.`)
-        setIsAiGenerating(false)
-      }, 1500)
+    if (!evidenceFile) {
+      lastAnalyzedFileRef.current = null
+      return
+    }
+    if (evidenceFile && contextFilled && !description && lastAnalyzedFileRef.current !== evidenceFile) {
+      lastAnalyzedFileRef.current = evidenceFile
+      runAiEvidenceAnalysis(evidenceFile)
     }
   }, [evidenceFile, contextFilled])
 
@@ -324,10 +394,35 @@ function CreateReportModal({
 
             {/* 📝 WIREFRAME ROW 4: Full-Width Description Entry Block */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', position: 'relative' }}>
-              <label className="label-field" style={{ margin: 0 }}>
-                Description:
-                {isAiGenerating && <span style={{ color: '#0891b2', marginLeft: '8px', fontSize: '12px' }}>(AI Auto-filling...)</span>}
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label className="label-field" style={{ margin: 0 }}>
+                  Description: *
+                  {isAiGenerating && <span style={{ color: '#0891b2', marginLeft: '8px', fontSize: '12px' }}>(AI inspecting photo &amp; context…)</span>}
+                </label>
+                {evidenceFile && contextFilled && (
+                  <button
+                    type="button"
+                    disabled={isAiGenerating}
+                    onClick={() => runAiEvidenceAnalysis(evidenceFile)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '3px 9px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      background: 'rgba(8, 145, 178, 0.1)',
+                      border: '1px solid rgba(8, 145, 178, 0.3)',
+                      color: '#0891b2',
+                      borderRadius: '4px',
+                      cursor: isAiGenerating ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    <Sparkles size={12} />
+                    {isAiGenerating ? 'Analyzing…' : 'Regenerate with AI'}
+                  </button>
+                )}
+              </div>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}

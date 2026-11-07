@@ -69,7 +69,7 @@ const limiter = rateLimit({
 })
 app.use(limiter)
 
-app.use(express.json())
+app.use(express.json({ limit: '15mb' }))
 
 app.get('/api/health', (req, res) => res.status(200).json({ status: 'ok' }))
 

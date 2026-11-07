@@ -40,3 +40,10 @@ export async function classifyIssueTags(description, reportType = 'CAR') {
         body: JSON.stringify({ description, reportType }),
     })
 }
+
+export async function describeEvidenceWithAi(payload) {
+    return await request('/suggestions/describe-evidence', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    })
+}

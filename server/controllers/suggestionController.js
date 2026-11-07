@@ -1,4 +1,4 @@
-import { findSimilarCases, getCachedSuggestion, storeSuggestion, generateAiSuggestion, generateAiSuggestionFromText, autoClassifyTags } from '../services/suggestionService.js'
+import { findSimilarCases, getCachedSuggestion, storeSuggestion, generateAiSuggestion, generateAiSuggestionFromText, autoClassifyTags, generateEvidenceDescription } from '../services/suggestionService.js'
 import boss from '../utils/queue.js'
 
 export async function getSimilarCases(req, res, next) {
@@ -66,6 +66,40 @@ export async function classifyTags(req, res, next) {
     const { description, reportType } = req.body
     const tags = await autoClassifyTags(description, reportType)
     return res.json({ tags })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function describeEvidence(req, res, next) {
+  try {
+    const {
+      imageBase64,
+      mimeType,
+      productType,
+      batchNumber,
+      location,
+      severity,
+      department,
+      issueType,
+    } = req.body || {}
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: 'imageBase64 is required to inspect evidence.' })
+    }
+
+    const result = await generateEvidenceDescription({
+      imageBase64,
+      mimeType,
+      productType,
+      batchNumber,
+      location,
+      severity,
+      department,
+      issueType,
+    })
+
+    return res.json(result)
   } catch (err) {
     next(err)
   }
