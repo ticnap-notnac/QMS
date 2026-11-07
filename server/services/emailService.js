@@ -2,6 +2,15 @@ import nodemailer from 'nodemailer'
 import logger from '../utils/logger.js'
 import { supabase } from '../lib/supabase.js'
 
+export function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 // Create reusable transporter object using SMTP transport
 let transporter = null
 
@@ -44,29 +53,32 @@ async function getUserEmail(userId) {
 
 /**
  * Sends a generic notification email
- * @param {string} toEmail 
+ * @param {string|number} userId 
  * @param {string} title 
  * @param {string} message 
  */
 export async function sendNotificationEmail(userId, title, message) {
   try {
     const toEmail = await getUserEmail(userId)
-    
+
     if (!toEmail) {
       logger.warn(`Could not send email. No email address found for user ID: ${userId}`)
       return
     }
 
+    const safeTitle = escapeHtml(title)
+    const safeMessage = escapeHtml(message)
+
     const mailOptions = {
       from: process.env.SMTP_FROM || `"QFlow Automated Alerts" <${process.env.SMTP_USER}>`,
       to: toEmail,
-      subject: `QFlow Alert: ${title}`,
+      subject: `QFlow Alert: ${String(title || '').replace(/[\r\n]+/g, ' ')}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
           <h2 style="color: #0f172a; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">QFlow System Alert</h2>
-          <p style="font-size: 16px; color: #334155; margin-top: 20px;"><strong>${title}</strong></p>
+          <p style="font-size: 16px; color: #334155; margin-top: 20px;"><strong>${safeTitle}</strong></p>
           <p style="font-size: 15px; color: #475569; line-height: 1.5; background: #f8fafc; padding: 15px; border-radius: 6px;">
-            ${message}
+            ${safeMessage}
           </p>
           <p style="font-size: 14px; color: #64748b; margin-top: 30px;">
             You can view this by logging into your QFlow dashboard.<br>
@@ -83,7 +95,6 @@ export async function sendNotificationEmail(userId, title, message) {
     } else {
       logger.info(`[MOCK EMAIL] To: ${toEmail} | Subject: ${mailOptions.subject} | Body: ${message}`)
     }
-
   } catch (error) {
     logger.error(`Failed to send notification email: ${error.message}`)
   }
@@ -94,7 +105,7 @@ export async function sendNotificationEmail(userId, title, message) {
  * @param {object} params
  * @param {string} params.toEmail
  * @param {string} params.password
- * @param {string} params.frontendUrl
+ * @param {string} [params.frontendUrl]
  * @param {string} [params.displayName]
  */
 export async function sendNewUserCredentialsEmail({ toEmail, password, frontendUrl, displayName }) {
@@ -104,7 +115,11 @@ export async function sendNewUserCredentialsEmail({ toEmail, password, frontendU
       return
     }
 
-    const targetUrl = 'https://qms-jade.vercel.app'
+    const targetUrl = frontendUrl || process.env.FRONTEND_URL || 'https://qms-jade.vercel.app'
+    const safeDisplayName = escapeHtml(displayName || '')
+    const safeEmail = escapeHtml(toEmail)
+    const safePassword = escapeHtml(password)
+    const safeTargetUrl = escapeHtml(targetUrl)
 
     const mailOptions = {
       from: process.env.SMTP_FROM || `"QFlow System" <${process.env.SMTP_USER}>`,
@@ -119,12 +134,12 @@ export async function sendNewUserCredentialsEmail({ toEmail, password, frontendU
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 10px; background: #ffffff;">
           <h2 style="color: #0f172a; margin-top: 0;">Welcome to QFlow!</h2>
-          <p style="font-size: 15px; color: #334155; line-height: 1.6;">${displayName ? `Hello ${displayName},` : 'Hello,'} your account has been created. Use the credentials below to sign in.</p>
+          <p style="font-size: 15px; color: #334155; line-height: 1.6;">${safeDisplayName ? `Hello ${safeDisplayName},` : 'Hello,'} your account has been created. Use the credentials below to sign in.</p>
           <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin: 20px 0;">
-            <p style="margin: 0 0 10px; color: #0f172a; font-size: 14px;"><strong>Email:</strong> ${toEmail}</p>
-            <p style="margin: 0; color: #0f172a; font-size: 14px;"><strong>Password:</strong> ${password}</p>
+            <p style="margin: 0 0 10px; color: #0f172a; font-size: 14px;"><strong>Email:</strong> ${safeEmail}</p>
+            <p style="margin: 0; color: #0f172a; font-size: 14px;"><strong>Password:</strong> ${safePassword}</p>
           </div>
-          <p style="font-size: 15px; color: #334155; line-height: 1.6;">Sign in here: <a href="${targetUrl}" style="color: #2563eb; text-decoration: none;">${targetUrl}</a></p>
+          <p style="font-size: 15px; color: #334155; line-height: 1.6;">Sign in here: <a href="${safeTargetUrl}" style="color: #2563eb; text-decoration: none;">${safeTargetUrl}</a></p>
           <p style="font-size: 14px; color: #64748b; margin-top: 24px;">Please keep these details secure.</p>
         </div>
       `,

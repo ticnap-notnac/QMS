@@ -27,14 +27,18 @@ const logger = winston.createLogger({
     logFormat
   ),
   transports: [
-    // Write all errors to error.log
-    new winston.transports.File({ 
-      filename: path.join(logDir, 'error.log'), 
-      level: 'error' 
+    // Write all errors to error.log with size rotation
+    new winston.transports.File({
+      filename: path.join(logDir, 'error.log'),
+      level: 'error',
+      maxsize: 5 * 1024 * 1024,
+      maxFiles: 5
     }),
-    // Write all logs to system.log
-    new winston.transports.File({ 
-      filename: path.join(logDir, 'system.log') 
+    // Write all logs to system.log with size rotation
+    new winston.transports.File({
+      filename: path.join(logDir, 'system.log'),
+      maxsize: 5 * 1024 * 1024,
+      maxFiles: 5
     }),
   ],
 })

@@ -41,6 +41,7 @@ app.use((req, res, next) => {
 
 app.use(helmet())
 app.disable('x-powered-by')
+app.set('trust proxy', 1)
 
 
 const allowedOrigins = [
@@ -85,7 +86,9 @@ app.use('/api', authMiddleware, positionRoutes)
 app.post('/api/logs/client-error', logClientError)
 
 app.use('/api/logs', authMiddleware, logRoutes)
-app.use('/api/debug', authMiddleware, debugRoutes)
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api/debug', authMiddleware, debugRoutes)
+}
 app.use('/api', authMiddleware, ncrRoutes)
 app.use('/api/suggestions', authMiddleware, suggestionRoutes)
 app.use('/api', authMiddleware, carRoutes)

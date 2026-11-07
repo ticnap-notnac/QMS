@@ -564,6 +564,70 @@ export async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, 
 
 // ─── Core NCR Business Operations ────────────────────────────────────────────
 
+let isCheckingVerificationDates = false
+let lastVerificationDateCheckAt = 0
+const VERIFICATION_CHECK_COOLDOWN_MS = 5 * 60 * 1000
+
+/**
+ * Checks for closed NCR reports whose verification_date has arrived without a preventive_rating,
+ * guarded by an in-memory mutex and cooldown so concurrent GET /api/ncr calls never trigger duplicate email bursts.
+ */
+export async function checkDueVerificationDates() {
+  const now = Date.now()
+  if (isCheckingVerificationDates || now - lastVerificationDateCheckAt < VERIFICATION_CHECK_COOLDOWN_MS) {
+    return
+  }
+  isCheckingVerificationDates = true
+  lastVerificationDateCheckAt = now
+
+  try {
+    const todayStr = getLocalDateString()
+    const { data: dueReports } = await supabase
+      .from('ncr_reports')
+      .select('id, reference_no, verification_date, status, assigned_to')
+      .eq('status', REPORT_STATUS.CLOSED)
+      .lte('verification_date', todayStr)
+      .is('preventive_rating', null)
+
+    if (dueReports && dueReports.length > 0) {
+      for (const report of dueReports) {
+        const notifTitle = `Verification Date Up: ${report.reference_no}`
+        const notifMessage = `The verification date (${report.verification_date}) for report ${report.reference_no} has been reached. Please submit the Preventive Action rating.`
+
+        const { data: existingNotif } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('report_id', report.id)
+          .eq('title', notifTitle)
+          .limit(1)
+
+        if (!existingNotif || existingNotif.length === 0) {
+          if (report.assigned_to) {
+            await createNotification({
+              title: notifTitle,
+              message: notifMessage,
+              type: 'warning',
+              reportId: report.id,
+              userId: report.assigned_to,
+            })
+          }
+          await createNotificationsForRoles({
+            roleNames: ['admin', 'qa officer'],
+            title: notifTitle,
+            message: notifMessage,
+            type: 'warning',
+            reportId: report.id,
+          })
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to process verification date notifications:', err.message)
+  } finally {
+    isCheckingVerificationDates = false
+  }
+}
+
 /**
  * Fetches NCR reports filtered by scope and enriches them with related data.
  * @param {'open'|'investigated'|'closed'|'all'} [scope='open'] - The scope of reports to fetch.
@@ -571,52 +635,7 @@ export async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, 
  * @returns {Promise<Object[]>} Array of enriched report objects.
  */
 export async function fetchReports(scope = 'open', actorAuthId = null) {
-  Promise.resolve().then(async () => {
-    try {
-      const todayStr = getLocalDateString()
-      const { data: dueReports } = await supabase
-        .from('ncr_reports')
-        .select('id, reference_no, verification_date, status, assigned_to')
-        .eq('status', REPORT_STATUS.CLOSED)
-        .lte('verification_date', todayStr)
-        .is('preventive_rating', null)
-
-      if (dueReports && dueReports.length > 0) {
-        for (const report of dueReports) {
-          const notifTitle = `Verification Date Up: ${report.reference_no}`
-          const notifMessage = `The verification date (${report.verification_date}) for report ${report.reference_no} has been reached. Please submit the Preventive Action rating.`
-
-          const { data: existingNotif } = await supabase
-            .from('notifications')
-            .select('id')
-            .eq('report_id', report.id)
-            .eq('title', notifTitle)
-            .limit(1)
-
-          if (!existingNotif || existingNotif.length === 0) {
-            if (report.assigned_to) {
-              await createNotification({
-                title: notifTitle,
-                message: notifMessage,
-                type: 'warning',
-                reportId: report.id,
-                userId: report.assigned_to,
-              })
-            }
-            await createNotificationsForRoles({
-              roleNames: ['admin', 'qa officer'],
-              title: notifTitle,
-              message: notifMessage,
-              type: 'warning',
-              reportId: report.id,
-            })
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to process verification date notifications:', err.message)
-    }
-  })
+  checkDueVerificationDates().catch(() => {})
 
   let query = supabase.from('ncr_reports').select('*')
 

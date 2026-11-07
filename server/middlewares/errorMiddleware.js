@@ -20,7 +20,10 @@ export function errorHandler(err, req, res, next) {
 
   const status = err?.status || err?.statusCode || 500
 
-  const message = err?.message || String(err) || 'An unexpected system error occurred. Our technical team has been notified. Please try again.'
+  const isProd500 = status >= 500 && process.env.NODE_ENV === 'production'
+  const message = isProd500
+    ? 'Internal Server Error'
+    : (err?.message || String(err) || 'An unexpected system error occurred. Our technical team has been notified. Please try again.')
 
   const details = status >= 500 ? undefined : (err?.details || undefined)
 

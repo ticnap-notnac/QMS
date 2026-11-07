@@ -4,13 +4,14 @@ import { supabase } from '../lib/supabase.js'
 
 function normaliseCamelAuthId(payload) {
   const p = { ...payload }
+  delete p.id
+  delete p.created_at
   if (p.userAuthId && !p.user_auth_id) {
     p.user_auth_id = p.userAuthId
-    delete p.userAuthId
   }
+  delete p.userAuthId
   return p
 }
-
 
 async function fetchUsersByAuthIds(authIds) {
   if (!authIds.length) return new Map()
@@ -31,10 +32,12 @@ function resolveUserDisplay(user) {
   return fullName || user.user_name || user.email || null
 }
 
-
 // Service methods---------------------------------------------------------------------------
 
 export async function getSystemLogs({ limit = 50, offset = 0, level, source, userAuth, from, to, action } = {}) {
+  const safeLimit = Math.min(Math.max(Number(limit) || 50, 1), 1000)
+  const safeOffset = Math.max(Number(offset) || 0, 0)
+
   let query = supabase
     .from('system_logs')
     .select('id,created_at,level,source,user_auth_id,action,details,ip,metadata', { count: 'exact' })
@@ -47,7 +50,7 @@ export async function getSystemLogs({ limit = 50, offset = 0, level, source, use
   if (to)        query = query.lte('created_at', to)
   if (action)    query = query.ilike('action', `%${action}%`)
 
-  const { data, error, count } = await query.range(offset, Math.max(0, offset + limit - 1))
+  const { data, error, count } = await query.range(safeOffset, Math.max(0, safeOffset + safeLimit - 1))
 
   if (error) throw new Error(error.message)
 
@@ -77,7 +80,6 @@ export async function insertSystemLog(payload) {
 
   return data || []
 }
-
 
 export async function recordSystemLogRead(payload) {
   const normalised = normaliseCamelAuthId(payload)

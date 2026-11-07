@@ -5,9 +5,19 @@ import {
 } from '../services/logService.js'
 import logger from '../utils/logger.js'
 
+function sanitizeLogField(value, maxLen = 500) {
+  if (value === null || value === undefined) return ''
+  return String(value)
+    .replace(/[\r\n]+/g, ' ')
+    .trim()
+    .slice(0, maxLen)
+}
+
 export async function getLogs(req, res, next) {
-  const limit  = Number(req.query.limit  || 50)
-  const offset = Number(req.query.offset || 0)
+  const rawLimit = Number(req.query.limit || 50)
+  const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 1000) : 50
+  const rawOffset = Number(req.query.offset || 0)
+  const offset = Number.isFinite(rawOffset) ? Math.max(rawOffset, 0) : 0
   const { level, source, user_auth_id, userAuthId, from, to, action } = req.query || {}
   const userAuth = user_auth_id || userAuthId
 
@@ -21,7 +31,14 @@ export async function getLogs(req, res, next) {
 
 export async function insertLog(req, res, next) {
   try {
-    const data = await insertSystemLog(req.body || {})
+    const rawBody = { ...(req.body || {}) }
+    delete rawBody.id
+    delete rawBody.created_at
+    delete rawBody.userAuthId
+    rawBody.user_auth_id = req.user?.id || null
+    rawBody.ip = req.ip || null
+
+    const data = await insertSystemLog(rawBody)
     return res.json(data)
   } catch (err) {
     next(err)
@@ -30,7 +47,13 @@ export async function insertLog(req, res, next) {
 
 export async function recordLogRead(req, res, next) {
   try {
-    const data = await recordSystemLogRead(req.body || {})
+    const rawBody = { ...(req.body || {}) }
+    delete rawBody.id
+    delete rawBody.created_at
+    delete rawBody.userAuthId
+    rawBody.user_auth_id = req.user?.id || null
+
+    const data = await recordSystemLogRead(rawBody)
     return res.json(data)
   } catch (err) {
     next(err)
@@ -39,14 +62,20 @@ export async function recordLogRead(req, res, next) {
 
 export function logClientError(req, res) {
   const { message, source, lineno, colno, error, userAgent, path } = req.body || {}
-  logger.error(`Client Error: ${message}`, {
+  const safeMessage = sanitizeLogField(message, 500)
+  const safeSource = sanitizeLogField(source, 500)
+  const safeStack = sanitizeLogField(error?.stack || error, 500)
+  const safeUserAgent = sanitizeLogField(userAgent, 500)
+  const safePath = sanitizeLogField(path, 500)
+
+  logger.error(`Client Error: ${safeMessage}`, {
     source: 'frontend',
-    client_source: source,
-    lineno,
-    colno,
-    stack: error?.stack || error,
-    userAgent,
-    path
+    client_source: safeSource,
+    lineno: Number.isFinite(Number(lineno)) ? Number(lineno) : null,
+    colno: Number.isFinite(Number(colno)) ? Number(colno) : null,
+    stack: safeStack,
+    userAgent: safeUserAgent,
+    path: safePath
   })
   res.status(204).end()
 }
