@@ -60,7 +60,7 @@ export default function ISOPage({ userRole, userPermissions, userName }) {
           </div>
         </div>
 
-        <div className="metric-card metric-card--padded iso-review-card" style={{ padding: '24px' }}>
+        <div className="metric-card metric-card--padded iso-review-card" style={{ padding: '24px', height: 'auto', minHeight: 'max-content' }}>
           <h3 className="metric-card-title iso-review-title" style={{ margin: '0 0 16px 0', fontSize: '18px', color: '#0f172a' }}>Review Clause Status</h3>
           <div className="iso-progress-stack" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>

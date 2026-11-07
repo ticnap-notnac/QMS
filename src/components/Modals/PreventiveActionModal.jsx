@@ -119,17 +119,26 @@ export default function PreventiveActionModal({
           style={{ 
             flexShrink: 0, 
             display: 'flex', 
-            justifyContent: 'flex-end', 
+            justifyContent: 'flex-end',
+            gap: '12px',
+            alignItems: 'center',
             paddingTop: '16px', 
-            borderTop: '1px solid rgba(255,255,255,0.08)', 
+            borderTop: '1px solid #cbd5e1', 
             marginTop: '16px' 
           }}
         >
           <button
             type="button"
+            onClick={onClose}
+            className="btn-secondary-light"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
             onClick={onSubmit}
             className="btn-gradient-primary"
-            style={{ padding: '8px 24px', height: 'auto', borderRadius: '6px', margin: 0 }}
             disabled={isSubmitting || !preventiveRating}
           >
             {isSubmitting ? 'Submitting...' : 'Submit Rating'}

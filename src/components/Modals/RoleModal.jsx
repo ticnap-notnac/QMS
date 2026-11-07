@@ -48,7 +48,7 @@ export default function RoleModal({
           {message && <div className="user-info-success">{message}</div>}
 
           <label className="panel-column" style={{ marginBottom: '16px' }}>
-            <span className="small-label">ROLE NAME: <span style={{ color: '#ef4444' }}>*</span></span>
+            <span className="small-label">Role Name: <span style={{ color: '#ef4444' }}>*</span></span>
             <input
               type="text"
               value={roleName}
@@ -60,7 +60,7 @@ export default function RoleModal({
 
           <div className="panel-column" style={{ marginBottom: '20px' }}>
             <span className="small-label" style={{ marginBottom: '8px', display: 'block' }}>
-              ASSIGNED POSITIONS (JOB TITLES):
+              Assigned Positions (Job Titles):
             </span>
             <p className="glass-card-subtext" style={{ marginTop: 0, marginBottom: '8px', fontSize: '13px' }}>
               Select which job positions belong to this system role:
@@ -130,20 +130,19 @@ export default function RoleModal({
 
           <div className="modal-submit-row">
             <button
-              className="btn-add-action"
+              type="button"
+              className="btn-secondary-light"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn-gradient-primary"
               type="submit"
               disabled={loading}
-              style={{
-                background: '#1A435A',
-                border: 'none',
-                padding: '8px 24px',
-                borderRadius: '4px',
-                color: '#ffffff',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
             >
-              {loading ? 'Saving...' : submitLabel}
+              {loading ? 'Saving...' : (submitLabel || 'Save Role')}
             </button>
           </div>
         </form>

@@ -47,7 +47,7 @@ export default function PermissionsPage({ userRole, userPermissions, onPermissio
 
           <SettingsNavbar userRole={userRole} />
 
-          <div className="glass-card-rounded-bottom">
+          <div className="glass-card-rounded-bottom" style={{ marginBottom: '48px', paddingBottom: '24px' }}>
             <div className="admin-inner-panel">
               <div className="search-row">
                 <div className="admin-top-row">
@@ -57,7 +57,7 @@ export default function PermissionsPage({ userRole, userPermissions, onPermissio
                 </div>
               </div>
 
-              <div className="glass-card-content" style={{ paddingTop: '10px' }}>
+              <div className="glass-card-content" style={{ paddingTop: '10px', paddingBottom: '24px' }}>
                 {loading ? (
                   <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                     Loading role permissions...

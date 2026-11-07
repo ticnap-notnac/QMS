@@ -1099,6 +1099,55 @@
   padding: 8px;
 }
 
+/* ==========================================================================
+   ROLE PERMISSIONS MATRIX LAYOUT
+   ========================================================================== */
+.permissions-matrix-container {
+  margin-top: 16px;
+  width: 100%;
+  padding-bottom: 32px;
+}
+
+.permissions-sections-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(420px, 2fr);
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .permissions-sections-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.permissions-rights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.permissions-sticky-footer {
+  position: sticky;
+  bottom: 0;
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid #e2e8f0;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  z-index: 20;
+}
 
 
-
+/* Spacing for card on settings pages so content is never cut off */
+.glass-card-rounded-bottom {
+  margin-bottom: 32px;
+}

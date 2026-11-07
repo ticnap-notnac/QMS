@@ -1,5 +1,4 @@
 import { useMemo, useState, useEffect } from 'react'
-import { FileSignature } from 'lucide-react'
 import SearchableDropdown from '@/components/Forms/SearchableDropdown'
 
 export default function AssignReportModal({ 
@@ -58,9 +57,8 @@ export default function AssignReportModal({
           borderBottom: '1px solid #e2e8f0',
           boxSizing: 'border-box'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#1A435A' }}>
-            <FileSignature size={18} className="icon-teal" />
-            <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#1A435A', fontWeight: 600 }}>Assign Report</h3>
+          <div style={{ display: 'flex', alignItems: 'center', color: '#1A435A' }}>
+            <h3 style={{ margin: 0, fontSize: '18px', color: '#1A435A', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Assign Report</h3>
           </div>
           <button 
             type="button" 

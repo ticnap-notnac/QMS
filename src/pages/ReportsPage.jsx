@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { SlidersHorizontal, LayoutGrid, List } from 'lucide-react'
+import { SlidersHorizontal, LayoutGrid, List, PanelLeftClose, PanelLeftOpen, FileText, FileCheck, AlertTriangle } from 'lucide-react'
 import Toast from '@/components/UI/Toast'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import FilterModal from '../components/Modals/FilterModal.jsx'
@@ -35,6 +35,24 @@ export default function ReportsPage({
   userPermissions
 }) {
   const logic = useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId })
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('reports_sidebar_collapsed') === 'true'
+  })
+
+  const handleToggleSidebar = () => {
+    setIsSidebarCollapsed(prev => {
+      const next = !prev
+      localStorage.setItem('reports_sidebar_collapsed', String(next))
+      return next
+    })
+  }
+
+  const tabMeta = {
+    ncr: { label: 'Newsfeed (NCR)', icon: FileText },
+    car: { label: 'Corrective Actions (CAR)', icon: FileCheck },
+    qddr: { label: 'Defect Reports (QDDR)', icon: AlertTriangle }
+  }
+
   const normalizedRole = String(userRole || '').trim().toLowerCase()
   const hasExplicitPages = Array.isArray(userPermissions?.pages)
   const pages = hasExplicitPages ? userPermissions.pages : []
@@ -231,26 +249,38 @@ export default function ReportsPage({
           <Toast message={logic.toast.message} type={logic.toast.type} onClose={() => logic.setToast(null)} />
         </div>
       )}
-      <div className="reports-layout-container">
+      <div className={`reports-layout-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         {/* Desktop Sidebar */}
         {availableTabs.length > 1 && (
-          <aside className="reports-sidebar desktop-only-tabs">
-            <h3 className="reports-sidebar-title">Modules</h3>
+          <aside className={`reports-sidebar desktop-only-tabs ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+            <div className={`reports-sidebar-header ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+              {!isSidebarCollapsed && <h3 className="reports-sidebar-title">Modules</h3>}
+              <button 
+                type="button" 
+                className="reports-sidebar-toggle-btn"
+                onClick={handleToggleSidebar}
+                title={isSidebarCollapsed ? "Expand Modules" : "Collapse Modules"}
+                aria-label={isSidebarCollapsed ? "Expand Modules" : "Collapse Modules"}
+              >
+                {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+              </button>
+            </div>
             {availableTabs.map(t => {
-              const tabNames = {
-                ncr: 'Newsfeed (NCR)',
-                car: 'Corrective Actions (CAR)',
-                qddr: 'Defect Reports (QDDR)'
-              };
+              const meta = tabMeta[t] || { label: t.toUpperCase(), icon: FileText }
+              const IconComp = meta.icon
               return (
                 <button 
                   key={t} 
                   type="button" 
                   className={`reports-sidebar-btn ${logic.activeTab === t ? 'active' : ''}`} 
                   onClick={() => logic.setActiveTab(t)}
-                  title={tabNames[t] || t.toUpperCase()}
+                  title={meta.label}
+                  aria-label={meta.label}
                 >
-                  {tabNames[t] || t.toUpperCase()}
+                  <IconComp size={18} className="reports-sidebar-btn-icon" />
+                  {!isSidebarCollapsed && (
+                    <span className="reports-sidebar-btn-text">{meta.label}</span>
+                  )}
                 </button>
               );
             })}

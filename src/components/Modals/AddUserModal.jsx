@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { Eye, EyeOff } from 'lucide-react'
 
 function AddUserModal({
@@ -36,10 +37,10 @@ function AddUserModal({
     return null
   }
 
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
+  return createPortal(
+    <div className="modal-backdrop" style={{ zIndex: 10000 }} onClick={onClose}>
       <div
-        className="modal modal-wide"
+        className="modal modal-wide compact-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-user-title"
@@ -55,16 +56,12 @@ function AddUserModal({
         </div>
 
         <form className="modal-form" onSubmit={onSubmit} autoComplete="off">
-          <p className="glass-card-subtext">
-            Create the auth account and matching profile record for a new user.
-          </p>
-
-          {error && <div className="user-info-error">{error}</div>}
-          {message && <div className="user-info-success">{message}</div>}
+          {error && <div className="user-info-error" style={{ padding: '6px 12px', fontSize: '13px', marginBottom: '8px' }}>{error}</div>}
+          {message && <div className="user-info-success" style={{ padding: '6px 12px', fontSize: '13px', marginBottom: '8px' }}>{message}</div>}
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">First Name: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">First Name: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></span>
               <input
                 type="text"
                 name="firstName"
@@ -76,7 +73,7 @@ function AddUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Last Name: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">Last Name: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></span>
               <input
                 type="text"
                 name="lastName"
@@ -88,7 +85,7 @@ function AddUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Password: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">Password: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></span>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -98,14 +95,14 @@ function AddUserModal({
                   className="form-input-reports"
                   placeholder="Create a password"
                   autoComplete="new-password"
-                  style={{ width: '100%', paddingRight: '40px' }}
+                  style={{ width: '100%', paddingRight: '36px' }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   style={{
                     position: 'absolute',
-                    right: '12px',
+                    right: '10px',
                     background: 'none',
                     border: 'none',
                     padding: 0,
@@ -117,7 +114,7 @@ function AddUserModal({
                   }}
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
             </label>
@@ -125,7 +122,10 @@ function AddUserModal({
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">Email Address: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">
+                Email Address: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span>
+                <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'none', marginLeft: '6px', fontWeight: 'normal' }}>(Gmail only)</span>
+              </span>
               <input
                 type="email"
                 name="email"
@@ -135,13 +135,10 @@ function AddUserModal({
                 placeholder="Enter email address"
                 autoComplete="new-password"
               />
-              <span className="small-label" style={{ marginTop: '6px', color: '#64748b' }}>
-                Gmail addresses only.
-              </span>
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Username: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">Username: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></span>
               <input
                 type="text"
                 name="userName"
@@ -169,7 +166,7 @@ function AddUserModal({
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">Department: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">Department: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></span>
               <select
                 name="departmentId"
                 value={formData.departmentId}
@@ -194,7 +191,7 @@ function AddUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Site: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">Site: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></span>
               <select
                 name="siteId"
                 value={formData.siteId || ''}
@@ -236,15 +233,18 @@ function AddUserModal({
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">Assigned Team Leader (Searchable):</span>
+              <span className="small-label">Filter Team Leader:</span>
               <input
                 type="text"
                 value={tlSearch}
                 onChange={(e) => setTlSearch(e.target.value)}
                 className="form-input-reports"
                 placeholder="Filter Team Leaders..."
-                style={{ marginBottom: '6px' }}
               />
+            </label>
+
+            <label className="panel-column" style={{ gridColumn: 'span 2' }}>
+              <span className="small-label">Assigned Team Leader:</span>
               <select
                 name="teamLeaderId"
                 value={formData.teamLeaderId || ''}
@@ -265,13 +265,26 @@ function AddUserModal({
           </div>
 
           <div className="modal-submit-row">
-            <button className="btn-add-action" type="submit" disabled={loading}>
+            <button
+              type="button"
+              className="btn-secondary-light"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn-gradient-primary"
+              type="submit"
+              disabled={loading}
+            >
               {loading ? 'Creating...' : 'Create User'}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

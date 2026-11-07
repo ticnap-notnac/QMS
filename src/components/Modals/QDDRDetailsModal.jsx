@@ -231,8 +231,7 @@ export default function QDDRDetailsModal({
             paddingTop: '24px'
           }}
         >
-          <h3 className="reports-update-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-            <Clipboard size={20} className="icon-cyan" />
+          <h3 className="reports-update-title" style={{ margin: 0 }}>
             QDDR Details - {qddr.reference_no}
           </h3>
           <span className={`iso-status-pill ${getStatusBadgeClass(qddr.status)}`} style={{ margin: 0, whiteSpace: 'nowrap' }}>

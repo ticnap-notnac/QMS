@@ -361,6 +361,64 @@ function QDDRModal({
 
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
 
+              {/* Actions & Analysis Header with CBR Suggest Actions Button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ color: '#1A435A', fontSize: '13px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions & Analysis</span>
+                <button
+                  type="button"
+                  onClick={suggestActions}
+                  disabled={suggesting}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 10px',
+                    fontSize: '12px',
+                    background: 'rgba(8, 145, 178, 0.12)',
+                    border: '1px solid rgba(8, 145, 178, 0.3)',
+                    color: '#0891b2',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Sparkles size={13} /> {suggesting ? 'Analyzing...' : 'Suggest Actions (CBR)'}
+                </button>
+              </div>
+
+              {/* Details: Reason, Corrective, Preventive */}
+              <div className="qddr-form-row-3-col" style={isMobile ? { gridTemplateColumns: '1fr', gap: '10px' } : undefined}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label className="label-field">Reason of Discrepancy: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></label>
+                  <textarea
+                    value={form.reason_of_discrepancy}
+                    onChange={(e) => handleChange('reason_of_discrepancy', e.target.value)}
+                    className="input-field"
+                    required
+                    style={{ height: '80px', padding: '8px', resize: 'none' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label className="label-field">Corrective Action:</label>
+                  <textarea
+                    value={form.corrective_action}
+                    onChange={(e) => handleChange('corrective_action', e.target.value)}
+                    className="input-field"
+                    style={{ height: '80px', padding: '8px', resize: 'none' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label className="label-field">Preventive Action:</label>
+                  <textarea
+                    value={form.preventive_action}
+                    onChange={(e) => handleChange('preventive_action', e.target.value)}
+                    className="input-field"
+                    style={{ height: '80px', padding: '8px', resize: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
+
               {/* ── ISO Clause Linkage Panel ─────────────────────────────── */}
               <div style={{
                 background: 'rgba(8, 145, 178, 0.04)',
@@ -468,67 +526,9 @@ function QDDRModal({
 
                 {!clausesLoading && !form.suggested_clauses?.length && !clausesError && (
                   <p style={{ fontSize: '12px', color: '#475569', margin: 0 }}>
-                    Fill in the Reason of Discrepancy details below, then click "Suggest Matching Clauses" to automatically identify the relevant ISO clauses for this QDDR.
+                    Fill in the Reason of Discrepancy details above, then click "Suggest Matching Clauses" to automatically identify the relevant ISO clauses for this QDDR.
                   </p>
                 )}
-              </div>
-
-              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
-
-              {/* Actions & Analysis Header with CBR Suggest Actions Button */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ color: '#1A435A', fontSize: '13px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions & Analysis</span>
-                <button
-                  type="button"
-                  onClick={suggestActions}
-                  disabled={suggesting}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '4px 10px',
-                    fontSize: '12px',
-                    background: 'rgba(8, 145, 178, 0.12)',
-                    border: '1px solid rgba(8, 145, 178, 0.3)',
-                    color: '#0891b2',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Sparkles size={13} /> {suggesting ? 'Analyzing...' : 'Suggest Actions (CBR)'}
-                </button>
-              </div>
-
-              {/* Details: Reason, Corrective, Preventive */}
-              <div className="qddr-form-row-3-col" style={isMobile ? { gridTemplateColumns: '1fr', gap: '10px' } : undefined}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label className="label-field">Reason of Discrepancy: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></label>
-                  <textarea
-                    value={form.reason_of_discrepancy}
-                    onChange={(e) => handleChange('reason_of_discrepancy', e.target.value)}
-                    className="input-field"
-                    required
-                    style={{ height: '80px', padding: '8px', resize: 'none' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label className="label-field">Corrective Action:</label>
-                  <textarea
-                    value={form.corrective_action}
-                    onChange={(e) => handleChange('corrective_action', e.target.value)}
-                    className="input-field"
-                    style={{ height: '80px', padding: '8px', resize: 'none' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label className="label-field">Preventive Action:</label>
-                  <textarea
-                    value={form.preventive_action}
-                    onChange={(e) => handleChange('preventive_action', e.target.value)}
-                    className="input-field"
-                    style={{ height: '80px', padding: '8px', resize: 'none' }}
-                  />
-                </div>
               </div>
 
               {/* Signature / Approval Roles: Leader, Approved By, Noted By */}

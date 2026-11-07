@@ -740,6 +740,18 @@ div[class*="navbar"] {
   color: #ffffff;
 }
 
+.sidebar-user-menu-dropdown .user-menu-item.logout {
+  color: #fca5a5;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 4px;
+  padding-top: 8px;
+}
+
+.sidebar-user-menu-dropdown .user-menu-item.logout:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
 .sidebar-user-menu-dropdown .user-menu-item.mobile-only {
   display: none !important;
 }
@@ -791,38 +803,42 @@ div[class*="navbar"] {
 
 .page-root {
   width: 100%;
-  height: 100vh;
-  max-height: 100vh;
-  overflow: hidden;
+  height: calc(100vh - 72px) !important;
+  max-height: calc(100vh - 72px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
-
-
-
 .page-main-wide {
-  flex: 1;
+  flex: none;
   width: 95%;
   max-width: 1050px;
   min-width: 0;
-  margin: 40px auto;
-  padding: 0 16px;
+  margin: 0 auto;
+  padding: 24px 16px 80px 16px;
   box-sizing: border-box;
   position: relative;
   z-index: 10;
+  height: auto !important;
+  min-height: 100%;
 }
 
 /* Backwards-compatible alias for pages that use `page-main` */
 .page-main {
-  flex: 1;
+  flex: none;
   width: 95%;
   max-width: 1160px;
-  margin: 48px auto 24px; /* give space below navbar */
-  padding: 8px 20px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 24px 20px 80px 20px;
   box-sizing: border-box;
   position: relative;
   z-index: 10;
+  height: auto !important;
+  min-height: 100%;
 }
 
 .page-main-centered {
@@ -955,33 +971,42 @@ div[class*="navbar"] {
 .modal-card {
   width: 100%;
   max-width: 580px; /* Default width for standard modals */
-  max-height: 85vh; /* Prevents modal from shooting past viewport edges */
-  background: #f8fafc; /* QMS dashboard panel background tone */
-  border-radius: 14px;
+  max-height: min(90vh, 760px); /* Prevents modal from shooting past viewport edges */
+  background: #ffffff; /* Unified white background across all modals */
+  border-radius: 20px;
   display: flex;
   flex-direction: column; /* Structured ordering layout stack: Header -> Content -> Footer */
   overflow: hidden; /* Hides component leakage so corner curves clip beautifully */
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
   box-sizing: border-box;
   position: relative !important; /* Crucial for absolute close button positioning */
+  font-family: var(--body);
 }
 
 /* 3. Freeze the title header elements block at the top */
 .modal-header {
   flex-shrink: 0;
-  padding: 24px 28px 12px 28px;
+  padding: 22px 28px 14px 28px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-sizing: border-box;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.modal-header h3 {
+.modal-header h3,
+.modal-header h2 {
   margin: 0;
-  font-size: 1.43rem;
-  color: #0f172a;
+  font-size: 18px;
+  color: #1A435A;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-family: var(--body);
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* 4. Confine scrolling EXCLUSIVELY to the inner form field zone */
@@ -1436,9 +1461,9 @@ div:has(> .nav-user-info) ~ div span,
   width: 100% !important;
   background: #ffffff !important;
   border: 1px solid #cbd5e1 !important;
-  border-radius: 8px !important;
-  color: #0f172a !important;
-  font-size: 17px !important;
+  border-radius: 10px !important;
+  color: #1A435A !important;
+  font-size: 14.5px !important;
   font-family: var(--body) !important;
   box-sizing: border-box !important;
   outline: none !important;
@@ -1448,11 +1473,11 @@ div:has(> .nav-user-info) ~ div span,
 input.input-field,
 select.input-field {
   height: 40px !important;
-  padding: 0 16px !important;
+  padding: 0 14px !important;
 }
 
 textarea.input-field {
-  padding: 12px 16px !important;
+  padding: 10px 14px !important;
 }
 
 .input-field:hover {
@@ -1460,8 +1485,8 @@ textarea.input-field {
 }
 
 .input-field:focus {
-  border-color: #0f172a !important;
-  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.05) !important;
+  border-color: #4987A4 !important;
+  box-shadow: 0 0 0 3px rgba(73, 135, 164, 0.18) !important;
 }
 
 .input-field:disabled {
@@ -1472,12 +1497,13 @@ textarea.input-field {
 
 .label-field {
   display: block !important;
-  font-size: 12px !important;
+  font-size: 13.5px !important;
   font-weight: 600 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
-  color: #475569 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: #1A435A !important;
   margin-bottom: 6px !important;
+  font-family: var(--body) !important;
 }
 
 /* ========================================================= */

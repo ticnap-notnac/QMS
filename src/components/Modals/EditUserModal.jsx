@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { Eye, EyeOff } from 'lucide-react'
 
 function EditUserModal({
@@ -35,31 +36,39 @@ function EditUserModal({
 
   if (!isOpen) return null
 
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="edit-user-title" onClick={(e) => e.stopPropagation()}>
+  return createPortal(
+    <div className="modal-backdrop" style={{ zIndex: 10000 }} onClick={onClose}>
+      <div
+        className="modal modal-wide compact-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-user-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
-          <h2 id="edit-user-title" className="modal-title">Edit User</h2>
+          <h2 id="edit-user-title" className="modal-title">
+            Edit User
+          </h2>
           <button className="modal-close" type="button" onClick={onClose} aria-label="Close edit user dialog">×</button>
         </div>
 
         <form className="modal-form" onSubmit={onSubmit}>
-          {error && <div className="user-info-error">{error}</div>}
-          {message && <div className="user-info-success">{message}</div>}
+          {error && <div className="user-info-error" style={{ padding: '6px 12px', fontSize: '13px', marginBottom: '8px' }}>{error}</div>}
+          {message && <div className="user-info-success" style={{ padding: '6px 12px', fontSize: '13px', marginBottom: '8px' }}>{message}</div>}
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">First Name: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">First Name: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></span>
               <input type="text" name="firstName" value={formData.firstName} onChange={onChange} className="form-input-reports" placeholder="Enter first name" />
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Last Name: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">Last Name: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></span>
               <input type="text" name="lastName" value={formData.lastName} onChange={onChange} className="form-input-reports" placeholder="Enter last name" />
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Status: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">Status: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></span>
               <select name="status" value={formData.status ?? 'ACTIVE'} onChange={onChange} className="form-input-reports">
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
@@ -70,12 +79,15 @@ function EditUserModal({
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">Email Address: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">
+                Email Address: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span>
+                <span style={{ fontSize: '11px', color: '#64748b', textTransform: 'none', marginLeft: '6px', fontWeight: 'normal' }}>(Gmail only)</span>
+              </span>
               <input type="email" name="email" value={formData.email} onChange={onChange} className="form-input-reports" placeholder="Enter email address" />
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Username: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">Username: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></span>
               <input type="text" name="userName" value={formData.userName} onChange={onChange} className="form-input-reports" placeholder="Enter username" />
             </label>
 
@@ -87,7 +99,7 @@ function EditUserModal({
 
           <div className="modal-grid-3">
             <label className="panel-column">
-              <span className="small-label">Department: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">Department: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></span>
               <select name="departmentId" value={formData.departmentId} onChange={onChange} className="form-input-reports" disabled={departmentsLoading || availableDepartments.length === 0}>
                 <option value="">{departmentsLoading ? 'Loading departments...' : 'Select a department'}</option>
                 {availableDepartments.map((d) => (
@@ -97,7 +109,7 @@ function EditUserModal({
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Site: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></span>
+              <span className="small-label">Site: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></span>
               <select
                 name="siteId"
                 value={formData.siteId || ''}
@@ -139,16 +151,16 @@ function EditUserModal({
                   value={formData.password || ''}
                   onChange={onChange}
                   className="form-input-reports"
-                  placeholder="Leave blank to keep current"
+                  placeholder="Leave blank to keep"
                   minLength={6}
-                  style={{ width: '100%', paddingRight: '40px' }}
+                  style={{ width: '100%', paddingRight: '36px' }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   style={{
                     position: 'absolute',
-                    right: '12px',
+                    right: '10px',
                     background: 'none',
                     border: 'none',
                     padding: 0,
@@ -160,21 +172,24 @@ function EditUserModal({
                   }}
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
             </label>
 
             <label className="panel-column">
-              <span className="small-label">Assigned Team Leader (Searchable):</span>
+              <span className="small-label">Filter Team Leader:</span>
               <input
                 type="text"
                 value={tlSearch}
                 onChange={(e) => setTlSearch(e.target.value)}
                 className="form-input-reports"
-                placeholder="Filter Team Leaders..."
-                style={{ marginBottom: '6px' }}
+                placeholder="Filter by name..."
               />
+            </label>
+
+            <label className="panel-column">
+              <span className="small-label">Assigned Team Leader:</span>
               <select
                 name="teamLeaderId"
                 value={formData.teamLeaderId || ''}
@@ -195,13 +210,26 @@ function EditUserModal({
           </div>
 
           <div className="modal-submit-row">
-            <button className="btn-add-action" type="submit" disabled={loading}>
+            <button
+              type="button"
+              className="btn-secondary-light"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn-gradient-primary"
+              type="submit"
+              disabled={loading}
+            >
               {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

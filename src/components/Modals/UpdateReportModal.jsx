@@ -70,8 +70,7 @@ export default function UpdateReportModal({
         <button type="button" onClick={onClose} className="modal-close-button" style={{ zIndex: 10 }}>×</button>
         
         <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <FileSearch size={18} className="icon-teal" />
+          <div style={{ display: 'flex', alignItems: 'center' }}>
             <h3 className="reports-update-title">{isClosed ? 'Report Details' : 'Update Report'}</h3>
           </div>
           <button 
@@ -421,13 +420,18 @@ export default function UpdateReportModal({
                 Close Details
               </button>
             ) : (
-              <button type="submit" className="btn-gradient-primary reports-update-button" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <LoaderCircle size={16} className="iso-spinner" /> Updating...
-                  </span>
-                ) : 'Update Report'}
-              </button>
+              <>
+                <button type="button" className="btn-secondary-light" onClick={onClose} disabled={isSubmitting}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-gradient-primary" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <LoaderCircle size={16} className="iso-spinner" /> Updating...
+                    </span>
+                  ) : 'Update Report'}
+                </button>
+              </>
             )}
           </div>
         </form>

@@ -247,7 +247,7 @@ function AppInner() {
         if (!localStorage.getItem('iso_terms_agreed')) {
           setShowIntro(true)
         }
-        navigate('/')
+        navigate('/dashboard')
       }
     } catch (err) {
       setToast({ message: friendlyError(err, 'Your session could not be loaded. Please refresh the page or log in again.'), type: 'error' })

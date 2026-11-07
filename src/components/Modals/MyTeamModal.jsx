@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Users, Search, RefreshCw } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { Search, RefreshCw } from 'lucide-react'
 import { fetchUsers, updateUserStatus } from '@/services/userService'
 import { isAdminRole } from '@/utils/roleUtils.js'
 
@@ -92,18 +93,28 @@ export default function MyTeamModal({
 
   if (!isOpen) return null
 
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
+  return createPortal(
+    <div className="modal-backdrop" onClick={onClose} style={{ zIndex: 10000 }}>
       <div
         className="modal modal-wide"
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '680px', width: '95vw' }}
+        style={{
+          maxWidth: '680px',
+          width: '95vw',
+          maxHeight: 'min(90vh, 760px)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          padding: '24px 28px',
+          borderRadius: '20px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        }}
       >
         <div className="modal-header">
-          <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Users size={20} /> My Team Roster
+          <h2 className="modal-title">
+            My Team Roster
           </h2>
           <button className="modal-close" type="button" onClick={onClose} aria-label="Close">×</button>
         </div>
@@ -262,8 +273,30 @@ export default function MyTeamModal({
               })
             )}
           </div>
+
+          <div
+            className="modal-submit-row"
+            style={{
+              marginTop: '16px',
+              paddingTop: '14px',
+              borderTop: '1px solid #cbd5e1',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+            }}
+          >
+            <button
+              type="button"
+              className="btn-secondary-light"
+              onClick={onClose}
+              style={{ minWidth: '100px' }}
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

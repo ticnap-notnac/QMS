@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 export default function Toast({ 
   message, 
@@ -33,7 +34,7 @@ export default function Toast({
     if (onClose) onClose()
   }
 
-  return (
+  const toastContent = (
     <>
       {onConfirm && (
         <div 
@@ -78,4 +79,9 @@ export default function Toast({
       </div>
     </>
   )
+
+  if (typeof document !== 'undefined') {
+    return createPortal(toastContent, document.body)
+  }
+  return toastContent
 }

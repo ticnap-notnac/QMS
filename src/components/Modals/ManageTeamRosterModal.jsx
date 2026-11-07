@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
-import { Users, CheckSquare, Square, Search } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { CheckSquare, Square, Search } from 'lucide-react'
 
 export default function ManageTeamRosterModal({
   isOpen,
@@ -75,31 +76,52 @@ export default function ManageTeamRosterModal({
     onSetSelectedMembers(Array.from(next))
   }
 
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
+  return createPortal(
+    <div className="modal-backdrop" onClick={onClose} style={{ zIndex: 10000 }}>
       <div
         className="modal modal-wide"
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '720px', width: '95vw' }}
+        style={{
+          maxWidth: '720px',
+          width: '95vw',
+          maxHeight: 'min(90vh, 760px)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          padding: '24px 28px 20px 28px',
+          borderRadius: '20px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        }}
       >
-        <div className="modal-header">
-          <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Users size={20} /> Manage Team Leader Roster
+        <div className="modal-header" style={{ marginBottom: '8px', flexShrink: 0 }}>
+          <h2 className="modal-title">
+            Manage Team Leader Roster
           </h2>
           <button className="modal-close" type="button" onClick={onClose} aria-label="Close">×</button>
         </div>
 
-        <form className="modal-form" onSubmit={onSubmit}>
-          <p className="glass-card-subtext" style={{ marginBottom: '12px' }}>
+        <form
+          className="modal-form"
+          onSubmit={onSubmit}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            minHeight: 0,
+            overflow: 'hidden',
+            paddingBottom: 0,
+          }}
+        >
+          <p className="glass-card-subtext" style={{ marginBottom: '10px', fontSize: '13.5px', lineHeight: '1.4', flexShrink: 0 }}>
             Select a Team Leader and check the employees assigned under them. The Team Leader will be able to manage these employees&apos; active/inactive status and assign NCR reports to them.
           </p>
 
-          {error && <div className="user-info-error">{error}</div>}
+          {error && <div className="user-info-error" style={{ marginBottom: '10px', flexShrink: 0 }}>{error}</div>}
 
-          <label className="panel-column" style={{ marginBottom: '14px' }}>
-            <span className="small-label">Select Team Leader: <span style={{ color: '#ef4444' }}>*</span></span>
+          <label className="panel-column" style={{ marginBottom: '10px', flexShrink: 0 }}>
+            <span className="small-label" style={{ marginBottom: '4px' }}>Select Team Leader: <span style={{ color: '#ef4444' }}>*</span></span>
             <select
               value={selectedTeamLeaderId || ''}
               onChange={(e) => onSelectTeamLeader(e.target.value)}
@@ -121,8 +143,8 @@ export default function ManageTeamRosterModal({
 
           {selectedTeamLeaderId ? (
             <>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px', alignItems: 'center' }}>
-                <div style={{ position: 'relative', flex: '1 1 220px' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px', alignItems: 'center', flexShrink: 0 }}>
+                <div style={{ position: 'relative', flex: '1 1 200px' }}>
                   <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
                   <input
                     type="text"
@@ -130,14 +152,14 @@ export default function ManageTeamRosterModal({
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search employee name, username, or email..."
                     className="form-input-reports"
-                    style={{ paddingLeft: '32px', width: '100%' }}
+                    style={{ paddingLeft: '32px', width: '100%', fontSize: '13px' }}
                   />
                 </div>
                 <select
                   value={deptFilter}
                   onChange={(e) => setDeptFilter(e.target.value)}
                   className="form-input-reports"
-                  style={{ width: 'auto', minWidth: '160px' }}
+                  style={{ width: 'auto', minWidth: '150px', fontSize: '13px' }}
                 >
                   <option value="ALL">All Departments</option>
                   {uniqueDepts.map((d) => (
@@ -162,7 +184,9 @@ export default function ManageTeamRosterModal({
 
               <div
                 style={{
-                  maxHeight: '300px',
+                  flex: '1 1 auto',
+                  minHeight: '140px',
+                  maxHeight: '280px',
                   overflowY: 'auto',
                   border: '1px solid #e2e8f0',
                   borderRadius: '8px',
@@ -247,17 +271,40 @@ export default function ManageTeamRosterModal({
             </>
           ) : null}
 
-          <div className="modal-submit-row" style={{ marginTop: '16px' }}>
+          <div
+            className="modal-submit-row"
+            style={{
+              marginTop: '14px',
+              paddingTop: '12px',
+              borderTop: '1px solid #f1f5f9',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: '10px',
+              flexShrink: 0,
+            }}
+          >
             <button
-              className="btn-add-action"
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="btn-secondary-light"
+              style={{ minWidth: '110px' }}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn-gradient-primary"
               type="submit"
               disabled={saving || !selectedTeamLeaderId}
+              style={{ minWidth: '160px' }}
             >
               {saving ? 'Saving Roster...' : 'Save Team Roster'}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

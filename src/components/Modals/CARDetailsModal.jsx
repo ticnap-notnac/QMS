@@ -114,8 +114,7 @@ export default function CARDetailsModal({
             paddingTop: '24px'
           }}
         >
-          <h3 className="reports-update-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-            <Clipboard size={20} className="icon-cyan" />
+          <h3 className="reports-update-title" style={{ margin: 0 }}>
             CAR Details - {car.reference_no}
           </h3>
           <span className={`iso-status-pill ${getStatusBadgeClass(car.status)}`} style={{ margin: 0, whiteSpace: 'nowrap' }}>

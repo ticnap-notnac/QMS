@@ -1,5 +1,3 @@
-import { SquarePen } from 'lucide-react'
-
 export default function RejectReportModal({
   isOpen,
   report,
@@ -16,7 +14,6 @@ export default function RejectReportModal({
       <div className="modal-card modal-card--tall reports-update-card">
         <button type="button" onClick={onClose} className="modal-close-button">×</button>
         <div className="modal-header-row">
-          <SquarePen size={18} className="icon-teal" />
           <h3 className="reports-update-title">Reject Updated Report</h3>
         </div>
         <p className="glass-card-subtext" style={{ marginBottom: '12px' }}>
@@ -35,11 +32,11 @@ export default function RejectReportModal({
               placeholder="Explain what needs to be fixed before resubmission..."
             />
           </div>
-          <div className="reports-update-submit-row">
-            <button type="button" className="btn-edit-user" onClick={onClose} disabled={isSubmitting}>Cancel</button>
+          <div className="modal-footer-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid #cbd5e1', paddingTop: '16px', marginTop: '16px' }}>
+            <button type="button" className="btn-secondary-light" onClick={onClose} disabled={isSubmitting}>Cancel</button>
             <button
               type="button"
-              className="btn-gradient-primary reports-update-button"
+              className="btn-gradient-primary"
               onClick={() => onSubmit(report, 'reject', rejectReason)}
               disabled={isSubmitting}
             >

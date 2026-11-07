@@ -242,18 +242,29 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <label style={{ fontWeight: '600', fontSize: '0.875rem', color: '#475569' }}>Select Role:</label>
-          <select
-            value={selectedRoleId}
-            onChange={(e) => setSelectedRoleId(e.target.value)}
-            className="form-input-reports"
-            style={{ minWidth: '180px', fontWeight: '600' }}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <label style={{ fontWeight: '600', fontSize: '0.875rem', color: '#475569' }}>Select Role:</label>
+            <select
+              value={selectedRoleId}
+              onChange={(e) => setSelectedRoleId(e.target.value)}
+              className="form-input-reports"
+              style={{ minWidth: '180px', fontWeight: '600' }}
+            >
+              {roles.map(role => (
+                <option key={role.id} value={role.id}>{role.role_name}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="btn-add-action"
+            style={{ padding: '8px 18px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', cursor: saving ? 'not-allowed' : 'pointer' }}
           >
-            {roles.map(role => (
-              <option key={role.id} value={role.id}>{role.role_name}</option>
-            ))}
-          </select>
+            <Save size={16} /> {saving ? 'Saving...' : 'Save Role Permissions'}
+          </button>
         </div>
       </div>
 
@@ -262,9 +273,12 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
           {/* Quick Actions Bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', padding: '12px 16px', background: 'rgba(241, 245, 249, 0.7)', borderRadius: '10px' }}>
             <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#1e293b' }}>
-              Configuring permissions for: <span style={{ color: '#2563eb', fontWeight: '700' }}>{selectedRole.role_name}</span>
+              Configuring permissions for: <span style={{ color: '#2563eb', fontWeight: '700' }}>{selectedRole.role_name}</span>{' '}
+              <span style={{ fontSize: '0.8rem', fontWeight: '500', color: '#64748b', marginLeft: '6px' }}>
+                ({permissions.pages.length} pages, {permissions.rights.length} rights active)
+              </span>
             </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
               <button type="button" onClick={handleSelectAll} className="btn-secondary-light" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
                 Select All
               </button>
@@ -277,13 +291,13 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+          <div className="permissions-sections-grid" style={{ marginBottom: '24px' }}>
             {/* Section 1: Page Access */}
-            <div className="glass-panel" style={{ padding: '20px', borderRadius: '12px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1A435A', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1A435A', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Layout size={18} color="#0284c7" /> Page Access
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {AVAILABLE_PAGES.map(page => {
                   const isChecked = permissions.pages.includes(page.key)
                   return (
@@ -292,8 +306,8 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
                       style={{
                         display: 'flex',
                         alignItems: 'flex-start',
-                        gap: '12px',
-                        padding: '10px 12px',
+                        gap: '10px',
+                        padding: '8px 12px',
                         borderRadius: '8px',
                         border: `1px solid ${isChecked ? '#93c5fd' : '#f1f5f9'}`,
                         background: isChecked ? '#eff6ff' : '#f8fafc',
@@ -305,11 +319,11 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => togglePage(page.key)}
-                        style={{ marginTop: '3px', width: '16px', height: '16px', accentColor: '#2563eb', cursor: 'pointer' }}
+                        style={{ marginTop: '2px', width: '15px', height: '15px', accentColor: '#2563eb', cursor: 'pointer' }}
                       />
                       <div>
-                        <div style={{ fontWeight: '600', fontSize: '0.875rem', color: '#1e293b' }}>{page.label}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{page.description}</div>
+                        <div style={{ fontWeight: '600', fontSize: '0.85rem', color: '#1e293b' }}>{page.label}</div>
+                        <div style={{ fontSize: '0.73rem', color: '#64748b', marginTop: '1px', lineHeight: '1.25' }}>{page.description}</div>
                       </div>
                     </label>
                   )
@@ -318,7 +332,7 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
             </div>
 
             {/* Section 2: Rights & Actions */}
-            <div className="glass-panel" style={{ padding: '20px', borderRadius: '12px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+<div className="glass-panel" style={{ padding: '20px', borderRadius: '12px', background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
               <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#1A435A', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <CheckSquare size={18} color="#16a34a" /> Action & Viewing Rights
               </h3>
@@ -381,18 +395,7 @@ export default function RolePermissionsMatrix({ roles = [], onPermissionsUpdated
             </div>
           </div>
 
-          {/* Save Action Footer */}
-          <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="btn-add-action"
-              style={{ padding: '10px 24px', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600' }}
-            >
-              <Save size={18} /> {saving ? 'Saving...' : 'Save Role Permissions'}
-            </button>
-          </div>
+
         </div>
       )}
 

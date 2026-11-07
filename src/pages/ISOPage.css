@@ -87,7 +87,8 @@
   min-height: 170px;
 }
 .iso-graph-placeholder-text { color: #64748b; }
-.iso-review-card { margin: 0; padding: 32px; }
+.iso-review-card { margin: 0; padding: 32px; height: auto !important; min-height: max-content; }
+.iso-action-center-card { height: auto !important; min-height: max-content; }
 .iso-review-title { margin: 0 0 24px 0; font-size: 19px; letter-spacing: 0.5px; }
 .iso-progress-stack { display: flex; flex-direction: column; gap: 20px; }
 .iso-cta-row { display: flex; justify-content: flex-end; width: 100%; margin-top: 8px; }

@@ -93,7 +93,7 @@ export default function Navbar({
       {hasPageAccess('dashboard') && (
         <button 
           onClick={() => navigate('/dashboard')} 
-          className={`nav-tab-button ${location.pathname.startsWith('/dashboard') ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
+          className={`nav-tab-button ${location.pathname === '/' || location.pathname.startsWith('/dashboard') ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
         >
           <LayoutDashboard size={isMobile ? 24 : 18} />
           <span>Overview</span>
@@ -102,8 +102,8 @@ export default function Navbar({
 
       {hasPageAccess('reports') && (
         <button 
-          onClick={() => navigate('/')} 
-          className={`nav-tab-button ${location.pathname === '/' ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
+          onClick={() => navigate('/reports')} 
+          className={`nav-tab-button ${location.pathname.startsWith('/reports') ? 'active' : ''} ${isMobile ? 'mobile-tab' : ''}`}
         >
           <ClipboardList size={isMobile ? 24 : 18} />
           <span>Reports</span>
@@ -165,17 +165,16 @@ export default function Navbar({
         </button>
       )}
 
-      {/* Mobile-only settings and logout inside dropdown */}
+      {/* Settings and logout inside dropdown */}
       <button 
         onClick={() => { navigate('/settings'); setProfileTargetTab('Settings'); onToggleMenu(); }} 
-        className="user-menu-item mobile-only"
+        className="user-menu-item"
       >
         <Settings size={16} /> Settings
       </button>
       <button 
         onClick={() => { onLogout(); onToggleMenu(); }} 
-        className="user-menu-item mobile-only"
-        style={{ color: '#fca5a5' }}
+        className="user-menu-item logout"
       >
         <LogOut size={16} /> Logout
       </button>
@@ -207,24 +206,6 @@ export default function Navbar({
         aria-label="Help & Documentation"
       >
         <HelpCircle size={20} />
-      </button>
-      
-      <button 
-        onClick={() => { navigate('/settings'); setProfileTargetTab('Settings'); }} 
-        className="nav-icon-link-button desktop-only" 
-        title="Settings"
-        aria-label="Settings"
-      >
-        <Settings size={20} />
-      </button>
-      
-      <button 
-        onClick={onLogout} 
-        className="nav-icon-link-button logout desktop-only" 
-        title="Logout"
-        aria-label="Logout"
-      >
-        <LogOut size={20} />
       </button>
     </div>
   )
