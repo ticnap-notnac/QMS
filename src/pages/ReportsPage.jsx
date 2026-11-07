@@ -437,7 +437,7 @@ export default function ReportsPage({
       <CARDetailsModal {...logic.carDetailsModalProps} />
       <QDDRDetailsModal
         isOpen={logic.isQddrDetailsModalOpen} onClose={logic.closeQddrDetails} qddr={logic.selectedQddr}
-        onUpdateQddr={logic.updateQddr} users={logic.users} usersLoading={logic.usersLoading} userRole={userRole} authUserId={authUserId}
+        onUpdateQddr={logic.updateQddr} users={logic.users} usersLoading={logic.usersLoading} userRole={userRole} userPermissions={userPermissions} authUserId={authUserId}
       />
       <ConfirmDialog {...logic.confirmDeleteDialogProps} />
       <ConfirmDialog {...confirmDeleteCarDialogProps} />

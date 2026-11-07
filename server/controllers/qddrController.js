@@ -35,7 +35,7 @@ export async function updateQddr(req, res, next) {
   const { id } = req.params
 
   try {
-    const { data } = await updateQddrReport({ id, body: req.body })
+    const { data } = await updateQddrReport({ id, body: req.body, actorAuthId })
     await writeAudit({
       level: 'audit',
       source: 'qddr_reports',

@@ -7,7 +7,7 @@ import { createQddrSchema, updateQddrSchema } from '../validations/qddrValidatio
 const router = Router()
 
 router.post('/qddr', requirePermission(['create_qddr_report', 'create_report']), validateRequest(createQddrSchema), createQddr)
-router.put('/qddr/:id', requirePermission('accept_decline_report'), validateRequest(updateQddrSchema), updateQddr)
+router.put('/qddr/:id', requirePermission(['accept_decline_report', 'create_qddr_report', 'create_report', 'edit_delete_report']), validateRequest(updateQddrSchema), updateQddr)
 
 // Note: editQddr is a separate route for full form edits, using different roles/validation potentially, but we'll re-use the generic id path
 router.put('/qddr/:id/edit', requirePermission('edit_delete_report'), editQddr)

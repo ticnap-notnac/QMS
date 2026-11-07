@@ -132,7 +132,7 @@ const DEFAULT_ROLE_PERMISSIONS = {
   },
 }
 
-function resolveEffectivePermissions(roleName, permissions) {
+export function resolveEffectivePermissions(roleName, permissions) {
   if (permissions && typeof permissions === 'object' && (Array.isArray(permissions.rights) || Array.isArray(permissions.pages))) {
     return {
       pages: Array.isArray(permissions.pages) ? permissions.pages : [],

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { X as CloseIcon, Clipboard, CheckCircle, User, Calendar, Sparkles } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 import { generateAiSuggestionFromText } from '../../services/suggestionService'
+import { fetchLinkedClausesForQddr } from '../../services/qddrService'
+import { isAdminRole } from '@/utils/roleUtils.js'
 
 export default function QDDRDetailsModal({
   isOpen,
@@ -11,6 +13,7 @@ export default function QDDRDetailsModal({
   users,
   usersLoading,
   userRole,
+  userPermissions,
   authUserId,
   readOnly = false
 }) {
@@ -24,30 +27,50 @@ export default function QDDRDetailsModal({
   const [suggesting, setSuggesting] = useState(false)
   const [suggestionMeta, setSuggestionMeta] = useState(null)
   const [error, setError] = useState('')
+  const [linkedClauses, setLinkedClauses] = useState([])
+  const [loadingClauses, setLoadingClauses] = useState(false)
+
+  const resolveName = (userId, fallbackName = '') => {
+    if (!userId && !fallbackName) return ''
+    const found = users?.find(u => Number(u.id) === Number(userId) || String(u.id) === String(userId))
+    if (found) return found.label
+    if (fallbackName) return fallbackName
+    return /^\d+$/.test(String(userId)) ? '' : String(userId)
+  }
 
   // Sync state with selected QDDR details
   useEffect(() => {
     if (qddr) {
       setCorrectiveAction(qddr.corrective_action || '')
       setPreventiveAction(qddr.preventive_action || '')
-      
-      // Resolve signatures to their names if populated
-      const resolveName = (userId) => {
-        if (!userId) return ''
-        const found = users?.find(u => String(u.id) === String(userId))
-        return found ? found.label : ''
-      }
-      
-      setApprovedBy(resolveName(qddr.approved_by))
-      setNotedBy(resolveName(qddr.noted_by))
-      setLeader(resolveName(qddr.leader))
+      setApprovedBy(resolveName(qddr.approved_by, qddr.approved_by_name))
+      setNotedBy(resolveName(qddr.noted_by, qddr.noted_by_name))
+      setLeader(resolveName(qddr.leader, qddr.leader_name))
       setStatus(qddr.status || 'open')
       setSuggestionMeta(null)
       setError('')
+
+      if (qddr.id) {
+        setLoadingClauses(true)
+        fetchLinkedClausesForQddr(qddr.id)
+          .then((clauses) => setLinkedClauses(clauses || []))
+          .catch(() => setLinkedClauses([]))
+          .finally(() => setLoadingClauses(false))
+      } else {
+        setLinkedClauses([])
+      }
     }
   }, [qddr, users])
 
   if (!isOpen || !qddr) return null
+
+  const normalizedRole = String(userRole || '').trim().toLowerCase()
+  const hasExplicitRights = Array.isArray(userPermissions?.rights)
+  const rights = hasExplicitRights ? userPermissions.rights : []
+  const canCloseQddr =
+    isAdminRole(userRole) ||
+    ['qa officer', 'auditor', 'quality assurance', 'department manager'].includes(normalizedRole) ||
+    (hasExplicitRights ? rights.includes('accept_decline_report') : false)
 
   const handleSuggestActions = async () => {
     setSuggesting(true)
@@ -122,7 +145,7 @@ export default function QDDRDetailsModal({
       }, authUserId)
       onClose()
     } catch (err) {
-      setError('The QDDR report could not be updated. Please try again.')
+      setError(err?.message || 'The QDDR report could not be updated. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -250,11 +273,43 @@ export default function QDDRDetailsModal({
             <div><span style={{ color: 'var(--muted)' }}>Batch / ISU No:</span> <strong style={{ color: '#1A435A' }}>{qddr.batch_code_su_number || '—'}</strong></div>
             
             <div><span style={{ color: 'var(--muted)' }}>Quantity:</span> <strong style={{ color: '#1A435A' }}>{qddr.qty || '—'}</strong></div>
-            {qddr.ncr_id && (
+            {(Array.isArray(qddr.ncr_id) ? qddr.ncr_id.length > 0 : Boolean(qddr.ncr_id)) && (
               <div style={{ gridColumn: 'span 2' }}>
-                <span style={{ color: 'var(--muted)' }}>Linked NCR:</span> <strong style={{ color: '#1A435A' }}>{qddr.ncr_id}</strong>
+                <span style={{ color: 'var(--muted)' }}>Linked NCR:</span>{' '}
+                <strong style={{ color: '#1A435A' }}>
+                  {Array.isArray(qddr.ncr_id) ? qddr.ncr_id.map(id => `NCR #${id}`).join(', ') : `NCR #${qddr.ncr_id}`}
+                </strong>
               </div>
             )}
+          </div>
+
+          {/* Linked ISO Clauses */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label className="label-field" style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase' }}>Linked ISO Clauses</label>
+            <div style={{
+              background: 'rgba(8, 145, 178, 0.04)',
+              border: '1px solid rgba(8, 145, 178, 0.2)',
+              padding: '12px',
+              borderRadius: '6px',
+              fontSize: '13px',
+              color: '#0891b2'
+            }}>
+              {loadingClauses ? (
+                <span style={{ color: 'var(--muted)' }}>Loading clauses...</span>
+              ) : linkedClauses.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {linkedClauses.map((cl, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: '#0891b2', fontWeight: 'bold' }}>Clause {cl.clause_number}</span>
+                      <span>—</span>
+                      <span style={{ color: '#334155' }}>{cl.title}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <span style={{ color: '#64748b' }}>No linked ISO clauses.</span>
+              )}
+            </div>
           </div>
 
           {/* Discrepancies Checked */}
@@ -443,11 +498,12 @@ export default function QDDRDetailsModal({
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
+                    disabled={!canCloseQddr && status !== 'closed'}
                     className="input-field"
                     style={{ padding: '6px 12px', fontSize: '13px', width: '120px' }}
                   >
                     <option value="open">Open</option>
-                    <option value="closed">Closed</option>
+                    {(canCloseQddr || status === 'closed') && <option value="closed">Closed</option>}
                   </select>
                 </div>
                 <button
@@ -492,9 +548,9 @@ export default function QDDRDetailsModal({
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', fontSize: '13px', borderTop: '1px solid #cbd5e1', paddingTop: '12px' }}>
-                <div><span style={{ color: 'var(--muted)' }}>Leader / Supervisor:</span> <strong style={{ color: '#1A435A' }}>{users?.find(u => String(u.id) === String(qddr.leader))?.label || '—'}</strong></div>
-                <div><span style={{ color: 'var(--muted)' }}>Approved By:</span> <strong style={{ color: '#1A435A' }}>{users?.find(u => String(u.id) === String(qddr.approved_by))?.label || '—'}</strong></div>
-                <div><span style={{ color: 'var(--muted)' }}>Noted By:</span> <strong style={{ color: '#1A435A' }}>{users?.find(u => String(u.id) === String(qddr.noted_by))?.label || '—'}</strong></div>
+                <div><span style={{ color: 'var(--muted)' }}>Leader / Supervisor:</span> <strong style={{ color: '#1A435A' }}>{resolveName(qddr.leader, qddr.leader_name) || '—'}</strong></div>
+                <div><span style={{ color: 'var(--muted)' }}>Approved By:</span> <strong style={{ color: '#1A435A' }}>{resolveName(qddr.approved_by, qddr.approved_by_name) || '—'}</strong></div>
+                <div><span style={{ color: 'var(--muted)' }}>Noted By:</span> <strong style={{ color: '#1A435A' }}>{resolveName(qddr.noted_by, qddr.noted_by_name) || '—'}</strong></div>
               </div>
             </div>
           )}

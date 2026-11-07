@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { generateAiSuggestionFromText } from '@/services/suggestionService'
+import { generateAiSuggestionFromText, classifyIssueTags } from '@/services/suggestionService'
 
 export function useQDDRForm() {
   const initialState = {
@@ -69,23 +69,16 @@ export function useQDDRForm() {
     // AI Classification (if linking)
     if (form.ncr_id !== id && report?.description) {
       try {
-        const res = await fetch('/api/suggestions/classify-tags', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ description: report.description, reportType: 'QDDR' })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.tags && data.tags.length > 0) {
-            setForm(prev => {
-              const updates = {};
-              data.tags.forEach(t => updates[t] = true);
-              return { ...prev, ...updates };
-            });
-          }
+        const data = await classifyIssueTags(report.description, 'QDDR')
+        if (data?.tags && data.tags.length > 0) {
+          setForm(prev => {
+            const updates = {}
+            data.tags.forEach(t => { updates[t] = true })
+            return { ...prev, ...updates }
+          })
         }
       } catch (err) {
-        console.warn('Auto classification failed', err);
+        console.warn('Auto classification failed', err)
       }
     }
   }
@@ -136,7 +129,9 @@ export function useQDDRForm() {
       approved_by: existingQddr.approved_by || '',
       noted_by: existingQddr.noted_by || '',
       leader: existingQddr.leader || '',
-      ncr_id: existingQddr.ncr_id || null,
+      ncr_id: Array.isArray(existingQddr.ncr_id)
+        ? (existingQddr.ncr_id[0] ?? null)
+        : (existingQddr.ncr_id || null),
       linked_ncr_reference: existingQddr.linked_ncr_reference || '',
       linked_clause_ids: existingQddr.linked_clause_ids || [],
       suggested_clauses: existingQddr.suggested_clauses || []

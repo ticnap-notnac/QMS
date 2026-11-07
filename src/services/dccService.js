@@ -54,7 +54,25 @@ export async function fetchQddrReports() {
     .eq('status', 'closed')
     .order('created_at', { ascending: false })
   if (error) throw error
-  return data || []
+
+  const { data: usersData } = await supabase
+    .from('users')
+    .select('id, user_name, first_name, last_name')
+
+  const userMap = new Map(
+    (usersData || []).map((u) => [
+      Number(u.id),
+      `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.user_name || `User #${u.id}`,
+    ])
+  )
+
+  return (data || []).map((q) => ({
+    ...q,
+    reported_by_name: q.reported_by ? (userMap.get(Number(q.reported_by)) || String(q.reported_by)) : '',
+    leader_name: q.leader ? (userMap.get(Number(q.leader)) || String(q.leader)) : '',
+    approved_by_name: q.approved_by ? (userMap.get(Number(q.approved_by)) || String(q.approved_by)) : '',
+    noted_by_name: q.noted_by ? (userMap.get(Number(q.noted_by)) || String(q.noted_by)) : '',
+  }))
 }
 
 export async function fetchAuditRuns() {

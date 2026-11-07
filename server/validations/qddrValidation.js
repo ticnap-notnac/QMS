@@ -13,9 +13,9 @@ export const updateQddrSchema = z.object({
     reason_of_discrepancy: z.string().optional().nullable(),
     corrective_action: z.string().optional().nullable(),
     preventive_action: z.string().optional().nullable(),
-    approved_by: z.string().optional().nullable(),
-    noted_by: z.string().optional().nullable(),
-    leader: z.string().optional().nullable(),
+    approved_by: z.union([z.string(), z.number()]).optional().nullable(),
+    noted_by: z.union([z.string(), z.number()]).optional().nullable(),
+    leader: z.union([z.string(), z.number()]).optional().nullable(),
     status: z.string().optional().nullable(),
   }).passthrough()
 })

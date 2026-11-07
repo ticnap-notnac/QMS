@@ -719,10 +719,11 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     qddrFormState.setError(null)
 
     try {
-      // Build payload including NCR ID
+      // Build payload including confirmed ISO clause links and NCR ID
       const payload = {
         ...qddrFormState.form,
-        ncr_id: modalsState.selectedQDDRReport?.id
+        clause_ids: qddrFormState.form.linked_clause_ids || [],
+        ncr_id: (!qddrFormState.form.id && modalsState.selectedQDDRReport?.id)
           ? modalsState.selectedQDDRReport.id
           : qddrFormState.form.ncr_id
       }
@@ -834,19 +835,32 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   }
 
   const openEditQddrModal = async (qddr) => {
+    const resolveUserDropdownLabel = (val) => {
+      if (!val) return ''
+      const found = (dataState.users || []).find(u => Number(u.id) === Number(val))
+      return found ? `${found.user_name || 'Unnamed'} — ${found.role || found.role_name || 'Unknown'}` : String(val)
+    }
+
+    const hydratedQddr = {
+      ...qddr,
+      leader: resolveUserDropdownLabel(qddr.leader),
+      approved_by: resolveUserDropdownLabel(qddr.approved_by),
+      noted_by: resolveUserDropdownLabel(qddr.noted_by),
+    }
+
     try {
       const { fetchLinkedClausesForQddr } = await import('@/services/qddrService')
       const linkedClauses = await fetchLinkedClausesForQddr(qddr.id)
       const linkedClauseIds = linkedClauses.map(c => c.clause_id)
       qddrFormState.initForm({
-        ...qddr,
+        ...hydratedQddr,
         linked_clause_ids: linkedClauseIds,
         suggested_clauses: linkedClauses.map(c => ({ ...c, confidence: 1 }))
       })
       modalsState.openQDDRModal(qddr)
     } catch (err) {
       console.error('Failed to fetch linked clauses for QDDR edit:', err)
-      qddrFormState.initForm(qddr)
+      qddrFormState.initForm(hydratedQddr)
       modalsState.openQDDRModal(qddr)
     }
   }

@@ -1,4 +1,52 @@
 import { supabase } from '../lib/supabase.js'
+import { resolveEffectivePermissions } from '../middlewares/roleMiddleware.js'
+
+function isAdminRole(roleName) {
+  const normalized = String(roleName || '').trim().toLowerCase()
+  return normalized === 'admin' || normalized === 'super admin'
+}
+
+async function getCallerQddrProfile(actorAuthId) {
+  if (!actorAuthId) return null
+  const { data: user } = await supabase
+    .from('users')
+    .select('id, auth_id, site_id, role_id, position_id')
+    .eq('auth_id', actorAuthId)
+    .maybeSingle()
+
+  if (!user) return null
+
+  let effectiveRoleId = user.role_id
+  if (!effectiveRoleId && user.position_id) {
+    const { data: pos } = await supabase
+      .from('positions')
+      .select('role_id')
+      .eq('id', user.position_id)
+      .maybeSingle()
+    effectiveRoleId = pos?.role_id || null
+  }
+
+  let roleName = ''
+  let rawPermissions = null
+  if (effectiveRoleId) {
+    const { data: role } = await supabase
+      .from('roles')
+      .select('role_name, permissions')
+      .eq('id', effectiveRoleId)
+      .maybeSingle()
+    roleName = role?.role_name || ''
+    rawPermissions = role?.permissions || null
+  }
+
+  const effectivePerms = resolveEffectivePermissions(roleName, rawPermissions)
+  return {
+    id: user.id,
+    auth_id: user.auth_id,
+    site_id: user.site_id || null,
+    role_name: roleName,
+    rights: Array.isArray(effectivePerms?.rights) ? effectivePerms.rights : []
+  }
+}
 
 function buildQddrReferenceNumber(recordsOrLatestRef) {
   if (Array.isArray(recordsOrLatestRef)) {
@@ -17,23 +65,42 @@ function buildQddrReferenceNumber(recordsOrLatestRef) {
   return Number(match[1]) || 0
 }
 
-async function findUserIdByName(name) {
-  if (!name) return null
-  // SearchableDropdown labels look like "Name — Role"
-  const cleanName = String(name).split('—')[0].trim()
-  
+export async function findUserIdByName(name) {
+  if (name === null || name === undefined || String(name).trim() === '') return null
+
+  const trimmed = String(name).trim()
+  if (/^\d+$/.test(trimmed)) {
+    return Number(trimmed)
+  }
+
+  // SearchableDropdown labels look like "Name — Role" or "Name - Role"
+  const cleanName = trimmed.split(/\s*[—–-]\s*/)[0].trim()
+  if (!cleanName) return null
+
   const { data, error } = await supabase
     .from('users')
     .select('id')
-    .eq('user_name', cleanName)
+    .ilike('user_name', cleanName)
     .limit(1)
     .maybeSingle()
 
-  if (error) {
-    console.warn(`[qddrService] Failed to resolve user for "${cleanName}":`, error.message)
-    return null
+  if (!error && data?.id) {
+    return data.id
   }
-  return data?.id || null
+
+  // Fallback: match against first_name + last_name or user_name case-insensitively
+  const { data: allUsers } = await supabase
+    .from('users')
+    .select('id, user_name, first_name, last_name')
+
+  const lowerTarget = cleanName.toLowerCase()
+  const matched = (allUsers || []).find((u) => {
+    const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim().toLowerCase()
+    const userName = String(u.user_name || '').trim().toLowerCase()
+    return fullName === lowerTarget || userName === lowerTarget
+  })
+
+  return matched?.id || null
 }
 
 /**
@@ -221,8 +288,30 @@ export async function createQddrReport({ body, reportedByAuthId }) {
  * @param {Object} params.body - The fields to update.
  * @returns {Promise<{data: Object}>} The updated QDDR report data.
  */
-export async function updateQddrReport({ id, body }) {
+export async function updateQddrReport({ id, body, actorAuthId }) {
+  const { data: existing, error: findError } = await supabase
+    .from('qddr_reports')
+    .select('id, reference_no, status, reported_by, leader, approved_by, noted_by, site_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (findError) throw findError
+  if (!existing) {
+    const err = new Error('QDDR report not found')
+    err.status = 404
+    throw err
+  }
+
+  const caller = await getCallerQddrProfile(actorAuthId)
+  if (caller && !isAdminRole(caller.role_name) && caller.site_id && existing.site_id && String(caller.site_id) !== String(existing.site_id)) {
+    const err = new Error('You can only update QDDRs belonging to your assigned site.')
+    err.status = 403
+    throw err
+  }
+
   const {
+    material_description,
+    reason_of_discrepancy,
     corrective_action,
     preventive_action,
     approved_by,
@@ -231,18 +320,37 @@ export async function updateQddrReport({ id, body }) {
     status
   } = body || {}
 
+  const requestedStatus = status !== undefined ? String(status || '').trim().toLowerCase() : undefined
+  const currentStatus = String(existing.status || 'open').trim().toLowerCase()
+
+  if (requestedStatus === 'closed' && currentStatus !== 'closed' && caller) {
+    const normalizedRole = String(caller.role_name || '').trim().toLowerCase()
+    const canCloseQddr =
+      isAdminRole(caller.role_name) ||
+      ['qa officer', 'auditor', 'quality assurance', 'department manager'].includes(normalizedRole) ||
+      caller.rights.includes('accept_decline_report')
+
+    if (!canCloseQddr) {
+      const err = new Error('Only authorized reviewers (QA Officer, Auditor, Department Manager, or Admin) can close a QDDR report.')
+      err.status = 403
+      throw err
+    }
+  }
+
   const [approvedById, notedById, leaderId] = await Promise.all([
-    approved_by ? findUserIdByName(approved_by) : Promise.resolve(null),
-    noted_by ? findUserIdByName(noted_by) : Promise.resolve(null),
-    leader ? findUserIdByName(leader) : Promise.resolve(null)
+    approved_by !== undefined ? findUserIdByName(approved_by) : Promise.resolve(undefined),
+    noted_by !== undefined ? findUserIdByName(noted_by) : Promise.resolve(undefined),
+    leader !== undefined ? findUserIdByName(leader) : Promise.resolve(undefined)
   ])
 
   const updates = {}
+  if (material_description !== undefined) updates.material_description = material_description
+  if (reason_of_discrepancy !== undefined) updates.reason_of_discrepancy = reason_of_discrepancy
   if (corrective_action !== undefined) updates.corrective_action = corrective_action
   if (preventive_action !== undefined) updates.preventive_action = preventive_action
-  if (approvedById !== null) updates.approved_by = approvedById
-  if (notedById !== null) updates.noted_by = notedById
-  if (leaderId !== null) updates.leader = leaderId
+  if (approved_by !== undefined) updates.approved_by = approvedById
+  if (noted_by !== undefined) updates.noted_by = notedById
+  if (leader !== undefined) updates.leader = leaderId
   if (status !== undefined) updates.status = status
 
   const { data, error } = await supabase
@@ -269,6 +377,26 @@ export async function updateQddrReport({ id, body }) {
  * @returns {Promise<{data: Object}>} The deleted QDDR report data.
  */
 export async function softDeleteQddrReport({ id, actorAuthId }) {
+  const { data: existing, error: findError } = await supabase
+    .from('qddr_reports')
+    .select('id, site_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (findError) throw findError
+  if (!existing) {
+    const err = new Error('QDDR report not found')
+    err.status = 404
+    throw err
+  }
+
+  const caller = await getCallerQddrProfile(actorAuthId)
+  if (caller && !isAdminRole(caller.role_name) && caller.site_id && existing.site_id && String(caller.site_id) !== String(existing.site_id)) {
+    const err = new Error('You can only delete QDDRs belonging to your assigned site.')
+    err.status = 403
+    throw err
+  }
+
   await supabase.from('qddr_clause_links').delete().eq('qddr_report_id', id)
 
   const { data, error } = await supabase
@@ -297,55 +425,133 @@ export async function softDeleteQddrReport({ id, actorAuthId }) {
 }
 
 /**
- * Fully edits an existing QDDR report and its clause links.
+ * Fully edits an existing QDDR report and its clause links (supports partial updates).
  * @param {Object} params - The parameters for editing a QDDR report.
  * @param {number|string} params.id - The ID of the QDDR report.
- * @param {Object} params.body - The full report data payload.
+ * @param {Object} params.body - The report data payload.
  * @param {string} params.actorAuthId - The auth ID of the user performing the edit.
  * @returns {Promise<{data: Object}>} The updated QDDR report data.
  */
-export async function editQddrReport({ id, body, actorAuthId }) {
-  const payload = {
-    location: body.location,
-    date: body.date ? body.date : null,
-    time: body.time ? body.time : null,
-    trucker_broker: body.trucker_broker,
-    plate_number: body.plate_number,
-    container_number: body.container_number,
-    po_reference: body.po_reference,
-    drwb_number: body.drwb_number,
-    brand_supplier: body.brand_supplier,
-    material_description: body.material_description,
-    material_code: body.material_code,
-    batch_code_su_number: body.batch_code_su_number,
-    holes_punctures: Boolean(body.holes_punctures),
-    deformed_torn: Boolean(body.deformed_torn),
-    open_carton: Boolean(body.open_carton),
-    crushed_dented: Boolean(body.crushed_dented),
-    wet_leaked: Boolean(body.wet_leaked),
-    stain_graffiti: Boolean(body.stain_graffiti),
-    bulging: Boolean(body.bulging),
-    improper_stretch_wrapping: Boolean(body.improper_stretch_wrapping),
-    wrong_no_batchcode: Boolean(body.wrong_no_batchcode),
-    opened_seal: Boolean(body.opened_seal),
-    no_label_broken_label: Boolean(body.no_label_broken_label),
-    short_pack: Boolean(body.short_pack),
-    excess_shipment: Boolean(body.excess_shipment),
-    documentation_error: Boolean(body.documentation_error),
-    picking_discrepancy: Boolean(body.picking_discrepancy),
-    others: body.others,
-    qty: body.qty ? parseInt(body.qty, 10) : null,
-    reason_of_discrepancy: body.reason_of_discrepancy
-  }
-
-  const { data, error } = await supabase
+export async function editQddrReport({ id, body = {}, actorAuthId }) {
+  const { data: existing, error: findError } = await supabase
     .from('qddr_reports')
-    .update(payload)
+    .select('id, site_id')
     .eq('id', id)
-    .select('*')
     .maybeSingle()
 
-  if (error) throw error
+  if (findError) throw findError
+  if (!existing) {
+    const err = new Error('QDDR report not found')
+    err.status = 404
+    throw err
+  }
+
+  const caller = await getCallerQddrProfile(actorAuthId)
+  if (caller && !isAdminRole(caller.role_name) && caller.site_id && existing.site_id && String(caller.site_id) !== String(existing.site_id)) {
+    const err = new Error('You can only edit QDDRs belonging to your assigned site.')
+    err.status = 403
+    throw err
+  }
+
+  const payload = {}
+
+  const stringKeys = [
+    'location',
+    'trucker_broker',
+    'plate_number',
+    'container_number',
+    'po_reference',
+    'drwb_number',
+    'brand_supplier',
+    'material_description',
+    'material_code',
+    'batch_code_su_number',
+    'others',
+    'reason_of_discrepancy',
+    'corrective_action',
+    'preventive_action',
+  ]
+
+  for (const key of stringKeys) {
+    if (body[key] !== undefined) {
+      payload[key] = body[key]
+    }
+  }
+
+  if (body.date !== undefined) {
+    payload.date = body.date ? body.date : null
+  }
+  if (body.time !== undefined) {
+    payload.time = body.time ? body.time : null
+  }
+  if (body.qty !== undefined) {
+    payload.qty = body.qty ? parseInt(body.qty, 10) : null
+  }
+
+  const booleanKeys = [
+    'holes_punctures',
+    'deformed_torn',
+    'open_carton',
+    'crushed_dented',
+    'wet_leaked',
+    'stain_graffiti',
+    'bulging',
+    'improper_stretch_wrapping',
+    'wrong_no_batchcode',
+    'opened_seal',
+    'no_label_broken_label',
+    'short_pack',
+    'excess_shipment',
+    'documentation_error',
+    'picking_discrepancy',
+  ]
+
+  for (const key of booleanKeys) {
+    if (body[key] !== undefined) {
+      payload[key] = Boolean(body[key])
+    }
+  }
+
+  const [approvedById, notedById, leaderId] = await Promise.all([
+    body.approved_by !== undefined ? findUserIdByName(body.approved_by) : Promise.resolve(undefined),
+    body.noted_by !== undefined ? findUserIdByName(body.noted_by) : Promise.resolve(undefined),
+    body.leader !== undefined ? findUserIdByName(body.leader) : Promise.resolve(undefined),
+  ])
+
+  if (body.approved_by !== undefined) payload.approved_by = approvedById
+  if (body.noted_by !== undefined) payload.noted_by = notedById
+  if (body.leader !== undefined) payload.leader = leaderId
+
+  if (body.ncr_id !== undefined) {
+    if (!body.ncr_id || (Array.isArray(body.ncr_id) && body.ncr_id.length === 0)) {
+      payload.ncr_id = null
+    } else if (Array.isArray(body.ncr_id)) {
+      payload.ncr_id = body.ncr_id.map(nid => parseInt(nid, 10)).filter(n => !Number.isNaN(n))
+    } else {
+      const parsed = parseInt(body.ncr_id, 10)
+      payload.ncr_id = !Number.isNaN(parsed) ? [parsed] : null
+    }
+  }
+
+  let data = null
+  if (Object.keys(payload).length > 0) {
+    const { data: updated, error } = await supabase
+      .from('qddr_reports')
+      .update(payload)
+      .eq('id', id)
+      .select('*')
+      .maybeSingle()
+
+    if (error) throw error
+    data = updated
+  } else {
+    const { data: current } = await supabase
+      .from('qddr_reports')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
+    data = current
+  }
 
   const { clause_ids } = body || {}
   if (Array.isArray(clause_ids)) {
