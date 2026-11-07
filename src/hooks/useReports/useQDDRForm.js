@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { generateAiSuggestionFromText, classifyIssueTags } from '@/services/suggestionService'
+import { useState, useEffect, useRef } from 'react'
+import { generateAiSuggestionFromText, classifyDiscrepancyTags } from '@/services/suggestionService'
 
 export function useQDDRForm() {
   const initialState = {
@@ -53,6 +53,32 @@ export function useQDDRForm() {
   // Clause suggestion loading state
   const [clausesLoading, setClausesLoading] = useState(false)
   const [clausesError, setClausesError] = useState(null)
+  const lastClassifiedReasonRef = useRef('')
+
+  useEffect(() => {
+    const desc = (form.reason_of_discrepancy || '').trim()
+    if (desc.length < 15 || desc === lastClassifiedReasonRef.current) return
+
+    const timer = setTimeout(async () => {
+      try {
+        lastClassifiedReasonRef.current = desc
+        const data = await classifyDiscrepancyTags({ description: desc, type: 'QDDR' })
+        if (Array.isArray(data?.tags) && data.tags.length > 0) {
+          setForm(prev => {
+            const updates = {}
+            data.tags.forEach(t => {
+              if (t in initialState) updates[t] = true
+            })
+            return { ...prev, ...updates }
+          })
+        }
+      } catch (err) {
+        console.warn('Auto QDDR tag classification failed', err)
+      }
+    }, 800)
+
+    return () => clearTimeout(timer)
+  }, [form.reason_of_discrepancy])
 
   const handleChange = (key, value) => {
     setForm(prev => ({ ...prev, [key]: value }))
@@ -69,7 +95,7 @@ export function useQDDRForm() {
     // AI Classification (if linking)
     if (form.ncr_id !== id && report?.description) {
       try {
-        const data = await classifyIssueTags(report.description, 'QDDR')
+        const data = await classifyDiscrepancyTags({ description: report.description, type: 'QDDR' })
         if (data?.tags && data.tags.length > 0) {
           setForm(prev => {
             const updates = {}
@@ -184,7 +210,7 @@ export function useQDDRForm() {
         { description: form.reason_of_discrepancy, flags },
         userAuthId
       )
-      const suggestions = result?.suggestions || []
+      const suggestions = Array.isArray(result) ? result : (result?.suggestions || [])
       setForm(prev => ({ ...prev, suggested_clauses: suggestions }))
 
       if (suggestions.length === 0) {

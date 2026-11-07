@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { suggestClausesForCar } from '@/services/carService'
+import { classifyDiscrepancyTags } from '@/services/suggestionService'
 
 export function useCARForm() {
   const initialState = {
@@ -39,6 +40,32 @@ export function useCARForm() {
   // Clause suggestion loading state (kept separate to avoid polluting form)
   const [clausesLoading, setClausesLoading] = useState(false)
   const [clausesError, setClausesError] = useState(null)
+  const lastClassifiedDescRef = useRef('')
+
+  useEffect(() => {
+    const desc = (form.details_of_nonconformance || '').trim()
+    if (desc.length < 15 || desc === lastClassifiedDescRef.current) return
+
+    const timer = setTimeout(async () => {
+      try {
+        lastClassifiedDescRef.current = desc
+        const data = await classifyDiscrepancyTags({ description: desc, type: 'CAR' })
+        if (Array.isArray(data?.tags) && data.tags.length > 0) {
+          setForm(prev => {
+            const updates = {}
+            data.tags.forEach(tag => {
+              if (tag in initialState) updates[tag] = true
+            })
+            return { ...prev, ...updates }
+          })
+        }
+      } catch (err) {
+        console.warn('Auto CAR tag classification failed:', err)
+      }
+    }, 800)
+
+    return () => clearTimeout(timer)
+  }, [form.details_of_nonconformance])
 
   const handleChange = (key, value) => {
     setForm(prev => ({ ...prev, [key]: value }))
@@ -124,7 +151,7 @@ export function useCARForm() {
         { description: form.details_of_nonconformance, flags },
         userAuthId
       )
-      const suggestions = result?.suggestions || []
+      const suggestions = Array.isArray(result) ? result : (result?.suggestions || [])
       setForm(prev => ({ ...prev, suggested_clauses: suggestions }))
 
       if (suggestions.length === 0) {

@@ -34,11 +34,19 @@ export async function generateAiSuggestionFromText({ description, issueType, dep
     })
 }
 
-export async function classifyIssueTags(description, reportType = 'CAR') {
+export async function classifyIssueTags(descriptionOrObj, reportType = 'CAR') {
+    const isObj = descriptionOrObj && typeof descriptionOrObj === 'object'
+    const description = isObj ? descriptionOrObj.description : descriptionOrObj
+    const resolvedType = isObj ? (descriptionOrObj.type || descriptionOrObj.reportType || 'CAR') : reportType
+
     return await request('/suggestions/classify-tags', {
         method: 'POST',
-        body: JSON.stringify({ description, reportType }),
+        body: JSON.stringify({ description, reportType: resolvedType }),
     })
+}
+
+export async function classifyDiscrepancyTags({ description, type = 'CAR', reportType } = {}) {
+    return await classifyIssueTags({ description, type: reportType || type })
 }
 
 export async function describeEvidenceWithAi(payload) {

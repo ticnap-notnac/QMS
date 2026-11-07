@@ -46,7 +46,8 @@ export default function useNCRSubmitModal({ onSuccess, authUserId }) {
         customer_complaint: form.issueType?.toLowerCase().includes('complaint') || false,
         vendor_nonconformance: form.issueType?.toLowerCase().includes('vendor') || false,
       }
-      const suggestions = await suggestClausesForCar({ description: form.description, flags }, authUserId)
+      const result = await suggestClausesForCar({ description: form.description, flags }, authUserId)
+      const suggestions = Array.isArray(result) ? result : (result?.suggestions || [])
       if (suggestions && suggestions.length > 0) {
         // Auto-select the top suggested clause
         setForm((s) => ({ ...s, clauseId: suggestions[0].clause_id }))

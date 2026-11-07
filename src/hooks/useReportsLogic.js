@@ -265,9 +265,10 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         customer_complaint: cat?.toLowerCase().includes('complaint') || false,
         vendor_nonconformance: cat?.toLowerCase().includes('vendor') || false,
       }
-      const suggestions = await suggestClausesForCar({ description: desc, flags }, currentAuthId)
-      if (suggestions && suggestions.length > 0) {
-        formState.createFormState.setClauseId(suggestions[0].clause_id)
+      const result = await suggestClausesForCar({ description: desc, flags }, currentAuthId)
+      const list = Array.isArray(result) ? result : (result?.suggestions || [])
+      if (list.length > 0) {
+        formState.createFormState.setClauseId(list[0].clause_id)
       }
     } catch (err) {
       console.warn('AI clause suggestion failed:', err)
