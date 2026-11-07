@@ -57,7 +57,7 @@ export async function createReport(req, res) {
     })
     await safeCreateNotificationsForRolesAndDepartment({
       globalRoleNames: ['admin'],
-      departmentRoleNames: ['manager', 'department manager'],
+      departmentRoleNames: ['team leader'],
       departmentId: department_id,
       title: `New Report Submitted: ${referenceNo}`,
       message: `A new NCR report ${referenceNo} has been submitted. Please review and assign it.`,
@@ -163,7 +163,7 @@ export async function createReportSubmit(req, res) {
     const reporterName = `${reporter.first_name || ''} ${reporter.last_name || ''}`.trim() || reporter.user_name || 'a user'
     await safeCreateNotificationsForRolesAndDepartment({
       globalRoleNames: ['admin'],
-      departmentRoleNames: ['manager', 'department manager'],
+      departmentRoleNames: ['team leader'],
       departmentId: department_id,
       title: `New Report Submitted: ${referenceNo}`,
       message: `A new NCR report ${referenceNo} has been submitted by ${reporterName}. Please review and assign it.`,
@@ -194,19 +194,21 @@ export async function reviewReportApproval(req, res) {
     const { updatedReport, report, nextStatus } = await reviewNcrApproval({ id, decision: normalizedDecision, reason, currentUser })
 
     const trimmedReason = String(reason || '').trim()
+    const targetUserId = report.assigned_to || report.reported_by
+
     if (normalizedDecision === 'approve') {
       await safeCreateNotification({
-        userId: report.reported_by,
+        userId: targetUserId,
         title: `Report Approved: ${report.reference_no}`,
-        message: `Your report ${report.reference_no} has been approved. It is now open for rating.`,
+        message: `Your investigation for report ${report.reference_no} has been approved.`,
         type: 'info',
         reportId: report.id
       })
     } else {
       await safeCreateNotification({
-        userId: report.reported_by,
+        userId: targetUserId,
         title: `Report Rejected: ${report.reference_no}`,
-        message: `Your report ${report.reference_no} was rejected. Reason: ${trimmedReason}. Please update your investigation and resubmit.`,
+        message: `Your investigation for report ${report.reference_no} was rejected. Reason: ${trimmedReason}. Please update your investigation and resubmit.`,
         type: 'warning',
         reportId: report.id
       })

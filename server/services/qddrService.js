@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase.js'
 import { resolveEffectivePermissions } from '../middlewares/roleMiddleware.js'
+import logger from '../utils/logger.js'
+import { sendQddrClosedEmail } from './emailService.js'
 
 function isAdminRole(roleName) {
   const norm = String(roleName || '').trim().toLowerCase()
@@ -291,6 +293,70 @@ export async function createQddrReport({ body, reportedByAuthId }) {
 }
 
 /**
+ * Automatically notifies all active Inventory Manager users via in-app notification and email when a QDDR is closed.
+ * @param {Object} qddr - The closed QDDR report record.
+ */
+export async function notifyInventoryManagersOnQddrClosed(qddr) {
+  try {
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id, email, first_name, last_name, user_name, status, roles(role_name), positions(position_name)')
+
+    if (error) {
+      logger.error('[qddrService] Failed to fetch users for Inventory Manager notifications:', error)
+      return
+    }
+
+    const inventoryManagers = (users || []).filter((user) => {
+      if (user.status && String(user.status).toUpperCase() === 'INACTIVE') return false
+      const roleName = String(user.roles?.role_name || '').trim().toLowerCase()
+      const positionName = String(user.positions?.position_name || '').trim().toLowerCase()
+      return roleName === 'inventory manager' || positionName === 'inventory manager'
+    })
+
+    if (inventoryManagers.length === 0) {
+      logger.info('[qddrService] No active Inventory Manager users found to notify for closed QDDR.')
+      return
+    }
+
+    const refNo = qddr.reference_no || `QDDR #${qddr.id}`
+    const title = `QDDR Closed: ${refNo}`
+    const message = `Heads up: Quality Defect & Deviation Report ${refNo} has been closed. Please check the system to review the new document.`
+
+    // In-app notifications
+    const notificationRows = inventoryManagers.map((im) => ({
+      user_id: im.id,
+      title,
+      message,
+      type: 'info',
+      is_read: false,
+    }))
+
+    const { error: notifError } = await supabase.from('notifications').insert(notificationRows)
+    if (notifError) {
+      logger.warn('[qddrService] Failed to insert in-app notifications for Inventory Managers:', notifError.message)
+    }
+
+    // Email dispatch via SMTP
+    for (const im of inventoryManagers) {
+      if (!im.email) continue
+      const displayName = `${im.first_name || ''} ${im.last_name || ''}`.trim() || im.user_name || 'Inventory Manager'
+      await sendQddrClosedEmail({
+        toEmail: im.email,
+        qddr,
+        displayName,
+      }).catch((emailErr) => {
+        logger.error(`[qddrService] Failed to send QDDR closed email to ${im.email}:`, emailErr.message)
+      })
+    }
+
+    logger.info(`[qddrService] Successfully notified ${inventoryManagers.length} Inventory Manager(s) for closed QDDR ${refNo}.`)
+  } catch (err) {
+    logger.error('[qddrService] Error in notifyInventoryManagersOnQddrClosed:', err.message)
+  }
+}
+
+/**
  * Updates specific fields of an existing QDDR report.
  * @param {Object} params - The parameters for updating a QDDR report.
  * @param {number|string} params.id - The ID of the QDDR report.
@@ -373,6 +439,12 @@ export async function updateQddrReport({ id, body, actorAuthId }) {
     const customErr = new Error(`Database error updating QDDR: ${error.message}`)
     customErr.status = 500
     throw customErr
+  }
+
+  if (requestedStatus === 'closed' && currentStatus !== 'closed' && data) {
+    notifyInventoryManagersOnQddrClosed(data).catch((notifyErr) => {
+      logger.error('[qddrService] Failed to notify inventory managers on QDDR closed:', notifyErr.message)
+    })
   }
 
   return { data }

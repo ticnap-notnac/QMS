@@ -243,12 +243,26 @@ export async function getUsersByRoleNames(roleNames = []) {
     .filter((role) => normalizedRoleNames.includes(String(role.role_name || '').trim().toLowerCase()))
     .map((role) => role.id)
 
-  if (targetRoleIds.length === 0) return []
+  const { data: positions } = await supabase.from('positions').select('id, position_name')
+  const targetPositionIds = (positions || [])
+    .filter((pos) => normalizedRoleNames.includes(String(pos.position_name || '').trim().toLowerCase()))
+    .map((pos) => pos.id)
 
-  const { data: users, error: usersError } = await supabase
+  let query = supabase
     .from('users')
-    .select('id, user_name, first_name, last_name, auth_id, role_id')
-    .in('role_id', targetRoleIds)
+    .select('id, user_name, first_name, last_name, auth_id, role_id, position_id')
+
+  if (targetRoleIds.length > 0 && targetPositionIds.length > 0) {
+    query = query.or(`role_id.in.(${targetRoleIds.join(',')}),position_id.in.(${targetPositionIds.join(',')})`)
+  } else if (targetRoleIds.length > 0) {
+    query = query.in('role_id', targetRoleIds)
+  } else if (targetPositionIds.length > 0) {
+    query = query.in('position_id', targetPositionIds)
+  } else {
+    return []
+  }
+
+  const { data: users, error: usersError } = await query
   if (usersError) throw usersError
 
   return users || []
@@ -1319,7 +1333,7 @@ export async function updateNcrInvestigation({ id, body, files, actorAuthId }) {
 export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
   const { data: report, error: reportError } = await supabase
     .from('ncr_reports')
-    .select('id, reference_no, reported_by, status, created_at, department_id, site_id')
+    .select('id, reference_no, reported_by, assigned_to, status, created_at, department_id, site_id')
     .eq('id', id)
     .maybeSingle()
   if (reportError) throw reportError

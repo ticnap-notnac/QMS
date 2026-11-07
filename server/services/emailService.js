@@ -155,3 +155,69 @@ export async function sendNewUserCredentialsEmail({ toEmail, password, frontendU
     logger.error(`Failed to send new user credentials email: ${error.message}`)
   }
 }
+
+/**
+ * Sends an email notification to Inventory Managers when a QDDR report is closed.
+ * @param {object} params
+ * @param {string} params.toEmail
+ * @param {object} params.qddr
+ * @param {string} [params.displayName]
+ */
+export async function sendQddrClosedEmail({ toEmail, qddr, displayName }) {
+  try {
+    if (!toEmail) {
+      logger.warn('Could not send QDDR closed email. No recipient email provided.')
+      return
+    }
+
+    const refNo = qddr?.reference_no || `QDDR #${qddr?.id || 'Unknown'}`
+    const targetUrl = process.env.FRONTEND_URL || 'https://qms-jade.vercel.app'
+    const safeDisplayName = escapeHtml(displayName || 'Inventory Manager')
+    const safeRefNo = escapeHtml(refNo)
+    const safeDesc = escapeHtml(qddr?.material_description || 'N/A')
+    const safeCode = escapeHtml(qddr?.material_code || 'N/A')
+    const safeBatch = escapeHtml(qddr?.batch_code_su_number || 'N/A')
+    const safeQty = escapeHtml(qddr?.qty != null ? String(qddr.qty) : 'N/A')
+    const safeReason = escapeHtml(qddr?.reason_of_discrepancy || 'N/A')
+    const safeCorrective = escapeHtml(qddr?.corrective_action || 'N/A')
+    const safePreventive = escapeHtml(qddr?.preventive_action || 'N/A')
+    const safeTargetUrl = escapeHtml(targetUrl)
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || `"QFlow Automated Alerts" <${process.env.SMTP_USER}>`,
+      to: toEmail,
+      subject: `QFlow Alert: QDDR ${refNo} Closed - Please Review`,
+      text: `Hello ${displayName || 'Inventory Manager'},\n\nThis is a heads up that Quality Defect & Deviation Report ${refNo} has been closed. Please check the system to review the new document.\n\nSign in here: ${targetUrl}\n\nPlease do not reply to this automated message.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+          <h2 style="color: #0f172a; margin-top: 0; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
+            QFlow Notification
+          </h2>
+          <p style="font-size: 15px; color: #334155; line-height: 1.6;">
+            Hello ${safeDisplayName},
+          </p>
+          <p style="font-size: 15px; color: #334155; line-height: 1.6;">
+            This is a heads up that Quality Defect &amp; Deviation Report <strong>${safeRefNo}</strong> has been closed. Please check the system to review the new document.
+          </p>
+          <p style="font-size: 15px; color: #334155; line-height: 1.6; margin-top: 20px;">
+            <a href="${safeTargetUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 500;">
+              Open QFlow System
+            </a>
+          </p>
+          <p style="font-size: 13px; color: #64748b; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+            Please do not reply to this automated message.
+          </p>
+        </div>
+      `,
+    }
+
+    if (transporter) {
+      const info = await transporter.sendMail(mailOptions)
+      logger.info(`QDDR closed email sent successfully to ${toEmail} [MessageId: ${info.messageId}]`)
+    } else {
+      logger.info(`[MOCK EMAIL] To: ${toEmail} | Subject: ${mailOptions.subject} | Email skipped because SMTP is not configured.`)
+    }
+  } catch (error) {
+    logger.error(`Failed to send QDDR closed email: ${error.message}`)
+  }
+}
