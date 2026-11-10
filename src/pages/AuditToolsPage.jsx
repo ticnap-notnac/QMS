@@ -74,7 +74,7 @@ export default function AuditToolsPage({ authUserId, userRole, userPermissions }
     return null
   }
 
-  return (
+  const mainContent = (
     <div className={isInsideSettings ? "settings-content-inner" : "audit-main"} style={{ width: '100%' }}>
       {!isInsideSettings && (
         <>
@@ -114,6 +114,16 @@ export default function AuditToolsPage({ authUserId, userRole, userPermissions }
         readOnly={true}
       />
       <SubmissionLoadingOverlay isOpen={isOverlayLoading} message={overlayMessage} />
+    </div>
+  )
+
+  if (isInsideSettings) {
+    return mainContent
+  }
+
+  return (
+    <div className="page-root">
+      {mainContent}
     </div>
   )
 }

@@ -43,7 +43,7 @@
   width: 95%;
   max-width: 1400px; /* Increased to match main pages and maximize space */
   margin: 40px auto;
-  padding: 0 16px;
+  padding: 0 16px 60px 16px;
   box-sizing: border-box;
 }
 

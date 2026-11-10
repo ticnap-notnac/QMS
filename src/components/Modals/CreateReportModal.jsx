@@ -247,7 +247,8 @@ function CreateReportModal({
               {/* Product Type Search Dropdown */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <SearchableDropdown
-                  label="Product Type: *"
+                  label="Product Type:"
+                  required={true}
                   value={productType}
                   onValueChange={setProductType}
                   options={productTypeOptions}
@@ -259,7 +260,9 @@ function CreateReportModal({
 
               {/* Batch / Lot Number Input */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field" style={{ margin: 0, marginBottom: '6px' }}>Batch / Lot Number: *</label>
+                <label className="label-field" style={{ margin: 0, marginBottom: '6px' }}>
+                  Batch / Lot Number: <span className="required-asterisk">*</span>
+                </label>
                 <input
                   type="text"
                   className="input-field"
@@ -274,7 +277,8 @@ function CreateReportModal({
               {/* Location Search Dropdown */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <SearchableDropdown
-                  label="Location: *"
+                  label="Location:"
+                  required={true}
                   value={location}
                   onValueChange={setLocation}
                   options={locationOptions}
@@ -289,7 +293,9 @@ function CreateReportModal({
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '10px' : '14px' }}>
               {/* Severity Dropdown Select */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Severity Level: *</label>
+                <label className="label-field">
+                  Severity Level: <span className="required-asterisk">*</span>
+                </label>
                 <select
                   value={severity}
                   onChange={(e) => setSeverity(e.target.value)}
@@ -306,7 +312,9 @@ function CreateReportModal({
 
               {/* Department Dropdown Select */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label className="label-field">Department: *</label>
+                <label className="label-field">
+                  Department: <span className="required-asterisk">*</span>
+                </label>
                 <select
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
@@ -325,7 +333,8 @@ function CreateReportModal({
               {/* Issue Category Dropdown */}
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <SearchableDropdown
-                  label="Issue Category: *"
+                  label="Issue Category:"
+                  required={true}
                   value={issueType}
                   onValueChange={setIssueType}
                   options={issueTypeOptions}
@@ -396,7 +405,7 @@ function CreateReportModal({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label className="label-field" style={{ margin: 0 }}>
-                  Description: *
+                  Description: <span className="required-asterisk">*</span>
                   {isAiGenerating && <span style={{ color: '#0891b2', marginLeft: '8px', fontSize: '12px' }}>(AI inspecting photo &amp; context…)</span>}
                 </label>
                 {evidenceFile && contextFilled && (

@@ -48,7 +48,7 @@ export default function ReportsPage({
   }
 
   const tabMeta = {
-    ncr: { label: 'Newsfeed (NCR)', icon: FileText },
+    ncr: { label: 'Non-Conformance (NCR)', icon: FileText },
     car: { label: 'Corrective Actions (CAR)', icon: FileCheck },
     qddr: { label: 'Defect Reports (QDDR)', icon: AlertTriangle }
   }
@@ -243,7 +243,7 @@ export default function ReportsPage({
     (logic.activeTab === 'qddr' && canAccessQddr)
 
   return (
-    <main className="dashboard page-root">
+    <main className="reports-page-root page-root">
       {logic.toast && (
         <div className="reports-toast-container">
           <Toast message={logic.toast.message} type={logic.toast.type} onClose={() => logic.setToast(null)} />
@@ -298,7 +298,7 @@ export default function ReportsPage({
             >
               {availableTabs.map(t => {
                 const tabNamesMobile = {
-                  ncr: 'Newsfeed (NCR)',
+                  ncr: 'Non-Conformance (NCR)',
                   car: 'Corrective Actions (CAR)',
                   qddr: 'Defect Reports (QDDR)'
                 };
@@ -365,7 +365,7 @@ export default function ReportsPage({
           )}
 
           {availableTabs.length > 1 && logic.activeTab !== 'ncr' && canViewActiveTab && (
-            <div className="reports-tab-nav-container" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px' }}>
+            <div className="reports-tab-nav-container">
               {logic.activeTab === 'car' && (
                 <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
                   <button

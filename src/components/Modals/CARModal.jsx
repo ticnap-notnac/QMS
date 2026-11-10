@@ -134,7 +134,9 @@ function CARModal({
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label className="label-field">Date: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></label>
+                  <label className="label-field">
+                    Date: <span className="required-asterisk">*</span>
+                  </label>
                   <input
                     type="date"
                     value={form.date}
@@ -192,7 +194,9 @@ function CARModal({
 
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
 
-              <h4 style={{ color: '#1A435A', fontSize: '14px', margin: '0 0 8px 0', textAlign: 'center' }}>TYPE OF NON-CONFORMANCE</h4>
+              <h4 style={{ color: '#1A435A', fontSize: '14px', margin: '0 0 8px 0', textAlign: 'center' }}>
+                TYPE OF NON-CONFORMANCE <span className="required-asterisk">*</span>
+              </h4>
               
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: isMobile ? '12px' : '20px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -209,19 +213,27 @@ function CARModal({
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label className="label-field">Product / Material Name:</label>
+                    <label className="label-field">
+                      Product / Material Name: <span className="required-asterisk">*</span>
+                    </label>
                     <input type="text" value={form.product_material_name} onChange={(e) => handleChange('product_material_name', e.target.value)} className="input-field" />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label className="label-field">Model / Type:</label>
+                    <label className="label-field">
+                      Model / Type: <span className="required-asterisk">*</span>
+                    </label>
                     <input type="text" value={form.model_type} onChange={(e) => handleChange('model_type', e.target.value)} className="input-field" />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label className="label-field">Control No.:</label>
+                    <label className="label-field">
+                      Control No.: <span className="required-asterisk">*</span>
+                    </label>
                     <input type="text" value={form.control_no} onChange={(e) => handleChange('control_no', e.target.value)} className="input-field" />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label className="label-field">Affected Quantity:</label>
+                    <label className="label-field">
+                      Affected Quantity: <span className="required-asterisk">*</span>
+                    </label>
                     <input 
                       type="number" 
                       min="0"
@@ -250,7 +262,9 @@ function CARModal({
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label className="label-field" style={{ margin: 0, textAlign: 'center' }}>DETAILS OF NON-CONFORMANCE: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></label>
+                <label className="label-field" style={{ margin: 0, textAlign: 'center' }}>
+                  DETAILS OF NON-CONFORMANCE: <span className="required-asterisk">*</span>
+                </label>
                 <textarea
                   value={form.details_of_nonconformance}
                   onChange={(e) => handleChange('details_of_nonconformance', e.target.value)}
@@ -374,7 +388,9 @@ function CARModal({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', width: '31.5%' }}>
-                  <label className="label-field">Request Date: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span></label>
+                  <label className="label-field">
+                    Request Date: <span className="required-asterisk">*</span>
+                  </label>
                   <input
                     type="date"
                     value={form.request_date}

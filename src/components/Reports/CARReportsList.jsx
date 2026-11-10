@@ -28,7 +28,7 @@ export default function CARReportsList({
   }
 
   return (
-    <div style={{ marginTop: '24px' }}>
+    <div className="reports-content-container">
       {viewMode === 'feed' ? (
         <div className="reports-list-stack">
           {carReports.map((car) => (

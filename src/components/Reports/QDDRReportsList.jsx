@@ -45,9 +45,10 @@ export default function QDDRReportsList({
   }
 
   return (
-    <div className="glass-card-dcc reports-list-card-container">
-      {/* 🚀 Fluid Full-Width Scroll Wrapper Shield */}
-      <div className="reports-table-scroll-wrap">
+    <div className="reports-content-container">
+      <div className="glass-card-dcc reports-list-card-container">
+        {/* 🚀 Fluid Full-Width Scroll Wrapper Shield */}
+        <div className="reports-table-scroll-wrap">
         <table className="iso-table">
           <thead>
             <tr>
@@ -143,6 +144,7 @@ export default function QDDRReportsList({
             })}
           </tbody>
         </table>
+      </div>
       </div>
     </div>
   )

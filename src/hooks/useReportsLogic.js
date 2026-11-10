@@ -54,6 +54,16 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   const [isClosedMode, setIsClosedMode] = useState(false)
   const [activeTab, setActiveTab] = useState(initialTab)
 
+  // Sync activeTab when navigating with location.state.tab
+  useEffect(() => {
+    if (location?.state?.tab && ['ncr', 'car', 'qddr'].includes(location.state.tab)) {
+      setActiveTab(location.state.tab)
+      if (location.state.isClosed !== undefined) {
+        setIsClosedMode(Boolean(location.state.isClosed))
+      }
+    }
+  }, [location?.state?.tab, location?.state?.isClosed])
+
   // ── CAR & QDDR Reports lists state ───────────────────────────────────────────
   const [carReports, setCarReports] = useState([])
   const [loadingCar, setLoadingCar] = useState(false)

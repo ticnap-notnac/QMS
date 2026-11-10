@@ -14,6 +14,9 @@ import { useMemo, useState } from 'react'
 function SearchableDropdown({ label, value, onValueChange, options, loading = false, placeholder = '', onSelectOption, required = false }) {
   const [isOpen, setIsOpen] = useState(false)
 
+  // Clean trailing asterisks from string labels to avoid duplication/dark asterisks
+  const cleanLabel = typeof label === 'string' ? label.replace(/\s*\*+$/, '') : label
+
   const filteredOptions = useMemo(() => {
     const query = String(value || '').trim().toLowerCase()
     if (!query) return options
@@ -23,8 +26,21 @@ function SearchableDropdown({ label, value, onValueChange, options, loading = fa
   return (
     <div>
       <label className="label-field">
-        {label}
-        {required && <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold' }}>*</span>}
+        {cleanLabel}
+        {required && (
+          <span 
+            className="required-asterisk" 
+            style={{ 
+              color: '#dc2626', 
+              marginLeft: '4px', 
+              fontWeight: 700, 
+              fontSize: '15px',
+              lineHeight: 1 
+            }}
+          >
+            *
+          </span>
+        )}
       </label>
       <div style={{ position: 'relative' }}>
         <input

@@ -17,7 +17,6 @@
 .settings-page-container, 
 .user-info-page-container, 
 .admin-page-container-narrow, 
-.reports-main-wrap, 
 .iso-page-main,
 .audit-main {
   margin: 0 !important;
@@ -47,6 +46,17 @@
   background: var(--color-light-neutral) !important;
 }
 
+/* Noticeable red asterisk for mandatory form fields */
+.required-asterisk {
+  color: #dc2626 !important;
+  margin-left: 4px;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: baseline;
+}
+
 /* Sleek, visible scrollbars for scrollable page containers */
 .page-root,
 .page-main, 
@@ -54,7 +64,6 @@
 .settings-page-container, 
 .user-info-page-container, 
 .admin-page-container-narrow, 
-.reports-main-wrap, 
 .iso-page-main,
 .audit-main {
   scrollbar-width: thin;

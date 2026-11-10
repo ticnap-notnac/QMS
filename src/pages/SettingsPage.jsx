@@ -70,7 +70,7 @@ export default function SettingsPage(props) {
   }
 
   return (
-    <>
+    <div className="page-root">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <main className="page-container settings-page-container">
@@ -207,6 +207,6 @@ export default function SettingsPage(props) {
         </div>
       </main>
       <SubmissionLoadingOverlay isOpen={saving} message="Saving settings changes..." />
-    </>
+    </div>
   )
 }

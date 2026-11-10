@@ -232,7 +232,9 @@ export default function NCRSubmitModal({
             
             {/* Product Type select field */}
             <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Product Type:</label>
+              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>
+                Product Type: <span className="required-asterisk">*</span>
+              </label>
               <select 
                 value={form.productTypeId || ''} 
                 onChange={(e) => {
@@ -252,7 +254,9 @@ export default function NCRSubmitModal({
 
             {/* Batch Number manual input */}
             <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Batch Number:</label>
+              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>
+                Batch Number: <span className="required-asterisk">*</span>
+              </label>
               <input 
                 value={form.batchNumber} 
                 onChange={(e) => setField('batchNumber', e.target.value)} 
@@ -263,7 +267,9 @@ export default function NCRSubmitModal({
 
             {/* Location select field */}
             <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Location:</label>
+              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>
+                Location: <span className="required-asterisk">*</span>
+              </label>
               <select 
                 value={form.locationId || ''} 
                 onChange={(e) => {
@@ -287,7 +293,9 @@ export default function NCRSubmitModal({
             
             {/* Severity input group */}
             <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Severity Level: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
+              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>
+                Severity Level: <span className="required-asterisk">*</span>
+              </label>
               <select value={form.severity} onChange={(e) => setField('severity', e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }}>
                 <option value="">Select severity...</option>
                 <option value="Low">Low</option>
@@ -300,7 +308,9 @@ export default function NCRSubmitModal({
 
             {/* Department input group */}
             <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Department: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
+              <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>
+                Department: <span className="required-asterisk">*</span>
+              </label>
               <select value={form.departmentId} onChange={(e) => setField('departmentId', e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }}>
                 <option value="">Select department...</option>
                 {departments.map((dept) => (
@@ -331,7 +341,9 @@ export default function NCRSubmitModal({
 
           {/* 📝 WIREFRAME POSITION 4: Wide Description Textarea Input block */}
           <div className="qflow-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
-            <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>Description: <span style={{ color: '#ef4444', marginLeft: '4px', fontWeight: 'bold', fontSize: '16px' }}>*</span></label>
+            <label style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>
+              Description: <span className="required-asterisk">*</span>
+            </label>
             <textarea 
               value={form.description} 
               onChange={(e) => setField('description', e.target.value)} 

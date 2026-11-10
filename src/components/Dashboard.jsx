@@ -21,6 +21,7 @@ import { AlertCircle, Shield, TrendingUp, BarChart2, Clock, MoreHorizontal, Cale
 // Custom tooltips for nice monotone popup displays
 import './Dashboard.css'
 import PendingRatingsWidget from './Dashboard/PendingRatingsWidget'
+import OccurringIssuesSummary from './Dashboard/OccurringIssuesSummary'
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -105,7 +106,8 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
           trendDataRes,
           resolutionRes,
           schedulesRes,
-          carsRes
+          carsRes,
+          qddrRes
         ] = await Promise.all([
           supabase.from('ncr_reports').select('id', { count: 'exact', head: true }).neq('status', 'CLOSED'),
           supabase.from('car_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed'),
@@ -119,7 +121,8 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
             .gte('scheduled_date', new Date().toISOString().split('T')[0])
             .order('scheduled_date', { ascending: true })
             .limit(3),
-          supabase.from('car_reports').select('id, reference_no, status, created_at, recipient').order('created_at', { ascending: false }).limit(4)
+          supabase.from('car_reports').select('id, reference_no, status, created_at, recipient').order('created_at', { ascending: false }).limit(4),
+          supabase.from('qddr_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed')
         ])
 
         const stats = statsRes || []
@@ -137,7 +140,7 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
         setMetrics({
           openComplaints: (ncrRes.count || 0) + (carRes.count || 0),
           isoCompliance: avgCompliance,
-          defectRate: 0
+          defectRate: qddrRes?.count || 0
         })
 
         // Handle upcoming audit schedules
@@ -247,20 +250,23 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
         </div>
 
         <div className="metric-card" 
-          title="The percentage rate of defective items identified in QDDR (Quality Defect & Disposal Reports) relative to total inspection lots."
+          title="The total number of active Quality Defects / Damaged / Discrepancy Reports currently undergoing inspection or quarantine."
         >
           <div className="metric-card-header">
-            <p className="metric-card-title">QDDR Defect Rate</p>
+            <p className="metric-card-title">Active QDDR Defects</p>
             <div className="metric-icon-badge">
               <TrendingUp size={18} color="#1A435A" />
             </div>
           </div>
           <h3 className="metric-card-value">
-            {metrics?.defectRate ?? 0}%
+            {metrics?.defectRate ?? 0}
           </h3>
-          <span className="metric-card-subtitle">Well within compliance margins</span>
+          <span className="metric-card-subtitle">Active receiving &amp; warehouse discrepancies</span>
         </div>
       </section>
+
+      {/* Occurring Issues Summary Section (NCR • CAR • QDDR) */}
+      <OccurringIssuesSummary />
 
       {/* Double Column Info Widgets Row */}
       {canViewAuditAndCarWidgets && (
