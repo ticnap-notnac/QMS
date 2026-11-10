@@ -103,85 +103,33 @@
 }
 
 .btn-refresh-issues {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  border-radius: 8px;
-  padding: 8px 14px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.btn-refresh-issues:hover:not(:disabled) {
-  background: #f1f5f9;
-  border-color: #94a3b8;
-  color: #1A435A;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.btn-refresh-issues:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.btn-refresh-issues:disabled {
-  cursor: not-allowed;
-  opacity: 0.85;
-}
-
-.btn-refresh-issues--refreshing {
   background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-refresh-issues:hover {
+  background: #e2e8f0;
   color: #1A435A;
-  border-color: #94a3b8;
 }
 
-.btn-refresh-issues--success {
-  background: #F0FDF4;
-  border-color: #86EFAC;
-  color: #15803D;
+.spin-animation {
+  animation: issues-spin 0.75s linear infinite;
 }
 
-.refresh-icon-spin {
-  animation: refresh-icon-spin-keyframes 0.75s linear infinite;
-}
-
-@keyframes refresh-icon-spin-keyframes {
+@keyframes issues-spin {
   from {
     transform: rotate(0deg);
   }
   to {
     transform: rotate(360deg);
-  }
-}
-
-.refresh-icon-success {
-  color: #16A34A;
-  animation: refresh-pop 0.3s ease-out;
-}
-
-@keyframes refresh-pop {
-  0% { transform: scale(0.6); }
-  70% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
-.refresh-feedback-text {
-  font-size: 12.5px;
-  letter-spacing: -0.01em;
-}
-
-@media (max-width: 480px) {
-  .refresh-feedback-text {
-    display: none;
-  }
-  .btn-refresh-issues {
-    padding: 8px;
   }
 }
 

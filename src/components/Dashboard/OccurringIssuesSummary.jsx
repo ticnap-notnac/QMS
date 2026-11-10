@@ -39,7 +39,6 @@ export default function OccurringIssuesSummary({ onRefresh }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [justRefreshed, setJustRefreshed] = useState(false)
   const [error, setError] = useState(null)
 
   // Raw active data lists
@@ -48,16 +47,9 @@ export default function OccurringIssuesSummary({ onRefresh }) {
   const [activeQddrs, setActiveQddrs] = useState([])
 
   const loadOccurringIssues = useCallback(async (isManualRefresh = false) => {
-    if (isManualRefresh) {
-      setRefreshing(true)
-      setJustRefreshed(false)
-    } else {
-      setLoading(true)
-    }
+    if (isManualRefresh) setRefreshing(true)
+    else setLoading(true)
     setError(null)
-
-    // Ensure a minimum delay during manual click so the spinning animation is clearly noticeable
-    const minDelay = isManualRefresh ? new Promise(resolve => setTimeout(resolve, 650)) : Promise.resolve()
 
     try {
       const [ncrResult, carResult, qddrResult] = await Promise.all([
@@ -80,10 +72,8 @@ export default function OccurringIssuesSummary({ onRefresh }) {
           .not('status', 'ilike', 'closed')
           .order('created_at', { ascending: false })
           .limit(100),
-        // 4. Also refresh parent dashboard metrics if available
-        onRefresh ? onRefresh().catch(err => console.warn('Parent dashboard refresh error:', err)) : Promise.resolve(),
-        // 5. Ensure smooth animation duration
-        minDelay
+        // 4. Optionally refresh dashboard metrics
+        isManualRefresh && onRefresh ? onRefresh().catch(() => {}) : Promise.resolve()
       ])
 
       // Filter active NCRs (status !== 'CLOSED')
@@ -99,13 +89,6 @@ export default function OccurringIssuesSummary({ onRefresh }) {
       setActiveNcrs(ncrsList)
       setActiveCars(carsList)
       setActiveQddrs(qddrsList)
-
-      if (isManualRefresh) {
-        setJustRefreshed(true)
-        setTimeout(() => {
-          setJustRefreshed(false)
-        }, 2000)
-      }
     } catch (err) {
       console.error('Error loading occurring issues summary:', err)
       setError('Could not load occurring issues data.')
@@ -113,7 +96,7 @@ export default function OccurringIssuesSummary({ onRefresh }) {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [onRefresh])
+  }, [])
 
   useEffect(() => {
     loadOccurringIssues()
@@ -342,23 +325,11 @@ export default function OccurringIssuesSummary({ onRefresh }) {
         <div className="occurring-issues-header-actions">
           <button
             type="button"
-            className={`btn-refresh-issues ${refreshing ? 'btn-refresh-issues--refreshing' : ''} ${justRefreshed ? 'btn-refresh-issues--success' : ''}`}
+            className="btn-refresh-issues"
             onClick={() => loadOccurringIssues(true)}
-            disabled={refreshing}
-            title={justRefreshed ? 'Data is up to date' : 'Refresh occurring issues and metrics'}
-            aria-label="Refresh occurring issues"
+            title="Refresh occurring issues"
           >
-            {justRefreshed ? (
-              <>
-                <CheckCircle2 size={15} className="refresh-icon-success" />
-                <span className="refresh-feedback-text">Updated</span>
-              </>
-            ) : (
-              <>
-                <RefreshCw size={15} className={refreshing ? 'refresh-icon-spin' : ''} />
-                <span className="refresh-feedback-text">{refreshing ? 'Refreshing...' : 'Refresh'}</span>
-              </>
-            )}
+            <RefreshCw size={15} className={refreshing ? 'spin-animation' : ''} />
           </button>
           <button
             type="button"
