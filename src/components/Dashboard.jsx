@@ -95,88 +95,88 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
     return 'Just now'
   }
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        // Fire all network requests concurrently to dramatically speed up load times
-        const [
-          ncrRes,
-          carRes,
-          statsRes,
-          trendDataRes,
-          resolutionRes,
-          schedulesRes,
-          carsRes,
-          qddrRes
-        ] = await Promise.all([
-          supabase.from('ncr_reports').select('id', { count: 'exact', head: true }).neq('status', 'CLOSED'),
-          supabase.from('car_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed'),
-          request('/compliance'),
-          request('/compliance/trends'),
-          request('/dashboard/resolution-trends'),
-          supabase
-            .from('audit_schedules')
-            .select('id, title, scheduled_date, status, audit_checklist_templates(title), iso_standards(name)')
-            .neq('status', 'completed')
-            .gte('scheduled_date', new Date().toISOString().split('T')[0])
-            .order('scheduled_date', { ascending: true })
-            .limit(3),
-          supabase.from('car_reports').select('id, reference_no, status, created_at, recipient').order('created_at', { ascending: false }).limit(4),
-          supabase.from('qddr_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed')
-        ])
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      // Fire all network requests concurrently to dramatically speed up load times
+      const [
+        ncrRes,
+        carRes,
+        statsRes,
+        trendDataRes,
+        resolutionRes,
+        schedulesRes,
+        carsRes,
+        qddrRes
+      ] = await Promise.all([
+        supabase.from('ncr_reports').select('id', { count: 'exact', head: true }).neq('status', 'CLOSED'),
+        supabase.from('car_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed'),
+        request('/compliance'),
+        request('/compliance/trends'),
+        request('/dashboard/resolution-trends'),
+        supabase
+          .from('audit_schedules')
+          .select('id, title, scheduled_date, status, audit_checklist_templates(title), iso_standards(name)')
+          .neq('status', 'completed')
+          .gte('scheduled_date', new Date().toISOString().split('T')[0])
+          .order('scheduled_date', { ascending: true })
+          .limit(3),
+        supabase.from('car_reports').select('id, reference_no, status, created_at, recipient').order('created_at', { ascending: false }).limit(4),
+        supabase.from('qddr_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed')
+      ])
 
-        const stats = statsRes || []
-        setComplianceStats(stats)
-        setTrends(trendDataRes || [])
-        setResolutionTrend(resolutionRes || [])
+      const stats = statsRes || []
+      setComplianceStats(stats)
+      setTrends(trendDataRes || [])
+      setResolutionTrend(resolutionRes || [])
 
-        // Calculate average ISO compliance score
-        let avgCompliance = 0
-        if (stats.length > 0) {
-          const total = stats.reduce((sum, s) => sum + (s.compliance || 0), 0)
-          avgCompliance = Math.round(total / stats.length)
-        }
-
-        setMetrics({
-          openComplaints: (ncrRes.count || 0) + (carRes.count || 0),
-          isoCompliance: avgCompliance,
-          defectRate: qddrRes?.count || 0
-        })
-
-        // Handle upcoming audit schedules
-        if (schedulesRes.data && schedulesRes.data.length > 0) {
-          setUpcomingAudits(schedulesRes.data.map(s => ({
-            id: s.id,
-            title: s.title,
-            date: new Date(s.scheduled_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-            checklistName: s.audit_checklist_templates?.title || s.iso_standards?.name || 'General Checklist'
-          })))
-        } else {
-          setUpcomingAudits([])
-        }
-
-        // Handle latest CAR activities
-        if (carsRes.data && carsRes.data.length > 0) {
-          setLatestActivities(carsRes.data.map((c, idx) => ({
-            id: c.id,
-            title: `CAR Notification: ${c.reference_no}`,
-            description: `Status: ${String(c.status || '').toUpperCase()}${c.recipient ? ` | Assignee: ${c.recipient}` : ''}`,
-            time: getRelativeTime(c.created_at),
-            tone: idx % 2 === 0 ? 'success' : 'danger'
-          })))
-        } else {
-          setLatestActivities([])
-        }
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err)
-        setError('We could not load your dashboard. Please refresh the page to try again.')
-      } finally {
-        setLoading(false)
+      // Calculate average ISO compliance score
+      let avgCompliance = 0
+      if (stats.length > 0) {
+        const total = stats.reduce((sum, s) => sum + (s.compliance || 0), 0)
+        avgCompliance = Math.round(total / stats.length)
       }
-    }
 
-    fetchDashboardData()
+      setMetrics({
+        openComplaints: (ncrRes.count || 0) + (carRes.count || 0),
+        isoCompliance: avgCompliance,
+        defectRate: qddrRes?.count || 0
+      })
+
+      // Handle upcoming audit schedules
+      if (schedulesRes.data && schedulesRes.data.length > 0) {
+        setUpcomingAudits(schedulesRes.data.map(s => ({
+          id: s.id,
+          title: s.title,
+          date: new Date(s.scheduled_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+          checklistName: s.audit_checklist_templates?.title || s.iso_standards?.name || 'General Checklist'
+        })))
+      } else {
+        setUpcomingAudits([])
+      }
+
+      // Handle latest CAR activities
+      if (carsRes.data && carsRes.data.length > 0) {
+        setLatestActivities(carsRes.data.map((c, idx) => ({
+          id: c.id,
+          title: `CAR Notification: ${c.reference_no}`,
+          description: `Status: ${String(c.status || '').toUpperCase()}${c.recipient ? ` | Assignee: ${c.recipient}` : ''}`,
+          time: getRelativeTime(c.created_at),
+          tone: idx % 2 === 0 ? 'success' : 'danger'
+        })))
+      } else {
+        setLatestActivities([])
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err)
+      setError('We could not load your dashboard. Please refresh the page to try again.')
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [fetchDashboardData])
 
   if (loading) {
     return (
@@ -266,7 +266,7 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
       </section>
 
       {/* Occurring Issues Summary Section (NCR • CAR • QDDR) */}
-      <OccurringIssuesSummary />
+      <OccurringIssuesSummary onRefresh={fetchDashboardData} />
 
       {/* Double Column Info Widgets Row */}
       {canViewAuditAndCarWidgets && (
