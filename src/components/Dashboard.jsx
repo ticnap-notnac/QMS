@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { isAdminRole } from '@/utils/roleUtils.js'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/utils/supabase'
@@ -187,14 +187,14 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
   }
 
   // Format data for Recharts Bar Chart (Compliance by standard)
-  const barChartData = complianceStats.map(s => ({
+  const barChartData = (Array.isArray(complianceStats) ? complianceStats : []).map(s => ({
     name: s.name,
     Compliance: s.compliance
   }))
 
   // Format data for Recharts Line Chart (Chronological compliance trends)
-  const lineChartData = trends.map(t => ({
-    date: new Date(t.completed_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+  const lineChartData = (Array.isArray(trends) ? trends : []).map(t => ({
+    date: t.completed_at ? new Date(t.completed_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '',
     Score: t.score,
     title: t.title,
     standard: t.standard_name
@@ -282,7 +282,7 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
           </div>
 
           <div className="widget-list">
-            {upcomingAudits.length > 0 ? (
+            {Array.isArray(upcomingAudits) && upcomingAudits.length > 0 ? (
               upcomingAudits.map((audit) => (
                 <div 
                   key={audit.id} 
@@ -317,7 +317,7 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
           </div>
 
           <div className="widget-list">
-            {latestActivities.length > 0 ? (
+            {Array.isArray(latestActivities) && latestActivities.length > 0 ? (
               latestActivities.map((activity) => (
                 <div 
                   key={activity.id} 
@@ -419,7 +419,7 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
               <h4 className="chart-title">Average Resolution Time Trend (Hours)</h4>
             </div>
             <div className="chart-container">
-              {resolutionTrend.length > 0 ? (
+              {Array.isArray(resolutionTrend) && resolutionTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={resolutionTrend} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />

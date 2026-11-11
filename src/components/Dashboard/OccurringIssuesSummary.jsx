@@ -195,25 +195,25 @@ export default function OccurringIssuesSummary({ onRefresh }) {
     const list = []
 
     // 1. Process NCRs
-    activeNcrs.forEach((n) => {
+    ;(Array.isArray(activeNcrs) ? activeNcrs : []).forEach((n) => {
       list.push({
         id: `ncr-${n.id}`,
         rawId: n.id,
         type: 'ncr',
         typeLabel: 'NCR',
-        referenceNo: n.reference_no || `NCR #${n.id}`,
-        headline: n.issue_types?.issue_type_name || n.issue_type || n.product_types?.product_name || n.product_type || 'Non-Conformance Issue',
-        detail: n.product_types?.product_name || n.product_type || (n.description ? `${n.description.slice(0, 60)}…` : ''),
-        location: n.locations?.location_name || n.location || n.departments?.department_name || 'Warehouse',
-        severity: n.severity || 'Medium',
-        status: n.status || 'OPEN',
+        referenceNo: String(n.reference_no || `NCR #${n.id}`),
+        headline: String(n.issue_types?.issue_type_name || n.issue_type || n.product_types?.product_name || n.product_type || 'Non-Conformance Issue'),
+        detail: String(n.product_types?.product_name || n.product_type || (n.description ? `${String(n.description).slice(0, 60)}…` : '')),
+        location: String(n.locations?.location_name || n.location || n.departments?.department_name || 'Warehouse'),
+        severity: String(n.severity || 'Medium'),
+        status: String(n.status || 'OPEN'),
         createdAt: n.created_at,
         relativeTime: getRelativeTime(n.created_at)
       })
     })
 
     // 2. Process CARs
-    activeCars.forEach((c) => {
+    ;(Array.isArray(activeCars) ? activeCars : []).forEach((c) => {
       const tags = []
       if (c.quality_food_safety) tags.push('Quality / Food Safety')
       if (c.customer_complaint) tags.push('Customer Complaint')
@@ -228,19 +228,19 @@ export default function OccurringIssuesSummary({ onRefresh }) {
         rawId: c.id,
         type: 'car',
         typeLabel: 'CAR',
-        referenceNo: c.reference_no || `CAR #${c.id}`,
-        headline: headlineText,
-        detail: c.product_material_name ? `${c.product_material_name} ${c.control_no ? `(${c.control_no})` : ''}` : (c.details_of_nonconformance?.slice(0, 60) || ''),
-        location: c.requesting_department || c.responsible_department || 'QA Department',
+        referenceNo: String(c.reference_no || `CAR #${c.id}`),
+        headline: String(headlineText),
+        detail: String(c.product_material_name ? `${c.product_material_name} ${c.control_no ? `(${c.control_no})` : ''}` : (c.details_of_nonconformance ? String(c.details_of_nonconformance).slice(0, 60) : '')),
+        location: String(c.requesting_department || c.responsible_department || 'QA Department'),
         severity: c.quality_food_safety ? 'High' : 'Medium',
-        status: c.status || 'OPEN',
+        status: String(c.status || 'OPEN'),
         createdAt: c.created_at,
         relativeTime: getRelativeTime(c.created_at)
       })
     })
 
     // 3. Process QDDRs
-    activeQddrs.forEach((q) => {
+    ;(Array.isArray(activeQddrs) ? activeQddrs : []).forEach((q) => {
       const discTypes = []
       if (q.crushed_dented) discTypes.push('Crushed/Dented')
       if (q.holes_punctures) discTypes.push('Holes/Punctures')
@@ -256,12 +256,12 @@ export default function OccurringIssuesSummary({ onRefresh }) {
         rawId: q.id,
         type: 'qddr',
         typeLabel: 'QDDR',
-        referenceNo: q.reference_no || `QDDR #${q.id}`,
-        headline: headlineText,
-        detail: q.material_description ? `${q.material_description}${q.qty ? ` (Qty: ${q.qty})` : ''}` : (q.reason_of_discrepancy?.slice(0, 60) || ''),
-        location: q.location || 'Receiving Bay',
+        referenceNo: String(q.reference_no || `QDDR #${q.id}`),
+        headline: String(headlineText),
+        detail: String(q.material_description ? `${q.material_description}${q.qty ? ` (Qty: ${q.qty})` : ''}` : (q.reason_of_discrepancy ? String(q.reason_of_discrepancy).slice(0, 60) : '')),
+        location: String(q.location || 'Receiving Bay'),
         severity: (q.wet_leaked || q.opened_seal) ? 'High' : 'Medium',
-        status: q.status || 'OPEN',
+        status: String(q.status || 'OPEN'),
         createdAt: q.created_at,
         relativeTime: getRelativeTime(q.created_at)
       })
