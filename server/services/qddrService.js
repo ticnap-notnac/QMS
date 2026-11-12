@@ -167,7 +167,6 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     approved_by,
     noted_by,
     leader,
-    ncr_id,
     clause_ids,
     audit_schedule_id
   } = body || {}
@@ -250,7 +249,6 @@ export async function createQddrReport({ body, reportedByAuthId }) {
       approved_by: approvedById,
       noted_by: notedById,
       leader: leaderId,
-      ncr_id: ncr_id ? (Array.isArray(ncr_id) ? ncr_id.map(id => parseInt(id, 10)) : [parseInt(ncr_id, 10)]) : null,
       audit_schedule_id: audit_schedule_id || null,
       status: 'open',
       site_id: reporter.site_id || null
@@ -287,6 +285,14 @@ export async function createQddrReport({ body, reportedByAuthId }) {
         console.warn('[qddrService] Failed to insert qddr_clause_links:', linkError.message)
       }
     }
+  }
+
+  if (data?.id) {
+    import('./trendClusteringService.js').then(m => {
+      m.analyzeAndClusterQddrReportInBackground(data.id)
+    }).catch(err => {
+      console.warn('[qddrService] Failed to trigger QDDR trend clustering:', err.message)
+    })
   }
 
   return { data }
@@ -444,6 +450,9 @@ export async function updateQddrReport({ id, body, actorAuthId }) {
   if (requestedStatus === 'closed' && currentStatus !== 'closed' && data) {
     notifyInventoryManagersOnQddrClosed(data).catch((notifyErr) => {
       logger.error('[qddrService] Failed to notify inventory managers on QDDR closed:', notifyErr.message)
+    })
+    autoPromoteQddrToCaseRepository(data).catch((promoteErr) => {
+      logger.warn('[qddrService] Failed to auto-promote QDDR to case repository:', promoteErr.message)
     })
   }
 
@@ -603,17 +612,6 @@ export async function editQddrReport({ id, body = {}, actorAuthId }) {
   if (body.noted_by !== undefined) payload.noted_by = notedById
   if (body.leader !== undefined) payload.leader = leaderId
 
-  if (body.ncr_id !== undefined) {
-    if (!body.ncr_id || (Array.isArray(body.ncr_id) && body.ncr_id.length === 0)) {
-      payload.ncr_id = null
-    } else if (Array.isArray(body.ncr_id)) {
-      payload.ncr_id = body.ncr_id.map(nid => parseInt(nid, 10)).filter(n => !Number.isNaN(n))
-    } else {
-      const parsed = parseInt(body.ncr_id, 10)
-      payload.ncr_id = !Number.isNaN(parsed) ? [parsed] : null
-    }
-  }
-
   let data = null
   if (Object.keys(payload).length > 0) {
     const { data: updated, error } = await supabase
@@ -667,5 +665,75 @@ export async function editQddrReport({ id, body = {}, actorAuthId }) {
     console.warn('Failed to write audit log:', err.message || err)
   }
 
+  if (data && String(data.status || '').toLowerCase() === 'closed') {
+    autoPromoteQddrToCaseRepository(data).catch((promoteErr) => {
+      logger.warn('[qddrService] Failed to auto-promote QDDR to case repository on edit:', promoteErr.message)
+    })
+  }
+
   return { data }
+}
+
+/**
+ * Automatically promotes a closed QDDR report into the `qddr_case_repository`
+ * for Case-Based Reasoning (CBR) retrieval and vector similarity search.
+ *
+ * @param {Object} qddr - The closed QDDR report record.
+ */
+export async function autoPromoteQddrToCaseRepository(qddr) {
+  if (!qddr || !qddr.id) return null
+  const discrepancy = String(qddr.reason_of_discrepancy || '').trim()
+  if (!discrepancy) return null
+
+  try {
+    const apiKey = process.env.GEMINI_API_KEY
+    let embedding = null
+    if (apiKey) {
+      const { generateEmbedding } = await import('../utils/cbr.js')
+      embedding = await generateEmbedding(discrepancy, apiKey)
+    }
+
+    const defectCategories = []
+    const boolKeys = [
+      'holes_punctures', 'deformed_torn', 'open_carton', 'crushed_dented',
+      'wet_leaked', 'stain_graffiti', 'bulging', 'improper_stretch_wrapping',
+      'wrong_no_batchcode', 'opened_seal', 'no_label_broken_label',
+      'short_pack', 'excess_shipment', 'documentation_error', 'picking_discrepancy'
+    ]
+    for (const k of boolKeys) {
+      if (qddr[k]) defectCategories.push(k)
+    }
+
+    const record = {
+      qddr_id: qddr.id,
+      reference_no: qddr.reference_no,
+      reason_of_discrepancy: discrepancy,
+      material_description: qddr.material_description || null,
+      defect_categories: defectCategories,
+      corrective_action: qddr.corrective_action || 'Approved for disposal',
+      preventive_action: qddr.preventive_action || null,
+      disposal_approved: true,
+      effectiveness_score: 1.0,
+      embedding: embedding ? `[${embedding.join(',')}]` : null
+    }
+
+    const { data: existing } = await supabase
+      .from('qddr_case_repository')
+      .select('id')
+      .eq('qddr_id', qddr.id)
+      .maybeSingle()
+
+    if (existing) {
+      await supabase
+        .from('qddr_case_repository')
+        .update(record)
+        .eq('id', existing.id)
+    } else {
+      await supabase
+        .from('qddr_case_repository')
+        .insert([record])
+    }
+  } catch (err) {
+    logger.warn('[qddrService] autoPromoteQddrToCaseRepository warning:', err.message)
+  }
 }

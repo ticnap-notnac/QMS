@@ -138,3 +138,8 @@ export async function deleteCarReport(carId, userAuthId) {
     }
   })
 }
+
+
+export async function fetchCarRecurringTrends(days = 14) {
+  return await request(`/car/recurring-trends?days=${days}`)
+}

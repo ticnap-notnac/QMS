@@ -54,12 +54,6 @@ export async function fetchResolutionTrends(userAuthId = null) {
   dateOneYearAgo.setFullYear(dateOneYearAgo.getFullYear() - 1)
   const oneYearAgoStr = dateOneYearAgo.toISOString()
 
-  let ncrQuery = supabase
-    .from('ncr_reports')
-    .select('created_at, updated_at, resolution_time, site_id')
-    .eq('status', 'CLOSED')
-    .gte('created_at', oneYearAgoStr)
-
   let carQuery = supabase
     .from('car_reports')
     .select('created_at, request_date, resolution_time, verification_date, updated_at, site_id')
@@ -74,18 +68,15 @@ export async function fetchResolutionTrends(userAuthId = null) {
 
   if (callerSiteId) {
     const siteFilter = `site_id.is.null,site_id.eq.${callerSiteId}`
-    ncrQuery = ncrQuery.or(siteFilter)
     carQuery = carQuery.or(siteFilter)
     qddrQuery = qddrQuery.or(siteFilter)
   }
 
-  const [ncrsRes, carsRes, qddrsRes] = await Promise.all([
-    ncrQuery,
+  const [carsRes, qddrsRes] = await Promise.all([
     carQuery,
     qddrQuery
   ])
 
-  const ncrs = ncrsRes.data || []
   const cars = carsRes.data || []
   const qddrs = qddrsRes.data || []
 
@@ -98,7 +89,6 @@ export async function fetchResolutionTrends(userAuthId = null) {
     const monthKey = d.toLocaleString('default', { month: 'short' }) + ' ' + d.getFullYear()
     if (!months[monthKey]) {
       months[monthKey] = {
-        ncrSum: 0, ncrCount: 0,
         carSum: 0, carCount: 0,
         qddrSum: 0, qddrCount: 0,
         rawDate: d
@@ -107,11 +97,6 @@ export async function fetchResolutionTrends(userAuthId = null) {
     months[monthKey][`${type}Sum`] += val
     months[monthKey][`${type}Count`] += 1
   }
-
-  ncrs.forEach(item => {
-    const val = parseResolutionTimeToHours(item.resolution_time, item.created_at, item.updated_at)
-    addValue(item.created_at, val, 'ncr')
-  })
 
   cars.forEach(item => {
     const val = parseResolutionTimeToHours(item.resolution_time, item.created_at || item.request_date, item.verification_date || item.updated_at)
@@ -125,12 +110,10 @@ export async function fetchResolutionTrends(userAuthId = null) {
 
   return Object.entries(months)
     .map(([month, data]) => {
-      const ncrAvg = data.ncrCount > 0 ? Number((data.ncrSum / data.ncrCount).toFixed(1)) : null
       const carAvg = data.carCount > 0 ? Number((data.carSum / data.carCount).toFixed(1)) : null
       const qddrAvg = data.qddrCount > 0 ? Number((data.qddrSum / data.qddrCount).toFixed(1)) : null
       return {
         month,
-        NCR: ncrAvg,
         CAR: carAvg,
         QDDR: qddrAvg,
         rawDate: data.rawDate.toISOString()
@@ -139,73 +122,7 @@ export async function fetchResolutionTrends(userAuthId = null) {
     .sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate))
 }
 
-export async function fetchPendingRatings(userAuthId) {
-  // 1. Get the current user details
-  const { data: currentUser, error: userError } = await supabase
-    .from('users')
-    .select('id, department_id, site_id, role:roles(role_name, permissions)')
-    .eq('auth_id', userAuthId)
-    .maybeSingle()
-
-  if (userError || !currentUser) throw new Error('User not found.')
-
-  const roleObj = Array.isArray(currentUser.role) ? currentUser.role[0] : currentUser.role
-  const normalizedRole = String(roleObj?.role_name || '').toLowerCase().trim()
-  const perms = roleObj?.permissions || null
-  const pages = Array.isArray(perms?.pages) ? perms.pages : []
-  const rights = Array.isArray(perms?.rights) ? perms.rights : []
-
-  const isAuditorOrAdmin =
-    normalizedRole === 'auditor' ||
-    normalizedRole === 'qa officer' ||
-    isAdminRole(roleObj?.role_name) ||
-    pages.includes('audit_tools') ||
-    rights.includes('manage_iso') ||
-    rights.includes('edit_delete_report')
-  const isManager =
-    normalizedRole === 'department manager' ||
-    normalizedRole === 'manager' ||
-    normalizedRole === 'team leader' ||
-    rights.includes('accept_decline_report') ||
-    rights.includes('assign_report')
-
-  // 2. Query closed reports based on role access and site scoping
-  let query = supabase
-    .from('ncr_reports')
-    .select('id, reference_no, description, corrective_action, department_id, reported_by, site_id')
-    .eq('status', 'CLOSED')
-
-  if (!isAdminRole(roleObj?.role_name) && currentUser.site_id) {
-    query = query.or(`site_id.is.null,site_id.eq.${currentUser.site_id}`)
-  }
-
-  if (!isAuditorOrAdmin) {
-    if (isManager && currentUser.department_id) {
-      query = query.eq('department_id', currentUser.department_id)
-    } else {
-      query = query.eq('reported_by', currentUser.id)
-    }
-  }
-
-  const { data: reports, error: reportsErr } = await query
-  if (reportsErr) throw reportsErr
-
-  if (!reports || reports.length === 0) return []
-
-  const reportIds = reports.map(r => r.id)
-
-  // 3. Find which of these reports the user has ALREADY rated
-  const { data: ratings, error: ratingsErr } = await supabase
-    .from('ncr_report_ratings')
-    .select('report_id')
-    .eq('rated_by', currentUser.id)
-    .in('report_id', reportIds)
-
-  if (ratingsErr) throw ratingsErr
-
-  const ratedIds = new Set((ratings || []).map(r => r.report_id))
-
-  // 4. Return the pending ones
-  const pending = reports.filter(r => !ratedIds.has(r.id))
-  return pending
+export async function fetchPendingRatings(_userAuthId) {
+  // NCR ratings are deprecated; return empty array cleanly
+  return []
 }

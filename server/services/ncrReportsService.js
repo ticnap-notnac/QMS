@@ -27,55 +27,20 @@ export function normalizeId(value) {
  * @returns {number} The numeric sequence, or 0 if not matched.
  */
 export function buildReferenceNumber(referenceNo) {
-  const match = String(referenceNo || '').match(/^NCR-(\d{4})-(\d+)$/i)
+  const match = String(referenceNo || '').match(/^NCR-(\d{4})-(\d{3,})$/i)
   if (!match) return 0
   return Number(match[2]) || 0
 }
 
 /**
  * Generates the next NCR reference number.
- * @param {string|Array} recordsOrLatestRef - The array of records or latest reference number.
+ * @param {string} latestRef - The latest reference number.
  * @returns {string} The next reference number.
  */
-export function generateNextNcrReferenceNo(recordsOrLatestRef) {
+export function generateNextNcrReferenceNo(latestRef) {
   const currentYear = new Date().getFullYear()
-  if (Array.isArray(recordsOrLatestRef)) {
-    let maxSeq = 0
-    for (const r of recordsOrLatestRef) {
-      const match = String(r?.reference_no || '').match(new RegExp(`^NCR-${currentYear}-(\\d+)$`, 'i'))
-      if (match) {
-        const seq = parseInt(match[1], 10)
-        if (seq > maxSeq) maxSeq = seq
-      }
-    }
-    return `NCR-${currentYear}-${String(maxSeq + 1).padStart(4, '0')}`
-  }
-  const nextSeq = buildReferenceNumber(recordsOrLatestRef) + 1
-  return `NCR-${currentYear}-${String(nextSeq).padStart(4, '0')}`
-}
-
-/**
- * Atomically generates the next NCR reference number via database RPC (with fallback).
- * @param {number} [year] - Target year.
- * @returns {Promise<string>} The next NCR reference number.
- */
-export async function fetchNextNcrReferenceNo(year = new Date().getFullYear()) {
-  if (typeof supabase.rpc === 'function') {
-    const { data: rpcRef, error: rpcErr } = await supabase.rpc('next_report_reference', {
-      p_type: 'NCR',
-      p_year: year,
-    })
-    if (!rpcErr && rpcRef) return rpcRef
-  }
-
-  const { data: records, error: latestError } = await supabase
-    .from('ncr_reports')
-    .select('reference_no')
-    .ilike('reference_no', `NCR-${year}-%`)
-    .order('id', { ascending: false })
-    .limit(1000)
-  if (latestError) throw latestError
-  return generateNextNcrReferenceNo(records || [])
+  const nextSeq = buildReferenceNumber(latestRef) + 1
+  return `NCR-${currentYear}-${String(nextSeq).padStart(3, '0')}`
 }
 
 /**
@@ -156,27 +121,18 @@ function isAdminRole(roleName) {
     norm === 'system administrator' ||
     norm === 'system_administrator' ||
     norm === 'administrator' ||
-    norm === 'superadmin'
+    norm.includes('admin')
   )
 }
 
 /**
- * Checks if a role name belongs to an admin or QA Officer.
+ * Checks if a role name belongs to an admin or auditor.
  * @param {string} roleName - The role name to check.
- * @returns {boolean} True if admin or QA Officer, false otherwise.
+ * @returns {boolean} True if admin or auditor, false otherwise.
  */
-export function isAdminOrQA(roleName, permissions = null) {
+export function isAdminOrAuditor(roleName) {
   const normalized = String(roleName || '').trim().toLowerCase()
-  if (isAdminRole(roleName) || normalized === 'qa officer' || normalized === 'auditor' || normalized === 'quality assurance') {
-    return true
-  }
-  const pages = Array.isArray(permissions?.pages) ? permissions.pages : []
-  const rights = Array.isArray(permissions?.rights) ? permissions.rights : []
-  return (
-    pages.includes('audit_tools') ||
-    rights.includes('manage_iso') ||
-    rights.includes('edit_delete_report')
-  )
+  return isAdminRole(roleName) || normalized === 'auditor'
 }
 
 // ─── DB Helpers ───────────────────────────────────────────────────────────────
@@ -243,26 +199,12 @@ export async function getUsersByRoleNames(roleNames = []) {
     .filter((role) => normalizedRoleNames.includes(String(role.role_name || '').trim().toLowerCase()))
     .map((role) => role.id)
 
-  const { data: positions } = await supabase.from('positions').select('id, position_name')
-  const targetPositionIds = (positions || [])
-    .filter((pos) => normalizedRoleNames.includes(String(pos.position_name || '').trim().toLowerCase()))
-    .map((pos) => pos.id)
+  if (targetRoleIds.length === 0) return []
 
-  let query = supabase
+  const { data: users, error: usersError } = await supabase
     .from('users')
-    .select('id, user_name, first_name, last_name, auth_id, role_id, position_id')
-
-  if (targetRoleIds.length > 0 && targetPositionIds.length > 0) {
-    query = query.or(`role_id.in.(${targetRoleIds.join(',')}),position_id.in.(${targetPositionIds.join(',')})`)
-  } else if (targetRoleIds.length > 0) {
-    query = query.in('role_id', targetRoleIds)
-  } else if (targetPositionIds.length > 0) {
-    query = query.in('position_id', targetPositionIds)
-  } else {
-    return []
-  }
-
-  const { data: users, error: usersError } = await query
+    .select('id, user_name, first_name, last_name, auth_id, role_id')
+    .in('role_id', targetRoleIds)
   if (usersError) throw usersError
 
   return users || []
@@ -319,14 +261,14 @@ export async function createNotificationsForRoles({ roleNames = [], title, messa
 export async function createNotificationsForRolesAndDepartment({ globalRoleNames = [], departmentRoleNames = [], departmentId, title, message, type = 'info', reportId = null }) {
   const globalUsers = await getUsersByRoleNames(globalRoleNames)
   let deptUsers = []
-  
+
   if (departmentRoleNames.length > 0 && departmentId) {
     const roleUsers = await getUsersByRoleNames(departmentRoleNames)
     const { data: deptUserRows } = await supabase
       .from('users')
       .select('id')
       .eq('department_id', departmentId)
-    
+
     const deptUserIds = new Set((deptUserRows || []).map(u => u.id))
     deptUsers = roleUsers.filter(u => deptUserIds.has(u.id))
   }
@@ -436,29 +378,21 @@ export async function buildEnrichedReports(reports) {
   if (reportList.length === 0) return []
 
   const { userById, roleById, departmentById } = await getReporterMaps(reportList)
-
   const locationIds = [...new Set(reportList.map((r) => r.location_id).filter(Boolean))]
   const productTypeIds = [...new Set(reportList.map((r) => r.product_type_id).filter(Boolean))]
-  const issueTypeIds = [...new Set(reportList.map((r) => r.issue_type_id).filter(Boolean))]
-
-  const [locationsResult, productTypesResult, issueTypesResult] = await Promise.all([
+  const [locationsResult, productTypesResult] = await Promise.all([
     locationIds.length > 0
       ? supabase.from('locations').select('id, location_name').in('id', locationIds)
       : Promise.resolve({ data: [], error: null }),
     productTypeIds.length > 0
-      ? supabase.from('product_types').select('id, product_name, product_type_name').in('id', productTypeIds)
-      : Promise.resolve({ data: [], error: null }),
-    issueTypeIds.length > 0
-      ? supabase.from('issue_types').select('id, issue_type_name').in('id', issueTypeIds)
+      ? supabase.from('product_types').select('id, product_name').in('id', productTypeIds)
       : Promise.resolve({ data: [], error: null }),
   ])
   if (locationsResult.error) throw locationsResult.error
   if (productTypesResult.error) throw productTypesResult.error
-  if (issueTypesResult.error) throw issueTypesResult.error
 
   const locationById = new Map((locationsResult.data || []).map((l) => [String(l.id), l.location_name]))
-  const productTypeById = new Map((productTypesResult.data || []).map((p) => [String(p.id), p.product_name || p.product_type_name]))
-  const issueTypeById = new Map((issueTypesResult.data || []).map((i) => [String(i.id), i.issue_type_name]))
+  const productTypeById = new Map((productTypesResult.data || []).map((p) => [String(p.id), p.product_name]))
 
   const pathsToSign = new Set()
   reportList.forEach((report) => {
@@ -515,10 +449,6 @@ export async function buildEnrichedReports(reports) {
       ? report.investigation_evidence_files.map(resolveUrl)
       : []
 
-    const resolvedIssueName = report.issue_type_id
-      ? issueTypeById.get(String(report.issue_type_id)) || null
-      : null
-
     return {
       ...report,
       reporter_full_name: reporterFullName,
@@ -530,8 +460,6 @@ export async function buildEnrichedReports(reports) {
       product_type_name: report.product_type_id
         ? productTypeById.get(String(report.product_type_id)) || null
         : report.product_type || null,
-      issue_type_name: resolvedIssueName,
-      issue_type: resolvedIssueName,
       evidence_url: resolveUrl(report.evidence_url),
       evidence_files: signedEvidenceFiles,
       investigation_evidence_url: resolveUrl(report.investigation_evidence_url),
@@ -587,70 +515,6 @@ export async function resolveCatalogEntry({ table, idColumn, nameColumn, rawId, 
 
 // ─── Core NCR Business Operations ────────────────────────────────────────────
 
-let isCheckingVerificationDates = false
-let lastVerificationDateCheckAt = 0
-const VERIFICATION_CHECK_COOLDOWN_MS = 5 * 60 * 1000
-
-/**
- * Checks for closed NCR reports whose verification_date has arrived without a preventive_rating,
- * guarded by an in-memory mutex and cooldown so concurrent GET /api/ncr calls never trigger duplicate email bursts.
- */
-export async function checkDueVerificationDates() {
-  const now = Date.now()
-  if (isCheckingVerificationDates || now - lastVerificationDateCheckAt < VERIFICATION_CHECK_COOLDOWN_MS) {
-    return
-  }
-  isCheckingVerificationDates = true
-  lastVerificationDateCheckAt = now
-
-  try {
-    const todayStr = getLocalDateString()
-    const { data: dueReports } = await supabase
-      .from('ncr_reports')
-      .select('id, reference_no, verification_date, status, assigned_to')
-      .eq('status', REPORT_STATUS.CLOSED)
-      .lte('verification_date', todayStr)
-      .is('preventive_rating', null)
-
-    if (dueReports && dueReports.length > 0) {
-      for (const report of dueReports) {
-        const notifTitle = `Verification Date Up: ${report.reference_no}`
-        const notifMessage = `The verification date (${report.verification_date}) for report ${report.reference_no} has been reached. Please submit the Preventive Action rating.`
-
-        const { data: existingNotif } = await supabase
-          .from('notifications')
-          .select('id')
-          .eq('report_id', report.id)
-          .eq('title', notifTitle)
-          .limit(1)
-
-        if (!existingNotif || existingNotif.length === 0) {
-          if (report.assigned_to) {
-            await createNotification({
-              title: notifTitle,
-              message: notifMessage,
-              type: 'warning',
-              reportId: report.id,
-              userId: report.assigned_to,
-            })
-          }
-          await createNotificationsForRoles({
-            roleNames: ['admin', 'qa officer'],
-            title: notifTitle,
-            message: notifMessage,
-            type: 'warning',
-            reportId: report.id,
-          })
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('Failed to process verification date notifications:', err.message)
-  } finally {
-    isCheckingVerificationDates = false
-  }
-}
-
 /**
  * Fetches NCR reports filtered by scope and enriches them with related data.
  * @param {'open'|'investigated'|'closed'|'all'} [scope='open'] - The scope of reports to fetch.
@@ -658,7 +522,52 @@ export async function checkDueVerificationDates() {
  * @returns {Promise<Object[]>} Array of enriched report objects.
  */
 export async function fetchReports(scope = 'open', actorAuthId = null) {
-  checkDueVerificationDates().catch(() => {})
+  Promise.resolve().then(async () => {
+    try {
+      const todayStr = getLocalDateString()
+      const { data: dueReports } = await supabase
+        .from('ncr_reports')
+        .select('id, reference_no, verification_date, status, assigned_to')
+        .eq('status', REPORT_STATUS.CLOSED)
+        .lte('verification_date', todayStr)
+        .is('preventive_rating', null)
+
+      if (dueReports && dueReports.length > 0) {
+        for (const report of dueReports) {
+          const notifTitle = `Verification Date Up: ${report.reference_no}`
+          const notifMessage = `The verification date (${report.verification_date}) for report ${report.reference_no} has been reached. Please submit the Preventive Action rating.`
+
+          const { data: existingNotif } = await supabase
+            .from('notifications')
+            .select('id')
+            .eq('report_id', report.id)
+            .eq('title', notifTitle)
+            .limit(1)
+
+          if (!existingNotif || existingNotif.length === 0) {
+            if (report.assigned_to) {
+              await createNotification({
+                title: notifTitle,
+                message: notifMessage,
+                type: 'warning',
+                reportId: report.id,
+                userId: report.assigned_to,
+              })
+            }
+            await createNotificationsForRoles({
+              roleNames: ['admin', 'qa officer'],
+              title: notifTitle,
+              message: notifMessage,
+              type: 'warning',
+              reportId: report.id,
+            })
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to process verification date notifications:', err.message)
+    }
+  })
 
   let query = supabase.from('ncr_reports').select('*')
 
@@ -718,14 +627,16 @@ export async function submitNcrMultipart({ body, files, reportedByAuthId }) {
     throw err
   }
 
-  const year = new Date().getFullYear()
   const { data: records, error: latestError } = await supabase
     .from('ncr_reports')
     .select('reference_no')
-    .ilike('reference_no', `NCR-${year}-%`)
+    .ilike('reference_no', 'NCR-%')
+    .order('reference_no', { ascending: false })
+    .limit(50)
 
   if (latestError) throw new Error(`Database error getting latest NCR ref: ${latestError.message}`)
-  const referenceNo = generateNextNcrReferenceNo(records || [])
+  const latestNumeric = (records || []).find(r => /^NCR-\d{4}-\d{3}$/i.test(r.reference_no))
+  const referenceNo = generateNextNcrReferenceNo(latestNumeric?.reference_no)
 
   const normalizedSeverity = String(severity || '').trim().toLowerCase()
   const status = (normalizedSeverity === 'critical' || normalizedSeverity === 'high')
@@ -840,7 +751,16 @@ export async function createNcrReport({ body, reportedByAuthId }) {
   if (!reporter) throw Object.assign(new Error('Reporter profile not found.'), { status: 404 })
 
   const year = new Date().getFullYear()
-  let referenceNo = await fetchNextNcrReferenceNo(year)
+  const { data: records, error: latestError } = await supabase
+    .from('ncr_reports')
+    .select('reference_no')
+    .ilike('reference_no', `NCR-${year}-%`)
+    .order('reference_no', { ascending: false })
+    .limit(50)
+  if (latestError) throw latestError
+
+  const latestNumeric = (records || []).find(r => /^NCR-\d{4}-\d{3,}$/i.test(r.reference_no))
+  const referenceNo = `NCR-${year}-${String(buildReferenceNumber(latestNumeric?.reference_no) + 1).padStart(4, '0')}`
 
   const { id: resolvedLocationId, name: resolvedLocationName } = await resolveCatalogEntry({
     table: 'locations', idColumn: 'id', nameColumn: 'location_name',
@@ -866,40 +786,25 @@ export async function createNcrReport({ body, reportedByAuthId }) {
     throw Object.assign(new Error('Location and product type are required.'), { status: 400 })
   }
 
-  let data = null
-  let lastInsertError = null
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    if (attempt > 1) {
-      referenceNo = await fetchNextNcrReferenceNo(year)
-    }
-    const payload = {
-      reference_no: referenceNo,
-      reported_by: reporter.id,
-      status: REPORT_STATUS.OPEN,
-      issue_type_id: resolvedIssueTypeId,
-      occurrence_date: occurrence_date || getLocalDateString(),
-      product_type_id: resolvedProductTypeId,
-      batch_number,
-      complaint_location: resolvedLocationName,
-      location_id: resolvedLocationId,
-      severity: normalizeSeverityValue(severity),
-      department_id: normalizeId(department_id),
-      description,
-      evidence_url,
-      clause_id: clause_id || null,
-      site_id: reporter.site_id || null,
-    }
-
-    const res = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()
-    if (!res.error) {
-      data = res.data
-      lastInsertError = null
-      break
-    }
-    lastInsertError = res.error
-    if (res.error.code !== '23505') break
+  const payload = {
+    reference_no: referenceNo,
+    reported_by: reporter.id,
+    status: REPORT_STATUS.OPEN,
+    issue_type_id: resolvedIssueTypeId,
+    occurrence_date: occurrence_date || getLocalDateString(),
+    product_type_id: resolvedProductTypeId,
+    batch_number,
+    complaint_location: resolvedLocationName,
+    location_id: resolvedLocationId,
+    severity: normalizeSeverityValue(severity),
+    department_id: normalizeId(department_id),
+    description,
+    evidence_url,
+    site_id: reporter.site_id || null,
   }
-  if (lastInsertError) throw lastInsertError
+
+  const { data, error } = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()
+  if (error) throw error
 
   if (data && data.id) {
     analyzeAndClusterReportInBackground(data.id).catch(err => {
@@ -942,7 +847,16 @@ export async function createNcrReportWithUpload({ body, files, reportedByAuthId 
   if (!reporter) throw Object.assign(new Error('Reporter profile not found.'), { status: 404 })
 
   const year = new Date().getFullYear()
-  let referenceNo = await fetchNextNcrReferenceNo(year)
+  const { data: records, error: latestError } = await supabase
+    .from('ncr_reports')
+    .select('reference_no')
+    .ilike('reference_no', `NCR-${year}-%`)
+    .order('reference_no', { ascending: false })
+    .limit(50)
+  if (latestError) throw latestError
+
+  const latestNumeric = (records || []).find(r => /^NCR-\d{4}-\d{3,}$/i.test(r.reference_no))
+  const referenceNo = `NCR-${year}-${String(buildReferenceNumber(latestNumeric?.reference_no) + 1).padStart(4, '0')}`
 
   const { id: resolvedLocationId, name: resolvedLocationName } = await resolveCatalogEntry({
     table: 'locations', idColumn: 'id', nameColumn: 'location_name',
@@ -973,7 +887,7 @@ export async function createNcrReportWithUpload({ body, files, reportedByAuthId 
     if (!hasServiceRole) {
       throw Object.assign(new Error('Service role key is required for uploads.'), { status: 500 })
     }
-    
+
     for (const file of files) {
       const orig = file.originalname || `${referenceNo}`
       const ext = (orig.match(/\.([0-9a-zA-Z]+)$/) || [])[1] || ''
@@ -1003,46 +917,25 @@ export async function createNcrReportWithUpload({ body, files, reportedByAuthId 
     }
   }
 
-  let data = null
-  let lastInsertError = null
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    if (attempt > 1) {
-      referenceNo = await fetchNextNcrReferenceNo(year)
-    }
-    const payload = {
-      reference_no: referenceNo,
-      reported_by: reporter.id,
-      status: REPORT_STATUS.OPEN,
-      issue_type_id: resolvedIssueTypeId,
-      occurrence_date: occurrence_date || getLocalDateString(),
-      product_type_id: resolvedProductTypeId,
-      batch_number,
-      complaint_location: resolvedLocationName,
-      location_id: resolvedLocationId,
-      severity: normalizeSeverityValue(severity),
-      department_id: normalizeId(department_id),
-      description,
-      evidence_files: evidenceUrls.length > 0 ? evidenceUrls : [],
-      clause_id: clause_id || null,
-      site_id: reporter.site_id || null,
-    }
-
-    const res = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()
-    if (!res.error) {
-      data = res.data
-      lastInsertError = null
-      break
-    }
-    lastInsertError = res.error
-    if (res.error.code !== '23505') break
+  const payload = {
+    reference_no: referenceNo,
+    reported_by: reporter.id,
+    status: REPORT_STATUS.OPEN,
+    issue_type_id: resolvedIssueTypeId,
+    occurrence_date: occurrence_date || getLocalDateString(),
+    product_type_id: resolvedProductTypeId,
+    batch_number,
+    complaint_location: resolvedLocationName,
+    location_id: resolvedLocationId,
+    severity: normalizeSeverityValue(severity),
+    department_id: normalizeId(department_id),
+    description,
+    evidence_files: evidenceUrls.length > 0 ? evidenceUrls : [],
+    site_id: reporter.site_id || null,
   }
-  if (lastInsertError) throw lastInsertError
 
-  if (data && data.id) {
-    analyzeAndClusterReportInBackground(data.id).catch(err => {
-      console.error('Background trend clustering failed:', err)
-    })
-  }
+  const { data, error } = await supabase.from('ncr_reports').insert(payload).select('*').maybeSingle()
+  if (error) throw error
 
   return { data, referenceNo, reporter }
 }
@@ -1054,123 +947,24 @@ export async function createNcrReportWithUpload({ body, files, reportedByAuthId 
  * @param {Object} params.body - The request body containing updated data.
  * @returns {Promise<Object>} The updated report data.
  */
-async function resolveCallerContext(authId) {
-  if (!authId) return null
-  const { data: profile, error } = await supabase
-    .from('users')
-    .select('id, auth_id, role_id, position_id, department_id, site_id, status')
-    .eq('auth_id', authId)
-    .maybeSingle()
-
-  if (error || !profile) return null
-
-  let resolvedRoleId = profile.role_id || null
-  if (!resolvedRoleId && profile.position_id) {
-    const { data: posData } = await supabase
-      .from('positions')
-      .select('role_id')
-      .eq('id', profile.position_id)
-      .maybeSingle()
-    if (posData?.role_id) resolvedRoleId = posData.role_id
-  }
-
-  let roleName = ''
-  let permissions = null
-  if (resolvedRoleId) {
-    const { data: roleData } = await supabase
-      .from('roles')
-      .select('role_name, permissions')
-      .eq('id', resolvedRoleId)
-      .maybeSingle()
-    roleName = roleData?.role_name || ''
-    permissions = roleData?.permissions || null
-  }
-
-  const rights = Array.isArray(permissions?.rights) ? permissions.rights : []
-  const pages = Array.isArray(permissions?.pages) ? permissions.pages : []
-
-  return {
-    profile,
-    roleName,
-    normalizedRole: String(roleName).trim().toLowerCase(),
-    rights,
-    pages,
-  }
-}
-
-/**
- * Applies a partial update to an NCR report record.
- * @param {Object} params - Update parameters.
- * @param {number} params.id - The report ID.
- * @param {Object} params.body - The request body containing updated data.
- * @param {string} [params.actorAuthId] - The auth ID of the caller.
- * @returns {Promise<Object>} The updated report data.
- */
-export async function updateNcrReport({ id, body, actorAuthId }) {
+export async function updateNcrReport({ id, body }) {
   const { data: existing, error: existingError } = await supabase
     .from('ncr_reports').select('*').eq('id', id).maybeSingle()
   if (existingError) throw existingError
   if (!existing) throw Object.assign(new Error('NCR report not found.'), { status: 404 })
 
-  if (actorAuthId) {
-    const caller = await resolveCallerContext(actorAuthId)
-    if (!caller) {
-      throw Object.assign(new Error('Access forbidden. User profile not found.'), { status: 403 })
-    }
-    const { profile, roleName, normalizedRole, rights } = caller
-    if (!isAdminRole(roleName) && profile.site_id && existing.site_id && String(profile.site_id) !== String(existing.site_id)) {
-      throw Object.assign(new Error('Access forbidden. You cannot modify reports belonging to another site.'), { status: 403 })
-    }
-    const isManagerOfDept =
-      (['department manager', 'manager', 'team leader'].includes(normalizedRole) || rights.includes('accept_decline_report')) &&
-      String(existing.department_id) === String(profile.department_id)
-    const isAssigned = existing.assigned_to != null && Number(existing.assigned_to) === Number(profile.id)
-    const isReporter = existing.reported_by != null && Number(existing.reported_by) === Number(profile.id)
-    const isAuthorized =
-      isAdminOrQA(roleName) ||
-      rights.includes('edit_delete_report') ||
-      isManagerOfDept ||
-      isAssigned ||
-      isReporter
-
-    if (!isAuthorized) {
-      throw Object.assign(new Error('Access forbidden. You do not have permission to update this report.'), { status: 403 })
-    }
+  if (String(existing.status || '').trim().toUpperCase() === REPORT_STATUS.CLOSED) {
+    throw Object.assign(new Error('Closed reports cannot be updated.'), { status: 400 })
   }
 
   const {
     product_type, product_type_id, batch_number, complaint_location, location_id,
-    severity, department_id, description, car_filed, qddr_filed, evidence_url,
+    severity, department_id, description, car_filed, qddr_filed, evidence_url, status,
     issue_type, issue_type_id, preventive_rating, resolution_details, clause_id,
   } = body
 
-  const isClosed = String(existing.status || '').trim().toUpperCase() === REPORT_STATUS.CLOSED
-  const hasCoreFieldModification =
-    product_type !== undefined ||
-    product_type_id !== undefined ||
-    batch_number !== undefined ||
-    complaint_location !== undefined ||
-    location_id !== undefined ||
-    severity !== undefined ||
-    department_id !== undefined ||
-    description !== undefined ||
-    evidence_url !== undefined ||
-    issue_type !== undefined ||
-    issue_type_id !== undefined
-
-  const hasPostClosureFieldUpdate =
-    preventive_rating !== undefined ||
-    resolution_details !== undefined ||
-    car_filed !== undefined ||
-    qddr_filed !== undefined ||
-    clause_id !== undefined
-
-  if (isClosed && (hasCoreFieldModification || !hasPostClosureFieldUpdate)) {
-    throw Object.assign(new Error('Closed reports cannot be updated.'), { status: 400 })
-  }
-
   let resolvedLocation = null
-  if (!isClosed && (location_id !== undefined || complaint_location !== undefined)) {
+  if (location_id !== undefined || complaint_location !== undefined) {
     resolvedLocation = await resolveCatalogEntry({
       table: 'locations', idColumn: 'id', nameColumn: 'location_name',
       rawId: location_id, rawName: complaint_location,
@@ -1178,7 +972,7 @@ export async function updateNcrReport({ id, body, actorAuthId }) {
   }
 
   let resolvedProductType = null
-  if (!isClosed && (product_type_id !== undefined || product_type !== undefined)) {
+  if (product_type_id !== undefined || product_type !== undefined) {
     resolvedProductType = await resolveCatalogEntry({
       table: 'product_types', idColumn: 'id', nameColumn: 'product_name',
       rawId: product_type_id, rawName: product_type,
@@ -1186,7 +980,7 @@ export async function updateNcrReport({ id, body, actorAuthId }) {
   }
 
   let resolvedIssueType = null
-  if (!isClosed && (issue_type_id !== undefined || issue_type !== undefined)) {
+  if (issue_type_id !== undefined || issue_type !== undefined) {
     resolvedIssueType = await resolveCatalogEntry({
       table: 'issue_types', idColumn: 'id', nameColumn: 'issue_type_name',
       rawId: issue_type_id, rawName: issue_type,
@@ -1194,18 +988,17 @@ export async function updateNcrReport({ id, body, actorAuthId }) {
   }
 
   const updates = {}
-  if (!isClosed) {
-    if (resolvedProductType) { updates.product_type_id = resolvedProductType.id }
-    if (batch_number !== undefined) updates.batch_number = batch_number
-    if (resolvedLocation) { updates.complaint_location = resolvedLocation.name; updates.location_id = resolvedLocation.id }
-    if (resolvedIssueType) { updates.issue_type_id = resolvedIssueType.id }
-    if (severity !== undefined) updates.severity = normalizeSeverityValue(severity)
-    if (department_id !== undefined) updates.department_id = normalizeId(department_id)
-    if (description !== undefined) updates.description = description
-    if (evidence_url !== undefined) updates.evidence_url = evidence_url
-  }
+  if (resolvedProductType) { updates.product_type = resolvedProductType.name; updates.product_type_id = resolvedProductType.id }
+  if (batch_number !== undefined) updates.batch_number = batch_number
+  if (resolvedLocation) { updates.complaint_location = resolvedLocation.name; updates.location_id = resolvedLocation.id }
+  if (resolvedIssueType) { updates.issue_type = resolvedIssueType.name; updates.issue_type_id = resolvedIssueType.id }
+  if (severity !== undefined) updates.severity = normalizeSeverityValue(severity)
+  if (department_id !== undefined) updates.department_id = normalizeId(department_id)
+  if (description !== undefined) updates.description = description
   if (car_filed !== undefined) updates.car_filed = Boolean(car_filed)
   if (qddr_filed !== undefined) updates.qddr_filed = Boolean(qddr_filed)
+  if (evidence_url !== undefined) updates.evidence_url = evidence_url
+  if (status !== undefined) updates.status = status
   if (preventive_rating !== undefined) updates.preventive_rating = normalizeText(preventive_rating) || null
   if (resolution_details !== undefined) updates.resolution_details = normalizeText(resolution_details) || null
   if (clause_id !== undefined) updates.clause_id = clause_id ? String(clause_id).trim() : null
@@ -1223,18 +1016,17 @@ export async function updateNcrReport({ id, body, actorAuthId }) {
  * @param {number} params.id - The report ID.
  * @param {Object} params.body - The request body containing investigation data.
  * @param {Object[]} params.files - Array of uploaded files.
- * @param {string} [params.actorAuthId] - The auth ID of the caller.
  * @returns {Promise<Object>} The updated report data and previous existing record.
  */
-export async function updateNcrInvestigation({ id, body, files, actorAuthId }) {
+export async function updateNcrInvestigation({ id, body, files }) {
   const {
     investigation_details, resolution_details, corrective_action,
-    verification_date, issue_type, issue_type_id, preventive_rating,
+    verification_date, issue_type, preventive_rating,
   } = body
 
   const { data: existing, error: existingError } = await supabase
     .from('ncr_reports')
-    .select('id, reference_no, reported_by, assigned_to, department_id, site_id, investigation_evidence_files, status')
+    .select('id, reference_no, investigation_evidence_files, status')
     .eq('id', id)
     .maybeSingle()
   if (existingError) throw existingError
@@ -1242,34 +1034,6 @@ export async function updateNcrInvestigation({ id, body, files, actorAuthId }) {
 
   if (String(existing.status || '').trim().toUpperCase() === REPORT_STATUS.CLOSED) {
     throw Object.assign(new Error('Closed reports cannot be updated.'), { status: 400 })
-  }
-
-  if (actorAuthId) {
-    const caller = await resolveCallerContext(actorAuthId)
-    if (!caller) {
-      throw Object.assign(new Error('Access forbidden. User profile not found.'), { status: 403 })
-    }
-    const { profile, roleName, normalizedRole, rights } = caller
-    if (!isAdminRole(roleName) && profile.site_id && existing.site_id && String(profile.site_id) !== String(existing.site_id)) {
-      throw Object.assign(new Error('Access forbidden. You cannot investigate reports belonging to another site.'), { status: 403 })
-    }
-    const isAssigned = existing.assigned_to != null && Number(existing.assigned_to) === Number(profile.id)
-    const isReporter = existing.reported_by != null && Number(existing.reported_by) === Number(profile.id)
-    const isManagerOfDept =
-      ['department manager', 'manager', 'team leader'].includes(normalizedRole) &&
-      String(existing.department_id) === String(profile.department_id)
-    const isAuthorized =
-      isAdminOrQA(roleName) ||
-      rights.includes('edit_delete_report') ||
-      rights.includes('accept_decline_report') ||
-      rights.includes('assign_report') ||
-      isManagerOfDept ||
-      isAssigned ||
-      isReporter
-
-    if (!isAuthorized) {
-      throw Object.assign(new Error('Access forbidden. You are not authorized to submit investigation details for this report.'), { status: 403 })
-    }
   }
 
   let evidenceUrls = Array.isArray(existing.investigation_evidence_files) ? [...existing.investigation_evidence_files] : []
@@ -1283,7 +1047,7 @@ export async function updateNcrInvestigation({ id, body, files, actorAuthId }) {
       const { error: uploadError } = await supabase.storage
         .from('ncr-evidence')
         .upload(filename, file.buffer, { contentType: file.mimetype, upsert: true })
-      
+
       if (uploadError) throw new Error(uploadError.message || 'Failed to upload investigation evidence.')
 
       const { data: publicData } = await supabase.storage.from('ncr-evidence').getPublicUrl(filename)
@@ -1306,13 +1070,7 @@ export async function updateNcrInvestigation({ id, body, files, actorAuthId }) {
     updated_at: new Date().toISOString(),
   }
 
-  if (issue_type || issue_type_id) {
-    const resolved = await resolveCatalogEntry({
-      table: 'issue_types', idColumn: 'id', nameColumn: 'issue_type_name',
-      rawId: issue_type_id, rawName: issue_type,
-    })
-    if (resolved?.id) updates.issue_type_id = resolved.id
-  }
+  if (issue_type) updates.issue_type = issue_type
 
   const { data, error } = await supabase
     .from('ncr_reports').update(updates).eq('id', id).select('*').maybeSingle()
@@ -1333,18 +1091,14 @@ export async function updateNcrInvestigation({ id, body, files, actorAuthId }) {
 export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
   const { data: report, error: reportError } = await supabase
     .from('ncr_reports')
-    .select('id, reference_no, reported_by, assigned_to, status, created_at, department_id, site_id')
+    .select('id, reference_no, reported_by, status, created_at, department_id')
     .eq('id', id)
     .maybeSingle()
   if (reportError) throw reportError
   if (!report) throw Object.assign(new Error('NCR report not found.'), { status: 404 })
 
-  if (String(report.status || '').trim().toUpperCase() === REPORT_STATUS.CLOSED) {
-    throw Object.assign(new Error('Closed reports cannot be reviewed again.'), { status: 400 })
-  }
-
-  let roleName = currentUser?.role_name || ''
-  if (!roleName && currentUser?.role_id) {
+  let roleName = ''
+  if (currentUser?.role_id) {
     const { data: roleData } = await supabase
       .from('roles')
       .select('role_name')
@@ -1354,12 +1108,8 @@ export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
   }
   const normalizedRole = String(roleName).trim().toLowerCase()
 
-  if (!isAdminRole(roleName) && currentUser?.site_id && report.site_id && String(currentUser.site_id) !== String(report.site_id)) {
-    throw Object.assign(new Error('You can only review reports belonging to your assigned site.'), { status: 403 })
-  }
-
   if (normalizedRole === 'department manager' || normalizedRole === 'manager' || normalizedRole === 'team leader') {
-    if (String(report.department_id) !== String(currentUser?.department_id)) {
+    if (String(report.department_id) !== String(currentUser.department_id)) {
       throw Object.assign(new Error('Managers can only approve reports that belong to their own department.'), { status: 403 })
     }
   }
@@ -1392,7 +1142,6 @@ export async function reviewNcrApproval({ id, decision, reason, currentUser }) {
       resolution_time: null,
       verification_date: null,
       investigation_evidence_url: null,
-      investigation_evidence_files: [],
     }
     approvalUpdates = {
       status: nextStatus,
@@ -1423,41 +1172,44 @@ export async function deleteNcrReport(id, currentUserAuthId) {
     throw Object.assign(new Error('Unauthorized. Missing user authentication context.'), { status: 401 })
   }
 
-  // 1. Fetch caller context
-  const caller = await resolveCallerContext(currentUserAuthId)
-  if (!caller) {
+  // 1. Fetch caller profile
+  const { data: profile, error: profileErr } = await supabase
+    .from('users')
+    .select('id, role_id')
+    .eq('auth_id', currentUserAuthId)
+    .maybeSingle()
+
+  if (profileErr || !profile) {
     throw Object.assign(new Error('Access forbidden. User profile not found.'), { status: 403 })
   }
-  const { profile, roleName, rights } = caller
 
-  // 2. Fetch target report
+  // 2. Fetch role name
+  let roleName = ''
+  if (profile.role_id) {
+    const { data: roleData } = await supabase
+      .from('roles')
+      .select('role_name')
+      .eq('id', profile.role_id)
+      .maybeSingle()
+    roleName = roleData?.role_name || ''
+  }
+  const normalizedRole = String(roleName).trim().toLowerCase()
+
+  // 3. Fetch target report
   const { data: existing, error: existingError } = await supabase
     .from('ncr_reports').select('*').eq('id', id).maybeSingle()
   if (existingError) throw existingError
   if (!existing) throw Object.assign(new Error('NCR report not found.'), { status: 404 })
 
-  if (!isAdminRole(roleName) && profile.site_id && existing.site_id && String(profile.site_id) !== String(existing.site_id)) {
-    throw Object.assign(new Error('Access forbidden. You cannot delete reports belonging to another site.'), { status: 403 })
-  }
-
-  // 3. Assert permissions matching frontend canDeleteReport rules
-  const hasPrivilegedDelete = isAdminOrQA(roleName) || rights.includes('edit_delete_report')
-  const isReporter = Number(existing.reported_by) === Number(profile.id)
-  const isUninvestigatedOpen =
-    String(existing.status || '').trim().toUpperCase() !== REPORT_STATUS.CLOSED &&
-    !existing.assigned_to &&
-    !existing.investigation_details
-
-  const isAuthorized = hasPrivilegedDelete || (isReporter && isUninvestigatedOpen)
+  // 4. Assert permissions
+  const isAuthorized = ['admin', 'qa officer'].includes(normalizedRole) ||
+    Number(existing.reported_by) === Number(profile.id)
 
   if (!isAuthorized) {
-    throw Object.assign(
-      new Error('Access forbidden. Reporters can only delete open, unassigned, and uninvestigated reports.'),
-      { status: 403 }
-    )
+    throw Object.assign(new Error('Access forbidden. You do not have permission to delete this report.'), { status: 403 })
   }
 
-  // 4. Delete
+  // 5. Delete
   const { error } = await supabase.from('ncr_reports').delete().eq('id', id)
   if (error) throw error
 
@@ -1481,21 +1233,14 @@ export async function assignReportToEmployee({ reportId, assignedToId, currentUs
   if (!currentUserAuthId) throw new Error('Missing x-user-auth-id header.')
 
   const { data: currentUser, error: currentUserError } = await supabase
-    .from('users').select('id, user_name, role_id, roles(role_name)').eq('auth_id', currentUserAuthId).maybeSingle()
+    .from('users').select('id, user_name').eq('auth_id', currentUserAuthId).maybeSingle()
   if (currentUserError) throw currentUserError
   if (!currentUser) throw new Error('Current user profile not found.')
 
   const { data: assignee, error: assigneeError } = await supabase
-    .from('users').select('id, user_name, status, team_leader_id').eq('id', normalizedAssignedToId).maybeSingle()
+    .from('users').select('id, user_name').eq('id', normalizedAssignedToId).maybeSingle()
   if (assigneeError) throw assigneeError
   if (!assignee) throw new Error('Assigned employee not found.')
-  if (String(assignee.status || 'ACTIVE').toUpperCase() !== 'ACTIVE') {
-    throw new Error('Cannot assign report to an inactive or deactivated employee.')
-  }
-  const assignerRole = String(currentUser.roles?.role_name || '').trim().toLowerCase()
-  if (assignerRole === 'team leader' && Number(assignee.team_leader_id) !== Number(currentUser.id)) {
-    throw new Error('Team Leaders can only assign reports to active employees under their own team.')
-  }
 
   const { data: report, error: reportError } = await supabase
     .from('ncr_reports')
@@ -1556,79 +1301,6 @@ export async function assignReportToEmployee({ reportId, assignedToId, currentUs
   return { report: updatedReport || null, assignedTo: assignee }
 }
 
-// ncr_reports stores FK ids; case_repository stores readable names.
-async function resolveCaseIssueTypeName(issueTypeId) {
-  if (!issueTypeId) return 'ncr'
-  const { data } = await supabase.from('issue_types').select('issue_type_name').eq('id', issueTypeId).maybeSingle()
-  return data?.issue_type_name || 'ncr'
-}
-
-async function resolveCaseProductTypeName(productTypeId) {
-  if (!productTypeId) return null
-  const { data } = await supabase.from('product_types').select('*').eq('id', productTypeId).maybeSingle()
-  return data?.product_name || data?.product_type_name || null
-}
-
-/**
- * Computes the 40/20/40 weighted effectiveness score across rater buckets:
- * Bucket A (40%): Admin / Super Admin / QA Officer
- * Bucket B (20%): Department Manager / Manager
- * Bucket C (40%): Staff / Other roles
- */
-export async function computeWeightedRatingScore(allRatings) {
-  if (!Array.isArray(allRatings) || allRatings.length === 0) return 0
-
-  const userIds = [...new Set(allRatings.map((r) => r.rated_by).filter(Boolean))]
-  const raterRoleMap = {}
-
-  if (userIds.length > 0) {
-    const { data: ratersRoles } = await supabase
-      .from('users')
-      .select('id, role_id, position_id, role:roles(role_name)')
-      .in('id', userIds)
-
-    if (Array.isArray(ratersRoles)) {
-      for (const user of ratersRoles) {
-        const roleObj = Array.isArray(user.role) ? user.role[0] : user.role
-        const roleName = String(roleObj?.role_name || '').trim()
-        raterRoleMap[user.id] = roleName
-      }
-    }
-  }
-
-  const bucketA = []
-  const bucketB = []
-  const bucketC = []
-
-  for (const r of allRatings) {
-    const role = raterRoleMap[r.rated_by] || 'staff'
-    const normalizedRole = String(role).trim().toLowerCase()
-    const val = Number(r.rating)
-    if (!Number.isFinite(val)) continue
-
-    if (isAdminOrQA(role)) {
-      bucketA.push(val)
-    } else if (normalizedRole === 'department manager' || normalizedRole === 'manager') {
-      bucketB.push(val)
-    } else {
-      bucketC.push(val)
-    }
-  }
-
-  const avgA = bucketA.length > 0 ? bucketA.reduce((a, b) => a + b, 0) / bucketA.length : 0
-  const avgB = bucketB.length > 0 ? bucketB.reduce((a, b) => a + b, 0) / bucketB.length : 0
-  const avgC = bucketC.length > 0 ? bucketC.reduce((a, b) => a + b, 0) / bucketC.length : 0
-
-  const weightA = bucketA.length > 0 ? 0.40 : 0
-  const weightB = bucketB.length > 0 ? 0.20 : 0
-  const weightC = bucketC.length > 0 ? 0.40 : 0
-  const totalWeight = weightA + weightB + weightC
-
-  if (totalWeight <= 0) return 0
-  const finalAvg = ((avgA * weightA) + (avgB * weightB) + (avgC * weightC)) / totalWeight
-  return Math.min(5, Math.max(0.5, finalAvg))
-}
-
 /**
  * Submits an effectiveness rating for a closed NCR report.
  * @param {Object} params - Rating parameters.
@@ -1643,7 +1315,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
 
   const { data: currentUser, error: currentUserError } = await supabase
     .from('users')
-    .select('id, user_name, department_id, role:roles(role_name, permissions)')
+    .select('id, user_name, department_id, role:roles(role_name)')
     .eq('auth_id', userAuthId)
     .maybeSingle()
   if (currentUserError) throw currentUserError
@@ -1651,7 +1323,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
 
   const { data: report, error: reportError } = await supabase
     .from('ncr_reports')
-    .select('id, reference_no, status, department_id, severity, issue_type_id, product_type_id, corrective_action, investigation_details, resolution_details, issue_types(issue_type_name), product_types(product_name)')
+    .select('id, reference_no, status, department_id, issue_type, investigation_details, resolution_details')
     .eq('id', normalizedReportId)
     .maybeSingle()
   if (reportError) throw reportError
@@ -1660,21 +1332,16 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
     throw Object.assign(new Error('Only closed reports can be rated.'), { status: 400 })
   }
 
-  const roleObj = Array.isArray(currentUser.role) ? currentUser.role[0] : currentUser.role
-  const userRole = roleObj?.role_name || ''
-  const userPermissions = roleObj?.permissions || null
-  const isPrivileged = isAdminOrQA(userRole, userPermissions) ||
-    (Array.isArray(userPermissions?.rights) && (userPermissions.rights.includes('verify_car') || userPermissions.rights.includes('accept_decline_report')))
-  if (!isPrivileged && String(report.department_id) !== String(currentUser.department_id)) {
+  const userRole = currentUser.role?.role_name || ''
+  const isPrivileged = isAdminOrAuditor(userRole)
+  if (!isPrivileged && report.department_id !== currentUser.department_id) {
     throw Object.assign(new Error('You can only rate reports from your own department.'), { status: 403 })
   }
-
-  const numericRating = Number(rating)
 
   const { data: ratingData, error: ratingError } = await supabase
     .from('ncr_report_ratings')
     .upsert(
-      { report_id: report.id, rated_by: currentUser.id, rating: numericRating },
+      { report_id: report.id, rated_by: currentUser.id, rating },
       { onConflict: 'report_id,rated_by' }
     )
     .select('*')
@@ -1687,64 +1354,75 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
     .eq('report_id', report.id)
 
   if (!allRatingsError && allRatings && allRatings.length > 0) {
-    const effectivenessScore = await computeWeightedRatingScore(allRatings)
+    const userIds = [...new Set(allRatings.map((r) => r.rated_by))]
+    const { data: ratersRoles } = await supabase
+      .from('users')
+      .select('id, role_id (name)')
+      .in('id', userIds)
+
+    const raterRoleMap = {}
+    if (ratersRoles) {
+      ratersRoles.forEach((user) => {
+        const roleName = String(user.role_id?.name || '').trim()
+        raterRoleMap[user.id] = roleName
+      })
+    }
+
+    const bucketA = []
+    const bucketB = []
+    const bucketC = []
+
+    allRatings.forEach((r) => {
+      const role = raterRoleMap[r.rated_by] || 'staff'
+      const val = Number(r.rating)
+
+      if (isAdminOrAuditor(role)) bucketA.push(val)
+      else if (String(role).toLowerCase() === 'department manager' || String(role).toLowerCase() === 'manager') bucketB.push(val)
+      else bucketC.push(val)
+    })
+
+    const avgA = bucketA.length > 0 ? bucketA.reduce((a, b) => a + b, 0) / bucketA.length : 0
+    const avgB = bucketB.length > 0 ? bucketB.reduce((a, b) => a + b, 0) / bucketB.length : 0
+    const avgC = bucketC.length > 0 ? bucketC.reduce((a, b) => a + b, 0) / bucketC.length : 0
+
+    let weightA = 0.40
+    let weightB = 0.20
+    let weightC = 0.40
+
+    if (bucketA.length === 0) { weightA = 0 }
+    if (bucketB.length === 0) { weightB = 0 }
+    if (bucketC.length === 0) { weightC = 0 }
+
+    const totalWeight = weightA + weightB + weightC
+
+    let finalAvg = 0
+    if (totalWeight > 0) {
+      finalAvg = ((avgA * weightA) + (avgB * weightB) + (avgC * weightC)) / totalWeight
+    }
+
+    const effectivenessScore = Math.min(5, Math.max(0.5, finalAvg))
 
     if (effectivenessScore >= 3.0) {
-      const resolvedIssueType =
-        report.issue_types?.issue_type_name ||
-        (await resolveCaseIssueTypeName(report.issue_type_id))
-      const resolvedProductType =
-        report.product_types?.product_name ||
-        (await resolveCaseProductTypeName(report.product_type_id))
-      const correctiveActionText = report.corrective_action || report.investigation_details || 'None provided'
-      const preventiveActionText = report.resolution_details || 'None provided'
-
-      let existingCase = null
-      const { data: byNcrId } = await supabase
+      const { data: existingCase, error: existingCaseError } = await supabase
         .from('case_repository')
         .select('id')
-        .eq('ncr_id', report.id)
+        .eq('corrective_action', report.investigation_details)
+        .eq('preventive_action', report.resolution_details)
         .maybeSingle()
-      existingCase = byNcrId
 
-      if (!existingCase) {
-        const { data: byActions } = await supabase
-          .from('case_repository')
-          .select('id')
-          .eq('corrective_action', correctiveActionText)
-          .eq('preventive_action', preventiveActionText)
-          .maybeSingle()
-        existingCase = byActions
-      }
-
-      if (!existingCase && (report.corrective_action || report.investigation_details)) {
+      if (!existingCase && !existingCaseError && (report.corrective_action || report.investigation_details)) {
         await supabase.from('case_repository').insert([{
-          ncr_id: report.id,
-          issue_type: resolvedIssueType,
-          corrective_action: correctiveActionText,
-          preventive_action: preventiveActionText,
+          issue_type: report.issue_type || 'ncr',
+          corrective_action: report.corrective_action || report.investigation_details || 'None provided',
+          preventive_action: report.resolution_details || 'None provided',
           effectiveness_score: effectivenessScore,
-          average_rating: effectivenessScore,
-          rating_count: allRatings.length,
           severity: report.severity || null,
           department_id: report.department_id || null,
-          product_type: resolvedProductType,
+          product_type: report.product_type || null,
           times_used: 1
         }])
       } else if (existingCase) {
-        await supabase.from('case_repository')
-          .update({
-            ncr_id: report.id,
-            issue_type: resolvedIssueType,
-            corrective_action: correctiveActionText,
-            preventive_action: preventiveActionText,
-            effectiveness_score: effectivenessScore,
-            average_rating: effectivenessScore,
-            rating_count: allRatings.length,
-            severity: report.severity || null,
-            department_id: report.department_id || null,
-            product_type: resolvedProductType,
-          })
+        await supabase.from('case_repository').update({ effectiveness_score: effectivenessScore })
           .eq('id', existingCase.id)
       }
     }
@@ -1755,7 +1433,7 @@ export async function submitReportRating({ reportId, rating, userAuthId }) {
       source: 'report_ratings',
       action: 'rate_report',
       userAuthId,
-      details: { report_id: report.id, rating: numericRating }
+      details: { report_id: report.id, rating }
     })
   } catch (err) {
     console.warn('Failed to audit rate_report:', err)
@@ -1788,47 +1466,37 @@ export async function getReportRatingsStats({ reportId, userAuthId }) {
     ? allRatings.find(r => String(r.rated_by) === String(currentUser.id))?.rating || null
     : null
 
+  let total = 0
+
   const validRatings = allRatings || []
-  const weightedAverage = validRatings.length > 0 ? await computeWeightedRatingScore(validRatings) : 0
+  for (const r of validRatings) {
+    total += Number(r.rating)
+  }
+
+  const average = validRatings.length > 0 ? (total / validRatings.length) : 0
 
   return {
-    average: Number(weightedAverage.toFixed(1)),
+    average: Number(average.toFixed(1)),
     count: validRatings.length,
     userRating
   }
 }
 
 /**
- * Fetches recurring issues that are linked to a trend cluster within the specified timeframe and site.
+ * Fetches recurring issues that are not linked to a trend cluster.
  * @param {number} [days=14] - The timeframe in days.
- * @param {string|null} [actorAuthId=null] - Optional auth_id of the requesting user for site scoping.
  * @returns {Promise<Object[][]>} Array of clustered reports.
  */
-export async function fetchRecurringUnlinkedIssues(days = 14, actorAuthId = null) {
-  const numericDays = Number(days) > 0 ? Number(days) : 14
-  const cutoff = new Date(Date.now() - numericDays * 24 * 60 * 60 * 1000)
-
-  let callerSiteId = null
-  if (actorAuthId) {
-    const caller = await resolveCallerContext(actorAuthId)
-    if (caller?.siteId && !isAdminRole(caller.roleName)) {
-      callerSiteId = caller.siteId
-    } else if (caller?.siteId) {
-      callerSiteId = caller.siteId
-    }
-  }
-
+export async function fetchRecurringUnlinkedIssues(days = 14) {
   const { data: trendClusters, error } = await supabase
     .from('trend_clusters')
     .select(`
       id,
       ai_summary,
-      updated_at,
       ncr_reports (
-        id, reference_no, description, created_at, status, site_id
+        id, reference_no, description, created_at, status
       )
     `)
-    .gte('updated_at', cutoff.toISOString())
     .order('updated_at', { ascending: false })
 
   if (error) {
@@ -1842,23 +1510,15 @@ export async function fetchRecurringUnlinkedIssues(days = 14, actorAuthId = null
 
   for (const cluster of trendClusters) {
     if (cluster.ncr_reports && cluster.ncr_reports.length > 1) {
-      const filteredReports = cluster.ncr_reports.filter(r => {
-        if (r.created_at && new Date(r.created_at) < cutoff) return false
-        if (callerSiteId && r.site_id && Number(r.site_id) !== Number(callerSiteId)) return false
-        return true
-      })
-
-      if (filteredReports.length > 1) {
-        const safeCluster = filteredReports.map(r => ({
-          id: r.id,
-          reference_no: r.reference_no,
-          description: r.description,
-          created_at: r.created_at,
-          status: r.status,
-          recurring_reason: cluster.ai_summary || 'Flagged as recurring issue.'
-        }))
-        clusters.push(safeCluster)
-      }
+      const safeCluster = cluster.ncr_reports.map(r => ({
+        id: r.id,
+        reference_no: r.reference_no,
+        description: r.description,
+        created_at: r.created_at,
+        status: r.status,
+        recurring_reason: cluster.ai_summary || 'Flagged as recurring issue.'
+      }))
+      clusters.push(safeCluster)
     }
   }
 

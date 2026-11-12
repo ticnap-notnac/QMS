@@ -265,6 +265,14 @@ export async function createCarReport({ body, reportedByAuthId }) {
     }
   }
 
+  if (data?.id) {
+    import('./trendClusteringService.js').then(m => {
+      m.analyzeAndClusterCarReportInBackground(data.id)
+    }).catch(err => {
+      console.warn('[carService] Failed to trigger CAR trend clustering:', err.message)
+    })
+  }
+
   return { data }
 }
 
@@ -317,7 +325,6 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
   if (error) throw error
 
   try {
-    const departmentId = await resolveDepartmentIdByName([
       existing?.responsible_department,
       existing?.requesting_department
     ])
@@ -427,8 +434,13 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, verificati
 
   if (error) throw error
 
+  if (status === CAR_STATUS.CLOSED && data) {
+    autoPromoteCarToCaseRepository(data).catch((err) => {
+      console.warn('[carService] Failed to auto-promote CAR to case repository:', err.message || err)
+    })
+  }
+
   try {
-    const { writeAudit } = await import('../lib/audit.js')
     await writeAudit({
       level: 'audit',
       source: 'car_reports',
@@ -565,7 +577,6 @@ export async function softDeleteCarReport({ carId, actorAuthId }) {
   if (error) throw error
 
   try {
-    const { writeAudit } = await import('../lib/audit.js')
     await writeAudit({
       level: 'audit',
       source: 'car_reports',
@@ -689,5 +700,76 @@ export async function updateCarReport({ carId, body = {}, actorAuthId }) {
     console.warn('Failed to write audit log:', err.message || err)
   }
 
+  if (data && String(data.status || '').toLowerCase() === CAR_STATUS.CLOSED) {
+    autoPromoteCarToCaseRepository(data).catch((err) => {
+      console.warn('[carService] Failed to auto-promote CAR to case repository on update:', err.message || err)
+    })
+  }
+
   return { data }
+}
+
+/**
+ * Automatically promotes a closed CAR report into the `car_case_repository`
+ * for Case-Based Reasoning (CBR) retrieval and vector similarity search.
+ *
+ * @param {Object} car - The closed CAR report record.
+ */
+export async function autoPromoteCarToCaseRepository(car) {
+  if (!car || !car.id) return null
+  const details = String(car.details_of_nonconformance || '').trim()
+  if (!details) return null
+
+  try {
+    const apiKey = process.env.GEMINI_API_KEY
+    let embedding = null
+    if (apiKey) {
+      const { generateEmbedding } = await import('../utils/cbr.js')
+      embedding = await generateEmbedding(details, apiKey)
+    }
+
+    let issueCategory = 'general'
+    if (car.customer_complaint) issueCategory = 'customer_complaint'
+    else if (car.internal_audit) issueCategory = 'internal_audit'
+    else if (car.customer_audit_nonconformance) issueCategory = 'customer_audit'
+    else if (car.government_agency_audit) issueCategory = 'government_agency_audit'
+    else if (car.vendor_nonconformance) issueCategory = 'vendor_nonconformance'
+    else if (car.quality_food_safety) issueCategory = 'quality_food_safety'
+    else if (car.environment_health_safety) issueCategory = 'environment_health_safety'
+    else if (car.security_issue) issueCategory = 'security_issue'
+
+    const record = {
+      car_id: car.id,
+      reference_no: car.reference_no,
+      details_of_nonconformance: details,
+      root_cause_analysis: car.root_cause_analysis || null,
+      corrective_action: car.corrective_action || 'No corrective action recorded',
+      preventive_action: car.preventive_action || null,
+      issue_category: issueCategory,
+      requesting_department: car.requesting_department || null,
+      responsible_department: car.responsible_department || null,
+      product_material_name: car.product_material_name || null,
+      effectiveness_score: 1.0,
+      embedding: embedding ? `[${embedding.join(',')}]` : null
+    }
+
+    const { data: existing } = await supabase
+      .from('car_case_repository')
+      .select('id')
+      .eq('car_id', car.id)
+      .maybeSingle()
+
+    if (existing) {
+      await supabase
+        .from('car_case_repository')
+        .update(record)
+        .eq('id', existing.id)
+    } else {
+      await supabase
+        .from('car_case_repository')
+        .insert([record])
+    }
+  } catch (err) {
+    console.warn('[carService] autoPromoteCarToCaseRepository warning:', err.message || err)
+  }
 }

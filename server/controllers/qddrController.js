@@ -100,3 +100,15 @@ export async function suggestClauses(req, res, next) {
     next(err)
   }
 }
+
+
+export async function getQddrRecurringTrends(req, res, next) {
+  try {
+    const { days = 14 } = req.query
+    const { fetchRecurringTrends } = await import('../services/trendClusteringService.js')
+    const clusters = await fetchRecurringTrends({ type: 'QDDR', days: Number(days) })
+    return res.json(clusters.map(c => c.reports))
+  } catch (err) {
+    next(err)
+  }
+}

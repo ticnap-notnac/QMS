@@ -32,7 +32,7 @@ export async function deleteIssueType(req, res, next) {
     return res.json(result)
   } catch (err) {
     if (err?.code === '23503' || (err?.message && (err.message.includes('foreign key constraint') || err.message.includes('violates foreign key')))) {
-      return res.status(400).json({ error: 'Cannot delete this issue category because existing records (such as NCR reports) are assigned to it.' })
+      return res.status(400).json({ error: 'Cannot delete this issue category because existing records (such as CAR reports) are assigned to it.' })
     }
     next(err)
   }

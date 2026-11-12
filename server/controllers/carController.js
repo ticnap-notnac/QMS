@@ -138,3 +138,15 @@ export async function deleteCar(req, res, next) {
     next(err)
   }
 }
+
+
+export async function getCarRecurringTrends(req, res, next) {
+  try {
+    const { days = 14 } = req.query
+    const { fetchRecurringTrends } = await import('../services/trendClusteringService.js')
+    const clusters = await fetchRecurringTrends({ type: 'CAR', days: Number(days) })
+    return res.json(clusters.map(c => c.reports))
+  } catch (err) {
+    next(err)
+  }
+}

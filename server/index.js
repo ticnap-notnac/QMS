@@ -17,7 +17,6 @@ import issueTypeRoutes from './routes/issueTypeRoutes.js'
 import positionRoutes from './routes/positionRoutes.js'
 import logRoutes from './routes/logRoutes.js'
 import debugRoutes from './routes/debugRoutes.js'
-import ncrRoutes from './routes/ncrRoutes.js'
 import suggestionRoutes from './routes/suggestionRoutes.js'
 import carRoutes from './routes/carRoutes.js'
 import qddrRoutes from './routes/qddrRoutes.js'
@@ -89,7 +88,6 @@ app.use('/api/logs', authMiddleware, logRoutes)
 if (process.env.NODE_ENV !== 'production') {
   app.use('/api/debug', authMiddleware, debugRoutes)
 }
-app.use('/api', authMiddleware, ncrRoutes)
 app.use('/api/suggestions', authMiddleware, suggestionRoutes)
 app.use('/api', authMiddleware, carRoutes)
 app.use('/api', authMiddleware, qddrRoutes)

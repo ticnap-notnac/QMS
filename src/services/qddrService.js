@@ -93,3 +93,8 @@ export async function fetchLinkedClausesForQddr(qddrId) {
     title: row.iso_clauses?.title
   }))
 }
+
+
+export async function fetchQddrRecurringTrends(days = 14) {
+  return await request(`/qddr/recurring-trends?days=${days}`)
+}
