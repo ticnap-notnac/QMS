@@ -165,9 +165,22 @@ function CARModal({
                     required={true}
                   />
                 </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">
+                    Request Date: <span className="required-asterisk">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={form.request_date}
+                    onChange={(e) => handleChange('request_date', e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    max="9999-12-31"
+                    className="input-field"
+                  />
+                </div>
               </div>
 
-              <div style={{ display: 'flex', gap: isMobile ? '10px' : '20px', alignItems: isMobile ? 'flex-start' : 'center', marginTop: '8px', flexDirection: isMobile ? 'column' : 'row' }}>
+              <div style={{ display: 'flex', gap: isMobile ? '10px' : '20px', alignItems: isMobile ? 'flex-start' : 'center', marginTop: '4px', flexDirection: isMobile ? 'column' : 'row' }}>
                 <label className="label-field" style={{ margin: 0 }}>Reason for Re-issue:</label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#334155', cursor: 'pointer' }}>
                   <input
@@ -185,10 +198,10 @@ function CARModal({
                 </label>
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
+              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
 
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr', gap: isMobile ? '12px' : '20px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '10px' : '14px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <SearchableDropdown
                     label="Type of Non-Conformance:"
                     value={form.type_of_nonconformance}
@@ -199,67 +212,87 @@ function CARModal({
                     onSelectOption={(opt) => handleChange('type_of_nonconformance', opt.label)}
                     required={true}
                   />
-
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label className="label-field">Others, Pls. Specify:</label>
-                    <input
-                      type="text"
-                      value={form.others}
-                      onChange={(e) => handleChange('others', e.target.value)}
-                      className="input-field"
-                      placeholder="Optional details for others..."
-                    />
-                  </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label className="label-field">
-                      Product / Material Name:
-                    </label>
-                    <input type="text" value={form.product_material_name} onChange={(e) => handleChange('product_material_name', e.target.value)} className="input-field" />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label className="label-field">
-                      Model / Type:
-                    </label>
-                    <input type="text" value={form.model_type} onChange={(e) => handleChange('model_type', e.target.value)} className="input-field" />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label className="label-field">
-                      Control No.:
-                    </label>
-                    <input type="text" value={form.control_no} onChange={(e) => handleChange('control_no', e.target.value)} className="input-field" />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label className="label-field">
-                      Affected Quantity:
-                    </label>
-                    <input 
-                      type="number" 
-                      min="0"
-                      value={form.affected_quantity} 
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '' || Number(val) >= 0) {
-                          handleChange('affected_quantity', val);
-                        }
-                      }} 
-                      onKeyDown={(e) => {
-                        if (e.key === '-' || e.key === 'e') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="input-field" 
-                    />
-                  </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">Others, Pls. Specify:</label>
+                  <input
+                    type="text"
+                    value={form.others}
+                    onChange={(e) => handleChange('others', e.target.value)}
+                    className="input-field"
+                    placeholder="Optional details for others..."
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">
+                    Product / Material Name:
+                  </label>
+                  <input 
+                    type="text" 
+                    value={form.product_material_name} 
+                    onChange={(e) => handleChange('product_material_name', e.target.value)} 
+                    className="input-field" 
+                    placeholder="e.g. Evaporada, Milk..."
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">
+                    Model / Type:
+                  </label>
+                  <input 
+                    type="text" 
+                    value={form.model_type} 
+                    onChange={(e) => handleChange('model_type', e.target.value)} 
+                    className="input-field" 
+                    placeholder="e.g. 250ml, Master Pack..."
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">
+                    Control No.:
+                  </label>
+                  <input 
+                    type="text" 
+                    value={form.control_no} 
+                    onChange={(e) => handleChange('control_no', e.target.value)} 
+                    className="input-field" 
+                    placeholder="e.g. CTRL-2026-001"
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <label className="label-field">
+                    Affected Quantity:
+                  </label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    value={form.affected_quantity} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || Number(val) >= 0) {
+                        handleChange('affected_quantity', val);
+                      }
+                    }} 
+                    onKeyDown={(e) => {
+                      if (e.key === '-' || e.key === 'e') {
+                        e.preventDefault();
+                      }
+                    }} 
+                    className="input-field" 
+                    placeholder="e.g. 10"
+                  />
                 </div>
               </div>
 
-              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
+              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label className="label-field" style={{ margin: 0, textAlign: 'center' }}>
+                <label className="label-field" style={{ margin: 0 }}>
                   DETAILS OF NON-CONFORMANCE: <span className="required-asterisk">*</span>
                 </label>
                 <textarea
@@ -404,22 +437,6 @@ function CARModal({
                     Fill in the non-conformance details above, then click "Suggest Matching Clauses" to automatically identify the relevant ISO clauses for this CAR.
                   </p>
                 )}
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', width: '31.5%' }}>
-                  <label className="label-field">
-                    Request Date: <span className="required-asterisk">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={form.request_date}
-                    onChange={(e) => handleChange('request_date', e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    max="9999-12-31"
-                    className="input-field"
-                  />
-                </div>
               </div>
 
             </form>
