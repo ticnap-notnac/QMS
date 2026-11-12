@@ -13,14 +13,7 @@ export function useCARForm() {
     reason_reissue: '',
     no_reply: false,
     re_corrective_action: false,
-    quality_food_safety: false,
-    environment_health_safety: false,
-    security_issue: false,
-    internal_audit: false,
-    customer_complaint: false,
-    government_agency_audit: false,
-    customer_audit_nonconformance: false,
-    vendor_nonconformance: false,
+    type_of_nonconformance: '',
     others: '',
     product_material_name: '',
     model_type: '',
@@ -42,6 +35,17 @@ export function useCARForm() {
   const [clausesError, setClausesError] = useState(null)
   const lastClassifiedDescRef = useRef('')
 
+  const CAR_TAG_LABELS = {
+    quality_food_safety: 'Quality/Food Safety Issue',
+    environment_health_safety: 'Environment, Health and Safety Issue',
+    security_issue: 'Security Issue',
+    internal_audit: 'Internal Audit',
+    customer_complaint: 'Customer Complaint',
+    government_agency_audit: 'Government Agency Audit Non-Conformance',
+    customer_audit_nonconformance: 'Customer Audit Non-Conformance',
+    vendor_nonconformance: 'Vendor Non-Conformance'
+  }
+
   useEffect(() => {
     const desc = (form.details_of_nonconformance || '').trim()
     if (desc.length < 15 || desc === lastClassifiedDescRef.current) return
@@ -52,11 +56,10 @@ export function useCARForm() {
         const data = await classifyDiscrepancyTags({ description: desc, type: 'CAR' })
         if (Array.isArray(data?.tags) && data.tags.length > 0) {
           setForm(prev => {
-            const updates = {}
-            data.tags.forEach(tag => {
-              if (tag in initialState) updates[tag] = true
-            })
-            return { ...prev, ...updates }
+            if (prev.type_of_nonconformance) return prev
+            const matchedKey = data.tags[0]
+            const typeLabel = CAR_TAG_LABELS[matchedKey] || matchedKey
+            return { ...prev, type_of_nonconformance: typeLabel }
           })
         }
       } catch (err) {
@@ -86,14 +89,7 @@ export function useCARForm() {
       reason_reissue: existingCar.reason_reissue || '',
       no_reply: Boolean(existingCar.no_reply),
       re_corrective_action: Boolean(existingCar.re_corrective_action),
-      quality_food_safety: Boolean(existingCar.quality_food_safety),
-      environment_health_safety: Boolean(existingCar.environment_health_safety),
-      security_issue: Boolean(existingCar.security_issue),
-      internal_audit: Boolean(existingCar.internal_audit),
-      customer_complaint: Boolean(existingCar.customer_complaint),
-      government_agency_audit: Boolean(existingCar.government_agency_audit),
-      customer_audit_nonconformance: Boolean(existingCar.customer_audit_nonconformance),
-      vendor_nonconformance: Boolean(existingCar.vendor_nonconformance),
+      type_of_nonconformance: existingCar.type_of_nonconformance || '',
       others: existingCar.others || '',
       product_material_name: existingCar.product_material_name || '',
       model_type: existingCar.model_type || '',
@@ -136,14 +132,7 @@ export function useCARForm() {
     setClausesError(null)
 
     const flags = {
-      quality_food_safety: form.quality_food_safety,
-      environment_health_safety: form.environment_health_safety,
-      security_issue: form.security_issue,
-      internal_audit: form.internal_audit,
-      customer_complaint: form.customer_complaint,
-      government_agency_audit: form.government_agency_audit,
-      customer_audit_nonconformance: form.customer_audit_nonconformance,
-      vendor_nonconformance: form.vendor_nonconformance,
+      type_of_nonconformance: form.type_of_nonconformance
     }
 
     try {
@@ -192,18 +181,8 @@ export function useCARForm() {
       return false
     }
 
-    const hasCheckboxChecked = 
-      form.quality_food_safety ||
-      form.environment_health_safety ||
-      form.security_issue ||
-      form.internal_audit ||
-      form.customer_complaint ||
-      form.government_agency_audit ||
-      form.customer_audit_nonconformance ||
-      form.vendor_nonconformance
-
-    if (!hasCheckboxChecked) {
-      setError('Please select at least one Type of Non-Conformance checkbox.')
+    if (!form.type_of_nonconformance?.trim()) {
+      setError('Type of Non-Conformance is required.')
       return false
     }
 

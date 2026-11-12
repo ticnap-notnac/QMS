@@ -487,7 +487,9 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       departments: dataState.departments.map(d => ({ id: d.id, label: d.department_name })),
       departmentsLoading: dataState.departmentsLoading,
       users: activeUserOptions,
-      usersLoading: dataState.usersLoading
+      usersLoading: dataState.usersLoading,
+      nonConformanceTypes: dataState.nonConformanceTypeOptions,
+      nonConformanceTypesLoading: dataState.issueTypesLoading
     },
     qddrModalProps: {
       isOpen: modalsState.isQDDRModalOpen,

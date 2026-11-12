@@ -797,6 +797,7 @@ export function AuditTemplatesTab({
     confirmText: 'Delete',
     cancelText: 'Cancel',
     isDestructive: true,
+    isLoading: saving,
     onConfirm: confirmDeleteTemplate,
     onCancel: cancelDeleteTemplate,
   }
@@ -1079,6 +1080,8 @@ export function AuditTemplatesTab({
             </table>
           </div>
         )}
+
+        <ConfirmDialog {...confirmDeleteTemplateDialogProps} />
       </div>
     </div>
   )

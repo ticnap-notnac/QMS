@@ -172,6 +172,17 @@ export async function deleteTemplate(id, actorAuthId = null) {
     throw err
   }
 
+  // Clear any schedule references and cascade delete child items safely
+  await supabase
+    .from('audit_schedules')
+    .update({ template_id: null })
+    .eq('template_id', id)
+
+  await supabase
+    .from('audit_checklist_items')
+    .delete()
+    .eq('template_id', id)
+
   const { error } = await supabase
     .from('audit_checklist_templates')
     .delete()

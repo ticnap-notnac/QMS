@@ -18,7 +18,9 @@ function CARModal({
   departments,
   departmentsLoading,
   users,
-  usersLoading
+  usersLoading,
+  nonConformanceTypes = [],
+  nonConformanceTypesLoading = false
 }) {
   const [isMobile, setIsMobile] = useState(false)
 
@@ -31,17 +33,6 @@ function CARModal({
   }, [])
 
   if (!isOpen) return null
-
-  const checkboxFields = [
-    { key: 'quality_food_safety', label: 'QUALITY/FOOD SAFETY ISSUE' },
-    { key: 'environment_health_safety', label: 'ENVIRONMENT, HEALTH AND SAFETY ISSUE' },
-    { key: 'security_issue', label: 'SECURITY ISSUE' },
-    { key: 'internal_audit', label: 'INTERNAL AUDIT' },
-    { key: 'customer_complaint', label: 'CUSTOMER COMPLAINT' },
-    { key: 'government_agency_audit', label: 'GOVERNMENT AGENCY AUDIT NON-CONFORMANCE' },
-    { key: 'customer_audit_nonconformance', label: 'CUSTOMER AUDIT NON-CONFORMANCE' },
-    { key: 'vendor_nonconformance', label: 'VENDOR NON-CONFORMANCE' }
-  ]
 
   const filteredUsers = users?.filter((user) => {
     const userRole = String(user.label || '').toUpperCase()
@@ -194,21 +185,29 @@ function CARModal({
 
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
 
-              <h4 style={{ color: '#1A435A', fontSize: '14px', margin: '0 0 8px 0', textAlign: 'center' }}>
-                TYPE OF NON-CONFORMANCE <span className="required-asterisk">*</span>
-              </h4>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: isMobile ? '12px' : '20px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {checkboxFields.map(field => (
-                    <label key={field.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#334155', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={form[field.key]}
-                        onChange={(e) => handleChange(field.key, e.target.checked)}
-                      /> {field.label}
-                    </label>
-                  ))}
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr', gap: isMobile ? '12px' : '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <SearchableDropdown
+                    label="Type of Non-Conformance:"
+                    value={form.type_of_nonconformance}
+                    onValueChange={(val) => handleChange('type_of_nonconformance', val)}
+                    options={nonConformanceTypes}
+                    loading={nonConformanceTypesLoading}
+                    placeholder="Search or enter type..."
+                    onSelectOption={(opt) => handleChange('type_of_nonconformance', opt.label)}
+                    required={true}
+                  />
+
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <label className="label-field">Others, Pls. Specify:</label>
+                    <input
+                      type="text"
+                      value={form.others}
+                      onChange={(e) => handleChange('others', e.target.value)}
+                      className="input-field"
+                      placeholder="Optional details for others..."
+                    />
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -251,10 +250,6 @@ function CARModal({
                       }}
                       className="input-field" 
                     />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <label className="label-field">Others, Pls. Specify:</label>
-                    <input type="text" value={form.others} onChange={(e) => handleChange('others', e.target.value)} className="input-field" />
                   </div>
                 </div>
               </div>

@@ -12,17 +12,7 @@ function CARReportCard({ car, canEdit, onSelectCar, onEditCar, onDeleteCar }) {
   const isClosed = statusClean === 'closed'
   const isUnderVerification = statusClean === 'under_verification'
 
-  const issueTypes = []
-  if (car.quality_food_safety) issueTypes.push('Quality/Food Safety')
-  if (car.environment_health_safety) issueTypes.push('EHS')
-  if (car.security_issue) issueTypes.push('Security')
-  if (car.internal_audit) issueTypes.push('Internal Audit')
-  if (car.customer_complaint) issueTypes.push('Customer Complaint')
-  if (car.government_agency_audit) issueTypes.push('Gov Audit')
-  if (car.customer_audit_nonconformance) issueTypes.push('Customer Audit')
-  if (car.vendor_nonconformance) issueTypes.push('Vendor')
-  if (car.others) issueTypes.push(`Others: ${car.others}`)
-  const issueTypeStr = issueTypes.join(', ') || '—'
+  const issueTypeStr = car.type_of_nonconformance || car.others || '—'
 
   let statusBg = '#f1f5f9'
   let statusColor = '#475569'

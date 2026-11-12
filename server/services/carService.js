@@ -134,6 +134,32 @@ function buildCarReferenceNumber(recordsOrLatestRef) {
  * @param {string} params.reportedByAuthId
  * @returns {Promise<{data: Object}>}
  */
+async function upsertNonConformanceType(typeName) {
+  const trimmed = normalizeText(typeName)
+  if (!trimmed) return null
+
+  try {
+    const { data: existing } = await supabase
+      .from('issue_types')
+      .select('id, issue_type_name')
+      .ilike('issue_type_name', trimmed)
+      .maybeSingle()
+
+    if (existing) return existing.issue_type_name
+
+    const { data: inserted } = await supabase
+      .from('issue_types')
+      .upsert([{ issue_type_name: trimmed }], { onConflict: 'issue_type_name', ignoreDuplicates: true })
+      .select('issue_type_name')
+      .maybeSingle()
+
+    return inserted?.issue_type_name || trimmed
+  } catch (err) {
+    console.warn('[carService] Failed to upsert non-conformance type into issue_types:', err.message || err)
+    return trimmed
+  }
+}
+
 export async function createCarReport({ body, reportedByAuthId }) {
   const {
     requesting_department,
@@ -144,14 +170,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
     reason_reissue,
     no_reply,
     re_corrective_action,
-    quality_food_safety,
-    environment_health_safety,
-    security_issue,
-    internal_audit,
-    customer_complaint,
-    government_agency_audit,
-    customer_audit_nonconformance,
-    vendor_nonconformance,
+    type_of_nonconformance,
     others,
     product_material_name,
     model_type,
@@ -195,6 +214,8 @@ export async function createCarReport({ body, reportedByAuthId }) {
     return `CAR-${String(maxSeq + 1).padStart(3, '0')}`
   }
 
+  const resolvedTypeOfNonconformance = await upsertNonConformanceType(type_of_nonconformance)
+
   let generatedReferenceNo = await getNextRef()
   let data = null
   let error = null
@@ -214,14 +235,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
       reason_reissue,
       no_reply: Boolean(no_reply),
       re_corrective_action: Boolean(re_corrective_action),
-      quality_food_safety: Boolean(quality_food_safety),
-      environment_health_safety: Boolean(environment_health_safety),
-      security_issue: Boolean(security_issue),
-      internal_audit: Boolean(internal_audit),
-      customer_complaint: Boolean(customer_complaint),
-      government_agency_audit: Boolean(government_agency_audit),
-      customer_audit_nonconformance: Boolean(customer_audit_nonconformance),
-      vendor_nonconformance: Boolean(vendor_nonconformance),
+      type_of_nonconformance: resolvedTypeOfNonconformance,
       others,
       product_material_name,
       model_type,
@@ -618,12 +632,17 @@ export async function updateCarReport({ carId, body = {}, actorAuthId }) {
     'model_type',
     'control_no',
     'details_of_nonconformance',
+    'type_of_nonconformance',
   ]
 
   for (const key of stringOrNullKeys) {
     if (body[key] !== undefined) {
       payload[key] = body[key]
     }
+  }
+
+  if (body.type_of_nonconformance !== undefined) {
+    payload.type_of_nonconformance = await upsertNonConformanceType(body.type_of_nonconformance)
   }
 
   const dateKeys = ['date', 'request_date']
@@ -636,14 +655,6 @@ export async function updateCarReport({ carId, body = {}, actorAuthId }) {
   const booleanKeys = [
     'no_reply',
     're_corrective_action',
-    'quality_food_safety',
-    'environment_health_safety',
-    'security_issue',
-    'internal_audit',
-    'customer_complaint',
-    'government_agency_audit',
-    'customer_audit_nonconformance',
-    'vendor_nonconformance',
   ]
 
   for (const key of booleanKeys) {
@@ -732,15 +743,7 @@ export async function autoPromoteCarToCaseRepository(car) {
       embedding = await generateEmbedding(details, apiKey)
     }
 
-    let issueCategory = 'general'
-    if (car.customer_complaint) issueCategory = 'customer_complaint'
-    else if (car.internal_audit) issueCategory = 'internal_audit'
-    else if (car.customer_audit_nonconformance) issueCategory = 'customer_audit'
-    else if (car.government_agency_audit) issueCategory = 'government_agency_audit'
-    else if (car.vendor_nonconformance) issueCategory = 'vendor_nonconformance'
-    else if (car.quality_food_safety) issueCategory = 'quality_food_safety'
-    else if (car.environment_health_safety) issueCategory = 'environment_health_safety'
-    else if (car.security_issue) issueCategory = 'security_issue'
+    const issueCategory = normalizeText(car.type_of_nonconformance) || 'general'
 
     const record = {
       car_id: car.id,

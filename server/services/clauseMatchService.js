@@ -34,15 +34,19 @@ function computeLexicalMatch(description, flags, clauses) {
   // Augment tokens from boolean flags
   const flagKeywords = []
   
-  // CAR Flags
-  if (flags?.internal_audit) flagKeywords.push('audit', 'internal', 'monitoring')
-  if (flags?.quality_food_safety) flagKeywords.push('quality', 'food', 'safety', 'product')
-  if (flags?.environment_health_safety) flagKeywords.push('environment', 'health', 'safety', 'hazard')
-  if (flags?.security_issue) flagKeywords.push('security', 'access', 'control')
-  if (flags?.customer_complaint) flagKeywords.push('customer', 'satisfaction', 'complaint', 'feedback')
-  if (flags?.vendor_nonconformance) flagKeywords.push('supplier', 'vendor', 'external', 'procurement')
-  if (flags?.government_agency_audit) flagKeywords.push('regulatory', 'legal', 'compliance', 'government')
-  if (flags?.customer_audit_nonconformance) flagKeywords.push('customer', 'audit', 'nonconformance')
+  // CAR Type of Non-Conformance (supports string or legacy flags)
+  const ncType = String(flags?.type_of_nonconformance || '').toLowerCase()
+  if (ncType) {
+    ncType.split(/\W+/).filter(t => t.length > 2).forEach(t => flagKeywords.push(t))
+  }
+  if (flags?.internal_audit || ncType.includes('internal audit')) flagKeywords.push('audit', 'internal', 'monitoring')
+  if (flags?.quality_food_safety || ncType.includes('quality') || ncType.includes('food')) flagKeywords.push('quality', 'food', 'safety', 'product')
+  if (flags?.environment_health_safety || ncType.includes('environment') || ncType.includes('health')) flagKeywords.push('environment', 'health', 'safety', 'hazard')
+  if (flags?.security_issue || ncType.includes('security')) flagKeywords.push('security', 'access', 'control')
+  if (flags?.customer_complaint || ncType.includes('complaint')) flagKeywords.push('customer', 'satisfaction', 'complaint', 'feedback')
+  if (flags?.vendor_nonconformance || ncType.includes('vendor')) flagKeywords.push('supplier', 'vendor', 'external', 'procurement')
+  if (flags?.government_agency_audit || ncType.includes('government')) flagKeywords.push('regulatory', 'legal', 'compliance', 'government')
+  if (flags?.customer_audit_nonconformance || ncType.includes('customer audit')) flagKeywords.push('customer', 'audit', 'nonconformance')
 
   // QDDR Flags
   if (flags?.holes_punctures) flagKeywords.push('damage', 'packaging', 'integrity', 'puncture')

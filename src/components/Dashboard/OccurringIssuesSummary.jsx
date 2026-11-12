@@ -86,20 +86,11 @@ export default function OccurringIssuesSummary({ onRefresh }) {
   // ─── Analytics Aggregations ────────────────────────────────────────────────
 
   const carMetrics = useMemo(() => {
-    const typeCounts = {
-      'Quality / Food Safety': 0,
-      'Customer Complaint': 0,
-      'Vendor Non-Conformance': 0,
-      'Internal Audit': 0,
-      'EHS Issue': 0
-    }
+    const typeCounts = {}
 
     activeCars.forEach((c) => {
-      if (c.quality_food_safety) typeCounts['Quality / Food Safety']++
-      if (c.customer_complaint) typeCounts['Customer Complaint']++
-      if (c.vendor_nonconformance) typeCounts['Vendor Non-Conformance']++
-      if (c.internal_audit) typeCounts['Internal Audit']++
-      if (c.environment_health_safety) typeCounts['EHS Issue']++
+      const typeName = c.type_of_nonconformance || c.others || 'General'
+      typeCounts[typeName] = (typeCounts[typeName] || 0) + 1
     })
 
     const topTypes = Object.entries(typeCounts)
@@ -151,13 +142,18 @@ export default function OccurringIssuesSummary({ onRefresh }) {
     // 1. Process CARs
     ;(Array.isArray(activeCars) ? activeCars : []).forEach((c) => {
       const tags = []
-      if (c.quality_food_safety) tags.push('Quality / Food Safety')
-      if (c.customer_complaint) tags.push('Customer Complaint')
-      if (c.vendor_nonconformance) tags.push('Vendor Non-Conformance')
-      if (c.internal_audit) tags.push('Internal Audit')
-      if (c.environment_health_safety) tags.push('EHS Issue')
+      if (c.type_of_nonconformance) {
+        tags.push(c.type_of_nonconformance)
+      } else {
+        if (c.quality_food_safety) tags.push('Quality / Food Safety')
+        if (c.customer_complaint) tags.push('Customer Complaint')
+        if (c.vendor_nonconformance) tags.push('Vendor Non-Conformance')
+        if (c.internal_audit) tags.push('Internal Audit')
+        if (c.environment_health_safety) tags.push('EHS Issue')
+      }
 
       const headlineText = tags.length > 0 ? tags.join(', ') : (c.product_material_name || 'Corrective Action Required')
+      const isQuality = (c.type_of_nonconformance || '').toLowerCase().includes('quality') || Boolean(c.quality_food_safety)
 
       list.push({
         id: `car-${c.id}`,
@@ -168,7 +164,7 @@ export default function OccurringIssuesSummary({ onRefresh }) {
         headline: String(headlineText),
         detail: String(c.product_material_name ? `${c.product_material_name} ${c.control_no ? `(${c.control_no})` : ''}` : (c.details_of_nonconformance ? String(c.details_of_nonconformance).slice(0, 60) : '')),
         location: String(c.requesting_department || c.responsible_department || 'QA Department'),
-        severity: c.quality_food_safety ? 'High' : 'Medium',
+        severity: isQuality ? 'High' : 'Medium',
         status: String(c.status || 'OPEN'),
         createdAt: c.created_at,
         relativeTime: getRelativeTime(c.created_at)

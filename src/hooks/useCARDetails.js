@@ -67,7 +67,7 @@ export function useCARDetails() {
     try {
       const result = await generateAiSuggestionFromText({
         description: selectedCar.details_of_nonconformance,
-        issueType: selectedCar.quality_food_safety ? 'quality' : selectedCar.environment_health_safety ? 'safety' : selectedCar.security_issue ? 'security' : selectedCar.internal_audit ? 'audit' : 'general',
+        issueType: selectedCar.type_of_nonconformance || 'general',
         deptName: selectedCar.responsible_department,
         reportType: 'CAR'
       })

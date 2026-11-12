@@ -71,81 +71,41 @@ const CARPrintTemplate = forwardRef(({ report }, ref) => {
           </tr>
           <tr>
             <td colSpan="3" className="print-section-title">
-              TYPE OF NON-CONFORMANCE
+              TYPE OF NON-CONFORMANCE: <span style={{ textTransform: 'none', fontWeight: 'bold' }}>{report.type_of_nonconformance || report.others || 'General'}</span>
             </td>
           </tr>
           <tr>
-            <td colSpan="2" style={{ padding: '15px' }}>
-              <ul className="checkbox-list">
-                <li className="checkbox-item">
-                  <div className={`checkbox-box ${report.quality_food_safety ? 'checked' : ''}`}></div>
-                  QUALITY/FOOD SAFETY ISSUE
-                </li>
-                <li className="checkbox-item">
-                  <div className={`checkbox-box ${report.environment_health_safety ? 'checked' : ''}`}></div>
-                  ENVIRONMENT, HEALTH AND SAFETY ISSUE
-                </li>
-                <li className="checkbox-item">
-                  <div className={`checkbox-box ${report.security_issue ? 'checked' : ''}`}></div>
-                  SECURITY ISSUE
-                </li>
-                <li className="checkbox-item">
-                  <div className={`checkbox-box ${report.internal_audit ? 'checked' : ''}`}></div>
-                  INTERNAL AUDIT
-                </li>
-                <li className="checkbox-item">
-                  <div className={`checkbox-box ${report.customer_complaint ? 'checked' : ''}`}></div>
-                  CUSTOMER COMPLAINT
-                </li>
-                <li className="checkbox-item">
-                  <div className={`checkbox-box ${report.government_agency_audit ? 'checked' : ''}`}></div>
-                  GOVERNMENT AGENCY AUDIT NON-CONFORMANCE
-                </li>
-                <li className="checkbox-item">
-                  <div className={`checkbox-box ${report.customer_audit_nonconformance ? 'checked' : ''}`}></div>
-                  CUSTOMER AUDIT NON-CONFORMANCE
-                </li>
-                <li className="checkbox-item">
-                  <div className={`checkbox-box ${report.vendor_nonconformance ? 'checked' : ''}`}></div>
-                  VENDOR NON-CONFORMANCE
-                </li>
-              </ul>
-            </td>
-            <td style={{ padding: 0 }}>
+            <td colSpan="3" style={{ padding: 0 }}>
               <table style={{ width: '100%', height: '100%', borderCollapse: 'collapse' }}>
                 <tbody>
                   <tr>
-                    <td style={{ borderBottom: '1px solid #000', borderRight: '1px solid #000', padding: '4px' }}>
+                    <td style={{ borderBottom: '1px solid #000', borderRight: '1px solid #000', padding: '6px' }}>
                       <div style={{ fontSize: '10px' }}>Product / material name:</div>
                       <div style={{ fontSize: '12px', minHeight: '20px' }}>{report.product_material_name || report.product_type_name || report.product_type || ''}</div>
                     </td>
-                    <td style={{ borderBottom: '1px solid #000', padding: '4px' }}>
+                    <td style={{ borderBottom: '1px solid #000', padding: '6px' }}>
                       <div style={{ fontSize: '10px' }}>Model Type:</div>
                       <div style={{ fontSize: '12px', minHeight: '20px' }}>{report.model_type || ''}</div>
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ borderBottom: '1px solid #000', borderRight: '1px solid #000', padding: '4px' }}>
+                    <td style={{ borderBottom: '1px solid #000', borderRight: '1px solid #000', padding: '6px' }}>
                       <div style={{ fontSize: '10px' }}>Control no.:</div>
                       <div style={{ fontSize: '12px', minHeight: '20px' }}>{report.control_no || ''}</div>
                     </td>
-                    <td style={{ borderBottom: '1px solid #000', padding: '4px' }}>
+                    <td style={{ borderBottom: '1px solid #000', padding: '6px' }}>
                       <div style={{ fontSize: '10px' }}>Affected Quantity:</div>
                       <div style={{ fontSize: '12px', minHeight: '20px' }}>{report.affected_quantity || ''}</div>
                     </td>
                   </tr>
-                  <tr>
-                    <td colSpan="2" style={{ padding: '4px', borderBottom: '1px solid #000' }}>
-                      <div className="checkbox-item" style={{ marginBottom: 0 }}>
-                        <div className={`checkbox-box ${report.others ? 'checked' : ''}`}></div> OTHERS, Pls. Specify
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colSpan="2" style={{ padding: '4px', height: '100%' }}>
-                      <div style={{ minHeight: '40px', fontSize: '12px' }}>{report.others || ''}</div>
-                    </td>
-                  </tr>
+                  {report.others && (
+                    <tr>
+                      <td colSpan="2" style={{ padding: '6px', borderBottom: '1px solid #000' }}>
+                        <div style={{ fontSize: '10px' }}>Others / Remarks:</div>
+                        <div style={{ fontSize: '12px' }}>{report.others}</div>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </td>
