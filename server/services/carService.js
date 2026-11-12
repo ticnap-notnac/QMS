@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase.js'
 import { CAR_STATUS } from '../../shared/constants.js'
 import { safeCreateNotificationsForRolesAndDepartment } from '../lib/notificationHelper.js'
+import { writeAudit } from '../lib/audit.js'
 
 function normalizeText(value) {
   return String(value || '').trim()
@@ -325,6 +326,7 @@ export async function submitCapaReport({ carId, rootCauseAnalysis, correctiveAct
   if (error) throw error
 
   try {
+    const departmentId = await resolveDepartmentIdByName([
       existing?.responsible_department,
       existing?.requesting_department
     ])

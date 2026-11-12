@@ -150,8 +150,9 @@ function generateFallbackHeuristicSuggestion({ description, issueType, deptName,
  * @param {string} [params.deptName] - Department name
  * @returns {Promise<Object>}
  */
-export async function generateAiSuggestionFromText({ description, issueType, deptName }) {
-  const isQddr = String(issueType || '').trim().toUpperCase() === 'QDDR' ||
+export async function generateAiSuggestionFromText({ description, issueType, deptName, reportType = 'CAR' }) {
+  const isQddr = String(reportType || '').trim().toUpperCase() === 'QDDR' ||
+    String(issueType || '').trim().toUpperCase() === 'QDDR' ||
     ['holes_punctures', 'crushed_dented', 'disposal', 'warehouse'].some(k => String(description || '').toLowerCase().includes(k))
 
   const apiKey = process.env.GEMINI_API_KEY
