@@ -162,6 +162,33 @@ input::-ms-clear {
   transform: translateY(0); 
 }
 
+.btn-danger {
+  background: #dc2626;
+  color: #ffffff;
+  padding: 8px 24px;
+  border-radius: 9999px; /* Pill shape */
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13.5px;
+  font-family: var(--body);
+  box-shadow: none;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-danger:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+  opacity: 0.95;
+}
+.btn-danger:active {
+  transform: translateY(0);
+}
+
 .btn-secondary-light {
   background: transparent;
   border: 1px solid #cbd5e1;

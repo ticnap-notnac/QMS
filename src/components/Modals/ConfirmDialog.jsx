@@ -46,7 +46,15 @@ export default function ConfirmDialog({
           <button 
             type="button" 
             className={isDestructive ? 'btn-danger' : 'btn-gradient-primary'} 
-            style={isDestructive ? { background: '#dc2626', borderColor: '#dc2626', color: '#ffffff', borderRadius: '9999px', padding: '8px 24px' } : { borderRadius: '9999px', padding: '8px 24px' }}
+            style={{
+              border: 'none',
+              outline: 'none',
+              boxShadow: 'none',
+              borderRadius: '9999px',
+              padding: '8px 24px',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              ...(isDestructive ? { background: '#dc2626', color: '#ffffff' } : {})
+            }}
             onClick={onConfirm}
             disabled={isLoading}
           >
