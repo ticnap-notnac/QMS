@@ -36,14 +36,15 @@ function getTransporter() {
 }
 
 function getResendClient() {
-  if (!process.env.RESEND_API_KEY) return null
-  return new Resend(process.env.RESEND_API_KEY)
+  const key = process.env.RESEND_API_KEY ? String(process.env.RESEND_API_KEY).trim() : null
+  if (!key) return null
+  return new Resend(key)
 }
 
 /**
  * Universal email dispatcher:
- * 1. Uses Brevo REST API (HTTPS port 443) if BREVO_API_KEY is configured.
- * 2. Uses Resend (HTTPS port 443) if RESEND_API_KEY is configured.
+ * 1. Uses Resend (HTTPS port 443) if RESEND_API_KEY is configured.
+ * 2. Uses Brevo REST API (HTTPS port 443) if BREVO_API_KEY is configured.
  * 3. Uses Nodemailer SMTP (supports 465, 587, 2525) if SMTP_USER & SMTP_PASS are configured.
  * 4. Falls back to mock email in console if none is configured.
  */
@@ -53,24 +54,52 @@ async function dispatchEmail({ to, subject, html, text, fromTitle = 'QFlow Syste
     return null
   }
 
-  // 1. Brevo REST API (Standard HTTPS port 443 - free, no domain required, works anywhere)
+  const cleanTo = String(to).trim()
+
+  // 1. Resend API (HTTPS port 443 - prioritized for custom domain)
+  const resend = getResendClient()
+  if (resend) {
+    const defaultFrom = `${fromTitle} <noreply@resqonlineonline.online>`
+    const rawFrom = process.env.RESEND_FROM || defaultFrom
+    const fromAddress = rawFrom.trim()
+
+    console.log(`[Email Dispatcher] Sending via Resend to ${cleanTo} from ${fromAddress}`)
+    const { data, error } = await resend.emails.send({
+      from: fromAddress,
+      to: [cleanTo],
+      subject,
+      html,
+      text,
+    })
+
+    if (error) {
+      console.error('[Email Dispatcher] Resend API Error:', error)
+      throw new Error(`Resend error: ${error.message || JSON.stringify(error)}`)
+    }
+
+    console.log(`[Email Dispatcher] Successfully sent via Resend [ID: ${data?.id}]`)
+    logger.info(`Email sent successfully via Resend to ${cleanTo} [Id: ${data?.id}]`)
+    return data
+  }
+
+  // 2. Brevo REST API (Standard HTTPS port 443)
   if (process.env.BREVO_API_KEY) {
     const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || 'qflooww@gmail.com'
-    const recipients = (Array.isArray(to) ? to : [to]).map(email => ({ email }))
+    console.log(`[Email Dispatcher] Sending via Brevo to ${cleanTo} from ${senderEmail}`)
 
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
-        'api-key': process.env.BREVO_API_KEY,
+        'api-key': String(process.env.BREVO_API_KEY).trim(),
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       body: JSON.stringify({
         sender: {
           name: fromTitle || 'QFlow System',
-          email: senderEmail,
+          email: String(senderEmail).trim(),
         },
-        to: recipients,
+        to: [{ email: cleanTo }],
         subject,
         htmlContent: html,
         textContent: text,
@@ -79,30 +108,12 @@ async function dispatchEmail({ to, subject, html, text, fromTitle = 'QFlow Syste
 
     const data = await res.json().catch(() => ({}))
     if (!res.ok) {
+      console.error('[Email Dispatcher] Brevo API Error:', data)
       throw new Error(`Brevo API error (${res.status}): ${data.message || JSON.stringify(data)}`)
     }
 
-    logger.info(`Email sent successfully via Brevo to ${to} [MessageId: ${data.messageId}]`)
-    return data
-  }
-
-  // 2. Resend API (HTTPS port 443)
-  const resend = getResendClient()
-  if (resend) {
-    const fromAddress = process.env.RESEND_FROM || `${fromTitle} <onboarding@resend.dev>`
-    const { data, error } = await resend.emails.send({
-      from: fromAddress,
-      to: Array.isArray(to) ? to : [to],
-      subject,
-      html,
-      text,
-    })
-
-    if (error) {
-      throw new Error(`Resend error: ${error.message || JSON.stringify(error)}`)
-    }
-
-    logger.info(`Email sent successfully via Resend to ${to} [Id: ${data?.id}]`)
+    console.log(`[Email Dispatcher] Successfully sent via Brevo [MessageId: ${data.messageId}]`)
+    logger.info(`Email sent successfully via Brevo to ${cleanTo} [MessageId: ${data.messageId}]`)
     return data
   }
 
@@ -110,18 +121,21 @@ async function dispatchEmail({ to, subject, html, text, fromTitle = 'QFlow Syste
   const activeTransporter = getTransporter()
   if (activeTransporter) {
     const fromAddress = process.env.SMTP_FROM || `"${fromTitle}" <${process.env.SMTP_USER}>`
+    console.log(`[Email Dispatcher] Sending via SMTP to ${cleanTo} from ${fromAddress}`)
     const info = await activeTransporter.sendMail({
       from: fromAddress,
-      to,
+      to: cleanTo,
       subject,
       html,
       text,
     })
-    logger.info(`Email sent successfully via SMTP to ${to} [MessageId: ${info.messageId}]`)
+    console.log(`[Email Dispatcher] Successfully sent via SMTP [MessageId: ${info.messageId}]`)
+    logger.info(`Email sent successfully via SMTP to ${cleanTo} [MessageId: ${info.messageId}]`)
     return info
   }
 
-  logger.info(`[MOCK EMAIL] To: ${to} | Subject: ${subject} | Email skipped because no email provider is configured.`)
+  console.warn(`[Email Dispatcher] MOCK EMAIL - No provider configured. To: ${cleanTo} | Subject: ${subject}`)
+  logger.info(`[MOCK EMAIL] To: ${cleanTo} | Subject: ${subject} | Email skipped because no email provider is configured.`)
   return null
 }
 
@@ -188,7 +202,9 @@ export async function sendNotificationEmail(userId, title, message) {
       fromTitle: 'QFlow Automated Alerts',
     })
   } catch (error) {
+    console.error(`[Email] Failed to send notification email:`, error.message)
     logger.error(`Failed to send notification email: ${error.message}`)
+    throw error
   }
 }
 
@@ -236,7 +252,9 @@ export async function sendNewUserCredentialsEmail({ toEmail, password, frontendU
       fromTitle: 'QFlow System',
     })
   } catch (error) {
+    console.error(`[Email] Failed to send new user credentials email:`, error.message)
     logger.error(`Failed to send new user credentials email: ${error.message}`)
+    throw error
   }
 }
 
@@ -292,6 +310,8 @@ export async function sendQddrClosedEmail({ toEmail, qddr, displayName }) {
       fromTitle: 'QFlow Automated Alerts',
     })
   } catch (error) {
+    console.error(`[Email] Failed to send QDDR closed email:`, error.message)
     logger.error(`Failed to send QDDR closed email: ${error.message}`)
+    throw error
   }
 }

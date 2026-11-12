@@ -20,13 +20,21 @@ const logFormat = printf(({ level, message, timestamp, stack }) => {
 })
 
 const logger = winston.createLogger({
-  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+  level: 'info',
   format: combine(
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     errors({ stack: true }),
     logFormat
   ),
   transports: [
+    // Always log to console so cloud providers (Render, Docker, etc.) show all logs
+    new winston.transports.Console({
+      format: combine(
+        colorize(),
+        timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+        logFormat
+      )
+    }),
     // Write all errors to error.log with size rotation
     new winston.transports.File({
       filename: path.join(logDir, 'error.log'),
@@ -42,16 +50,5 @@ const logger = winston.createLogger({
     }),
   ],
 })
-
-// If we're not in production, also log to the console with colors
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: combine(
-      colorize(),
-      timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-      logFormat
-    )
-  }))
-}
 
 export default logger

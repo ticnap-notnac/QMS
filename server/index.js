@@ -73,6 +73,39 @@ app.use(express.json({ limit: '15mb' }))
 
 app.get('/api/health', (req, res) => res.status(200).json({ status: 'ok' }))
 
+app.get('/api/test-email', async (req, res) => {
+  const to = String(req.query.to || 'paciolesronald65@gmail.com').trim()
+  try {
+    const { sendNewUserCredentialsEmail } = await import('./services/emailService.js')
+    await sendNewUserCredentialsEmail({
+      toEmail: to,
+      password: 'TestPassword123!',
+      displayName: 'Test User'
+    })
+    return res.status(200).json({
+      success: true,
+      message: `Successfully fired email to ${to}`,
+      config: {
+        hasResendKey: Boolean(process.env.RESEND_API_KEY),
+        resendFrom: process.env.RESEND_FROM || 'default (noreply@resqonlineonline.online)',
+        hasBrevoKey: Boolean(process.env.BREVO_API_KEY),
+        hasSmtpUser: Boolean(process.env.SMTP_USER),
+      }
+    })
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+      config: {
+        hasResendKey: Boolean(process.env.RESEND_API_KEY),
+        resendFrom: process.env.RESEND_FROM || 'default',
+        hasBrevoKey: Boolean(process.env.BREVO_API_KEY),
+        hasSmtpUser: Boolean(process.env.SMTP_USER),
+      }
+    })
+  }
+})
+
 app.use('/api/users', authMiddleware, userRoutes)
 app.use('/api/roles', authMiddleware, roleRoutes)
 app.use('/api/departments', authMiddleware, departmentRoutes)
