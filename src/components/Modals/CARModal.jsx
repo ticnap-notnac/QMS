@@ -39,6 +39,8 @@ function CARModal({
     return !userRole.includes('WAREHOUSE STAFF')
   }) || []
 
+  const hasNonconformanceDetails = Boolean(form?.details_of_nonconformance?.trim())
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
@@ -270,25 +272,48 @@ function CARModal({
               </div>
 
               {/* ── ISO Clause Linkage Panel ─────────────────────────────── */}
-              <div style={{
-                background: 'rgba(8, 145, 178, 0.04)',
-                border: '1px solid rgba(8, 145, 178, 0.15)',
-                borderRadius: '8px',
-                padding: '14px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px'
-              }}>
+              <div 
+                style={{
+                  background: hasNonconformanceDetails ? 'rgba(8, 145, 178, 0.04)' : '#f8fafc',
+                  border: hasNonconformanceDetails ? '1px solid rgba(8, 145, 178, 0.15)' : '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  filter: hasNonconformanceDetails ? 'none' : 'grayscale(100%)',
+                  opacity: hasNonconformanceDetails ? 1 : 0.6,
+                  transition: 'filter 0.25s ease, opacity 0.25s ease, background 0.25s ease, border-color 0.25s ease'
+                }}
+                title={!hasNonconformanceDetails ? 'Fill in Details of Non-Conformance first to enable ISO clause linkage.' : undefined}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#0891b2', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ 
+                    fontSize: '13px', 
+                    fontWeight: '600', 
+                    color: hasNonconformanceDetails ? '#0891b2' : '#64748b', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px' 
+                  }}>
                     <Link size={14} /> ISO Clause Linkage
                   </span>
                   <button
                     type="button"
                     className="btn-secondary-light"
-                    disabled={clausesLoading || !form.details_of_nonconformance?.trim()}
+                    disabled={clausesLoading || !hasNonconformanceDetails}
                     onClick={() => fetchClauseSuggestions(userAuthId)}
-                    style={{ margin: 0, padding: '5px 12px', fontSize: '12px', height: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    style={{ 
+                      margin: 0, 
+                      padding: '5px 12px', 
+                      fontSize: '12px', 
+                      height: 'auto', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '6px',
+                      cursor: hasNonconformanceDetails && !clausesLoading ? 'pointer' : 'not-allowed'
+                    }}
+                    title={!hasNonconformanceDetails ? 'Fill in Details of Non-Conformance first to suggest ISO clauses' : undefined}
                   >
                     {clausesLoading ? (
                       <><LoaderCircle size={12} className="iso-spinner" /> Analyzing...</>
@@ -375,7 +400,7 @@ function CARModal({
                 )}
 
                 {!clausesLoading && !form.suggested_clauses?.length && !clausesError && (
-                  <p style={{ fontSize: '12px', color: '#475569', margin: 0 }}>
+                  <p style={{ fontSize: '12px', color: hasNonconformanceDetails ? '#475569' : '#94a3b8', margin: 0 }}>
                     Fill in the non-conformance details above, then click "Suggest Matching Clauses" to automatically identify the relevant ISO clauses for this CAR.
                   </p>
                 )}
