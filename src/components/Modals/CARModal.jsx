@@ -213,25 +213,25 @@ function CARModal({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <label className="label-field">
-                      Product / Material Name: <span className="required-asterisk">*</span>
+                      Product / Material Name:
                     </label>
                     <input type="text" value={form.product_material_name} onChange={(e) => handleChange('product_material_name', e.target.value)} className="input-field" />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <label className="label-field">
-                      Model / Type: <span className="required-asterisk">*</span>
+                      Model / Type:
                     </label>
                     <input type="text" value={form.model_type} onChange={(e) => handleChange('model_type', e.target.value)} className="input-field" />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <label className="label-field">
-                      Control No.: <span className="required-asterisk">*</span>
+                      Control No.:
                     </label>
                     <input type="text" value={form.control_no} onChange={(e) => handleChange('control_no', e.target.value)} className="input-field" />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <label className="label-field">
-                      Affected Quantity: <span className="required-asterisk">*</span>
+                      Affected Quantity:
                     </label>
                     <input 
                       type="number" 
