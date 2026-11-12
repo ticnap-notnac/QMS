@@ -160,7 +160,8 @@ export async function createCarReport({ body, reportedByAuthId }) {
     details_of_nonconformance,
     request_date,
     clause_ids,
-    audit_schedule_id
+    audit_schedule_id,
+    audit_result_id
   } = body || {}
 
   const { data: creatorObj } = await supabase
@@ -229,6 +230,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
       details_of_nonconformance,
       request_date: request_date ? request_date : null,
       audit_schedule_id: audit_schedule_id || null,
+      audit_result_id: audit_result_id || null,
       status: CAR_STATUS.OPEN,
       site_id: creatorObj?.site_id || null
     }

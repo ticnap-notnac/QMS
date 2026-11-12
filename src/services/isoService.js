@@ -20,11 +20,28 @@ export async function fetchNonCompliantFindings() {
     .from('audit_results')
     .select(`
       id,
+      status,
+      requirement,
+      what_to_look_for,
       evidence,
+      notes,
+      attachment_url,
       clause_id,
       run_id,
       audit_runs (
-        schedule_id
+        id,
+        schedule_id,
+        auditor_id,
+        audit_schedules (
+          id,
+          title,
+          scheduled_date,
+          standard_id,
+          iso_standards (
+            name,
+            version
+          )
+        )
       ),
       iso_clauses (
         clause_number,

@@ -174,7 +174,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       const itemsList = (existingResults || []).map(res => {
         const clauseDetails = clausesList.find(c => c.id === res.clause_id)
         return {
-          id: res.clause_id,
+          id: res.id,
+          clause_id: res.clause_id,
           clause_number: clauseDetails?.clause_number || 'N/A',
           title: clauseDetails?.title || 'Custom Requirement',
           requirement: res.requirement || '',
@@ -185,9 +186,11 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
       const initialResults = {}
       itemsList.forEach(item => {
-        const resObj = existingResults.find(r => r.clause_id === item.id)
-        initialResults[item.id] = {
+        const resObj = existingResults.find(r => r.id === item.result_id)
+        const resultKey = item.result_id || item.id
+        initialResults[resultKey] = {
           id: resObj?.id || null,
+          clause_id: item.clause_id,
           status: resObj?.status || 'compliant',
           evidence: resObj?.evidence || '',
           notes: resObj?.notes || '',
@@ -298,7 +301,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     setError('')
     setSuccess('')
     if (complete) {
-      const missingClause = (activeClauses || []).find(c => !resultsMap[c.id]?.status)
+      const missingClause = (activeClauses || []).find(c => !resultsMap[c.result_id || c.id]?.status)
       if (missingClause) {
         setError(`Please record a status for Clause ${missingClause.clause_number || ''} before completing the audit.`)
         return
@@ -306,17 +309,17 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     }
     setSavingProgress(true)
     try {
-      const upsertData = Object.keys(resultsMap).map(clauseId => {
+      const upsertData = Object.entries(resultsMap).map(([resultKey, val]) => {
         const payload = {
           run_id: activeRun.id,
-          clause_id: clauseId,
-          status: resultsMap[clauseId].status,
-          evidence: resultsMap[clauseId].evidence || null,
-          notes: resultsMap[clauseId].notes || null,
-          attachment_url: resultsMap[clauseId].attachment_url || null
+          clause_id: val.clause_id || resultKey,
+          status: val.status,
+          evidence: val.evidence || null,
+          notes: val.notes || null,
+          attachment_url: val.attachment_url || null
         }
-        if (resultsMap[clauseId].id) {
-          payload.id = resultsMap[clauseId].id
+        if (val.id) {
+          payload.id = val.id
         }
         return payload
       })
@@ -330,8 +333,9 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
       const updatedResultsMap = { ...resultsMap }
       savedData.forEach(row => {
-        updatedResultsMap[row.clause_id] = {
+        updatedResultsMap[row.id] = {
           id: row.id,
+          clause_id: row.clause_id,
           status: row.status,
           evidence: row.evidence || '',
           notes: row.notes || '',
@@ -348,7 +352,9 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
       if (complete) {
         // Bind existing open CARs to this schedule so they don't appear in future audits
-        const clauseIds = Object.keys(resultsMap)
+        const clauseIds = Array.from(
+          new Set(Object.values(resultsMap).map(v => v.clause_id).filter(Boolean))
+        )
         if (clauseIds.length > 0) {
           const { data: linksData, error: linksErr } = await supabase
             .from('car_clause_links')
@@ -431,17 +437,17 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
     isAutoSavingRef.current = true
     try {
-      const upsertData = Object.keys(mapToSave).map(clauseId => {
+      const upsertData = Object.entries(mapToSave).map(([resultKey, val]) => {
         const payload = {
           run_id: runToSave.id,
-          clause_id: clauseId,
-          status: mapToSave[clauseId].status,
-          evidence: mapToSave[clauseId].evidence || null,
-          notes: mapToSave[clauseId].notes || null,
-          attachment_url: mapToSave[clauseId].attachment_url || null
+          clause_id: val.clause_id || resultKey,
+          status: val.status,
+          evidence: val.evidence || null,
+          notes: val.notes || null,
+          attachment_url: val.attachment_url || null
         }
-        if (mapToSave[clauseId].id) {
-          payload.id = mapToSave[clauseId].id
+        if (val.id) {
+          payload.id = val.id
         }
         return payload
       })

@@ -89,23 +89,55 @@ export default function ISOPage({ userRole, userPermissions, userName }) {
             <div className="iso-no-gaps">No active gaps found!</div>
           ) : (
             <div className="iso-findings-stack">
-              {nonCompliantFindings.map((finding) => (
-                <div key={finding.id} className="iso-finding-item">
-                  <div className="iso-finding-info">
-                    <div className="iso-finding-title-row">
-                      <span className="iso-finding-badge">Clause {finding.iso_clauses?.clause_number || 'N/A'}</span>
-                      <strong className="iso-finding-title">{finding.iso_clauses?.title || 'Unknown Clause'}</strong>
+              {nonCompliantFindings.map((finding) => {
+                const statusMeta = {
+                  major_nc: { label: 'Major NC', bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
+                  minor_nc: { label: 'Minor NC', bg: '#fffbeb', color: '#d97706', border: '#fde68a' },
+                  ofi: { label: 'OFI', bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' }
+                }[finding.status] || { label: 'Finding', bg: '#f8fafc', color: '#475569', border: '#cbd5e1' }
+                const schedule = finding.audit_runs?.audit_schedules
+
+                return (
+                  <div key={finding.id} className="iso-finding-item">
+                    <div className="iso-finding-info">
+                      <div className="iso-finding-title-row">
+                        <span className="iso-finding-badge">Clause {finding.iso_clauses?.clause_number || 'N/A'}</span>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            padding: '2px 8px',
+                            borderRadius: '999px',
+                            background: statusMeta.bg,
+                            color: statusMeta.color,
+                            border: `1px solid ${statusMeta.border}`
+                          }}
+                        >
+                          {statusMeta.label}
+                        </span>
+                        <strong className="iso-finding-title">{finding.iso_clauses?.title || 'Unknown Clause'}</strong>
+                      </div>
+                      {schedule?.title && (
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                          {schedule.title}{schedule.scheduled_date ? ` • ${schedule.scheduled_date}` : ''}
+                        </div>
+                      )}
+                      {finding.requirement && (
+                        <div style={{ fontSize: '12.5px', color: '#334155', marginTop: '4px', lineHeight: 1.4 }}>
+                          {finding.requirement}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      {createdCars[finding.id] ? (
+                        <div className="iso-car-generated"><CheckCircle2 size={14} />CAR Generated ({createdCars[finding.id]})</div>
+                      ) : canManageIso ? (
+                        <button type="button" onClick={() => handleOpenCarModal(finding)} className="btn-gradient-primary iso-btn-generate-car">Generate CAR</button>
+                      ) : null}
                     </div>
                   </div>
-                  <div>
-                    {createdCars[finding.id] ? (
-                      <div className="iso-car-generated"><CheckCircle2 size={14} />CAR Generated ({createdCars[finding.id]})</div>
-                    ) : canManageIso ? (
-                      <button type="button" onClick={() => handleOpenCarModal(finding)} className="btn-gradient-primary iso-btn-generate-car">Generate CAR</button>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>

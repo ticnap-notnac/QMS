@@ -309,6 +309,7 @@ CREATE TABLE IF NOT EXISTS public.qddr_reports (
   site_id bigint NULL REFERENCES public.sites(id) ON DELETE SET NULL,
   embedding vector NULL,
   audit_schedule_id uuid NULL REFERENCES public.audit_schedules(id) ON DELETE SET NULL,
+  audit_result_id uuid NULL REFERENCES public.audit_results(id) ON DELETE SET NULL,
   trend_cluster_id bigint NULL REFERENCES public.trend_clusters(id) ON DELETE SET NULL
 );
 
@@ -354,6 +355,7 @@ CREATE TABLE IF NOT EXISTS public.car_reports (
   verification_date timestamptz NULL,
   verified_by uuid NULL,
   audit_schedule_id uuid NULL REFERENCES public.audit_schedules(id) ON DELETE SET NULL,
+  audit_result_id uuid NULL REFERENCES public.audit_results(id) ON DELETE SET NULL,
   resolution_time text NULL,
   site_id bigint NULL REFERENCES public.sites(id) ON DELETE SET NULL,
   verification_rating text NULL,

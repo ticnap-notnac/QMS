@@ -192,9 +192,11 @@ export function AuditChecklistSection({
               </thead>
               <tbody>
                 {paginatedClauses.map(clause => {
-                  const answer = resultsMap[clause.id] || { status: 'compliant', evidence: '', notes: '' }
+                  const resultKey = clause.result_id || clause.id
+                  const clauseKey = clause.clause_id || clause.id
+                  const answer = resultsMap[resultKey] || { status: 'compliant', evidence: '', notes: '' }
                   return (
-                    <tr key={clause.id}>
+                    <tr key={resultKey}>
                       <td className="valign-top" style={{ paddingRight: '16px' }}>
                         <strong style={{ color: '#0891b2', display: 'block', marginBottom: '6px', fontSize: '14px' }}>Clause {clause.clause_number}</strong>
                         <span style={{ fontSize: '13.5px', color: '#334155', fontWeight: '500', display: 'block', wordBreak: 'break-word' }}>{clause.title}</span>
@@ -222,7 +224,7 @@ export function AuditChecklistSection({
                           onChange={(e) => {
                             setResultsMap({
                               ...resultsMap,
-                              [clause.id]: { ...answer, evidence: e.target.value }
+                              [resultKey]: { ...answer, evidence: e.target.value }
                             })
                           }}
                           style={{ display: 'block', margin: 0, marginBottom: '10px', width: '100%', resize: 'vertical', minHeight: '80px', borderRadius: '8px' }}
@@ -245,12 +247,12 @@ export function AuditChecklistSection({
                           onMouseOver={(e) => e.currentTarget.style.background = 'rgba(8, 145, 178, 0.15)'}
                           onMouseOut={(e) => e.currentTarget.style.background = 'rgba(8, 145, 178, 0.1)'}
                           >
-                            {uploadingFiles[clause.id] ? <LoaderCircle size={14} className="spin" /> : <Paperclip size={14} />}
-                            {uploadingFiles[clause.id] ? 'Uploading...' : 'Attach File'}
+                            {uploadingFiles[resultKey] ? <LoaderCircle size={14} className="spin" /> : <Paperclip size={14} />}
+                            {uploadingFiles[resultKey] ? 'Uploading...' : 'Attach File'}
                             <input
                               type="file"
                               style={{ display: 'none' }}
-                              onChange={(e) => handleFileUpload(e, clause.id)}
+                              onChange={(e) => handleFileUpload(e, resultKey)}
                             />
                           </label>
                           {answer.attachment_url && (
@@ -269,20 +271,20 @@ export function AuditChecklistSection({
                           onChange={(e) => {
                             setResultsMap({
                               ...resultsMap,
-                              [clause.id]: { ...answer, notes: e.target.value }
+                              [resultKey]: { ...answer, notes: e.target.value }
                             })
                           }}
                           style={{ display: 'block', margin: 0, marginBottom: '10px', width: '100%', resize: 'vertical', minHeight: '80px', borderRadius: '8px' }}
                         />
                         {/* Linked CARs & QDDRs display could go here if needed, or omitted for compactness */}
-                        {linkedCarsMap && linkedCarsMap[clause.id]?.length > 0 && (
+                        {linkedCarsMap && linkedCarsMap[clauseKey]?.length > 0 && (
                           <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 'bold' }}>
-                            Linked CARs: {linkedCarsMap[clause.id].map(car => car.reference_no).join(', ')}
+                            Linked CARs: {linkedCarsMap[clauseKey].map(car => car.reference_no).join(', ')}
                           </div>
                         )}
-                        {linkedQddrsMap && linkedQddrsMap[clause.id]?.length > 0 && (
+                        {linkedQddrsMap && linkedQddrsMap[clauseKey]?.length > 0 && (
                           <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 'bold' }}>
-                            Linked QDDRs: {linkedQddrsMap[clause.id].map(qddr => qddr.reference_no).join(', ')}
+                            Linked QDDRs: {linkedQddrsMap[clauseKey].map(qddr => qddr.reference_no).join(', ')}
                           </div>
                         )}
                       </td>
@@ -292,7 +294,7 @@ export function AuditChecklistSection({
                           onChange={(e) => {
                             setResultsMap({
                               ...resultsMap,
-                              [clause.id]: { ...answer, status: e.target.value }
+                              [resultKey]: { ...answer, status: e.target.value }
                             })
                           }}
                           style={{

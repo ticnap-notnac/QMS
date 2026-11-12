@@ -127,16 +127,52 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
   const handleOpenCarModal = (finding) => {
     setActiveFinding(finding)
 
-    let details = `Audit finding: Deficiency in Clause ${finding.iso_clauses?.clause_number || ''} (${finding.iso_clauses?.title || ''}). Evidence: ${finding.evidence || 'None provided.'}`
+    const schedule = finding.audit_runs?.audit_schedules || null
+    const standard = schedule?.iso_standards || null
+    const clauseNum = finding.iso_clauses?.clause_number || 'N/A'
+    const clauseTitle = finding.iso_clauses?.title || ''
+    const statusLabels = {
+      major_nc: 'Major Non-Conformance (Major NC)',
+      minor_nc: 'Minor Non-Conformance (Minor NC)',
+      ofi: 'Opportunity for Improvement (OFI)'
+    }
+    const severityLabel = statusLabels[finding.status] || finding.status || 'Non-Conformance'
+
+    const detailLines = [
+      schedule?.title
+        ? `Audit: ${schedule.title}${schedule.scheduled_date ? ` (${schedule.scheduled_date})` : ''}${standard?.name ? ` — ${standard.name}${standard.version ? ` (${standard.version})` : ''}` : ''}`
+        : null,
+      `Finding Severity: ${severityLabel}`,
+      `Clause: ${clauseNum}${clauseTitle ? ` – ${clauseTitle}` : ''}`,
+      finding.requirement ? `Requirement: ${finding.requirement}` : null,
+      finding.notes ? `Findings / Notes: ${finding.notes}` : null,
+      `Evidence: ${finding.evidence || 'None provided.'}`
+    ].filter(Boolean)
+
+    let details = detailLines.join('\n')
 
     if (finding.isNcrGap) {
-      details = `Escalated NCR Trend: Deficiency in Clause ${finding.iso_clauses?.clause_number || ''} (${finding.iso_clauses?.title || ''}). Active NCRs: ${finding.ncr_references.join(', ')}. Details: ${finding.evidence}`
+      details = `Escalated Trend: Deficiency in Clause ${clauseNum} (${clauseTitle}). Details: ${finding.evidence}`
     }
+
+    const prelinkedClauses = finding.clause_id
+      ? [{
+          clause_id: finding.clause_id,
+          clause_number: clauseNum,
+          title: clauseTitle || 'ISO Clause',
+          confidence: 1
+        }]
+      : []
 
     setCarForm({
       ...initialFormState,
+      date: schedule?.scheduled_date || initialFormState.date,
+      request_date: schedule?.scheduled_date || initialFormState.request_date,
+      internal_audit: true,
       requestor: userName || '',
-      details_of_nonconformance: details
+      details_of_nonconformance: details,
+      linked_clause_ids: finding.clause_id ? [finding.clause_id] : [],
+      suggested_clauses: prelinkedClauses
     })
     setCarError('')
     setClausesError(null)
@@ -181,6 +217,7 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
         details_of_nonconformance: carForm.details_of_nonconformance,
         request_date: carForm.request_date || null,
         audit_schedule_id: auditScheduleId,
+        audit_result_id: activeFinding?.id || null,
         clause_ids: Array.from(allClauseIds),
         status: CAR_STATUS.OPEN,
         site_id: userSiteId

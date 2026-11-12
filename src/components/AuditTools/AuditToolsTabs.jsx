@@ -637,6 +637,8 @@ export function AuditTemplatesTab({
     }
   }, [showForm, editingTemplate, formTitle, formDescription, formStandardId, formItems])
 
+  const makeRowKey = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+
   const handleStandardChange = async (stdId) => {
     setFormStandardId(stdId)
     if (!stdId) {
@@ -647,6 +649,7 @@ export function AuditTemplatesTab({
     try {
       const clauses = await fetchClausesForStandard(stdId)
       const items = clauses.map(clause => ({
+        rowKey: makeRowKey(),
         clause_id: clause.id,
         clause_number: clause.clause_number,
         title: clause.title,
@@ -701,6 +704,7 @@ export function AuditTemplatesTab({
     setFormStandardId(template.standard_id || '')
     
     const items = (template.audit_checklist_items || []).map(item => ({
+      rowKey: makeRowKey(),
       clause_id: item.clause_id,
       clause_number: item.iso_clauses?.clause_number || 'N/A',
       title: item.iso_clauses?.title || 'Custom Clause',
@@ -709,6 +713,30 @@ export function AuditTemplatesTab({
     }))
     setFormItems(items)
     setShowForm(true)
+  }
+
+  const handleAddRequirementRow = (index) => {
+    const source = formItems[index]
+    if (!source) return
+    const newRow = {
+      rowKey: makeRowKey(),
+      clause_id: source.clause_id,
+      clause_number: source.clause_number,
+      title: source.title,
+      requirement: '',
+      what_to_look_for: ''
+    }
+    const next = [...formItems]
+    next.splice(index + 1, 0, newRow)
+    setFormItems(next)
+  }
+
+  const handleRemoveRequirementRow = (index) => {
+    const target = formItems[index]
+    if (!target) return
+    const sameClauseCount = formItems.filter(i => i.clause_id === target.clause_id).length
+    if (sameClauseCount <= 1) return
+    setFormItems(formItems.filter((_, idx) => idx !== index))
   }
 
   const handleSubmit = async (e) => {
@@ -846,49 +874,97 @@ export function AuditTemplatesTab({
                   <table className="iso-table">
                     <thead>
                       <tr>
-                        <th style={{ width: '15%' }}>Clause ID</th>
-                        <th style={{ width: '25%' }}>Clause Title</th>
+                        <th style={{ width: '12%' }}>Clause ID</th>
+                        <th style={{ width: '22%' }}>Clause Title</th>
                         <th style={{ width: '30%' }}>Requirement (Custom)</th>
-                        <th style={{ width: '30%' }}>What to look for and how?</th>
+                        <th style={{ width: '28%' }}>What to look for and how?</th>
+                        <th style={{ width: '8%', textAlign: 'center' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {formItems.map((item, index) => (
-                        <tr key={item.clause_id}>
-                          <td><strong>{item.clause_number}</strong></td>
-                          <td style={{ fontSize: '13px' }}>{item.title}</td>
-                          <td>
-                            <textarea
-                              className="form-input"
-                              rows={2}
-                              style={{ fontSize: '12.5px', padding: '6px 8px', resize: 'vertical' }}
-                              placeholder="Enter specific audit requirement details..."
-                              value={item.requirement}
-                              onChange={e => {
-                                const newItems = [...formItems]
-                                newItems[index].requirement = e.target.value
-                                setFormItems(newItems)
-                              }}
-                              required
-                            />
-                          </td>
-                          <td>
-                            <textarea
-                              className="form-input"
-                              rows={2}
-                              style={{ fontSize: '12.5px', padding: '6px 8px', resize: 'vertical' }}
-                              placeholder="Instructions on what to look for and verify..."
-                              value={item.what_to_look_for}
-                              onChange={e => {
-                                const newItems = [...formItems]
-                                newItems[index].what_to_look_for = e.target.value
-                                setFormItems(newItems)
-                              }}
-                              required
-                            />
-                          </td>
-                        </tr>
-                      ))}
+                      {formItems.map((item, index) => {
+                        const clauseCount = formItems.filter(i => i.clause_id === item.clause_id).length
+                        return (
+                          <tr key={item.rowKey || `${item.clause_id}-${index}`}>
+                            <td><strong>{item.clause_number}</strong></td>
+                            <td style={{ fontSize: '13px' }}>{item.title}</td>
+                            <td>
+                              <textarea
+                                className="form-input"
+                                rows={2}
+                                style={{ fontSize: '12.5px', padding: '6px 8px', resize: 'vertical' }}
+                                placeholder="Enter specific audit requirement details..."
+                                value={item.requirement}
+                                onChange={e => {
+                                  const newItems = [...formItems]
+                                  newItems[index] = { ...newItems[index], requirement: e.target.value }
+                                  setFormItems(newItems)
+                                }}
+                                required
+                              />
+                            </td>
+                            <td>
+                              <textarea
+                                className="form-input"
+                                rows={2}
+                                style={{ fontSize: '12.5px', padding: '6px 8px', resize: 'vertical' }}
+                                placeholder="Instructions on what to look for and verify..."
+                                value={item.what_to_look_for}
+                                onChange={e => {
+                                  const newItems = [...formItems]
+                                  newItems[index] = { ...newItems[index], what_to_look_for: e.target.value }
+                                  setFormItems(newItems)
+                                }}
+                                required
+                              />
+                            </td>
+                            <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                              <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                                <button
+                                  type="button"
+                                  title="Add another requirement for this clause"
+                                  onClick={() => handleAddRequirementRow(index)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: '6px',
+                                    border: '1px solid rgba(8, 145, 178, 0.35)',
+                                    background: 'rgba(8, 145, 178, 0.08)',
+                                    color: '#0891b2',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Plus size={14} />
+                                </button>
+                                {clauseCount > 1 && (
+                                  <button
+                                    type="button"
+                                    title="Remove this requirement"
+                                    onClick={() => handleRemoveRequirementRow(index)}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: '28px',
+                                      height: '28px',
+                                      borderRadius: '6px',
+                                      border: '1px solid rgba(239, 68, 68, 0.35)',
+                                      background: 'rgba(239, 68, 68, 0.08)',
+                                      color: '#dc2626',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>

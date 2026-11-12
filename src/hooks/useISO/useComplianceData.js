@@ -41,7 +41,8 @@ export function useComplianceData() {
         .select(`
           id,
           reference_no,
-          audit_schedule_id
+          audit_schedule_id,
+          audit_result_id
         `)
       if (carsError) throw carsError
 
@@ -150,7 +151,10 @@ export function useComplianceData() {
       if (carsList && carsList.length > 0) {
         allFindings.forEach(finding => {
           const matchingCar = carsList.find(car => {
-            // Match audit result gaps or trend gaps by clause_id via links
+            if (car.audit_result_id) {
+              return String(car.audit_result_id).toLowerCase() === String(finding.id || '').toLowerCase()
+            }
+            // Fallback for legacy CARs without audit_result_id: match by clause_id + schedule_id
             const linkedClauseIds = (car.car_clause_links || []).map(l => l.clause_id)
             if (finding.clause_id && linkedClauseIds.includes(finding.clause_id)) {
               if (!finding.isNcrGap && finding.audit_runs?.schedule_id) {
