@@ -1,7 +1,95 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { BookOpen, LoaderCircle, Calendar, Plus, CheckCircle, Clock, Trash2, Filter } from 'lucide-react'
+import { BookOpen, LoaderCircle, Calendar, Plus, CheckCircle, Clock, Trash2, Filter, Search, User } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 import ConfirmDialog from '../Modals/ConfirmDialog'
+
+function getSourceBadge(source) {
+  const s = String(source || 'SYSTEM').toUpperCase()
+  let bg = '#f1f5f9'
+  let color = '#475569'
+  let border = '#cbd5e1'
+  if (s === 'AUTH') {
+    bg = 'rgba(14, 165, 233, 0.1)'
+    color = '#0284c7'
+    border = 'rgba(14, 165, 233, 0.3)'
+  } else if (s === 'DOCUMENTS' || s === 'DCC') {
+    bg = 'rgba(16, 185, 129, 0.1)'
+    color = '#059669'
+    border = 'rgba(16, 185, 129, 0.3)'
+  } else if (s === 'AUDIT') {
+    bg = 'rgba(139, 92, 246, 0.1)'
+    color = '#7c3aed'
+    border = 'rgba(139, 92, 246, 0.3)'
+  } else if (s === 'REPORTS') {
+    bg = 'rgba(245, 158, 11, 0.1)'
+    color = '#d97706'
+    border = 'rgba(245, 158, 11, 0.3)'
+  }
+  return (
+    <span style={{
+      fontSize: '11px',
+      background: bg,
+      color: color,
+      border: `1px solid ${border}`,
+      padding: '2px 8px',
+      borderRadius: '12px',
+      fontWeight: '700',
+      letterSpacing: '0.4px',
+      display: 'inline-block'
+    }}>
+      {s}
+    </span>
+  )
+}
+
+function formatActionTitle(action) {
+  if (typeof action !== 'string') return JSON.stringify(action)
+  const map = {
+    user_login_success: 'User Login',
+    user_logout_success: 'User Logout',
+    user_login_failure: 'Login Failed',
+    user_update: 'Update User',
+    role_update: 'Update Role',
+    CREATE_ISO_STANDARD: 'Create ISO Standard',
+    UPDATE_ISO_STANDARD: 'Update ISO Standard',
+    DELETE_ISO_STANDARD: 'Delete ISO Standard',
+    create_car: 'Create CAR',
+    update_car: 'Update CAR',
+    create_qddr: 'Create QDDR',
+    update_qddr: 'Update QDDR',
+    CREATE_CHECKLIST_TEMPLATE: 'Create Checklist Template',
+    UPDATE_CHECKLIST_TEMPLATE: 'Update Checklist Template',
+    DELETE_CHECKLIST_TEMPLATE: 'Delete Checklist Template',
+    START_AUDIT: 'Start Audit',
+    COMPLETE_AUDIT: 'Complete Audit'
+  }
+  if (map[action]) return map[action]
+  return action
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function formatLogDetails(log) {
+  const details = log.details || log.metadata
+  if (!details || (typeof details === 'object' && Object.keys(details).length === 0)) {
+    if (log.action === 'user_login_success') return 'Successful login to QMS portal'
+    if (log.action === 'user_logout_success') return 'User logged out of session'
+    if (log.action === 'user_login_failure') return 'Authentication attempt failed'
+    return '—'
+  }
+  if (typeof details === 'string') return details
+  if (details.details) return String(details.details)
+  if (log.action === 'user_update') return `Target User: ${details.email || details.user_name || details.id || 'User'}`
+  if (log.action === 'role_update') return `Role: ${details.role_name || details.id || 'Role'}`
+  if (log.action === 'CREATE_ISO_STANDARD' || log.action === 'UPDATE_ISO_STANDARD') {
+    return `Standard: ${details.name || details.title || details.id || 'ISO Standard'}`
+  }
+  if (details.reference_no) return `Reference No: ${details.reference_no}`
+  if (details.title) return `Title: ${details.title}`
+  if (details.message) return String(details.message)
+  return JSON.stringify(details)
+}
 
 export function AuditLogsTab({
   isInsideSettings,
@@ -16,22 +104,40 @@ export function AuditLogsTab({
 }) {
   const [filterSource, setFilterSource] = useState('ALL')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   
   const totalPages = Math.max(1, Math.ceil(logsTotal / logsLimit))
   
   const filteredLogs = useMemo(() => {
-    if (filterSource === 'ALL') return logs;
-    return logs.filter(log => (log.source || 'system').toUpperCase() === filterSource);
-  }, [logs, filterSource])
+    let result = logs || [];
+    if (filterSource !== 'ALL') {
+      result = result.filter(log => (log.source || 'system').toUpperCase() === filterSource);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim()
+      result = result.filter(log => {
+        const action = String(log.action || '').toLowerCase()
+        const user = String(log.user_display || log.user_auth_id || '').toLowerCase()
+        const source = String(log.source || '').toLowerCase()
+        const ip = String(log.ip || '').toLowerCase()
+        const details = typeof log.details === 'object' ? JSON.stringify(log.details).toLowerCase() : String(log.details || '').toLowerCase()
+        return action.includes(q) || user.includes(q) || source.includes(q) || ip.includes(q) || details.includes(q)
+      })
+    }
+    return result;
+  }, [logs, filterSource, searchQuery])
 
   return (
     <div className="tab-content" style={isInsideSettings ? { marginTop: '20px' } : {}}>
       <div className="settings-container--profile" style={{ minHeight: 'auto', padding: '24px', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
           <div>
-            <h3 className="settings-section-title" style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 className="settings-section-title" style={{ marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <BookOpen size={20} className="icon-cyan" />
               Audit Activity Logs
+              <span style={{ fontSize: '11.5px', background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontWeight: '600' }}>
+                {logsTotal || filteredLogs.length} events
+              </span>
             </h3>
             
             <p style={{ color: '#94a3b8', fontSize: '13.5px', margin: 0, lineHeight: '1.4' }}>
@@ -39,26 +145,47 @@ export function AuditLogsTab({
             </p>
           </div>
           
-          <div style={{ position: 'relative' }}>
-            <button 
-              type="button"
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="sidebar-button"
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '36px', padding: '0 16px', background: filterSource !== 'ALL' ? '#f0f9ff' : '#ffffff', border: filterSource !== 'ALL' ? '1px solid #0ea5e9' : '1px solid #cbd5e1', color: filterSource !== 'ALL' ? '#0ea5e9' : '#1A435A', borderRadius: '6px', fontWeight: '500', fontSize: '13.5px', cursor: 'pointer', transition: 'all 0.2s', marginTop: '4px' }}
-              title="Filter Audit Logs"
-            >
-              <Filter size={14} />
-              Filter {filterSource !== 'ALL' && `(${filterSource})`}
-            </button>
-            {isFilterOpen && (
-              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', zIndex: 50, minWidth: '150px', padding: '4px' }}>
-                <div style={{ padding: '6px 12px', fontSize: '11px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Filter by Source</div>
-                <button type="button" onClick={() => { setFilterSource('ALL'); setIsFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: filterSource === 'ALL' ? '#f1f5f9' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', borderRadius: '4px' }}>All Sources</button>
-                <button type="button" onClick={() => { setFilterSource('AUTH'); setIsFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: filterSource === 'AUTH' ? '#f1f5f9' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', borderRadius: '4px' }}>Auth</button>
-                <button type="button" onClick={() => { setFilterSource('SYSTEM'); setIsFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: filterSource === 'SYSTEM' ? '#f1f5f9' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', borderRadius: '4px' }}>System</button>
-                <button type="button" onClick={() => { setFilterSource('DOCUMENTS'); setIsFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: filterSource === 'DOCUMENTS' ? '#f1f5f9' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', borderRadius: '4px' }}>Documents</button>
-              </div>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ position: 'relative', width: '220px' }}>
+              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input
+                type="text"
+                placeholder="Search logs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '7px 10px 7px 32px',
+                  fontSize: '13px',
+                  borderRadius: '6px',
+                  border: '1px solid #cbd5e1',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <button 
+                type="button"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="sidebar-button"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '34px', padding: '0 14px', background: filterSource !== 'ALL' ? '#f0f9ff' : '#ffffff', border: filterSource !== 'ALL' ? '1px solid #0ea5e9' : '1px solid #cbd5e1', color: filterSource !== 'ALL' ? '#0ea5e9' : '#1A435A', borderRadius: '6px', fontWeight: '500', fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s' }}
+                title="Filter Audit Logs"
+              >
+                <Filter size={14} />
+                Filter {filterSource !== 'ALL' && `(${filterSource})`}
+              </button>
+              {isFilterOpen && (
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', zIndex: 50, minWidth: '150px', padding: '4px' }}>
+                  <div style={{ padding: '6px 12px', fontSize: '11px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>Filter by Source</div>
+                  <button type="button" onClick={() => { setFilterSource('ALL'); setIsFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: filterSource === 'ALL' ? '#f1f5f9' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', borderRadius: '4px' }}>All Sources</button>
+                  <button type="button" onClick={() => { setFilterSource('AUTH'); setIsFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: filterSource === 'AUTH' ? '#f1f5f9' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', borderRadius: '4px' }}>Auth</button>
+                  <button type="button" onClick={() => { setFilterSource('SYSTEM'); setIsFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: filterSource === 'SYSTEM' ? '#f1f5f9' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', borderRadius: '4px' }}>System</button>
+                  <button type="button" onClick={() => { setFilterSource('DOCUMENTS'); setIsFilterOpen(false); }} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: filterSource === 'DOCUMENTS' ? '#f1f5f9' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', borderRadius: '4px' }}>Documents</button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -77,59 +204,100 @@ export function AuditLogsTab({
 
         {!logsLoading && !logsError && (
           <>
-            <div className="iso-table-wrap">
-              <table className="iso-table">
+            <div className="iso-table-wrap" style={{ marginTop: '12px' }}>
+              <table className="iso-table audit-logs-table" style={{ width: '100%', tableLayout: 'fixed' }}>
                 <thead>
                   <tr>
-                    <th style={{ width: '20%' }}>Timestamp</th>
-                    <th style={{ width: '15%' }}>Source</th>
-                    <th style={{ width: '45%' }}>Action Description / Metadata</th>
-                    <th style={{ width: '20%' }}>User</th>
+                    <th style={{ width: '15%' }}>Timestamp</th>
+                    <th style={{ width: '18%' }}>User</th>
+                    <th style={{ width: '10%', textAlign: 'center' }}>Source</th>
+                    <th style={{ width: '18%' }}>Action</th>
+                    <th style={{ width: '27%' }}>Details / Context</th>
+                    <th style={{ width: '12%', textAlign: 'center' }}>IP Address</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredLogs.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="iso-empty-state">
+                      <td colSpan={6} className="iso-empty-state">
                         No audit activity logs found.
                       </td>
                     </tr>
                   ) : (
-                    filteredLogs.map((log) => (
-                      <tr key={log.id}>
-                        <td style={{ fontSize: '12.5px', whiteSpace: 'nowrap' }}>
-                          {new Date(log.created_at).toLocaleString()}
-                        </td>
-                        <td>
-                          <span style={{ fontSize: '11px', background: '#e2e8f0', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: '600', textTransform: 'uppercase' }}>
-                            {log.source || 'system'}
-                          </span>
-                        </td>
-                        <td style={{ maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '13px' }}>
-                          <div style={{ fontWeight: '500', color: '#1A435A' }}>
-                            {typeof log.action === 'string' ? log.action : JSON.stringify(log.action)}
-                          </div>
-                          {log.details && Object.keys(log.details).length > 0 && (
-                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                              {log.details.details ? (
-                                log.details.details
-                              ) : log.action === 'user_update' ? (
-                                `Updated user ID: ${log.details.id || 'Unknown'}`
-                              ) : log.action === 'role_update' ? (
-                                `Updated role: ${log.details.role_name || 'Unknown'}`
-                              ) : log.action === 'CREATE_ISO_STANDARD' || log.action === 'UPDATE_ISO_STANDARD' ? (
-                                `${log.action === 'CREATE_ISO_STANDARD' ? 'Created' : 'Updated'} standard: ${log.details.name || 'Unknown'}`
-                              ) : (
-                                ''
-                              )}
+                    filteredLogs.map((log) => {
+                      const logDate = new Date(log.created_at)
+                      const dateStr = logDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                      const timeStr = logDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                      const userDisplay = log.user_display || log.user_auth_id || 'System'
+                      const initials = (userDisplay || 'S')
+                        .split(' ')
+                        .filter(Boolean)
+                        .map(w => w[0])
+                        .slice(0, 2)
+                        .join('')
+                        .toUpperCase() || 'S'
+                      const detailsText = formatLogDetails(log)
+
+                      return (
+                        <tr key={log.id}>
+                          <td style={{ whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                              <span style={{ fontSize: '12.5px', fontWeight: '600', color: '#1A435A' }}>{dateStr}</span>
+                              <span style={{ fontSize: '11px', color: '#64748b' }}>{timeStr}</span>
                             </div>
-                          )}
-                        </td>
-                        <td style={{ fontSize: '13px', color: '#64748b' }}>
-                          {log.user_display || log.user_auth_id || 'System'}
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                              <div style={{
+                                width: '26px',
+                                height: '26px',
+                                borderRadius: '50%',
+                                background: '#e0f2fe',
+                                color: '#0284c7',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '10.5px',
+                                fontWeight: '700',
+                                flexShrink: 0
+                              }}>
+                                {initials}
+                              </div>
+                              <span style={{ fontSize: '13px', fontWeight: '600', color: '#1A435A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={userDisplay}>
+                                {userDisplay}
+                              </span>
+                            </div>
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            {getSourceBadge(log.source)}
+                          </td>
+                          <td>
+                            <span style={{ fontSize: '12.5px', fontWeight: '600', color: '#0f172a' }}>
+                              {formatActionTitle(log.action)}
+                            </span>
+                          </td>
+                          <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '12.5px', color: '#475569' }}>
+                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={detailsText}>
+                              {detailsText}
+                            </div>
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            <span style={{
+                              fontFamily: 'monospace',
+                              fontSize: '11.5px',
+                              color: '#475569',
+                              background: '#f8fafc',
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              border: '1px solid #e2e8f0',
+                              display: 'inline-block'
+                            }}>
+                              {log.ip || '—'}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })
                   )}
                 </tbody>
               </table>

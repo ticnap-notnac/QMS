@@ -352,6 +352,26 @@
   border-color: rgba(239, 68, 68, 0.4) !important;
 }
 
+/* Sleek, dense layout for audit activity logs */
+.audit-logs-table th {
+  padding: 10px 14px !important;
+  font-size: 12px !important;
+  letter-spacing: 0.04em !important;
+}
+
+.audit-logs-table td {
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+}
+
+.audit-logs-table tbody tr:nth-child(even) {
+  background: #fafbfc !important;
+}
+
+.audit-logs-table tbody tr:hover {
+  background: #f1f5f9 !important;
+}
+
 
 .placeholder-box p:first-child { font-weight: 600; }
 
