@@ -16,11 +16,12 @@ let transporter = null
 
 function getTransporter() {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null
+  const port = Number(process.env.SMTP_PORT) || 465
   if (!transporter) {
     transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: Number(process.env.SMTP_PORT) || 465,
-      secure: true,
+      port,
+      secure: port === 465, // true for 465 (SSL), false for 587/2525 (STARTTLS)
       family: 4,
       tls: {
         rejectUnauthorized: false,
@@ -41,9 +42,10 @@ function getResendClient() {
 
 /**
  * Universal email dispatcher:
- * 1. Uses Resend (HTTPS / port 443) if RESEND_API_KEY is configured (works on Render Free Tier).
- * 2. Falls back to Nodemailer (SMTP) if SMTP_USER & SMTP_PASS are configured.
- * 3. Falls back to mock email in console if neither is configured.
+ * 1. Uses Brevo REST API (HTTPS port 443) if BREVO_API_KEY is configured.
+ * 2. Uses Resend (HTTPS port 443) if RESEND_API_KEY is configured.
+ * 3. Uses Nodemailer SMTP (supports 465, 587, 2525) if SMTP_USER & SMTP_PASS are configured.
+ * 4. Falls back to mock email in console if none is configured.
  */
 async function dispatchEmail({ to, subject, html, text, fromTitle = 'QFlow System' }) {
   if (!to) {
@@ -51,6 +53,40 @@ async function dispatchEmail({ to, subject, html, text, fromTitle = 'QFlow Syste
     return null
   }
 
+  // 1. Brevo REST API (Standard HTTPS port 443 - free, no domain required, works anywhere)
+  if (process.env.BREVO_API_KEY) {
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || 'qflooww@gmail.com'
+    const recipients = (Array.isArray(to) ? to : [to]).map(email => ({ email }))
+
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': process.env.BREVO_API_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: {
+          name: fromTitle || 'QFlow System',
+          email: senderEmail,
+        },
+        to: recipients,
+        subject,
+        htmlContent: html,
+        textContent: text,
+      }),
+    })
+
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      throw new Error(`Brevo API error (${res.status}): ${data.message || JSON.stringify(data)}`)
+    }
+
+    logger.info(`Email sent successfully via Brevo to ${to} [MessageId: ${data.messageId}]`)
+    return data
+  }
+
+  // 2. Resend API (HTTPS port 443)
   const resend = getResendClient()
   if (resend) {
     const fromAddress = process.env.RESEND_FROM || `${fromTitle} <onboarding@resend.dev>`
@@ -70,6 +106,7 @@ async function dispatchEmail({ to, subject, html, text, fromTitle = 'QFlow Syste
     return data
   }
 
+  // 3. Nodemailer SMTP (supports port 2525, 465, 587)
   const activeTransporter = getTransporter()
   if (activeTransporter) {
     const fromAddress = process.env.SMTP_FROM || `"${fromTitle}" <${process.env.SMTP_USER}>`
@@ -84,7 +121,7 @@ async function dispatchEmail({ to, subject, html, text, fromTitle = 'QFlow Syste
     return info
   }
 
-  logger.info(`[MOCK EMAIL] To: ${to} | Subject: ${subject} | Email skipped because neither RESEND_API_KEY nor SMTP is configured.`)
+  logger.info(`[MOCK EMAIL] To: ${to} | Subject: ${subject} | Email skipped because no email provider is configured.`)
   return null
 }
 
