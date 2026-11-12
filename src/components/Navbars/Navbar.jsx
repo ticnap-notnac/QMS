@@ -206,7 +206,7 @@ export default function Navbar({
         <div className="app-navbar-inner">
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div onClick={() => navigate('/dashboard')} className="app-navbar-brand">
-              <img src="/resq_logo_transparent.png" alt="RESQ Logo" className="brand-logo-img" />
+              <img src="/resq_logo_navbar.png" alt="RESQ Logo" className="brand-logo-img" />
             </div>
 
             {userSiteName && (
@@ -243,7 +243,7 @@ export default function Navbar({
       {/* 2. MOBILE TOP HEADER (Hidden on desktop) */}
       <header className="app-navbar-mobile-top mobile-only" ref={mobileMenuContainerRef}>
         <div onClick={() => navigate('/dashboard')} className="mobile-brand">
-          <img src="/resq_logo_transparent.png" alt="RESQ Logo" className="brand-logo-img-mobile" />
+          <img src="/resq_logo_navbar.png" alt="RESQ Logo" className="brand-logo-img-mobile" />
         </div>
         
         <div className="mobile-top-actions">

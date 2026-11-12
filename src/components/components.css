@@ -48,16 +48,18 @@
 }
 
 .brand-logo-img {
-  height: 48px;
+  height: 42px;
   width: auto;
   max-width: 100%;
   object-fit: contain;
   display: block;
-  transition: transform 0.25s ease;
+  transition: transform 0.25s ease, filter 0.25s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22));
 }
 
 .app-navbar-brand:hover .brand-logo-img {
-  transform: scale(1.05);
+  transform: scale(1.04);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
 .brand-logo-box {
@@ -1552,11 +1554,12 @@ textarea.input-field {
   }
 
   .brand-logo-img-mobile {
-    height: 54px;
+    height: 40px;
     width: auto;
     object-fit: contain;
     flex-shrink: 0;
-    padding: 4px 0;
+    padding: 2px 0;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.22));
   }
 
   .mobile-top-actions {
