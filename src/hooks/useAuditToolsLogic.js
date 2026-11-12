@@ -21,7 +21,23 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [success, setSuccessState] = useState('')
+  const [toast, setToast] = useState(null)
+
+  const setSuccess = (msg) => {
+    setSuccessState(msg || '')
+    if (msg) {
+      setToast({ message: msg, type: 'success' })
+    } else {
+      setToast(null)
+    }
+  }
+
+  // Clear stale inline messages and errors on tab switch
+  useEffect(() => {
+    setError('')
+    setSuccessState('')
+  }, [activeTab])
 
   // Form fields
   const [title, setTitle] = useState('')
@@ -1068,6 +1084,8 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     setError,
     success,
     setSuccess,
+    toast,
+    setToast,
     title,
     setTitle,
     standardId,

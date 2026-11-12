@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
+import Toast from '@/components/UI/Toast.jsx'
 import useAuditToolsLogic from '../hooks/useAuditToolsLogic'
 import { AuditLogsTab, AuditReportsTab, AuditSchedulesTab, AuditTemplatesTab } from '../components/AuditTools/AuditToolsTabs'
 import { AuditChecklistSection, AuditRunDetailsModal } from '../components/AuditTools/AuditToolsModals'
@@ -76,6 +77,13 @@ export default function AuditToolsPage({ authUserId, userRole, userPermissions }
 
   const mainContent = (
     <div className={isInsideSettings ? "settings-content-inner" : "audit-main"} style={{ width: '100%' }}>
+      {logic.toast && (
+        <Toast
+          message={logic.toast.message}
+          type={logic.toast.type}
+          onClose={() => logic.setToast(null)}
+        />
+      )}
       {!isInsideSettings && (
         <>
           <h1>Audit Tools</h1>

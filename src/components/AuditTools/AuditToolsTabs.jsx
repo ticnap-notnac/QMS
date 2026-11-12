@@ -633,12 +633,6 @@ export function AuditSchedulesTab({
               </div>
             )}
 
-            {success && (
-              <div className="iso-inline-message iso-inline-message--success" style={{ marginBottom: '16px' }}>
-                {success}
-              </div>
-            )}
-
             <div className="iso-actions-row" style={{ marginTop: '8px' }}>
               <button type="submit" className="btn-primary" disabled={saving}>
                 {saving ? (
@@ -1182,11 +1176,6 @@ export function AuditTemplatesTab({
         {error && (
           <div className="iso-inline-message iso-inline-message--error" style={{ width: '100%', marginBottom: '8px' }}>
             {error}
-          </div>
-        )}
-        {success && (
-          <div className="iso-inline-message iso-inline-message--success" style={{ width: '100%', marginBottom: '8px' }}>
-            {success}
           </div>
         )}
 

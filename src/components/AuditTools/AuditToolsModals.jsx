@@ -169,11 +169,6 @@ export function AuditChecklistSection({
           {error}
         </div>
       )}
-      {success && (
-        <div className="iso-inline-message iso-inline-message--success" style={{ marginBottom: '16px' }}>
-          {success}
-        </div>
-      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px', width: '100%', overflowX: 'auto' }}>
         {activeClauses.length === 0 ? (
