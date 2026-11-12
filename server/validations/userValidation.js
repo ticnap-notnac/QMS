@@ -14,7 +14,6 @@ export const createUserSchema = z.object({
     departmentId: z.union([z.string(), z.number()]).optional().nullable(),
     siteId: z.union([z.string(), z.number()]).optional().nullable(),
     positionId: z.union([z.string(), z.number()]).optional().nullable(),
-    teamLeaderId: z.union([z.string(), z.number()]).optional().nullable(),
   })
 })
 
@@ -32,7 +31,6 @@ export const updateUserSchema = z.object({
     departmentId: z.union([z.string(), z.number()]).optional().nullable(),
     siteId: z.union([z.string(), z.number()]).optional().nullable(),
     positionId: z.union([z.string(), z.number()]).optional().nullable(),
-    teamLeaderId: z.union([z.string(), z.number()]).optional().nullable(),
     status: z.string().trim().toUpperCase().refine(
       (val) => ['ACTIVE', 'INACTIVE', 'DEACTIVATED'].includes(val),
       { message: "Status must be either 'ACTIVE', 'INACTIVE', or 'DEACTIVATED'" }
@@ -52,12 +50,5 @@ export const updateUserStatusSchema = z.object({
       (val) => ['ACTIVE', 'INACTIVE', 'DEACTIVATED'].includes(val),
       { message: "Status must be either 'ACTIVE', 'INACTIVE', or 'DEACTIVATED'" }
     )
-  })
-})
-
-export const assignTeamRosterSchema = z.object({
-  body: z.object({
-    teamLeaderId: z.union([z.string(), z.number()]),
-    memberIds: z.array(z.union([z.string(), z.number()])),
   })
 })

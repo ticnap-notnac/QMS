@@ -1,7 +1,6 @@
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import AddUserModal from '@/components/Modals/AddUserModal'
 import EditUserModal from '@/components/Modals/EditUserModal'
-import ManageTeamRosterModal from '@/components/Modals/ManageTeamRosterModal'
 import SearchForm from '@/components/Forms/SearchForm'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import UsersTable from '@/components/UsersTable/UsersTable'
@@ -21,25 +20,21 @@ export default function AddUserPage({ userRole, userPermissions }) {
     setStatusFilter,
     reloadUsers,
     openAddUserModal,
-    openManageRosterModal,
     usersLoading,
     usersError,
     filteredUsers,
     usersTableProps,
     addUserModalProps,
     editUserModalProps,
-    manageRosterModalProps,
     confirmDialogProps,
     toast,
     setToast
   } = useAddUserLogic({ currentUserRole: userRole })
 
-  const isOverlayLoading = addUserModalProps.loading || editUserModalProps.loading || manageRosterModalProps?.saving
+  const isOverlayLoading = addUserModalProps.loading || editUserModalProps.loading
   const overlayMessage = addUserModalProps.loading
     ? 'Creating user account...'
-    : editUserModalProps.loading
-      ? 'Updating user account...'
-      : 'Updating team roster...'
+    : 'Updating user account...'
 
   const canAccess = hasAdminPanelAccess(userRole, userPermissions, ['manage_users'])
 
@@ -72,14 +67,6 @@ export default function AddUserPage({ userRole, userPermissions }) {
                     </select>
                   </div>
                   <div className="admin-actions-right" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      onClick={openManageRosterModal}
-                      className="btn-add-action"
-                      style={{ background: '#0f172a' }}
-                    >
-                      <span>Manage Team Roster</span>
-                    </button>
                     <button onClick={openAddUserModal} className="btn-add-action"><span>+ Add User</span></button>
                   </div>
                 </div>
@@ -112,7 +99,6 @@ export default function AddUserPage({ userRole, userPermissions }) {
 
           <AddUserModal {...addUserModalProps} />
           <EditUserModal {...editUserModalProps} />
-          <ManageTeamRosterModal {...manageRosterModalProps} />
           <ConfirmDialog {...confirmDialogProps} />
           <SubmissionLoadingOverlay isOpen={isOverlayLoading} message={overlayMessage} />
           {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}

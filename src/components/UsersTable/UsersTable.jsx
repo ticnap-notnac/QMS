@@ -7,7 +7,6 @@ export default function UsersTable({
   departmentNameById,
   siteNameById,
   positionNameById,
-  teamLeaderNameById,
   onEdit,
   onDelete
 }) {
@@ -22,7 +21,6 @@ export default function UsersTable({
             <th>Position</th>
             <th>Role</th>
             <th>Department</th>
-            <th>Team Leader</th>
             <th className="text-center">Site</th>
             <th>Contact</th>
             <th style={{ width: '10%' }} className="text-center">STATUS</th>
@@ -35,10 +33,6 @@ export default function UsersTable({
             const roleName = user.role_name || roleNameById.get(String(user.role_id)) || '-'
             const positionName = user.position_name || positionNameById?.get(String(user.position_id)) || '-'
             const departmentLabel = user.department_name || departmentNameById.get(String(user.department_id)) || '-'
-            const teamLeaderLabel =
-              user.team_leader_name ||
-              (user.team_leader_id ? teamLeaderNameById?.get(String(user.team_leader_id)) : null) ||
-              '—'
             const siteLabel = user.site_name || siteNameById?.get(String(user.site_id)) || '—'
             const isDeleting = deletingUserId === user.id
 
@@ -50,7 +44,6 @@ export default function UsersTable({
                 <td>{positionName}</td>
                 <td>{roleName}</td>
                 <td>{departmentLabel}</td>
-                <td>{teamLeaderLabel}</td>
                 <td className="text-center">
                   <span style={{ fontSize: '11.5px', background: '#f1f5f9', color: '#475569', padding: '2px 7px', borderRadius: '4px', fontWeight: 600 }}>
                     {siteLabel}

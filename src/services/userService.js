@@ -34,10 +34,3 @@ export async function updateUserStatus(userId, status) {
     body: JSON.stringify({ status }),
   })
 }
-
-export async function assignTeamRoster(teamLeaderId, memberIds) {
-  return request('/users/team-roster', {
-    method: 'PATCH',
-    body: JSON.stringify({ teamLeaderId, memberIds }),
-  })
-}

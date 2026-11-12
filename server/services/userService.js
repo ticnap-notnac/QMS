@@ -11,7 +11,7 @@ export async function fetchAllUsers({ actorRoleName, actorSiteId } = {}) {
   const isActorAdmin = isAdminRole(actorRoleName)
   let usersQuery = supabase
     .from('users')
-    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, created_at, status, site_id, position_id, team_leader_id')
+    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, created_at, status, site_id, position_id')
     .order('created_at', { ascending: false })
     .limit(1000)
 
@@ -43,12 +43,6 @@ export async function fetchAllUsers({ actorRoleName, actorSiteId } = {}) {
   )
 
   const allRows = usersResult.data || []
-  const userMap = new Map(
-    allRows.map((u) => [
-      String(u.id),
-      `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.user_name || u.email || 'Unnamed',
-    ])
-  )
 
   const data = allRows.map((user) => ({
     ...user,
@@ -58,7 +52,6 @@ export async function fetchAllUsers({ actorRoleName, actorSiteId } = {}) {
     department_name: departmentMap.get(String(user.department_id)) || null,
     site_name: siteMap.get(String(user.site_id))?.site_name || null,
     site_code: siteMap.get(String(user.site_id))?.site_code || null,
-    team_leader_name: user.team_leader_id ? (userMap.get(String(user.team_leader_id)) || null) : null,
   }))
 
   return { data, error: null }
@@ -67,7 +60,7 @@ export async function fetchAllUsers({ actorRoleName, actorSiteId } = {}) {
 /**
  * Creates a new user in Supabase Auth and links it to a public user profile.
  */
-export async function createUserWithAuth({ firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId, positionId, teamLeaderId }) {
+export async function createUserWithAuth({ firstName, lastName, email, password, userName, contactNumber, roleId, departmentId, siteId, positionId }) {
   const describeAuthCreateError = (authError) => {
     const message = String(authError?.message || '').toLowerCase()
     const code = String(authError?.code || '').toLowerCase()
@@ -172,7 +165,6 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
       department_id: departmentId ? Number(departmentId) : null,
       site_id: siteId ? Number(siteId) : null,
       position_id: positionId ? Number(positionId) : null,
-      team_leader_id: teamLeaderId ? Number(teamLeaderId) : null,
     },
   })
   const authData = adminRes.data
@@ -188,7 +180,6 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
   if (roleId) profileUpdates.role_id = Number(roleId)
   if (departmentId) profileUpdates.department_id = Number(departmentId)
   if (positionId) profileUpdates.position_id = Number(positionId)
-  if (teamLeaderId !== undefined) profileUpdates.team_leader_id = teamLeaderId ? Number(teamLeaderId) : null
   if (contactNumber) profileUpdates.contact_number = contactNumber
   if (userName) profileUpdates.user_name = userName
 
@@ -198,7 +189,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
 
   let { data: profileData, error: profileError } = await supabase
     .from('users')
-    .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id, team_leader_id')
+    .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id')
     .eq('auth_id', authData.user.id)
     .maybeSingle()
 
@@ -216,10 +207,9 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
         department_id: departmentId ? Number(departmentId) : null,
         site_id: siteId ? Number(siteId) : null,
         position_id: positionId ? Number(positionId) : null,
-        team_leader_id: teamLeaderId ? Number(teamLeaderId) : null,
         status: 'ACTIVE'
       }])
-      .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id, team_leader_id')
+      .select('id, first_name, last_name, email, contact_number, role_id, department_id, auth_id, site_id, position_id')
       .maybeSingle()
 
     if (!insertErr && createdProfile) {
@@ -262,7 +252,7 @@ export async function createUserWithAuth({ firstName, lastName, email, password,
 export async function fetchUserById(id) {
   const { data, error } = await supabase
     .from('users')
-    .select('id, first_name, last_name, user_name, email, auth_id, position_id, team_leader_id')
+    .select('id, first_name, last_name, user_name, email, auth_id, position_id')
     .eq('id', id)
     .maybeSingle()
 
@@ -313,10 +303,10 @@ export async function deleteUserById(id, actorAuthId) {
 /**
  * Updates a user's profile and conditionally updates their Supabase Auth credentials.
  */
-export async function updateUserById(id, { firstName, lastName, email, userName, contactNumber, roleId, departmentId, siteId, positionId, teamLeaderId, password, status }, actorAuthId) {
+export async function updateUserById(id, { firstName, lastName, email, userName, contactNumber, roleId, departmentId, siteId, positionId, password, status }, actorAuthId) {
   const { data: existing, error: fetchError } = await supabase
     .from('users')
-    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id, position_id, team_leader_id')
+    .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id, position_id')
     .eq('id', id)
     .maybeSingle()
 
@@ -332,12 +322,6 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
   if (departmentId !== undefined && String(departmentId) !== String(existing.department_id)) updates.department_id = departmentId || null
   if (siteId !== undefined && String(siteId) !== String(existing.site_id ?? '')) updates.site_id = siteId || null
   if (positionId !== undefined && String(positionId) !== String(existing.position_id ?? '')) updates.position_id = positionId || null
-  if (teamLeaderId !== undefined) {
-    const nextTlId = teamLeaderId && String(teamLeaderId) !== String(id) ? Number(teamLeaderId) : null
-    if (String(nextTlId ?? '') !== String(existing.team_leader_id ?? '')) {
-      updates.team_leader_id = nextTlId
-    }
-  }
   if (email !== undefined && email !== (existing.email || '')) updates.email = email
   if (status !== undefined && status !== (existing.status || '')) {
     const VALID_STATUSES = ['ACTIVE', 'INACTIVE', 'DEACTIVATED', 'Active', 'Inactive', 'Deactivated']
@@ -353,7 +337,7 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
       .from('users')
       .update(updates)
       .eq('id', id)
-      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id, position_id, team_leader_id')
+      .select('id, first_name, last_name, user_name, email, contact_number, role_id, department_id, auth_id, status, site_id, position_id')
       .maybeSingle()
 
     if (profileError) return { profile: null, error: profileError.message, status: 500 }
@@ -387,7 +371,6 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
 
 /**
  * Updates the status of a specific user.
- * Supports both Administrators (any status) and Team Leaders (ACTIVE <-> INACTIVE for their own subordinates).
  */
 export async function updateUserStatusById(id, status, actorAuthId, actorDbUser = null) {
   const VALID_STATUSES = ['Active', 'Inactive', 'Deactivated', 'ACTIVE', 'INACTIVE', 'DEACTIVATED']
@@ -399,7 +382,7 @@ export async function updateUserStatusById(id, status, actorAuthId, actorDbUser 
   const normalisedStatus = status.toUpperCase()
   const { data: existing, error: fetchError } = await supabase
     .from('users')
-    .select('id, auth_id, status, team_leader_id')
+    .select('id, auth_id, status')
     .eq('id', id)
     .maybeSingle()
 
@@ -415,20 +398,10 @@ export async function updateUserStatusById(id, status, actorAuthId, actorDbUser 
   )
 
   if (actorDbUser && !actorIsAdminOrUserMgr) {
-    // Caller is a Team Leader: must only manage their own subordinates and only ACTIVE <-> INACTIVE
-    if (Number(existing.team_leader_id) !== Number(actorDbUser.id)) {
-      return {
-        success: false,
-        error: 'You can only change the status of employees assigned under your team.',
-        status: 403,
-      }
-    }
-    if (String(existing.status || '').toUpperCase() === 'DEACTIVATED' || normalisedStatus === 'DEACTIVATED') {
-      return {
-        success: false,
-        error: 'Only an Administrator can deactivate or reactivate a deactivated account.',
-        status: 403,
-      }
+    return {
+      success: false,
+      error: 'Only an Administrator can modify user status.',
+      status: 403,
     }
   }
 
@@ -457,53 +430,6 @@ export async function updateUserStatusById(id, status, actorAuthId, actorDbUser 
     })
   } catch (logErr) {
     console.warn('Failed to record user_status_update log:', logErr?.message || logErr)
-  }
-
-  return { success: true, error: null, status: 200 }
-}
-
-/**
- * Bulk-assigns a roster of employees to a Team Leader.
- * Any user currently assigned to `teamLeaderId` not in `memberIds` is unassigned (`team_leader_id = null`),
- * and all users in `memberIds` are assigned `team_leader_id = Number(teamLeaderId)`.
- */
-export async function assignTeamRoster(teamLeaderId, memberIds = [], actorAuthId) {
-  const tlId = Number(teamLeaderId)
-  if (!Number.isFinite(tlId) || tlId <= 0) {
-    return { success: false, error: 'Valid Team Leader ID is required.', status: 400 }
-  }
-
-  const normalizedMemberIds = (Array.isArray(memberIds) ? memberIds : [])
-    .map((id) => Number(id))
-    .filter((id) => Number.isFinite(id) && id > 0 && id !== tlId)
-
-  // 1. Clear existing members assigned to this TL
-  const { error: clearErr } = await supabase
-    .from('users')
-    .update({ team_leader_id: null })
-    .eq('team_leader_id', tlId)
-
-  if (clearErr) return { success: false, error: clearErr.message, status: 500 }
-
-  // 2. Assign selected members to this TL
-  if (normalizedMemberIds.length > 0) {
-    const { error: assignErr } = await supabase
-      .from('users')
-      .update({ team_leader_id: tlId })
-      .in('id', normalizedMemberIds)
-
-    if (assignErr) return { success: false, error: assignErr.message, status: 500 }
-  }
-
-  try {
-    await writeAudit({
-      source: 'users',
-      action: 'team_roster_update',
-      userAuthId: actorAuthId,
-      details: { teamLeaderId: tlId, memberIds: normalizedMemberIds },
-    })
-  } catch (logErr) {
-    console.warn('Failed to record team_roster_update log:', logErr?.message || logErr)
   }
 
   return { success: true, error: null, status: 200 }
