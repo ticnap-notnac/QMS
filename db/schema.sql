@@ -134,17 +134,6 @@ CREATE TABLE IF NOT EXISTS public.qddr_case_repository (
   created_at timestamptz DEFAULT now()
 );
 
--- Table: documents
-CREATE TABLE IF NOT EXISTS public.documents (
-  id bigint PRIMARY KEY,
-  document_name varchar NOT NULL,
-  version varchar NULL,
-  uploaded_by bigint NULL REFERENCES public.users(id),
-  file_path text NOT NULL,
-  approval_status varchar NULL,
-  uploaded_at timestamp NULL DEFAULT now()
-);
-
 -- Table: audit_logs
 CREATE TABLE IF NOT EXISTS public.audit_logs (
   id bigint PRIMARY KEY,
@@ -776,10 +765,7 @@ ALTER TABLE public.qddr_case_repository ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow authenticated select on qddr_case_repository" ON public.qddr_case_repository FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Allow all actions for service role on qddr_case_repository" ON public.qddr_case_repository FOR ALL TO service_role USING (true) WITH CHECK (true);
 
--- documents
-ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow authenticated select on documents" ON public.documents FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow all actions for service role on documents" ON public.documents FOR ALL TO service_role USING (true) WITH CHECK (true);
+
 
 -- audit_logs
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X as CloseIcon, Sparkles } from 'lucide-react'
+import { X as CloseIcon, Sparkles, LoaderCircle } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 
 function QDDRModal({
@@ -125,7 +125,7 @@ function QDDRModal({
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label className="label-field">
-                    Date: <span className="required-asterisk">*</span>
+                    Date:
                   </label>
                   <input
                     type="date"
@@ -137,7 +137,7 @@ function QDDRModal({
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label className="label-field">
-                    Time: <span className="required-asterisk">*</span>
+                    Time:
                   </label>
                   <input
                     type="time"
@@ -152,7 +152,7 @@ function QDDRModal({
               <div className="qddr-form-row-3-col">
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label className="label-field">
-                    Trucker / Broker: <span className="required-asterisk">*</span>
+                    Trucker / Broker:
                   </label>
                   <input
                     type="text"
@@ -164,7 +164,7 @@ function QDDRModal({
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label className="label-field">
-                    Plate Number: <span className="required-asterisk">*</span>
+                    Plate Number:
                   </label>
                   <input
                     type="text"
@@ -176,7 +176,7 @@ function QDDRModal({
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label className="label-field">
-                    Container Number: <span className="required-asterisk">*</span>
+                    Container Number:
                   </label>
                   <input
                     type="text"
@@ -192,7 +192,7 @@ function QDDRModal({
               <div className="qddr-form-row-3-col">
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label className="label-field">
-                    PO Reference: <span className="required-asterisk">*</span>
+                    PO Reference:
                   </label>
                   <input
                     type="text"
@@ -203,7 +203,7 @@ function QDDRModal({
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label className="label-field">
-                    DR / WB Number: <span className="required-asterisk">*</span>
+                    DR / WB Number:
                   </label>
                   <input
                     type="text"
@@ -214,7 +214,7 @@ function QDDRModal({
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label className="label-field">
-                    Brand / Supplier: <span className="required-asterisk">*</span>
+                    Brand / Supplier:
                   </label>
                   <input
                     type="text"
@@ -252,6 +252,7 @@ function QDDRModal({
                     onChange={(e) => handleChange('material_code', e.target.value)}
                     className="input-field"
                     placeholder="Code..."
+                    required
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -264,6 +265,7 @@ function QDDRModal({
                     onChange={(e) => handleChange('batch_code_su_number', e.target.value)}
                     className="input-field"
                     placeholder="Batch..."
+                    required
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -277,6 +279,7 @@ function QDDRModal({
                     className="input-field"
                     placeholder="Qty..."
                     min="0"
+                    required
                   />
                 </div>
               </div>
@@ -284,7 +287,7 @@ function QDDRModal({
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
 
               <h4 style={{ color: '#1A435A', fontSize: '13px', margin: '0 0 4px 0', textAlign: 'center', letterSpacing: '0.05em' }}>
-                TYPE OF DISCREPANCY <span className="required-asterisk">*</span>
+                TYPE OF DISCREPANCY
               </h4>
               
               {/* Discrepancies Grid & Others */}
@@ -341,19 +344,18 @@ function QDDRModal({
               <div className="qddr-form-row-3-col" style={isMobile ? { gridTemplateColumns: '1fr', gap: '10px' } : undefined}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label className="label-field">
-                    Reason of Discrepancy: <span className="required-asterisk">*</span>
+                    Reason of Discrepancy:
                   </label>
                   <textarea
                     value={form.reason_of_discrepancy}
                     onChange={(e) => handleChange('reason_of_discrepancy', e.target.value)}
                     className="input-field"
-                    required
                     style={{ height: '80px', padding: '8px', resize: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label className="label-field">
-                    Corrective Action: <span className="required-asterisk">*</span>
+                    Corrective Action:
                   </label>
                   <textarea
                     value={form.corrective_action}
@@ -364,7 +366,7 @@ function QDDRModal({
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label className="label-field">
-                    Preventive Action: <span className="required-asterisk">*</span>
+                    Preventive Action:
                   </label>
                   <textarea
                     value={form.preventive_action}

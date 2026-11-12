@@ -208,16 +208,24 @@ export function useQDDRForm() {
   }
 
   const validate = () => {
-    if (!form.location) {
+    if (!String(form.location || '').trim()) {
       setError('Location is required.')
       return false
     }
-    if (!form.material_description) {
+    if (!String(form.material_description || '').trim()) {
       setError('Material Description is required.')
       return false
     }
-    if (!form.reason_of_discrepancy) {
-      setError('Reason of Discrepancy is required.')
+    if (!String(form.material_code || '').trim()) {
+      setError('Material Code is required.')
+      return false
+    }
+    if (!String(form.batch_code_su_number || '').trim()) {
+      setError('Batch Code / ISU No is required.')
+      return false
+    }
+    if (form.qty === '' || form.qty === null || form.qty === undefined || Number(form.qty) < 0) {
+      setError('Quantity is required.')
       return false
     }
     setError(null)
