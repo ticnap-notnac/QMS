@@ -57,7 +57,7 @@ export default function ProfileCard({ userProfile = {}, userRole = 'employee', u
         </div>
         <div className="profile-field user-info-field--profile">
           <span className="profile-field-label user-info-field-label--profile">Employee Department</span>
-          <span className="profile-field-value user-info-field-value--profile">{userProfile.department_name || userProfile.department || 'IT Department'}</span>
+          <span className="profile-field-value user-info-field-value--profile">{userProfile.department_name || userProfile.department || '-'}</span>
         </div>
         <div className="profile-field user-info-field--profile">
           <span className="profile-field-label user-info-field-label--profile">Role</span>

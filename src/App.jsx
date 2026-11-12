@@ -135,19 +135,23 @@ function AppInner() {
       }
     }
 
-    if (resolvedRoleName) {
+    const resolvedPositionName = profile.positions?.position_name || profile.position_name || null
+    if (resolvedPositionName) {
+      setUserPosition(resolvedPositionName)
+    } else if (resolvedRoleName) {
       setUserPosition(resolvedRoleName)
+    } else if (profile.role) {
+      setUserPosition(profile.role)
+    } else {
+      setUserPosition(profile.user_name || 'Position')
+    }
+
+    if (resolvedRoleName) {
       const normalized = resolvedRoleName.toLowerCase()
       setUserRole(normalized === 'admin' ? 'admin' : normalized)
     } else if (profile.role) {
       resolvedRoleName = profile.role
-      setUserPosition(profile.role)
       setUserRole(normalizeRoleValue(profile.role))
-    }
-
-    // Fallbacks when role couldn't be resolved
-    if (!resolvedRoleName) {
-      setUserPosition(profile.user_name || 'Position')
     }
   }
 
@@ -162,7 +166,7 @@ function AppInner() {
         if (user) {
           const { data } = await supabase
             .from('users')
-            .select('id, first_name, last_name, user_name, role_id, department_id, status, roles(role_name, permissions)')
+            .select('id, first_name, last_name, user_name, role_id, department_id, position_id, status, roles(role_name, permissions), positions(position_name), departments(department_name)')
             .eq('auth_id', user.id)
             .maybeSingle()
 
@@ -191,7 +195,7 @@ function AppInner() {
         if (newUser) {
           supabase
             .from('users')
-            .select('id, first_name, last_name, user_name, role_id, department_id, status, roles(role_name, permissions)')
+            .select('id, first_name, last_name, user_name, role_id, department_id, position_id, status, roles(role_name, permissions), positions(position_name), departments(department_name)')
             .eq('auth_id', newUser.id)
             .maybeSingle()
             .then(({ data }) => {
