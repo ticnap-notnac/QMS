@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { generateAiSuggestionFromText, classifyDiscrepancyTags, fetchJobStatus } from '@/services/suggestionService'
-import { suggestClausesForQddr } from '@/services/qddrService'
 
 export function useQDDRForm() {
   const initialState = {
@@ -38,18 +37,13 @@ export function useQDDRForm() {
     preventive_action: '',
     approved_by: '',
     noted_by: '',
-    leader: '',
-    linked_clause_ids: [],
-    suggested_clauses: []
+    leader: ''
   }
 
   const [form, setForm] = useState(initialState)
   const [error, setError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
-
-  const [clausesLoading, setClausesLoading] = useState(false)
-  const [clausesError, setClausesError] = useState(null)
   const lastClassifiedReasonRef = useRef('')
 
   useEffect(() => {
@@ -85,7 +79,6 @@ export function useQDDRForm() {
   const resetForm = () => {
     setForm(initialState)
     setError(null)
-    setClausesError(null)
   }
 
   const initForm = (existingQddr) => {
@@ -126,68 +119,9 @@ export function useQDDRForm() {
       preventive_action: existingQddr.preventive_action || '',
       approved_by: existingQddr.approved_by || '',
       noted_by: existingQddr.noted_by || '',
-      leader: existingQddr.leader || '',
-      linked_clause_ids: existingQddr.linked_clause_ids || [],
-      suggested_clauses: existingQddr.suggested_clauses || []
+      leader: existingQddr.leader || ''
     })
     setError(null)
-  }
-
-  const toggleClauseSelection = (clauseId) => {
-    setForm(prev => {
-      const already = prev.linked_clause_ids.includes(clauseId)
-      return {
-        ...prev,
-        linked_clause_ids: already
-          ? prev.linked_clause_ids.filter(c => c !== clauseId)
-          : [...prev.linked_clause_ids, clauseId]
-      }
-    })
-  }
-
-  const fetchClauseSuggestions = async (userAuthId) => {
-    if (!form.reason_of_discrepancy?.trim()) {
-      setClausesError('Please fill in Reason of Discrepancy first.')
-      return
-    }
-
-    setClausesLoading(true)
-    setClausesError(null)
-
-    const flags = {
-      holes_punctures: form.holes_punctures,
-      deformed_torn: form.deformed_torn,
-      open_carton: form.open_carton,
-      crushed_dented: form.crushed_dented,
-      wet_leaked: form.wet_leaked,
-      stain_graffiti: form.stain_graffiti,
-      bulging: form.bulging,
-      improper_stretch_wrapping: form.improper_stretch_wrapping,
-      wrong_no_batchcode: form.wrong_no_batchcode,
-      opened_seal: form.opened_seal,
-      no_label_broken_label: form.no_label_broken_label,
-      short_pack: form.short_pack,
-      excess_shipment: form.excess_shipment,
-      documentation_error: form.documentation_error,
-      picking_discrepancy: form.picking_discrepancy
-    }
-
-    try {
-      const result = await suggestClausesForQddr(
-        { description: form.reason_of_discrepancy, flags },
-        userAuthId
-      )
-      const suggestions = Array.isArray(result) ? result : (result?.suggestions || [])
-      setForm(prev => ({ ...prev, suggested_clauses: suggestions }))
-
-      if (suggestions.length === 0) {
-        setClausesError('No matching clauses found. Try adding more detail.')
-      }
-    } catch (err) {
-      setClausesError('We could not generate clause suggestions. Please try again.')
-    } finally {
-      setClausesLoading(false)
-    }
   }
 
   const suggestActions = async () => {
@@ -302,11 +236,6 @@ export function useQDDRForm() {
     isSubmitting,
     setIsSubmitting,
     suggesting,
-    suggestActions,
-    toggleClauseSelection,
-    fetchClauseSuggestions,
-    clausesLoading,
-    clausesError,
-    setClausesError
+    suggestActions
   }
 }

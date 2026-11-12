@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { X as CloseIcon, Clipboard, CheckCircle, User, Calendar, Sparkles } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 import { generateAiSuggestionFromText } from '../../services/suggestionService'
-import { fetchLinkedClausesForQddr } from '../../services/qddrService'
 import { isAdminRole } from '@/utils/roleUtils.js'
 
 export default function QDDRDetailsModal({
@@ -27,8 +26,6 @@ export default function QDDRDetailsModal({
   const [suggesting, setSuggesting] = useState(false)
   const [suggestionMeta, setSuggestionMeta] = useState(null)
   const [error, setError] = useState('')
-  const [linkedClauses, setLinkedClauses] = useState([])
-  const [loadingClauses, setLoadingClauses] = useState(false)
 
   const resolveName = (userId, fallbackName = '') => {
     if (!userId && !fallbackName) return ''
@@ -49,16 +46,6 @@ export default function QDDRDetailsModal({
       setStatus(qddr.status || 'open')
       setSuggestionMeta(null)
       setError('')
-
-      if (qddr.id) {
-        setLoadingClauses(true)
-        fetchLinkedClausesForQddr(qddr.id)
-          .then((clauses) => setLinkedClauses(clauses || []))
-          .catch(() => setLinkedClauses([]))
-          .finally(() => setLoadingClauses(false))
-      } else {
-        setLinkedClauses([])
-      }
     }
   }, [qddr, users])
 
@@ -273,35 +260,6 @@ export default function QDDRDetailsModal({
             <div><span style={{ color: 'var(--muted)' }}>Batch / ISU No:</span> <strong style={{ color: '#1A435A' }}>{qddr.batch_code_su_number || '—'}</strong></div>
             
             <div><span style={{ color: 'var(--muted)' }}>Quantity:</span> <strong style={{ color: '#1A435A' }}>{qddr.qty || '—'}</strong></div>
-          </div>
-
-          {/* Linked ISO Clauses */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label className="label-field" style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase' }}>Linked ISO Clauses</label>
-            <div style={{
-              background: 'rgba(8, 145, 178, 0.04)',
-              border: '1px solid rgba(8, 145, 178, 0.2)',
-              padding: '12px',
-              borderRadius: '6px',
-              fontSize: '13px',
-              color: '#0891b2'
-            }}>
-              {loadingClauses ? (
-                <span style={{ color: 'var(--muted)' }}>Loading clauses...</span>
-              ) : linkedClauses.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {linkedClauses.map((cl, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ color: '#0891b2', fontWeight: 'bold' }}>Clause {cl.clause_number}</span>
-                      <span>—</span>
-                      <span style={{ color: '#334155' }}>{cl.title}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <span style={{ color: '#64748b' }}>No linked ISO clauses.</span>
-              )}
-            </div>
           </div>
 
           {/* Discrepancies Checked */}

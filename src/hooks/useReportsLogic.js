@@ -18,8 +18,7 @@ import {
 import {
   submitQddrReport,
   updateQddrReport,
-  editQddrReport,
-  fetchLinkedClausesForQddr
+  editQddrReport
 } from '@/services/qddrService'
 import { supabase } from '@/utils/supabase'
 import { useCARDetails } from './useCARDetails'
@@ -307,8 +306,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
 
     try {
       const payload = {
-        ...qddrFormState.form,
-        clause_ids: qddrFormState.form.linked_clause_ids || []
+        ...qddrFormState.form
       }
 
       if (qddrFormState.form.id) {
@@ -397,7 +395,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     }
   }
 
-  const openEditQddrModal = async (qddr) => {
+  const openEditQddrModal = (qddr) => {
     const resolveUserDropdownLabel = (val) => {
       if (!val) return ''
       const found = (dataState.users || []).find(u => Number(u.id) === Number(val))
@@ -411,20 +409,8 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       noted_by: resolveUserDropdownLabel(qddr.noted_by),
     }
 
-    try {
-      const linkedClauses = await fetchLinkedClausesForQddr(qddr.id)
-      const linkedClauseIds = linkedClauses.map(c => c.clause_id)
-      qddrFormState.initForm({
-        ...hydratedQddr,
-        linked_clause_ids: linkedClauseIds,
-        suggested_clauses: linkedClauses.map(c => ({ ...c, confidence: 1 }))
-      })
-      modalsState.openQDDRModal(qddr)
-    } catch (err) {
-      console.error('Failed to fetch linked clauses for QDDR edit:', err)
-      qddrFormState.initForm(hydratedQddr)
-      modalsState.openQDDRModal(qddr)
-    }
+    qddrFormState.initForm(hydratedQddr)
+    modalsState.openQDDRModal(qddr)
   }
 
   return {
@@ -519,12 +505,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       users: activeUserOptions,
       usersLoading: dataState.usersLoading,
       suggesting: qddrFormState.suggesting,
-      suggestActions: qddrFormState.suggestActions,
-      toggleClauseSelection: qddrFormState.toggleClauseSelection,
-      fetchClauseSuggestions: qddrFormState.fetchClauseSuggestions,
-      clausesLoading: qddrFormState.clausesLoading,
-      clausesError: qddrFormState.clausesError,
-      userAuthId: currentAuthId,
+      suggestActions: qddrFormState.suggestActions
     },
     carDetailsModalProps: {
       isOpen: carDetails.isCarDetailsModalOpen,
