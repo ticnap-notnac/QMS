@@ -6,7 +6,7 @@ import '@/pages/AdminPanel.css'
 
 const AVAILABLE_PAGES = [
   { key: 'dashboard', label: 'Dashboard', description: 'Overview metrics and recent activity' },
-  { key: 'reports', label: 'Reports', description: 'NCR, CAR, and QDDR quality reports' },
+  { key: 'reports', label: 'Reports', description: 'CAR and QDDR quality & disposal reports' },
   { key: 'iso', label: 'ISO Standards', description: 'ISO clauses, compliance matrix & standards' },
   { key: 'dcc', label: 'DCC (Document Control)', description: 'Document control center and logs' },
   { key: 'audit_tools', label: 'Audit Tools', description: 'Audit schedules, checklists & audit runs' },
@@ -15,7 +15,6 @@ const AVAILABLE_PAGES = [
 
 const AVAILABLE_RIGHTS = [
   // Document Control Center (DCC) Viewing Rights
-  { key: 'view_ncr_reports', pageKey: 'dcc', label: 'View NCR Reports', description: 'Access and view archived Non-Conformance Reports (NCR) in DCC' },
   { key: 'view_car_reports', pageKey: 'dcc', label: 'View CAR Reports', description: 'Access and view archived Corrective Action Requests (CAR) in DCC' },
   { key: 'view_qddr_reports', pageKey: 'dcc', label: 'View QDDR Reports', description: 'Access and view archived Quality Defect & Deviation Reports (QDDR) in DCC' },
   { key: 'view_audit_schedules', pageKey: 'dcc', label: 'View Audit Schedules', description: 'Access and view Audit Schedules in DCC' },
@@ -24,7 +23,6 @@ const AVAILABLE_RIGHTS = [
   // Reports Actions
   { key: 'accept_decline_report', pageKey: 'reports', label: 'Accept / Decline Reports', description: 'Approve, accept, or decline submitted quality reports' },
   { key: 'assign_report', pageKey: 'reports', label: 'Assign Reports', description: 'Assign reports to investigators or reviewers' },
-  { key: 'create_ncr_report', pageKey: 'reports', label: 'Create NCR Reports', description: 'Create new Non-Conformance Reports (NCR)' },
   { key: 'create_car_report', pageKey: 'reports', label: 'Create CAR Reports', description: 'Create new Corrective Action Requests (CAR)' },
   { key: 'create_qddr_report', pageKey: 'reports', label: 'Create QDDR Reports', description: 'Create new Quality Defect & Deviation Reports (QDDR)' },
   { key: 'edit_delete_report', pageKey: 'reports', label: 'Update / Delete Reports', description: 'Update or remove existing quality reports' },
@@ -64,9 +62,9 @@ const DEFAULT_ROLE_PERMISSIONS = {
   admin: {
     pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'admin_panel', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+      'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'accept_decline_report', 'assign_report',
-      'create_ncr_report', 'create_car_report', 'create_qddr_report',
+      'create_car_report', 'create_qddr_report',
       'edit_delete_report', 'submit_capa', 'verify_car',
       'manage_iso', 'manage_users', 'manage_roles', 'manage_categories',
       'manage_audit_schedules', 'view_logs'
@@ -75,18 +73,18 @@ const DEFAULT_ROLE_PERMISSIONS = {
   auditor: {
     pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+      'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'accept_decline_report', 'assign_report',
-      'create_ncr_report', 'create_car_report', 'create_qddr_report',
+      'create_car_report', 'create_qddr_report',
       'submit_capa', 'manage_iso', 'manage_audit_schedules', 'view_logs'
     ],
   },
   'qa officer': {
     pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+      'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'accept_decline_report', 'assign_report',
-      'create_ncr_report', 'create_car_report', 'create_qddr_report',
+      'create_car_report', 'create_qddr_report',
       'edit_delete_report', 'submit_capa', 'verify_car',
       'manage_iso', 'manage_audit_schedules', 'view_logs'
     ],
@@ -94,42 +92,42 @@ const DEFAULT_ROLE_PERMISSIONS = {
   'team leader': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
-      'create_ncr_report', 'create_car_report', 'accept_decline_report'
+      'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+      'create_car_report', 'accept_decline_report'
     ],
   },
   'warehouse supervisor': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
-      'create_ncr_report', 'create_car_report', 'create_qddr_report',
+      'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+      'create_car_report', 'create_qddr_report',
       'accept_decline_report', 'assign_report'
     ],
   },
   'warehouse executive': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
-      'create_ncr_report', 'create_qddr_report', 'accept_decline_report'
+      'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+      'create_qddr_report', 'accept_decline_report'
     ],
   },
   'checker': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_audit_schedules', 'view_audit_reports',
-      'create_ncr_report', 'verify_car'
+      'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+      'create_car_report', 'create_qddr_report', 'verify_car'
     ],
   },
   'warehouse checker': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
-      'view_ncr_reports', 'view_car_reports', 'view_audit_schedules', 'view_audit_reports',
-      'create_ncr_report', 'verify_car'
+      'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+      'create_car_report', 'create_qddr_report', 'verify_car'
     ],
   },
   default: {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
-    rights: ['view_ncr_reports', 'create_ncr_report', 'view_audit_schedules', 'view_audit_reports'],
+    rights: ['view_car_reports', 'view_qddr_reports', 'create_car_report', 'create_qddr_report', 'view_audit_schedules', 'view_audit_reports'],
   }
 }
 

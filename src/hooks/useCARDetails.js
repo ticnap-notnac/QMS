@@ -68,7 +68,8 @@ export function useCARDetails() {
       const result = await generateAiSuggestionFromText({
         description: selectedCar.details_of_nonconformance,
         issueType: selectedCar.quality_food_safety ? 'quality' : selectedCar.environment_health_safety ? 'safety' : selectedCar.security_issue ? 'security' : selectedCar.internal_audit ? 'audit' : 'general',
-        deptName: selectedCar.responsible_department
+        deptName: selectedCar.responsible_department,
+        reportType: 'CAR'
       })
 
       let res = result;
@@ -111,7 +112,7 @@ export function useCARDetails() {
           confidence: res.confidence || 0
         })
       }
-      setRootCause('Based on historical matching cases, the root cause is being verified. Action plan suggested.')
+      setRootCause(res?.root_cause_suggestion || 'Based on historical matching cases, the root cause is being verified. Action plan suggested.')
     } catch (err) {
       console.error('Failed to get suggestions:', err)
       setError('We could not generate suggestions. Please try again later.')

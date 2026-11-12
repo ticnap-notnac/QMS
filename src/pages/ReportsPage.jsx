@@ -1,26 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { SlidersHorizontal, LayoutGrid, List, PanelLeftClose, PanelLeftOpen, FileText, FileCheck, AlertTriangle } from 'lucide-react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { SlidersHorizontal, LayoutGrid, List, PanelLeftClose, PanelLeftOpen, FileCheck, AlertTriangle } from 'lucide-react'
 import Toast from '@/components/UI/Toast'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import FilterModal from '../components/Modals/FilterModal.jsx'
 import SubmissionLoadingOverlay from '../components/UI/SubmissionLoadingOverlay.jsx'
-import UpdateReportModal from '../components/Modals/UpdateReportModal.jsx'
-import AssignReportModal from '../components/Modals/AssignReportModal.jsx'
-import CreateReportModal from '../components/Modals/CreateReportModal.jsx'
 import CARModal from '../components/Modals/CARModal.jsx'
 import QDDRModal from '../components/Modals/QDDRModal.jsx'
-import RejectReportModal from '../components/Modals/RejectReportModal.jsx'
-import PreventiveActionModal from '../components/Modals/PreventiveActionModal.jsx'
 import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
 import QDDRDetailsModal from '../components/Modals/QDDRDetailsModal.jsx'
-import ReportsFeedList from '../components/Reports/ReportsFeedList.jsx'
 import CARReportsList from '../components/Reports/CARReportsList.jsx'
 import QDDRReportsList from '../components/Reports/QDDRReportsList.jsx'
-import { deleteCarReport } from '../services/carService.js'
-import { deleteQddrReport } from '../services/qddrService.js'
+import { deleteCarReport, fetchCarRecurringTrends } from '../services/carService.js'
+import { deleteQddrReport, fetchQddrRecurringTrends } from '../services/qddrService.js'
 import { CAR_STATUS } from '../../shared/constants'
 import { useReportsLogic } from '@/hooks/useReportsLogic'
-import { fetchRecurringTrends } from '@/services/ncrService'
 import { isAdminRole } from '@/utils/roleUtils.js'
 import './ReportsPage.css'
 
@@ -48,9 +41,8 @@ export default function ReportsPage({
   }
 
   const tabMeta = {
-    ncr: { label: 'Non-Conformance (NCR)', icon: FileText },
     car: { label: 'Corrective Actions (CAR)', icon: FileCheck },
-    qddr: { label: 'Defect Reports (QDDR)', icon: AlertTriangle }
+    qddr: { label: 'Defects & Disposal (QDDR)', icon: AlertTriangle }
   }
 
   const normalizedRole = String(userRole || '').trim().toLowerCase()
@@ -58,21 +50,14 @@ export default function ReportsPage({
   const pages = hasExplicitPages ? userPermissions.pages : []
   const hasExplicitRights = Array.isArray(userPermissions?.rights)
   const rights = hasExplicitRights ? userPermissions.rights : []
-  const hasLegacyCreate = rights.includes('create_report')
-  const hasReportsPageAccess = isAdminRole(userRole) || (hasExplicitPages ? pages.includes('reports') : true)
 
-  const canCreateNcr = hasExplicitRights
-    ? rights.includes('create_ncr_report')
-    : (isAdminRole(userRole) || hasLegacyCreate)
   const canCreateCar = hasExplicitRights
-    ? rights.includes('create_car_report')
+    ? rights.includes('create_car_report') || rights.includes('create_report')
     : (isAdminRole(userRole) || ['team leader', 'auditor'].includes(normalizedRole))
   const canCreateQddr = hasExplicitRights
-    ? rights.includes('create_qddr_report')
+    ? rights.includes('create_qddr_report') || rights.includes('create_report')
     : isAdminRole(userRole)
 
-  // In Reports page, NCR timeline is automatically accessible if user has Reports page access or can create NCR
-  const canAccessNcr = hasReportsPageAccess || canCreateNcr || rights.includes('view_ncr_reports')
   const canAccessCar = isAdminRole(userRole) || canCreateCar || rights.includes('view_car_reports') || rights.includes('submit_capa') || rights.includes('verify_car') || ['team leader', 'auditor'].includes(normalizedRole)
   const canAccessQddr = isAdminRole(userRole) || canCreateQddr || rights.includes('view_qddr_reports') || ['admin', 'qa officer', 'warehouse supervisor', 'warehouse executive'].includes(normalizedRole)
 
@@ -81,7 +66,6 @@ export default function ReportsPage({
     : (isAdminRole(userRole) || normalizedRole === 'auditor')
 
   const availableTabs = [
-    ...(canAccessNcr ? ['ncr'] : []),
     ...(canAccessCar ? ['car'] : []),
     ...(canAccessQddr ? ['qddr'] : [])
   ]
@@ -98,76 +82,57 @@ export default function ReportsPage({
   const [isDeletingQddr, setIsDeletingQddr] = useState(false)
   const [trendClusters, setTrendClusters] = useState([])
   const [isRecurringMode, setIsRecurringMode] = useState(false)
-  const [isSubmitDropdownOpen, setIsSubmitDropdownOpen] = useState(false)
   const [carViewMode, setCarViewMode] = useState('feed')
   const [qddrViewMode, setQddrViewMode] = useState('feed')
-  const submitDropdownRef = useRef(null)
 
   useEffect(() => {
-    if (!isSubmitDropdownOpen) return
-    const handleClickOutside = (e) => {
-      if (submitDropdownRef.current && !submitDropdownRef.current.contains(e.target)) {
-        setIsSubmitDropdownOpen(false)
-      }
+    let isMounted = true
+    if (logic.activeTab === 'car' && canAccessCar) {
+      fetchCarRecurringTrends(14)
+        .then(data => { if (isMounted) setTrendClusters(data || []) })
+        .catch(err => console.error('Error fetching CAR recurring trends:', err))
+    } else if (logic.activeTab === 'qddr' && canAccessQddr) {
+      fetchQddrRecurringTrends(14)
+        .then(data => { if (isMounted) setTrendClusters(data || []) })
+        .catch(err => console.error('Error fetching QDDR recurring trends:', err))
+    } else {
+      setTrendClusters([])
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isSubmitDropdownOpen])
-  
-  const allRecurringReportIds = React.useMemo(() => {
+    return () => { isMounted = false }
+  }, [canAccessCar, canAccessQddr, logic.activeTab])
+
+  const allRecurringReportIds = useMemo(() => {
     if (!trendClusters || trendClusters.length === 0) return []
-    return Array.from(new Set(trendClusters.flat().map(r => r.id)))
+    return Array.from(new Set(trendClusters.flatMap(c => (c.reports || []).map(r => r.id))))
   }, [trendClusters])
 
-  useEffect(() => {
-    if (canAccessCar) {
-      fetchRecurringTrends(14)
-        .then(data => setTrendClusters(data))
-        .catch(err => console.error('Error fetching recurring trends:', err))
-    }
-  }, [canAccessCar, logic.activeTab]) // Re-fetch occasionally
-
   // Aggregate loading states for premium overlay spinner feedback
-  const isOverlayLoading = logic.isNcrSubmitting || 
-                            logic.carModalProps.isSubmitting || 
-                            logic.qddrModalProps.isSubmitting || 
-                            logic.updateModalProps.isSubmitting || 
-                            logic.assignModalProps.isSubmitting ||
-                            logic.rejectModalProps.isSubmitting ||
-                            logic.preventiveActionModalProps.isSubmitting
+  const isOverlayLoading = logic.carModalProps.isSubmitting || 
+                            logic.qddrModalProps.isSubmitting
 
   let overlayMessage = ''
-  if (logic.isNcrSubmitting) overlayMessage = 'Submitting NCR report...'
-  else if (logic.carModalProps.isSubmitting) overlayMessage = 'Submitting CAR report...'
+  if (logic.carModalProps.isSubmitting) overlayMessage = 'Submitting CAR report...'
   else if (logic.qddrModalProps.isSubmitting) overlayMessage = 'Submitting QDDR report...'
-  else if (logic.updateModalProps.isSubmitting) overlayMessage = 'Updating NCR report...'
-  else if (logic.assignModalProps.isSubmitting) overlayMessage = 'Assigning report...'
-  else if (logic.rejectModalProps.isSubmitting) overlayMessage = 'Submitting review decision...'
-  else if (logic.preventiveActionModalProps.isSubmitting) overlayMessage = 'Submitting preventive action rating...'
 
-  const displayedCars = logic.isClosedMode
-    ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase())
-    : logic.carReports.filter(c => String(c.status).toLowerCase() !== CAR_STATUS.CLOSED.toLowerCase())
+  const displayedCars = useMemo(() => {
+    let list = logic.isClosedMode
+      ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase())
+      : logic.carReports.filter(c => String(c.status).toLowerCase() !== CAR_STATUS.CLOSED.toLowerCase())
+    if (isRecurringMode && allRecurringReportIds.length > 0) {
+      list = list.filter(c => allRecurringReportIds.includes(c.id))
+    }
+    return list
+  }, [logic.isClosedMode, logic.carReports, isRecurringMode, allRecurringReportIds])
 
-  const displayedQddrs = logic.isClosedMode
-    ? logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed')
-    : logic.qddrReports.filter(q => String(q.status).toLowerCase() !== 'closed')
-
-  const clusterReportIds = isRecurringMode ? allRecurringReportIds : null
-
-  const filteredReports = clusterReportIds 
-    ? logic.reports.filter(r => clusterReportIds.includes(r.id))
-    : logic.reports
-
-  const filteredInvestigated = clusterReportIds
-    ? logic.displayedInvestigatedReports.filter(r => clusterReportIds.includes(r.id))
-    : logic.displayedInvestigatedReports
-
-  const filteredClosed = clusterReportIds
-    ? logic.closedReports.filter(r => clusterReportIds.includes(r.id))
-    : logic.closedReports
+  const displayedQddrs = useMemo(() => {
+    let list = logic.isClosedMode
+      ? logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed')
+      : logic.qddrReports.filter(q => String(q.status).toLowerCase() !== 'closed')
+    if (isRecurringMode && allRecurringReportIds.length > 0) {
+      list = list.filter(q => allRecurringReportIds.includes(q.id))
+    }
+    return list
+  }, [logic.isClosedMode, logic.qddrReports, isRecurringMode, allRecurringReportIds])
 
   const handleDeleteCar = (id) => setCarToDelete(id)
 
@@ -238,7 +203,6 @@ export default function ReportsPage({
   }
 
   const canViewActiveTab =
-    (logic.activeTab === 'ncr' && canAccessNcr) ||
     (logic.activeTab === 'car' && canAccessCar) ||
     (logic.activeTab === 'qddr' && canAccessQddr)
 
@@ -266,14 +230,17 @@ export default function ReportsPage({
               </button>
             </div>
             {availableTabs.map(t => {
-              const meta = tabMeta[t] || { label: t.toUpperCase(), icon: FileText }
+              const meta = tabMeta[t] || { label: t.toUpperCase(), icon: FileCheck }
               const IconComp = meta.icon
               return (
                 <button 
                   key={t} 
                   type="button" 
                   className={`reports-sidebar-btn ${logic.activeTab === t ? 'active' : ''}`} 
-                  onClick={() => logic.setActiveTab(t)}
+                  onClick={() => {
+                    logic.setActiveTab(t)
+                    setIsRecurringMode(false)
+                  }}
                   title={meta.label}
                   aria-label={meta.label}
                 >
@@ -293,14 +260,16 @@ export default function ReportsPage({
             <select 
               className="reports-tab-mobile-dropdown"
               value={logic.activeTab}
-              onChange={(e) => logic.setActiveTab(e.target.value)}
+              onChange={(e) => {
+                logic.setActiveTab(e.target.value)
+                setIsRecurringMode(false)
+              }}
               style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
             >
               {availableTabs.map(t => {
                 const tabNamesMobile = {
-                  ncr: 'Non-Conformance (NCR)',
                   car: 'Corrective Actions (CAR)',
-                  qddr: 'Defect Reports (QDDR)'
+                  qddr: 'Defects & Disposal (QDDR)'
                 };
                 return (
                   <option key={t} value={t}>
@@ -319,52 +288,58 @@ export default function ReportsPage({
                 {canViewActiveTab && (
                   <>
                     <button type="button" onClick={() => logic.setIsFilterModalOpen(true)} className="btn-glass-action" title="Open Filters"><SlidersHorizontal size={18} /></button>
-                    {logic.activeTab === 'ncr' && logic.canAssignReports && (
-                      <button type="button" className={`btn-quick-toggle ${logic.isApprovalQueueMode ? 'active' : ''}`} onClick={() => logic.setIsApprovalQueueMode((c) => !c)}>{logic.isApprovalQueueMode ? 'Show All' : `Needs Approval (${logic.approvalQueueReports.length})`}</button>
-                    )}
-                    <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>{logic.isClosedMode ? 'Show Open' : `Closed (${logic.activeTab === 'ncr' ? logic.closedReports.length : logic.carReports.filter(c => c.status === CAR_STATUS.CLOSED).length})`}</button>
-                    {logic.activeTab === 'ncr' && trendClusters.length > 0 && (
+                    <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>
+                      {logic.isClosedMode 
+                        ? 'Show Open' 
+                        : `Closed (${logic.activeTab === 'car' 
+                            ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase()).length 
+                            : logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed').length})`}
+                    </button>
+                    {trendClusters.length > 0 && (
                       <button 
                         type="button" 
                         className={`btn-quick-toggle ${isRecurringMode ? 'active recurring-active' : 'recurring-inactive'}`} 
                         onClick={() => {
                           setIsRecurringMode(!isRecurringMode)
-                          // Turn off other modes
                           if (!isRecurringMode) {
-                            logic.setIsApprovalQueueMode(false)
                             logic.setIsClosedMode(false)
                           }
                         }}
                       >
-                        Recurring Issues ({allRecurringReportIds.length})
+                        Recurring Trends ({allRecurringReportIds.length})
                       </button>
                     )}
                   </>
                 )}
               </div>
               <div className="reports-action-buttons-right">
-                {((logic.activeTab === 'ncr' && canCreateNcr) ||
-                  (logic.activeTab === 'car' && canCreateCar) ||
-                  (logic.activeTab === 'qddr' && canCreateQddr)) && (
+                {logic.activeTab === 'car' && canCreateCar && (
                   <button 
                     type="button" 
-                    onClick={() => {
-                      if (logic.activeTab === 'ncr') logic.openCreateModal()
-                      else if (logic.activeTab === 'car') logic.openCARModal()
-                      else if (logic.activeTab === 'qddr') logic.openQDDRModal()
-                    }} 
+                    onClick={logic.openCARModal} 
                     className="btn-gradient-primary reports-submit-primary"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-                    title={`Submit a new ${logic.activeTab.toUpperCase()}`}
+                    title="Submit a new CAR"
                   >
-                    Submit {logic.activeTab.toUpperCase()}
+                    + Submit CAR
+                  </button>
+                )}
+                {logic.activeTab === 'qddr' && canCreateQddr && (
+                  <button 
+                    type="button" 
+                    onClick={logic.openQDDRModal} 
+                    className="btn-gradient-primary reports-submit-primary"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                    title="Submit a new QDDR"
+                  >
+                    + Submit QDDR
                   </button>
                 )}
               </div>
             </div>
           )}
 
-          {availableTabs.length > 1 && logic.activeTab !== 'ncr' && canViewActiveTab && (
+          {availableTabs.length > 0 && canViewActiveTab && (
             <div className="reports-tab-nav-container">
               {logic.activeTab === 'car' && (
                 <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
@@ -415,16 +390,6 @@ export default function ReportsPage({
 
           {logic.error && <div className="user-info-error">{logic.error}</div>}
           <div className="facebook-feed-layout-wrapper">
-            {logic.activeTab === 'ncr' && canAccessNcr && (
-              <ReportsFeedList
-                isRecurringMode={isRecurringMode} isApprovalQueueMode={logic.isApprovalQueueMode} isClosedMode={logic.isClosedMode} isLoading={logic.isLoading}
-                displayedInvestigatedReports={filteredInvestigated} closedReports={filteredClosed} reports={filteredReports}
-                trendClusters={trendClusters}
-                departmentNameById={logic.departmentNameById} userNameById={logic.userNameById} canAssignReports={logic.canAssignReports} canApproveReport={logic.canApproveReport} canUpdateReport={logic.canUpdateReport}
-                canDeleteReport={logic.canDeleteReport} onApprove={(r) => logic.handleReviewReport(r, 'approve')} onReject={logic.openRejectModal}
-                onUpdate={logic.openUpdateModal} onAssign={logic.openAssignModal} onDelete={logic.handleDeleteReport}
-              />
-            )}
             {logic.activeTab === 'car' && canAccessCar && (
               <CARReportsList 
                 carReports={displayedCars} 
@@ -452,19 +417,20 @@ export default function ReportsPage({
       </div>
 
       <FilterModal {...logic.filterModalProps} activeTab={logic.activeTab} />
-      <UpdateReportModal {...logic.updateModalProps} />
-      <AssignReportModal {...logic.assignModalProps} />
-      <CreateReportModal {...logic.createModalProps} />
       <CARModal {...logic.carModalProps} />
       <QDDRModal {...logic.qddrModalProps} />
-      <RejectReportModal {...logic.rejectModalProps} />
-      <PreventiveActionModal {...logic.preventiveActionModalProps} />
       <CARDetailsModal {...logic.carDetailsModalProps} />
       <QDDRDetailsModal
-        isOpen={logic.isQddrDetailsModalOpen} onClose={logic.closeQddrDetails} qddr={logic.selectedQddr}
-        onUpdateQddr={logic.updateQddr} users={logic.users} usersLoading={logic.usersLoading} userRole={userRole} userPermissions={userPermissions} authUserId={authUserId}
+        isOpen={logic.isQddrDetailsModalOpen}
+        onClose={logic.closeQddrDetails}
+        qddr={logic.selectedQddr}
+        onUpdateQddr={logic.updateQddr}
+        users={logic.users}
+        usersLoading={logic.usersLoading}
+        userRole={userRole}
+        userPermissions={userPermissions}
+        authUserId={authUserId}
       />
-      <ConfirmDialog {...logic.confirmDeleteDialogProps} />
       <ConfirmDialog {...confirmDeleteCarDialogProps} />
       <ConfirmDialog {...confirmDeleteQddrDialogProps} />
       <SubmissionLoadingOverlay isOpen={isOverlayLoading} message={overlayMessage} />

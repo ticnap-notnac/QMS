@@ -100,9 +100,9 @@ function AppInner() {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'admin_panel', 'settings'],
           rights: [
-            'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+            'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
             'accept_decline_report', 'assign_report',
-            'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
+            'create_car_report', 'create_qddr_report', 'create_report',
             'edit_delete_report', 'submit_capa', 'verify_car',
             'manage_iso', 'manage_users', 'manage_roles', 'manage_categories',
             'manage_audit_schedules', 'view_logs'
@@ -112,9 +112,9 @@ function AppInner() {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
           rights: [
-            'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+            'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
             'accept_decline_report', 'assign_report',
-            'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
+            'create_car_report', 'create_qddr_report', 'create_report',
             'submit_capa', 'manage_iso', 'manage_audit_schedules', 'view_logs'
           ],
         })
@@ -122,15 +122,15 @@ function AppInner() {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'dcc', 'settings'],
           rights: [
-            'view_ncr_reports', 'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
-            'create_ncr_report', 'create_car_report', 'create_qddr_report', 'create_report',
+            'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+            'create_car_report', 'create_qddr_report', 'create_report',
             'accept_decline_report', 'assign_report'
           ],
         })
       } else {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'dcc', 'settings'],
-          rights: ['view_ncr_reports', 'create_ncr_report', 'create_report', 'view_audit_schedules', 'view_audit_reports'],
+          rights: ['view_car_reports', 'view_qddr_reports', 'create_car_report', 'create_qddr_report', 'create_report', 'view_audit_schedules', 'view_audit_reports'],
         })
       }
     }

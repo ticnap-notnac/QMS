@@ -80,7 +80,8 @@ export default function QDDRDetailsModal({
       const result = await generateAiSuggestionFromText({
         description: qddr.reason_of_discrepancy,
         issueType: 'quality',
-        deptName: qddr.location
+        deptName: qddr.location,
+        reportType: 'QDDR'
       })
 
       let res = result;
@@ -272,14 +273,6 @@ export default function QDDRDetailsModal({
             <div><span style={{ color: 'var(--muted)' }}>Batch / ISU No:</span> <strong style={{ color: '#1A435A' }}>{qddr.batch_code_su_number || '—'}</strong></div>
             
             <div><span style={{ color: 'var(--muted)' }}>Quantity:</span> <strong style={{ color: '#1A435A' }}>{qddr.qty || '—'}</strong></div>
-            {(Array.isArray(qddr.ncr_id) ? qddr.ncr_id.length > 0 : Boolean(qddr.ncr_id)) && (
-              <div style={{ gridColumn: 'span 2' }}>
-                <span style={{ color: 'var(--muted)' }}>Linked NCR:</span>{' '}
-                <strong style={{ color: '#1A435A' }}>
-                  {Array.isArray(qddr.ncr_id) ? qddr.ncr_id.map(id => `NCR #${id}`).join(', ') : `NCR #${qddr.ncr_id}`}
-                </strong>
-              </div>
-            )}
           </div>
 
           {/* Linked ISO Clauses */}

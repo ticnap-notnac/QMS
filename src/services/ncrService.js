@@ -1,80 +1,59 @@
-import { request } from '@/lib/api'
+// Deprecated NCR service stubs returning safe defaults now that NCR is phased out
+// in favor of CAR (Customer complaints & audits) and QDDR (Disposal & defects).
 
 export async function fetchReports() {
-  return await request('/ncr')
+  return []
 }
 
 export async function fetchInvestigatedReports() {
-  return await request('/ncr?scope=investigated')
+  return []
 }
 
 export async function fetchAllReports() {
-  return await request('/ncr?scope=all')
+  return []
 }
 
 export async function fetchClosedReports() {
-  return await request('/ncr?scope=closed')
+  return []
 }
 
-export async function createReport(payload) {
-  return await request('/ncr', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
+export async function createReport() {
+  console.warn('createReport is deprecated. Use CAR or QDDR services instead.')
+  return { success: false, message: 'NCR is deprecated. Use CAR or QDDR instead.' }
 }
 
-export async function updateReport(id, payload) {
-  return await request(`/ncr/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  })
+export async function updateReport() {
+  return { success: false }
 }
 
-export async function updateReportInvestigationMultipart(id, formData) {
-  return await request(`/ncr/${id}/investigation`, {
-    method: 'PUT',
-    body: formData,
-  })
+export async function updateReportInvestigationMultipart() {
+  return { success: false }
 }
 
-export async function assignReportToEmployee(id, payload) {
-  return await request(`/ncr/${id}/assign`, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  })
+export async function assignReportToEmployee() {
+  return { success: false }
 }
 
-export async function reviewReportApproval(id, payload) {
-  return await request(`/ncr/${id}/approval`, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  })
+export async function reviewReportApproval() {
+  return { success: false }
 }
 
-export async function rateReport(id, rating) {
-  return await request(`/ncr/${id}/rate`, {
-    method: 'POST',
-    body: JSON.stringify({ rating }),
-  })
+export async function rateReport() {
+  return { success: false }
 }
 
-export async function getReportRating(id) {
-  return await request(`/ncr/${id}/rating`)
+export async function getReportRating() {
+  return null
 }
 
-export async function deleteReport(id) {
-  return await request(`/ncr/${id}`, {
-    method: 'DELETE',
-  })
+export async function deleteReport() {
+  return { success: false }
 }
 
-export async function submitNcrMultipart(formData) {
-  return await request('/ncr/submit', {
-    method: 'POST',
-    body: formData,
-  })
+export async function submitNcrMultipart() {
+  return { success: false }
 }
 
-export async function fetchRecurringTrends(days = 14) {
-  return await request(`/ncr/recurring-trends?days=${days}`)
+export async function fetchRecurringTrends() {
+  return []
 }

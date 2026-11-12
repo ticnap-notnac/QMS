@@ -20,7 +20,6 @@ import { AlertCircle, Shield, TrendingUp, BarChart2, Clock, MoreHorizontal, Cale
 
 // Custom tooltips for nice monotone popup displays
 import './Dashboard.css'
-import PendingRatingsWidget from './Dashboard/PendingRatingsWidget'
 import OccurringIssuesSummary from './Dashboard/OccurringIssuesSummary'
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -99,7 +98,6 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
     try {
       // Fire all network requests concurrently to dramatically speed up load times
       const [
-        ncrRes,
         carRes,
         statsRes,
         trendDataRes,
@@ -108,7 +106,6 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
         carsRes,
         qddrRes
       ] = await Promise.all([
-        supabase.from('ncr_reports').select('id', { count: 'exact', head: true }).neq('status', 'CLOSED'),
         supabase.from('car_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed'),
         request('/compliance'),
         request('/compliance/trends'),
@@ -137,7 +134,7 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
       }
 
       setMetrics({
-        openComplaints: (ncrRes.count || 0) + (carRes.count || 0),
+        openComplaints: carRes.count || 0,
         isoCompliance: avgCompliance,
         defectRate: qddrRes?.count || 0
       })
@@ -210,17 +207,10 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
         </div>
       )}
 
-      {/* Pending Ratings Widget - Fast Frictionless Rating UI */}
-      <PendingRatingsWidget 
-        currentUserId={currentUserId} 
-        userRole={userRole}
-        userDepartmentId={userDepartmentId}
-      />
-
       {/* Top Metrics Cards Row */}
       <section className="metrics-section">
         <div className="metric-card" 
-          title="The total number of currently active, unresolved NCR (Non-Conformance Reports) and CAR (Corrective Action Requests) processes."
+          title="The total number of currently active, unresolved CAR (Corrective Action Requests) processes."
         >
           <div className="metric-card-header">
             <p className="metric-card-title">Open Complaints</p>
@@ -231,7 +221,7 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
           <h3 className="metric-card-value">
             {metrics?.openComplaints || 0}
           </h3>
-          <span className="metric-card-subtitle">Active NCR and CAR processes</span>
+          <span className="metric-card-subtitle">Active CAR processes</span>
         </div>
 
         <div className="metric-card" 
@@ -427,7 +417,6 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
                     <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
                     <Tooltip content={<CustomResolutionTooltip />} />
                     <Legend verticalAlign="top" height={36} iconType="circle" />
-                    <Line type="monotone" name="NCR" dataKey="NCR" stroke="#52525b" strokeWidth={2} dot={{ fill: '#52525b', r: 4 }} activeDot={{ r: 6 }} connectNulls />
                     <Line type="monotone" name="CAR" dataKey="CAR" stroke="#1A435A" strokeWidth={2} dot={{ fill: '#1A435A', r: 4 }} activeDot={{ r: 6 }} connectNulls />
                     <Line type="monotone" name="QDDR" dataKey="QDDR" stroke="#a1a1aa" strokeWidth={2} dot={{ fill: '#a1a1aa', r: 4 }} activeDot={{ r: 6 }} connectNulls />
                   </LineChart>

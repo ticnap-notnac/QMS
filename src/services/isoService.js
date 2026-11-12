@@ -37,48 +37,10 @@ export async function fetchNonCompliantFindings() {
 }
 
 /**
- * Fetches all NCR reports (both open and closed) for ISO page compliance grouping.
+ * Deprecated stub: NCR reports have been replaced by CAR and QDDR.
  */
 export async function fetchNcrReportsForISO() {
-  const { data: ncrData, error } = await supabase
-    .from('ncr_reports')
-    .select(`
-      id,
-      reference_no,
-      severity,
-      description,
-      status,
-      car_filed,
-      clause_id,
-      department_id,
-      product_type_id,
-      location_id,
-      issue_type_id
-    `)
-  if (error) throw error
-
-  // Safely fetch clauses to merge manually
-  const { data: clausesData } = await supabase
-    .from('iso_clauses')
-    .select('id, clause_number, title')
-
-  const ncrs = ncrData || []
-  const clausesList = clausesData || []
-
-  // Merge the clauses into the ncrData using ncr_reports.clause_id directly
-  ncrs.forEach(ncr => {
-    if (ncr.clause_id) {
-      const matchedClause = clausesList.find(c => c.id === ncr.clause_id)
-      if (matchedClause) {
-        ncr.iso_clauses = {
-          clause_number: matchedClause.clause_number,
-          title: matchedClause.title
-        }
-      }
-    }
-  })
-
-  return ncrs
+  return []
 }
 
 /**

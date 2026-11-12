@@ -1,62 +1,50 @@
-import { useCallback, useMemo, useState, useEffect } from 'react'
-import { isAdminRole } from '@/utils/roleUtils.js'
+import { useCallback, useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
+import { isAdminRole } from '@/utils/roleUtils.js'
 import { useAuth } from '@/hooks/useAuth'
-import { createReport, reviewReportApproval, submitNcrMultipart, updateReport, deleteReport } from '@/services/ncrService'
-import { createLocation } from '@/services/locationService'
-import { createProductType } from '@/services/productTypeService'
-import { createIssueType } from '@/services/issueTypeService'
-import { resolveCatalogSelection, filterApprovalQueueReports } from '@/utils/reportsHelpers'
-
 import { useReportsData } from './useReports/useReportsData'
 import { useReportsForm } from './useReports/useReportsForm'
 import { useReportsModals } from './useReports/useReportsModals'
-import { useReportsUpdateForm } from './useReports/useReportsUpdateForm'
 import { useCARForm } from './useReports/useCARForm'
 import { useQDDRForm } from './useReports/useQDDRForm'
-import useAssignReportModal from './useReports/useAssignReportModal'
-import useNCRSubmitModal from './useReports/useNCRSubmitModal'
-import { useSuggestionLogic } from './useReports/useSuggestionLogic'
-import { fetchExistingAiSuggestion } from '@/services/suggestionService'
-import { dismissVerificationNotification } from '@/services/notificationService'
-import { updateReportInvestigationMultipart } from '@/services/ncrService'
-import { submitCarReport, suggestClausesForCar, submitCapaPlan, verifyCarPlan, updateCarReport, fetchLinkedClausesForCar, fetchCarReportById } from '@/services/carService'
+import {
+  submitCarReport,
+  submitCapaPlan,
+  verifyCarPlan,
+  updateCarReport,
+  fetchLinkedClausesForCar,
+  fetchCarReportById
+} from '@/services/carService'
+import {
+  submitQddrReport,
+  updateQddrReport,
+  editQddrReport,
+  fetchLinkedClausesForQddr
+} from '@/services/qddrService'
 import { supabase } from '@/utils/supabase'
-import { submitQddrReport, updateQddrReport, editQddrReport } from '@/services/qddrService'
 import { useCARDetails } from './useCARDetails'
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId }) {
   const { user: authUser } = useAuth()
   const currentAuthId = authUser?.id || authUserId || ''
-  const rights = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
 
-  // ── Async / UI state ────────────────────────────────────────────────────────
-  const [isReviewSubmitting, setIsReviewSubmitting] = useState(false)
-  const [isNcrSubmitting, setIsNcrSubmitting] = useState(false)
   const [toast, setToast] = useState(null)
-  const [rejectReason, setRejectReason] = useState('')
-  const [reportToDelete, setReportToDelete] = useState(null)
-  const [isDeletingReport, setIsDeletingReport] = useState(false)
+  const [error, setError] = useState(null)
 
-  // ── Preventive Action Rating state ──────────────────────────────────────────
-  const [preventiveRating, setPreventiveRating] = useState('')
-  const [customResolution, setCustomResolution] = useState('')
-  const [ratingReportId, setRatingReportId] = useState(null)
-  const [suggestedPreventiveAction, setSuggestedPreventiveAction] = useState('')
-  const [isSubmittingRating, setIsSubmittingRating] = useState(false)
-
-  // ── View mode ───────────────────────────────────────────────────────────────
+  // ── View mode & Tab Navigation ─────────────────────────────────────────────
   const location = useLocation()
-  const initialTab = location?.pathname?.includes('reports') && location?.state?.tab ? location.state.tab : 'ncr'
+  const initialTab =
+    location?.pathname?.includes('reports') &&
+    location?.state?.tab &&
+    ['car', 'qddr'].includes(location.state.tab)
+      ? location.state.tab
+      : 'car'
 
-  const [isApprovalQueueMode, setIsApprovalQueueMode] = useState(false)
   const [isClosedMode, setIsClosedMode] = useState(false)
   const [activeTab, setActiveTab] = useState(initialTab)
 
-  // Sync activeTab when navigating with location.state.tab
   useEffect(() => {
-    if (location?.state?.tab && ['ncr', 'car', 'qddr'].includes(location.state.tab)) {
+    if (location?.state?.tab && ['car', 'qddr'].includes(location.state.tab)) {
       setActiveTab(location.state.tab)
       if (location.state.isClosed !== undefined) {
         setIsClosedMode(Boolean(location.state.isClosed))
@@ -64,77 +52,54 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     }
   }, [location?.state?.tab, location?.state?.isClosed])
 
-  // ── CAR & QDDR Reports lists state ───────────────────────────────────────────
+  // ── CAR & QDDR Reports lists state ─────────────────────────────────────────
   const [carReports, setCarReports] = useState([])
   const [loadingCar, setLoadingCar] = useState(false)
   const [qddrReports, setQddrReports] = useState([])
   const [loadingQddr, setLoadingQddr] = useState(false)
 
-  // ── CAR details modal hook state ──
+  // ── Detail Modals state ────────────────────────────────────────────────────
   const carDetails = useCARDetails()
-
-  // ── QDDR Detail Modals state ──────────────────────────────────────────
   const [selectedQddr, setSelectedQddr] = useState(null)
   const [isQddrDetailsModalOpen, setIsQddrDetailsModalOpen] = useState(false)
 
-  // ── Sub-hooks ───────────────────────────────────────────────────────────────
+  // ── Sub-hooks ──────────────────────────────────────────────────────────────
   const formState = useReportsForm()
-  
-  const [error, setError] = useState(null)
-
-  const dataState = useReportsData({
-    currentUserId,
-    currentAuthId,
-    reportFilters: formState.reportFilters,
-    setError,
-    setToast,
-    userRole,
-    userPermissions,
-    userDepartmentId
-  })
-
-  const modalsState = useReportsModals({
-    clearEvidenceState: formState.clearEvidenceState,
-    resetCreateForm: formState.resetCreateForm,
-    setRejectReason,
-    setToast,
-    setError: () => {} // Or we can pass a no-op or another setter. We don't have direct setError here, but logic has toast. Let's pass a no-op so it doesn't crash on undefined.
-  })
-
-  const updateFormState = useReportsUpdateForm({
-    report: modalsState.selectedReport,
-  })
-
-  const suggestionState = useSuggestionLogic({
-    report: modalsState.selectedReport,
-    deptName: dataState.departmentNameById.get(String(modalsState.selectedReport?.department_id || '')) || '—',
-  })
-
+  const dataState = useReportsData({ currentAuthId, setError })
+  const modalsState = useReportsModals()
   const carFormState = useCARForm(dataState.departments)
   const qddrFormState = useQDDRForm()
 
+  const activeUserOptions = useMemo(
+    () =>
+      dataState.users
+        .filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
+        .map(u => ({
+          id: u.id,
+          label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}`
+        })),
+    [dataState.users]
+  )
+
+  // ── Load & Filter CAR and QDDR Reports ────────────────────────────────────
   const refreshCarAndQddrLists = useCallback(async () => {
     setLoadingCar(true)
     setLoadingQddr(true)
     try {
-      const { data: carData, error: carError } = await supabase
-        .from('car_reports')
-        .select('*, audit_schedules(id, title, scheduled_date)')
-        .order('created_at', { ascending: false })
-      if (carError) throw carError
+      const [carRes, qddrRes] = await Promise.all([
+        supabase
+          .from('car_reports')
+          .select('*, audit_schedules(id, title, scheduled_date)')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('qddr_reports')
+          .select('*')
+          .order('created_at', { ascending: false })
+      ])
 
-      const { data: qddrData, error: qddrError } = await supabase
-        .from('qddr_reports')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (qddrError) throw qddrError
+      if (carRes.error) throw carRes.error
+      if (qddrRes.error) throw qddrRes.error
 
-      // Fetch NCRs to resolve their department ID
-      const { data: ncrs } = await supabase
-        .from('ncr_reports')
-        .select('id, department_id')
-
-      const ncrDeptMap = new Map((ncrs || []).map(n => [n.id, n.department_id]))
       const normRole = String(userRole || '').trim().toLowerCase()
       const pagesList = Array.isArray(userPermissions?.pages) ? userPermissions.pages : []
       const rightsList = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
@@ -150,8 +115,8 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       const currentUserObj = (dataState.users || []).find(u => Number(u.id) === Number(currentUserId))
       const currentUserName = String(currentUserObj?.label || '').split(/\s+[—–-]\s+/)[0].trim().toLowerCase()
 
-      // 1. CAR department scoping/filtering
-      let filteredCars = carData || []
+      // 1. CAR department scoping & filtering
+      let filteredCars = carRes.data || []
       if (isStandardUser) {
         const userDeptName = dataState.departmentNameById.get(String(userDepartmentId))?.toLowerCase()
         filteredCars = filteredCars.filter(car => {
@@ -182,26 +147,27 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         })
       }
 
-      // Apply extra report filters (Status, Date) for CAR
       if (formState.reportFilters?.status) {
-        filteredCars = filteredCars.filter(car => String(car.status || '').trim().toLowerCase() === String(formState.reportFilters.status).trim().toLowerCase())
+        const targetStatus = String(formState.reportFilters.status).trim().toLowerCase()
+        filteredCars = filteredCars.filter(car => String(car.status || '').trim().toLowerCase() === targetStatus)
       }
       if (formState.reportFilters?.date) {
         filteredCars = filteredCars.filter(car => String(car.created_at || '').startsWith(formState.reportFilters.date))
       }
       setCarReports(filteredCars)
 
-      // 2. QDDR department scoping/filtering
-      let filteredQddrs = qddrData || []
+      // 2. QDDR department scoping & filtering
+      let filteredQddrs = qddrRes.data || []
       if (isStandardUser) {
         const userDeptName = dataState.departmentNameById.get(String(userDepartmentId))?.toLowerCase()
         filteredQddrs = filteredQddrs.filter(q => {
-          if (String(q.reported_by) === String(currentUserId) || String(q.leader) === String(currentUserId) || String(q.approved_by) === String(currentUserId) || String(q.noted_by) === String(currentUserId)) return true
-          if (Array.isArray(q.ncr_id) && q.ncr_id.length > 0) {
-            return q.ncr_id.some(ncrId => String(ncrDeptMap.get(Number(ncrId))) === String(userDepartmentId))
-          }
-          if (q.ncr_id && !Array.isArray(q.ncr_id)) {
-            return String(ncrDeptMap.get(Number(q.ncr_id))) === String(userDepartmentId)
+          if (
+            String(q.reported_by) === String(currentUserId) ||
+            String(q.leader) === String(currentUserId) ||
+            String(q.approved_by) === String(currentUserId) ||
+            String(q.noted_by) === String(currentUserId)
+          ) {
+            return true
           }
           if (userDeptName && q.issuing_department) {
             return q.issuing_department.toLowerCase() === userDeptName
@@ -211,12 +177,6 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       } else if (activeDeptFilterId) {
         const filterDeptName = dataState.departmentNameById.get(String(activeDeptFilterId))?.toLowerCase()
         filteredQddrs = filteredQddrs.filter(q => {
-          if (Array.isArray(q.ncr_id) && q.ncr_id.length > 0) {
-            return q.ncr_id.some(ncrId => String(ncrDeptMap.get(Number(ncrId))) === String(activeDeptFilterId))
-          }
-          if (q.ncr_id) {
-            return String(ncrDeptMap.get(Number(q.ncr_id))) === String(activeDeptFilterId)
-          }
           if (filterDeptName && q.issuing_department) {
             return q.issuing_department.toLowerCase() === filterDeptName
           }
@@ -224,9 +184,9 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         })
       }
 
-      // Apply extra report filters (Status, Date) for QDDR
       if (formState.reportFilters?.status) {
-        filteredQddrs = filteredQddrs.filter(q => String(q.status || '').trim().toLowerCase() === String(formState.reportFilters.status).trim().toLowerCase())
+        const targetStatus = String(formState.reportFilters.status).trim().toLowerCase()
+        filteredQddrs = filteredQddrs.filter(q => String(q.status || '').trim().toLowerCase() === targetStatus)
       }
       if (formState.reportFilters?.date) {
         filteredQddrs = filteredQddrs.filter(q => String(q.created_at || '').startsWith(formState.reportFilters.date))
@@ -239,9 +199,9 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       setLoadingQddr(false)
     }
   }, [
-    setToast,
     currentUserId,
     userRole,
+    userPermissions,
     userDepartmentId,
     formState.reportFilters.departmentId,
     formState.reportFilters.status,
@@ -259,102 +219,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     }
   }, [currentAuthId, refreshCarAndQddrLists])
 
-  // ISO Clauses options & auto-suggest states
-  const [clauses, setClauses] = useState([])
-  const [clausesLoading, setClausesLoading] = useState(false)
-  const [suggestingClause, setSuggestingClause] = useState(false)
-
-  useEffect(() => {
-    if (!currentAuthId) return
-    let active = true
-    const fetchClauses = async () => {
-      setClausesLoading(true)
-      try {
-        const { data } = await supabase
-          .from('iso_clauses')
-          .select('id, clause_number, title')
-          .eq('is_active', true)
-          .order('clause_number')
-        if (active) {
-          setClauses((data || []).map(c => ({ id: c.id, label: `Clause ${c.clause_number} — ${c.title}` })))
-        }
-      } catch (err) {
-        console.error('Failed to load clauses for dropdown:', err)
-      } finally {
-        if (active) setClausesLoading(false)
-      }
-    }
-    fetchClauses()
-    return () => { active = false }
-  }, [currentAuthId])
-
-  const handleSuggestClause = async () => {
-    const desc = formState.createFormState.description
-    const cat = formState.createFormState.issueType
-    if (!desc || desc.trim().length < 15 || !currentAuthId) return
-    setSuggestingClause(true)
-    try {
-      const flags = {
-        quality_food_safety: cat?.toLowerCase().includes('quality') || false,
-        environment_health_safety: cat?.toLowerCase().includes('environment') || false,
-        security_issue: cat?.toLowerCase().includes('security') || false,
-        internal_audit: cat?.toLowerCase().includes('audit') || false,
-        customer_complaint: cat?.toLowerCase().includes('complaint') || false,
-        vendor_nonconformance: cat?.toLowerCase().includes('vendor') || false,
-      }
-      const result = await suggestClausesForCar({ description: desc, flags }, currentAuthId)
-      const list = Array.isArray(result) ? result : (result?.suggestions || [])
-      if (list.length > 0) {
-        formState.createFormState.setClauseId(list[0].clause_id)
-      }
-    } catch (err) {
-      console.warn('AI clause suggestion failed:', err)
-    } finally {
-      setSuggestingClause(false)
-    }
-  }
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const openRatingId = params.get('openRating')
-    if (openRatingId) {
-      const loadRatingModal = async () => {
-        let reportObj = (dataState.reports || []).find(r => String(r.id) === String(openRatingId)) || 
-                        (dataState.investigatedReports || []).find(r => String(r.id) === String(openRatingId)) ||
-                        (dataState.closedReports || []).find(r => String(r.id) === String(openRatingId))
-        
-        if (!reportObj) {
-          try {
-            const { data } = await supabase
-              .from('ncr_reports')
-              .select('*')
-              .eq('id', openRatingId)
-              .maybeSingle()
-            if (data) reportObj = data
-          } catch (err) {
-            console.warn('Failed to query report by ID from DB:', err)
-          }
-        }
-
-        if (reportObj) {
-          try {
-            const cached = await fetchExistingAiSuggestion(openRatingId)
-            setRatingReportId(Number(openRatingId))
-            setSuggestedPreventiveAction(cached?.preventive_suggestion || 'Implement standard verification and monitoring checks.')
-            setPreventiveRating('')
-            setCustomResolution(reportObj.resolution_details || '')
-            modalsState.setIsPreventiveActionModalOpen(true)
-            window.history.replaceState({}, document.title, window.location.pathname)
-          } catch (e) {
-            console.error('Failed to load suggestion for rating:', e)
-          }
-        }
-      }
-      const t = setTimeout(loadRatingModal, 500)
-      return () => clearTimeout(t)
-    }
-  }, [dataState.reports, dataState.investigatedReports, dataState.closedReports, modalsState])
-
+  // Auto-open CAR details when navigated via ?openCar=<id>
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const openCarId = params.get('openCar')
@@ -381,336 +246,22 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     return () => clearTimeout(timer)
   }, [carReports, carDetails, currentAuthId])
 
-  // ─── Derived / memoised ────────────────────────────────────────────────────
-
-  const hasExplicitRights = Array.isArray(userPermissions?.rights)
-
-  const canAssignReports = useMemo(
-    () => isAdminRole(userRole) || (hasExplicitRights
-      ? rights.includes('assign_report')
-      : ['manager', 'department manager', 'auditor', 'warehouse supervisor'].includes(String(userRole || '').trim().toLowerCase())),
-    [hasExplicitRights, userRole, rights],
-  )
-
-  const canApproveReport = useCallback((report) => {
-    if (!report) return false;
-    if (String(report.status || '').trim().toUpperCase() === 'CLOSED') return false;
-    if (isAdminRole(userRole)) return true;
-    const role = String(userRole || '').trim().toLowerCase();
-    if (role === 'department manager' || role === 'manager' || role === 'team leader') {
-      const hasRight = hasExplicitRights ? rights.includes('accept_decline_report') : true;
-      return hasRight && String(report.department_id) === String(userDepartmentId);
-    }
-    if (hasExplicitRights) return rights.includes('accept_decline_report');
-    return false;
-  }, [hasExplicitRights, userRole, userDepartmentId, rights])
-
-  const canUpdateReport = useCallback(
-    (report) => {
-      if (!report) return false
-      if (String(report.status || '').trim().toUpperCase() === 'CLOSED') return false
-      if (isAdminRole(userRole)) return true
-      if (String(report.assigned_to || '') !== '' && String(report.assigned_to) === String(currentUserId)) {
-        return true
-      }
-      if (hasExplicitRights) return rights.includes('edit_delete_report')
-      const role = String(userRole || '').trim().toLowerCase()
-      if (role === 'manager' || role === 'department manager') return true
-
-      return false
-    },
-    [hasExplicitRights, currentUserId, userRole, rights],
-  )
-
-  const canDeleteReport = useCallback(
-    (report) => {
-      if (!report) return false
-      const role = String(userRole || '').trim().toLowerCase()
-      if (isAdminRole(userRole) || role === 'qa officer') return true
-      if (hasExplicitRights && rights.includes('edit_delete_report')) return true
-      const isReporter = Number(report.reported_by) === Number(currentUserId)
-      const isUninvestigatedOpen =
-        String(report.status || '').trim().toUpperCase() !== 'CLOSED' &&
-        !report.assigned_to &&
-        !report.investigation_details
-      return isReporter && isUninvestigatedOpen
-    },
-    [hasExplicitRights, userRole, rights, currentUserId]
-  )
-
-  const handleDeleteReport = useCallback((report) => {
-    if (!report) return
-    setReportToDelete(report)
-  }, [])
-
-  const confirmDeleteReport = useCallback(async () => {
-    if (!reportToDelete) return
-    const report = reportToDelete
-    setIsDeletingReport(true)
-    try {
-      await deleteReport(report.id)
-      setReportToDelete(null)
-      setToast({ message: `Report ${report.reference_no || ''} deleted successfully.`, type: 'success' })
-      await dataState.refreshReportsList(formState.reportFilters)
-    } catch (err) {
-      setToast({ message: 'Failed to delete report.', type: 'error' })
-    } finally {
-      setIsDeletingReport(false)
-    }
-  }, [reportToDelete, dataState, formState.reportFilters, setToast])
-
-  const cancelDeleteReport = useCallback(() => {
-    if (isDeletingReport) return
-    setReportToDelete(null)
-  }, [isDeletingReport])
-
-  const approvalQueueReports = useMemo(
-    () => filterApprovalQueueReports(dataState.investigatedReports),
-    [dataState.investigatedReports],
-  )
-
-  const displayedInvestigatedReports = isApprovalQueueMode ? approvalQueueReports : dataState.investigatedReports
-
-  // ─── Filter handlers ───────────────────────────────────────────────────────
-
-  const handleFilterApply = async (filters) => { 
-    formState.setReportFilters(filters); 
-    await dataState.refreshReportsList(filters) 
-    await refreshCarAndQddrLists()
+  // ── Filter Handlers ────────────────────────────────────────────────────────
+  const handleFilterApply = async (filters) => {
+    formState.setReportFilters(filters)
     modalsState.setIsFilterModalOpen(false)
   }
 
   const handleFilterClear = async () => {
     const cleared = { departmentId: '', status: '', severities: [], date: '' }
     formState.setReportFilters(cleared)
-    await dataState.refreshReportsList(cleared)
-    await refreshCarAndQddrLists()
     modalsState.setIsFilterModalOpen(false)
   }
 
-  // ─── Report actions ────────────────────────────────────────────────────────
-
-  const handleUpdateSuccess = async () => {
-    setToast({ message: 'Report updated successfully', type: 'success' })
-    modalsState.closeUpdateModal()
-    await dataState.refreshReportsList()
-  }
-
-  const handleUpdateReport = async (event) => {
-    if (event) event.preventDefault()
-
-    if (!modalsState.selectedReport?.id) {
-      updateFormState.setError('No report selected for update.')
-      return { success: false }
-    }
-
-    if (modalsState.selectedReport.status === 'Closed') {
-      return { success: false }
-    }
-
-    updateFormState.setIsSubmitting(true)
-    updateFormState.setError(null)
-
-    try {
-      const payload = new FormData()
-      payload.append('investigation_details', updateFormState.form.investigationDetails)
-      payload.append('corrective_action', updateFormState.form.correctiveAction)
-      payload.append('resolution_details', updateFormState.form.resolutionDetails)
-      payload.append('verification_date', updateFormState.form.verificationDate)
-      if (updateFormState.form.issueType) {
-        payload.append('issue_type', updateFormState.form.issueType)
-      }
-
-      if (updateFormState.form.files && updateFormState.form.files.length > 0) {
-        updateFormState.form.files.forEach(f => {
-          payload.append('investigation_evidence_files', f)
-        })
-      }
-
-      await updateReportInvestigationMultipart(modalsState.selectedReport.id, payload)
-      
-      await handleUpdateSuccess()
-      return { success: true }
-    } catch (submitError) {
-      updateFormState.setError(submitError?.message || 'Failed to update NCR report.')
-      return { success: false }
-    } finally {
-      updateFormState.setIsSubmitting(false)
-    }
-  }
-
-  const handlePreventiveRatingSubmit = async () => {
-    if (!ratingReportId) return
-    setIsSubmittingRating(true)
-    try {
-      await updateReport(ratingReportId, { 
-        preventive_rating: preventiveRating,
-        resolution_details: customResolution
-      })
-
-      if (currentUserId) {
-        await dismissVerificationNotification(ratingReportId, currentUserId)
-      }
-
-      setToast({ message: 'Preventive action rated and resolution updated successfully!', type: 'success' })
-      modalsState.setIsPreventiveActionModalOpen(false)
-      await dataState.refreshReportsList()
-    } catch (err) {
-      setToast({ message: err?.message || 'Failed to submit rating and resolution.', type: 'error' })
-    } finally {
-      setIsSubmittingRating(false)
-    }
-  }
-
-  const handleAssignSuccess = async ({ selectedUser }) => {
-    const name = selectedUser?.user_name || 'employee'
-    const ref = modalsState.selectedAssignmentReport?.reference_no || 'report'
-    setToast({ message: `Report ${ref} assigned to ${name}`, type: 'success' })
-    modalsState.closeAssignModal()
-    await dataState.refreshReportsList()
-  }
-
-  const handleReviewReport = async (report, decision, reason = '') => {
-    if (!report?.id) return
-    setToast(null)
-    const normalized = String(decision || '').trim().toLowerCase()
-    const trimmedReason = String(reason || '').trim()
-
-    if (normalized === 'reject' && !trimmedReason) {
-      setToast({ message: 'Rejection cancelled. Reason is required.', type: 'warning' })
-      return
-    }
-
-    try {
-      setIsReviewSubmitting(true)
-      await reviewReportApproval(report.id, { decision: normalized, reason: trimmedReason || undefined })
-      const label = normalized === 'approve' ? 'approved' : 'rejected'
-      setToast({ message: `Report ${report.reference_no || report.id} ${label}.`, type: normalized === 'approve' ? 'success' : 'warning' })
-      if (normalized === 'reject') modalsState.closeRejectModal()
-      await dataState.refreshReportsList()
-    } catch (err) {
-      setToast({ message: err?.message || 'Failed to review report.', type: 'error' })
-    } finally {
-      setIsReviewSubmitting(false)
-    }
-  }
-
-  // ─── Submit report ─────────────────────────────────────────────────────────
-
-  const handleSubmitReport = async (event) => {
-    if (event) event.preventDefault()
-    setError(null)
-
-    const cState = formState.createFormState
-    if (!cState.productType) {
-      setError('Please select a Product Type.')
-      return
-    }
-    if (!cState.batchNumber || !cState.batchNumber.trim()) {
-      setError('Batch / Lot Number is required.')
-      return
-    }
-    if (!cState.location) {
-      setError('Please select a Location.')
-      return
-    }
-    if (!cState.severity) {
-      setError('Please select a Severity Level.')
-      return
-    }
-    if (!cState.department) {
-      setError('Please select a Department.')
-      return
-    }
-    if (!cState.issueType) {
-      setError('Please select an Issue Category.')
-      return
-    }
-    if (!cState.description || cState.description.trim().length < 10) {
-      setError('Please provide a description of at least 10 characters.')
-      return
-    }
-
-    setIsNcrSubmitting(true)
-    try {
-      const resolvedProductType = await resolveCatalogSelection({
-        inputValue: formState.createFormState.productType,
-        selectedId: formState.createFormState.productTypeId,
-        options: dataState.productTypeOptions,
-        createFn: createProductType,
-        optionLabelKey: 'label',
-      })
-
-      const resolvedLocation = await resolveCatalogSelection({
-        inputValue: formState.createFormState.location,
-        selectedId: formState.createFormState.locationId,
-        options: dataState.locationOptions,
-        createFn: createLocation,
-        optionLabelKey: 'label',
-      })
-
-      const resolvedIssueType = await resolveCatalogSelection({
-        inputValue: formState.createFormState.issueType,
-        selectedId: formState.createFormState.issueTypeId,
-        options: dataState.issueTypeOptions,
-        createFn: createIssueType,
-        optionLabelKey: 'label',
-      })
-
-      if (formState.evidenceState.evidenceFileMain) {
-        if (!currentAuthId) throw new Error('Missing authenticated user. Please log in again.')
-        const fd = new FormData()
-        fd.append('product_type_id', resolvedProductType.id)
-        fd.append('batch_number', formState.createFormState.batchNumber.trim())
-        fd.append('location_id', resolvedLocation.id)
-        fd.append('severity', formState.createFormState.severity)
-        fd.append('department_id', formState.createFormState.department)
-        fd.append('description', formState.createFormState.description)
-        fd.append('issue_type', resolvedIssueType.label)
-        fd.append('issue_type_id', resolvedIssueType.id)
-        fd.append('car_filed', 'false')
-        fd.append('qddr_filed', 'false')
-        if (formState.createFormState.clauseId) {
-          fd.append('clause_id', formState.createFormState.clauseId)
-        }
-        fd.append('evidence_files', formState.evidenceState.evidenceFileMain)
-        await submitNcrMultipart(fd, currentAuthId)
-      } else {
-        await createReport({
-          product_type_id: resolvedProductType.id,
-          batch_number: formState.createFormState.batchNumber.trim(),
-          location_id: resolvedLocation.id,
-          severity: formState.createFormState.severity,
-          department_id: formState.createFormState.department,
-          description: formState.createFormState.description,
-          issue_type: resolvedIssueType.label,
-          issue_type_id: resolvedIssueType.id,
-          car_filed: false,
-          qddr_filed: false,
-          evidence_url: null,
-          clause_id: formState.createFormState.clauseId || null,
-        })
-      }
-
-      setError(null)
-      modalsState.setIsModalOpen(false)
-      formState.clearEvidenceState()
-      formState.resetCreateForm()
-      setToast({ message: 'NCR report submitted successfully!', type: 'success' })
-      await dataState.loadLookupData()
-      await dataState.refreshReportsList()
-    } catch (err) {
-      const errMsg = err?.message || 'Failed to submit NCR report.'
-      setError(errMsg)
-      setToast({ message: errMsg, type: 'error' })
-    } finally {
-      setIsNcrSubmitting(false)
-    }
-  }
-
+  // ── CAR & QDDR Submission & Edit Handlers ──────────────────────────────────
   const handleSubmitCAR = async (event) => {
     if (event) event.preventDefault()
-    
+
     if (!carFormState.validate()) {
       return { success: false }
     }
@@ -719,12 +270,11 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     carFormState.setError(null)
 
     try {
-      // Build payload including confirmed ISO clause links
       const payload = {
         ...carFormState.form,
         clause_ids: carFormState.form.linked_clause_ids || []
       }
-      
+
       if (carFormState.form.id) {
         await updateCarReport(carFormState.form.id, payload, currentAuthId)
         setToast({ message: 'CAR report updated successfully', type: 'success' })
@@ -732,10 +282,9 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         await submitCarReport(payload, currentAuthId)
         setToast({ message: 'CAR report submitted successfully', type: 'success' })
       }
-      
+
       modalsState.closeCARModal()
       carFormState.resetForm()
-      await dataState.refreshReportsList()
       await refreshCarAndQddrLists()
       return { success: true }
     } catch (submitError) {
@@ -748,7 +297,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
 
   const handleSubmitQDDR = async (event) => {
     if (event) event.preventDefault()
-    
+
     if (!qddrFormState.validate()) {
       return { success: false }
     }
@@ -757,27 +306,21 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     qddrFormState.setError(null)
 
     try {
-      // Build payload including confirmed ISO clause links and NCR ID
       const payload = {
         ...qddrFormState.form,
-        clause_ids: qddrFormState.form.linked_clause_ids || [],
-        ncr_id: (!qddrFormState.form.id && modalsState.selectedQDDRReport?.id)
-          ? modalsState.selectedQDDRReport.id
-          : qddrFormState.form.ncr_id
+        clause_ids: qddrFormState.form.linked_clause_ids || []
       }
-      
+
       if (qddrFormState.form.id) {
-        // use editQddrReport for the new backend edit endpoint
         await editQddrReport(qddrFormState.form.id, payload, currentAuthId)
         setToast({ message: 'QDDR report updated successfully', type: 'success' })
       } else {
         await submitQddrReport(payload, currentAuthId)
         setToast({ message: 'QDDR report submitted successfully', type: 'success' })
       }
-      
+
       modalsState.closeQDDRModal()
       qddrFormState.resetForm()
-      await dataState.refreshReportsList()
       await refreshCarAndQddrLists()
       return { success: true }
     } catch (submitError) {
@@ -837,36 +380,18 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     }
   }
 
-  const assignModalState = useAssignReportModal({
-    report: modalsState.selectedAssignmentReport,
-    onSuccess: handleAssignSuccess,
-    onClose: modalsState.closeAssignModal,
-    currentUserId,
-    userRole
-  })
-
-  const ncrSubmitModalState = useNCRSubmitModal({
-    onSuccess: async () => {
-      setToast({ message: 'Report submitted successfully', type: 'success' })
-      modalsState.closeCreateModal()
-      await dataState.refreshReportsList()
-    },
-    authUserId: currentAuthId
-  })
-
-  // Edit Handlers
   const openEditCarModal = async (car) => {
     try {
       const linkedClauses = await fetchLinkedClausesForCar(car.id)
       const linkedClauseIds = linkedClauses.map(c => c.clause_id)
-      carFormState.initForm({ 
-        ...car, 
+      carFormState.initForm({
+        ...car,
         linked_clause_ids: linkedClauseIds,
         suggested_clauses: linkedClauses.map(c => ({ ...c, confidence: 1 }))
       })
       modalsState.openCARModal(car)
     } catch (err) {
-      console.error('Failed to fetch linked clauses for edit:', err)
+      console.error('Failed to fetch linked clauses for CAR edit:', err)
       carFormState.initForm(car)
       modalsState.openCARModal(car)
     }
@@ -887,7 +412,6 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     }
 
     try {
-      const { fetchLinkedClausesForQddr } = await import('@/services/qddrService')
       const linkedClauses = await fetchLinkedClausesForQddr(qddr.id)
       const linkedClauseIds = linkedClauses.map(c => c.clause_id)
       qddrFormState.initForm({
@@ -903,103 +427,50 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     }
   }
 
-  // ─── Returned API ──────────────────────────────────────────────────────────
-
   return {
-    isLoading: dataState.isLoading,
-    isReviewSubmitting,
-    isNcrSubmitting,
     toast,
     setToast,
     error,
 
     activeTab,
     setActiveTab,
+    isClosedMode,
+    setIsClosedMode,
+
     carReports,
     loadingCar,
     qddrReports,
     loadingQddr,
     refreshCarAndQddrLists,
+
     selectedCar: carDetails.selectedCar,
     isCarDetailsModalOpen: carDetails.isCarDetailsModalOpen,
     openCarDetails: carDetails.openCarDetails,
     closeCarDetails: carDetails.closeCarDetails,
     submitCapa: handleCapaSubmit,
     verifyCar: handleCarVerify,
+
     selectedQddr,
     isQddrDetailsModalOpen,
     openQddrDetails: handleOpenQddrDetails,
     closeQddrDetails: handleCloseQddrDetails,
     updateQddr: handleUpdateQddr,
-    users: dataState.users
-      .filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
-      .map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
+
+    users: activeUserOptions,
     usersLoading: dataState.usersLoading,
-
-    openEditCarModal,
-    openEditQddrModal,
-
-    ...modalsState,
-    
-    reports: dataState.reports,
-    investigatedReports: dataState.investigatedReports,
-    closedReports: dataState.closedReports,
-    displayedInvestigatedReports,
-    approvalQueueReports,
     departments: dataState.departments,
-    locationOptions: dataState.locationOptions,
-    productTypeOptions: dataState.productTypeOptions,
     departmentNameById: dataState.departmentNameById,
     userNameById: dataState.userNameById,
 
-    departmentsLoading: dataState.departmentsLoading,
-    locationsLoading: dataState.locationsLoading,
-    productTypesLoading: dataState.productTypesLoading,
+    openEditCarModal,
+    openEditQddrModal,
+    ...modalsState,
 
-    rejectReason,
-    setRejectReason,
-
-    isApprovalQueueMode, setIsApprovalQueueMode,
-    isClosedMode, setIsClosedMode,
-
-    createFormState: formState.createFormState,
     reportFilters: formState.reportFilters,
     setReportFilters: formState.setReportFilters,
-
-    fileInputRefMain: formState.evidenceState.fileInputRefMain,
-    evidenceFileMain: formState.evidenceState.evidenceFileMain,
-    setEvidenceFileMain: formState.evidenceState.setEvidenceFileMain,
-    evidencePreviewMain: formState.evidenceState.evidencePreviewMain,
-    setEvidencePreviewMain: formState.evidenceState.setEvidencePreviewMain,
-    evidenceErrorMain: formState.evidenceState.evidenceErrorMain,
-    setEvidenceErrorMain: formState.evidenceState.setEvidenceErrorMain,
-
-    canAssignReports,
-    canApproveReport,
-    canUpdateReport,
-    canDeleteReport,
-    handleDeleteReport,
-
     handleFilterApply,
     handleFilterClear,
-    handleUpdateSuccess,
-    handleAssignSuccess,
-    handleReviewReport,
-    handleSubmitReport,
 
-    confirmDeleteDialogProps: {
-      isOpen: !!reportToDelete,
-      title: 'Delete Report',
-      message: reportToDelete ? `Are you sure you want to delete report ${reportToDelete.reference_no || 'this report'}?` : '',
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      isDestructive: true,
-      isLoading: isDeletingReport,
-      onConfirm: confirmDeleteReport,
-      onCancel: cancelDeleteReport,
-    },
-
-    // Bundled Modal Props for Clean Architecture (Prop Spreading)
     filterModalProps: {
       isOpen: modalsState.isFilterModalOpen,
       onClose: () => modalsState.setIsFilterModalOpen(false),
@@ -1011,97 +482,12 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       userRole,
       userPermissions,
     },
-    updateModalProps: {
-      isOpen: modalsState.isUpdateModalOpen,
-      onClose: modalsState.closeUpdateModal,
-      report: modalsState.selectedReport,
-      form: updateFormState.form,
-      previewUrls: updateFormState.previewUrls,
-      setField: updateFormState.setField,
-      handleFiles: updateFormState.handleFiles,
-      removeFile: updateFormState.removeFile,
-      errors: updateFormState.errors,
-      error: updateFormState.error,
-      isSubmitting: updateFormState.isSubmitting,
-      handleSubmit: handleUpdateReport,
-      deptName: dataState.departmentNameById.get(String(modalsState.selectedReport?.department_id || '')) || '—',
-      issueTypeOptions: dataState.issueTypeOptions,
-      issueTypesLoading: dataState.issueTypesLoading,
-      suggestion: suggestionState.suggestion,
-      isSuggesting: suggestionState.isSuggesting,
-      suggestionError: suggestionState.suggestionError,
-      loadSuggestion: suggestionState.loadSuggestion,
-    },
-    assignModalProps: {
-      isOpen: modalsState.isAssignModalOpen,
-      onClose: modalsState.closeAssignModal,
-    currentUserId,
-    userRole,
-      report: modalsState.selectedAssignmentReport,
-      onSuccess: handleAssignSuccess,
-      ...assignModalState,
-    },
-    ncrSubmitModalProps: {
-      isOpen: modalsState.isModalOpen,
-      onClose: modalsState.closeCreateModal,
-      ...ncrSubmitModalState,
-    },
-    createModalProps: {
-      isOpen: modalsState.isModalOpen,
-      onClose: () => {
-        setError(null)
-        modalsState.closeCreateModal()
-      },
-      onSubmit: handleSubmitReport,
-      error,
-      isLoading: isNcrSubmitting,
-      createFormState: formState.createFormState,
-      locationOptions: dataState.locationOptions,
-      productTypeOptions: dataState.productTypeOptions,
-      issueTypeOptions: dataState.issueTypeOptions,
-      departments: dataState.departments,
-      locationsLoading: dataState.locationsLoading,
-      productTypesLoading: dataState.productTypesLoading,
-      issueTypesLoading: dataState.issueTypesLoading,
-      departmentsLoading: dataState.departmentsLoading,
-      fileInputRef: formState.evidenceState.fileInputRefMain,
-      evidenceFile: formState.evidenceState.evidenceFileMain,
-      setEvidenceFile: formState.evidenceState.setEvidenceFileMain,
-      evidencePreview: formState.evidenceState.evidencePreviewMain,
-      setEvidencePreview: formState.evidenceState.setEvidencePreviewMain,
-      evidenceError: formState.evidenceState.evidenceErrorMain,
-      setEvidenceError: formState.evidenceState.setEvidenceErrorMain,
-      clauses,
-      clausesLoading,
-      suggestingClause,
-      handleSuggestClause,
-    },
-    rejectModalProps: {
-      isOpen: modalsState.isRejectModalOpen,
-      report: modalsState.rejectTargetReport,
-      rejectReason,
-      onReasonChange: setRejectReason,
-      onClose: modalsState.closeRejectModal,
-      onSubmit: handleReviewReport,
-      isSubmitting: isReviewSubmitting,
-    },
-    preventiveActionModalProps: {
-      isOpen: modalsState.isPreventiveActionModalOpen,
-      onClose: () => modalsState.setIsPreventiveActionModalOpen(false),
-      suggestedPreventiveAction,
-      preventiveRating,
-      onPreventiveRatingChange: setPreventiveRating,
-      customResolution,
-      onCustomResolutionChange: setCustomResolution,
-      onSubmit: handlePreventiveRatingSubmit,
-      isSubmitting: isSubmittingRating,
-      report: ratingReportId 
-        ? [...(dataState.reports || []), ...(dataState.investigatedReports || []), ...(dataState.closedReports || [])].find(r => String(r.id) === String(ratingReportId))
-        : null
-    },
     carModalProps: {
       isOpen: modalsState.isCARModalOpen,
-      onClose: modalsState.closeCARModal,
+      onClose: () => {
+        modalsState.closeCARModal()
+        carFormState.resetForm()
+      },
       form: carFormState.form,
       handleChange: carFormState.handleChange,
       toggleClauseSelection: carFormState.toggleClauseSelection,
@@ -1114,27 +500,24 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       onSubmit: handleSubmitCAR,
       departments: dataState.departments.map(d => ({ id: d.id, label: d.department_name })),
       departmentsLoading: dataState.departmentsLoading,
-      users: dataState.users
-        .filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
-        .map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
+      users: activeUserOptions,
       usersLoading: dataState.usersLoading
     },
     qddrModalProps: {
       isOpen: modalsState.isQDDRModalOpen,
-      onClose: modalsState.closeQDDRModal,
+      onClose: () => {
+        modalsState.closeQDDRModal()
+        qddrFormState.resetForm()
+      },
       form: qddrFormState.form,
       handleChange: qddrFormState.handleChange,
-      selectNcr: qddrFormState.selectNcr,
       error: qddrFormState.error,
       isSubmitting: qddrFormState.isSubmitting,
       onSubmit: handleSubmitQDDR,
       locations: dataState.locationOptions,
       locationsLoading: dataState.locationsLoading,
-      users: dataState.users
-        .filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
-        .map(u => ({ id: u.id, label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}` })),
+      users: activeUserOptions,
       usersLoading: dataState.usersLoading,
-      allReports: [...dataState.reports, ...dataState.closedReports].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
       suggesting: qddrFormState.suggesting,
       suggestActions: qddrFormState.suggestActions,
       toggleClauseSelection: qddrFormState.toggleClauseSelection,

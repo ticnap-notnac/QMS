@@ -2,18 +2,14 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/utils/supabase'
-import { fetchAllReports } from '@/services/ncrService'
 import {
-  AlertTriangle,
   FileCheck2,
   PackageX,
   ArrowRight,
   RefreshCw,
-  Search,
   CheckCircle2,
   Clock,
   MapPin,
-  ExternalLink,
   ChevronRight
 } from 'lucide-react'
 import './OccurringIssuesSummary.css'
@@ -35,14 +31,12 @@ function getRelativeTime(dateStr) {
 
 export default function OccurringIssuesSummary({ onRefresh }) {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('all') // 'all' | 'ncr' | 'car' | 'qddr'
+  const [activeTab, setActiveTab] = useState('all') // 'all' | 'car' | 'qddr'
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState(null)
 
-  // Raw active data lists
-  const [activeNcrs, setActiveNcrs] = useState([])
   const [activeCars, setActiveCars] = useState([])
   const [activeQddrs, setActiveQddrs] = useState([])
 
@@ -52,33 +46,21 @@ export default function OccurringIssuesSummary({ onRefresh }) {
     setError(null)
 
     try {
-      const [ncrResult, carResult, qddrResult] = await Promise.all([
-        // 1. Fetch active NCRs
-        fetchAllReports().catch((err) => {
-          console.warn('Failed to fetch NCRs for issues summary:', err)
-          return []
-        }),
-        // 2. Fetch active CARs
+      const [carResult, qddrResult] = await Promise.all([
         supabase
           .from('car_reports')
           .select('*, audit_schedules(id, title, scheduled_date)')
           .not('status', 'ilike', 'closed')
           .order('created_at', { ascending: false })
           .limit(100),
-        // 3. Fetch active QDDRs
         supabase
           .from('qddr_reports')
           .select('*')
           .not('status', 'ilike', 'closed')
           .order('created_at', { ascending: false })
           .limit(100),
-        // 4. Optionally refresh dashboard metrics
         isManualRefresh && onRefresh ? onRefresh().catch(() => {}) : Promise.resolve()
       ])
-
-      // Filter active NCRs (status !== 'CLOSED')
-      const ncrsList = (Array.isArray(ncrResult) ? ncrResult : [])
-        .filter(r => String(r.status || '').trim().toUpperCase() !== 'CLOSED')
 
       const carsList = (carResult?.data || [])
         .filter(c => String(c.status || '').trim().toLowerCase() !== 'closed')
@@ -86,7 +68,6 @@ export default function OccurringIssuesSummary({ onRefresh }) {
       const qddrsList = (qddrResult?.data || [])
         .filter(q => String(q.status || '').trim().toLowerCase() !== 'closed')
 
-      setActiveNcrs(ncrsList)
       setActiveCars(carsList)
       setActiveQddrs(qddrsList)
     } catch (err) {
@@ -96,7 +77,7 @@ export default function OccurringIssuesSummary({ onRefresh }) {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [])
+  }, [onRefresh])
 
   useEffect(() => {
     loadOccurringIssues()
@@ -104,32 +85,6 @@ export default function OccurringIssuesSummary({ onRefresh }) {
 
   // ─── Analytics Aggregations ────────────────────────────────────────────────
 
-  // NCR Metrics: Severity counts & top recurring categories
-  const ncrMetrics = useMemo(() => {
-    const severities = { critical: 0, high: 0, medium: 0, low: 0 }
-    const catCounts = {}
-
-    activeNcrs.forEach((n) => {
-      const sev = String(n.severity || 'low').toLowerCase()
-      if (severities[sev] !== undefined) severities[sev]++
-      else severities.low++
-
-      const catName = n.issue_types?.issue_type_name || n.issue_type || n.category || 'General Defect'
-      catCounts[catName] = (catCounts[catName] || 0) + 1
-    })
-
-    const topCategories = Object.entries(catCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-
-    return {
-      total: activeNcrs.length,
-      severities,
-      topCategories
-    }
-  }, [activeNcrs])
-
-  // CAR Metrics: Status counts & top non-conformance types
   const carMetrics = useMemo(() => {
     const typeCounts = {
       'Quality / Food Safety': 0,
@@ -158,7 +113,6 @@ export default function OccurringIssuesSummary({ onRefresh }) {
     }
   }, [activeCars])
 
-  // QDDR Metrics: Discrepancy types counts
   const qddrMetrics = useMemo(() => {
     const discCounts = {
       'Crushed / Dented': 0,
@@ -194,25 +148,7 @@ export default function OccurringIssuesSummary({ onRefresh }) {
   const unifiedIssuesList = useMemo(() => {
     const list = []
 
-    // 1. Process NCRs
-    ;(Array.isArray(activeNcrs) ? activeNcrs : []).forEach((n) => {
-      list.push({
-        id: `ncr-${n.id}`,
-        rawId: n.id,
-        type: 'ncr',
-        typeLabel: 'NCR',
-        referenceNo: String(n.reference_no || `NCR #${n.id}`),
-        headline: String(n.issue_types?.issue_type_name || n.issue_type || n.product_types?.product_name || n.product_type || 'Non-Conformance Issue'),
-        detail: String(n.product_types?.product_name || n.product_type || (n.description ? `${String(n.description).slice(0, 60)}…` : '')),
-        location: String(n.locations?.location_name || n.location || n.departments?.department_name || 'Warehouse'),
-        severity: String(n.severity || 'Medium'),
-        status: String(n.status || 'OPEN'),
-        createdAt: n.created_at,
-        relativeTime: getRelativeTime(n.created_at)
-      })
-    })
-
-    // 2. Process CARs
+    // 1. Process CARs
     ;(Array.isArray(activeCars) ? activeCars : []).forEach((c) => {
       const tags = []
       if (c.quality_food_safety) tags.push('Quality / Food Safety')
@@ -239,7 +175,7 @@ export default function OccurringIssuesSummary({ onRefresh }) {
       })
     })
 
-    // 3. Process QDDRs
+    // 2. Process QDDRs
     ;(Array.isArray(activeQddrs) ? activeQddrs : []).forEach((q) => {
       const discTypes = []
       if (q.crushed_dented) discTypes.push('Crushed/Dented')
@@ -267,19 +203,15 @@ export default function OccurringIssuesSummary({ onRefresh }) {
       })
     })
 
-    // Sort newest first
     return list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-  }, [activeNcrs, activeCars, activeQddrs])
+  }, [activeCars, activeQddrs])
 
-  // Filtered list based on active tab and search query
   const filteredIssues = useMemo(() => {
     return unifiedIssuesList.filter((item) => {
-      // Tab filter
       if (activeTab !== 'all' && item.type !== activeTab) {
         return false
       }
 
-      // Search query filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase()
         const matchRef = item.referenceNo.toLowerCase().includes(q)
@@ -318,7 +250,7 @@ export default function OccurringIssuesSummary({ onRefresh }) {
             </div>
           </div>
           <p className="occurring-issues-subtitle">
-            Real-time status of active Non-Conformance Reports (NCR), Corrective Actions (CAR), and Quality Defect Reports (QDDR).
+            Real-time status of active Corrective Actions (CAR) and Quality Defect &amp; Disposal Reports (QDDR).
           </p>
         </div>
 
@@ -348,68 +280,8 @@ export default function OccurringIssuesSummary({ onRefresh }) {
         </div>
       )}
 
-      {/* ── 3 Module Summary Cards Grid ── */}
+      {/* ── 2 Module Summary Cards Grid ── */}
       <div className="occurring-summary-cards-grid">
-        {/* NCR Summary Card */}
-        <div
-          className="occurring-module-card module-card--ncr"
-          onClick={() => handleCardClick('ncr')}
-          title="Click to view all active Non-Conformance Reports"
-        >
-          <div className="module-card-top">
-            <div className="module-card-badge-wrap">
-              <div className="module-icon-circle icon-ncr">
-                <AlertTriangle size={18} />
-              </div>
-              <div>
-                <h3 className="module-name-title">Non-Conformance (NCR)</h3>
-                <p className="module-name-sub">Facility &amp; Production Incidents</p>
-              </div>
-            </div>
-            <div className="module-active-counter counter-ncr">
-              {loading ? '…' : ncrMetrics.total}
-            </div>
-          </div>
-
-          <div className="module-pill-row">
-            {ncrMetrics.severities.critical > 0 && (
-              <span className="module-pill pill-critical">
-                {ncrMetrics.severities.critical} Critical
-              </span>
-            )}
-            {ncrMetrics.severities.high > 0 && (
-              <span className="module-pill pill-high">
-                {ncrMetrics.severities.high} High
-              </span>
-            )}
-            {ncrMetrics.severities.medium > 0 && (
-              <span className="module-pill pill-medium">
-                {ncrMetrics.severities.medium} Medium
-              </span>
-            )}
-            {ncrMetrics.severities.low > 0 && (
-              <span className="module-pill pill-low">
-                {ncrMetrics.severities.low} Low
-              </span>
-            )}
-            {ncrMetrics.total === 0 && (
-              <span className="module-pill pill-info">✓ All NCRs Resolved</span>
-            )}
-          </div>
-
-          {ncrMetrics.topCategories.length > 0 && (
-            <div style={{ fontSize: '11.5px', color: '#475569', lineHeight: 1.4 }}>
-              <span style={{ fontWeight: 600, color: '#1A435A' }}>Top Issues: </span>
-              {ncrMetrics.topCategories.map(([cat, count]) => `${cat} (${count})`).join(' • ')}
-            </div>
-          )}
-
-          <div className="module-card-footer-link">
-            <span>Manage NCRs in Reports</span>
-            <ChevronRight size={14} />
-          </div>
-        </div>
-
         {/* CAR Summary Card */}
         <div
           className="occurring-module-card module-card--car"
@@ -423,7 +295,7 @@ export default function OccurringIssuesSummary({ onRefresh }) {
               </div>
               <div>
                 <h3 className="module-name-title">Corrective Actions (CAR)</h3>
-                <p className="module-name-sub">CAPA &amp; Systemic Remedies</p>
+                <p className="module-name-sub">Customer Complaints &amp; Audit CAPA</p>
               </div>
             </div>
             <div className="module-active-counter counter-car">
@@ -466,8 +338,8 @@ export default function OccurringIssuesSummary({ onRefresh }) {
                 <PackageX size={18} />
               </div>
               <div>
-                <h3 className="module-name-title">Defect Reports (QDDR)</h3>
-                <p className="module-name-sub">Inbound &amp; Warehouse Defects</p>
+                <h3 className="module-name-title">Defects &amp; Disposal (QDDR)</h3>
+                <p className="module-name-sub">Inbound &amp; Warehouse Discrepancies</p>
               </div>
             </div>
             <div className="module-active-counter counter-qddr">
@@ -511,14 +383,6 @@ export default function OccurringIssuesSummary({ onRefresh }) {
             >
               <span>All Occurring</span>
               <span className="issues-tab-badge">{totalActiveCount}</span>
-            </button>
-            <button
-              type="button"
-              className={`issues-tab-btn ${activeTab === 'ncr' ? 'active' : ''}`}
-              onClick={() => setActiveTab('ncr')}
-            >
-              <span>NCR</span>
-              <span className="issues-tab-badge">{ncrMetrics.total}</span>
             </button>
             <button
               type="button"
@@ -637,4 +501,3 @@ export default function OccurringIssuesSummary({ onRefresh }) {
     </section>
   )
 }
-

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X as CloseIcon, Sparkles, Link, LoaderCircle, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react'
+import { X as CloseIcon, Sparkles, Link, LoaderCircle, CheckCircle2, XCircle } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 
 function QDDRModal({
@@ -7,7 +7,6 @@ function QDDRModal({
   onClose,
   form,
   handleChange,
-  selectNcr,
   error,
   isSubmitting,
   onSubmit,
@@ -15,7 +14,6 @@ function QDDRModal({
   locationsLoading,
   users,
   usersLoading,
-  allReports,
   suggesting,
   suggestActions,
   toggleClauseSelection,
@@ -24,8 +22,6 @@ function QDDRModal({
   clausesError,
   userAuthId
 }) {
-  const [isLinkingMode, setIsLinkingMode] = useState(false)
-  const [ncrSearchQuery, setNcrSearchQuery] = useState('')
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -56,10 +52,6 @@ function QDDRModal({
     { key: 'picking_discrepancy', label: 'PICKING DISCREPANCY' }
   ]
 
-  const sortedReports = [...(allReports || [])].sort((a, b) => {
-    return new Date(b.created_at || 0) - new Date(a.created_at || 0)
-  })
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
@@ -67,7 +59,7 @@ function QDDRModal({
         onClick={(e) => e.stopPropagation()}
         style={{
           maxHeight: isMobile ? 'calc(100vh - 16px)' : '90vh',
-          width: isMobile ? 'calc(100vw - 16px)' : (isLinkingMode ? '600px' : '900px'),
+          width: isMobile ? 'calc(100vw - 16px)' : '900px',
           maxWidth: '95vw',
           display: 'flex',
           flexDirection: 'column',
@@ -80,10 +72,10 @@ function QDDRModal({
         {/* ── ✕ ABSOLUTE CLOSE BUTTON (Safely isolated in the upper right) ── */}
         <button 
           type="button" 
-          onClick={isLinkingMode ? () => setIsLinkingMode(false) : onClose} 
+          onClick={onClose} 
           className="modal-close-button" 
-          title={isLinkingMode ? "Back to QDDR Form" : "Close Modal"}
-          aria-label={isLinkingMode ? "Back to QDDR Form" : "Close Modal"}
+          title="Close Modal"
+          aria-label="Close Modal"
           style={{ 
             position: 'absolute',
             top: '16px',
@@ -113,77 +105,14 @@ function QDDRModal({
           }}
         >
           <h3 className="reports-update-title" style={{ margin: 0 }}>
-            {isLinkingMode ? 'Select NCR to Link' : 'Quality Defects / Damaged / Discrepancy Report (QDDR)'}
+            Quality Defects / Damaged / Discrepancy Report (QDDR)
           </h3>
-          
-          {!isLinkingMode && (
-            <button 
-              type="button" 
-              className="btn-secondary-light" 
-              onClick={() => setIsLinkingMode(true)}
-              style={{ margin: 0, whiteSpace: 'nowrap' }}
-            >
-              {form.ncr_id ? `Linked NCR: ${form.linked_ncr_reference || form.ncr_id} (Change)` : 'Link NCR'}
-            </button>
-          )}
         </div>
 
-{error && !isLinkingMode && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: isMobile ? '16px' : '28px', marginRight: isMobile ? '16px' : '28px' }}>{error}</div>}
+        {error && <div className="user-info-error" style={{ marginBottom: '12px', flexShrink: 0, marginLeft: isMobile ? '16px' : '28px', marginRight: isMobile ? '16px' : '28px' }}>{error}</div>}
 
         <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', paddingLeft: isMobile ? '14px' : '28px', paddingRight: isMobile ? '14px' : '28px', paddingBottom: isMobile ? '14px' : '24px' }}>
-          {isLinkingMode ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <input
-                type="text"
-                placeholder="Search reference no..."
-                value={ncrSearchQuery}
-                onChange={(e) => setNcrSearchQuery(e.target.value)}
-                className="input-field"
-                style={{ width: '100%' }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {sortedReports
-                  .filter(r => !ncrSearchQuery || String(r.reference_no || r.id).toLowerCase().includes(ncrSearchQuery.toLowerCase()))
-                  .map(report => {
-                    const isSelected = String(form.ncr_id) === String(report.id);
-                    return (
-                      <label 
-                        key={report.id}
-                        style={{
-                          padding: '12px',
-                          background: isSelected ? 'rgba(59, 130, 246, 0.1)' : '#f8fafc',
-                          border: isSelected ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid #e2e8f0',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '12px'
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => selectNcr(report.id, report.reference_no || String(report.id), report)}
-                          style={{ marginTop: '4px' }}
-                        />
-                        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '6px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: '#1A435A', fontWeight: '500' }}>{report.reference_no || `NCR #${report.id}`}</span>
-                            <span style={{ color: 'var(--muted)', fontSize: '13px' }}>{new Date(report.created_at).toLocaleDateString()}</span>
-                          </div>
-                          {report.description && (
-                            <span style={{ color: 'var(--muted)', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                              {report.description}
-                            </span>
-                          )}
-                        </div>
-                      </label>
-                    );
-                  })}
-              </div>
-            </div>
-          ) : (
-            <form className="modal-form" onSubmit={onSubmit} style={{ gap: isMobile ? '10px' : '16px', display: 'flex', flexDirection: 'column' }}>
+          <form className="modal-form" onSubmit={onSubmit} style={{ gap: isMobile ? '10px' : '16px', display: 'flex', flexDirection: 'column' }}>
 
               {/* Row 1: Location, Date, Time */}
               <div className="qddr-form-row-3-col">
@@ -602,8 +531,7 @@ function QDDRModal({
                 </div>
               </div>
 
-            </form>
-          )}
+          </form>
         </div>
 
         {/* ── MODAL FOOTER ACTION BAR ── */}
@@ -621,46 +549,22 @@ function QDDRModal({
             marginTop: '12px'
           }}
         >
-          {isLinkingMode ? (
-            <>
-              <button 
-                type="button" 
-                className="btn-secondary-light" 
-                onClick={() => setIsLinkingMode(false)} 
-                style={{ margin: 0, padding: '8px 20px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                title="Back to QDDR Form"
-              >
-                <ArrowLeft size={15} /> Back
-              </button>
-              <button 
-                type="button" 
-                className="btn-gradient-primary" 
-                onClick={() => setIsLinkingMode(false)} 
-                style={{ margin: 0, padding: '8px 24px', fontSize: '13px', height: 'auto', boxShadow: 'none' }}
-              >
-                Done
-              </button>
-            </>
-          ) : (
-            <>
-              <button type="button" className="btn-secondary-light" onClick={onClose} disabled={isSubmitting} style={{ margin: 0, padding: '8px 20px', fontSize: '13px' }}>
-                Cancel
-              </button>
-              <button 
-                type="button" 
-                className="btn-gradient-primary" 
-                onClick={onSubmit}
-                disabled={isSubmitting}
-                style={{ margin: 0, padding: '8px 24px', fontSize: '13px', height: 'auto', boxShadow: 'none' }}
-              >
-                {isSubmitting ? (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <LoaderCircle size={16} className="iso-spinner" /> Submitting…
-                  </span>
-                ) : (form.id ? 'Update QDDR' : 'Submit QDDR')}
-              </button>
-            </>
-          )}
+          <button type="button" className="btn-secondary-light" onClick={onClose} disabled={isSubmitting} style={{ margin: 0, padding: '8px 20px', fontSize: '13px' }}>
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            className="btn-gradient-primary" 
+            onClick={onSubmit}
+            disabled={isSubmitting}
+            style={{ margin: 0, padding: '8px 24px', fontSize: '13px', height: 'auto', boxShadow: 'none' }}
+          >
+            {isSubmitting ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <LoaderCircle size={16} className="iso-spinner" /> Submitting…
+              </span>
+            ) : (form.id ? 'Update QDDR' : 'Submit QDDR')}
+          </button>
         </div>
 
       </div>

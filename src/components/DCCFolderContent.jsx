@@ -127,9 +127,7 @@ export default function DCCFolderContent({
   const hasExplicitPages = Array.isArray(userPermissions?.pages)
   const rights = hasExplicitRights ? userPermissions.rights : []
   const pages = hasExplicitPages ? userPermissions.pages : []
-  const canAccessNcr = hasExplicitRights
-    ? rights.includes('view_ncr_reports')
-    : (isAdminRole(userRole) || rights.length === 0)
+  const canAccessNcr = false
   const canAccessCar = hasExplicitRights
     ? rights.includes('view_car_reports')
     : (isAdminRole(userRole) || ['team leader', 'auditor'].includes(normRole))

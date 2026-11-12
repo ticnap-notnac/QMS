@@ -50,10 +50,10 @@ export async function generateSuggestion(req, res, next) {
 
 export async function generateSuggestionFromText(req, res, next) {
   try {
-    const { description, issueType, deptName } = req.body
+    const { description, issueType, deptName, reportType = 'CAR' } = req.body
     
     // Enqueue to pg-boss background worker
-    const jobId = await boss.send('cbr-suggestion-text', { description, issueType, deptName })
+    const jobId = await boss.send('cbr-suggestion-text', { description, issueType, deptName, reportType })
     
     return res.status(202).json({ success: true, message: 'Text suggestion generation started in the background', jobId, queue: 'cbr-suggestion-text' })
   } catch (err) {

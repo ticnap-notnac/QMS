@@ -1,57 +1,35 @@
 import { request } from '@/lib/api'
 
-export async function fetchSimilarCases(ncrId) {
-    return await request(`/suggestions/similar/${ncrId}`)
-}
-
-export async function fetchExistingAiSuggestion(ncrId) {
-    return await request(`/suggestions/cached/${ncrId}`)
-}
-
 export async function fetchJobStatus(jobId, queue) {
-    const qs = queue ? `?queue=${encodeURIComponent(queue)}` : ''
-    return await request(`/suggestions/job/${jobId}${qs}`)
+  const qs = queue ? `?queue=${encodeURIComponent(queue)}` : ''
+  return await request(`/suggestions/job/${jobId}${qs}`)
 }
 
-export async function saveAiSuggestion(ncrId, suggestion, preventiveSuggestion, confidence) {
-    return await request('/suggestions', {
-        method: 'POST',
-        body: JSON.stringify({ ncr_id: ncrId, suggestion, preventive_suggestion: preventiveSuggestion, confidence }),
-    })
-}
-
-export async function generateAiSuggestion(ncrId, deptName, previousSuggestions = []) {
-    return await request(`/suggestions/generate/${ncrId}`, {
-        method: 'POST',
-        body: JSON.stringify({ deptName, previousSuggestions }),
-    })
-}
-
-export async function generateAiSuggestionFromText({ description, issueType, deptName }) {
-    return await request('/suggestions/generate-text', {
-        method: 'POST',
-        body: JSON.stringify({ description, issueType, deptName }),
-    })
+export async function generateAiSuggestionFromText({ description, issueType, deptName, reportType = 'CAR' }) {
+  return await request('/suggestions/generate-text', {
+    method: 'POST',
+    body: JSON.stringify({ description, issueType, deptName, reportType }),
+  })
 }
 
 export async function classifyIssueTags(descriptionOrObj, reportType = 'CAR') {
-    const isObj = descriptionOrObj && typeof descriptionOrObj === 'object'
-    const description = isObj ? descriptionOrObj.description : descriptionOrObj
-    const resolvedType = isObj ? (descriptionOrObj.type || descriptionOrObj.reportType || 'CAR') : reportType
+  const isObj = descriptionOrObj && typeof descriptionOrObj === 'object'
+  const description = isObj ? descriptionOrObj.description : descriptionOrObj
+  const resolvedType = isObj ? (descriptionOrObj.type || descriptionOrObj.reportType || 'CAR') : reportType
 
-    return await request('/suggestions/classify-tags', {
-        method: 'POST',
-        body: JSON.stringify({ description, reportType: resolvedType }),
-    })
+  return await request('/suggestions/classify-tags', {
+    method: 'POST',
+    body: JSON.stringify({ description, reportType: resolvedType }),
+  })
 }
 
 export async function classifyDiscrepancyTags({ description, type = 'CAR', reportType } = {}) {
-    return await classifyIssueTags({ description, type: reportType || type })
+  return await classifyIssueTags({ description, type: reportType || type })
 }
 
 export async function describeEvidenceWithAi(payload) {
-    return await request('/suggestions/describe-evidence', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-    })
+  return await request('/suggestions/describe-evidence', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
 }

@@ -26,11 +26,11 @@ export const registerWorkers = async () => {
   // Worker for general text CBR generation
   await boss.work('cbr-suggestion-text', async (jobs) => {
     const job = Array.isArray(jobs) ? jobs[0] : jobs
-    const { description, issueType, deptName } = job.data
-    logger.info(`Processing text CBR job for issueType: ${issueType}`)
+    const { description, issueType, deptName, reportType = 'CAR' } = job.data
+    logger.info(`Processing text CBR job for reportType: ${reportType}, issueType: ${issueType}`)
     try {
       const { generateAiSuggestionFromText } = await import('../services/suggestionService.js')
-      const result = await generateAiSuggestionFromText({ description, issueType, deptName })
+      const result = await generateAiSuggestionFromText({ description, issueType, deptName, reportType })
       logger.info(`Successfully completed text CBR job`)
       return result
     } catch (error) {

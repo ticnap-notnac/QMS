@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { generateAiSuggestionFromText, classifyDiscrepancyTags } from '@/services/suggestionService'
+import { generateAiSuggestionFromText, classifyDiscrepancyTags, fetchJobStatus } from '@/services/suggestionService'
+import { suggestClausesForQddr } from '@/services/qddrService'
 
 export function useQDDRForm() {
   const initialState = {
@@ -38,9 +39,6 @@ export function useQDDRForm() {
     approved_by: '',
     noted_by: '',
     leader: '',
-    ncr_id: null,
-    linked_ncr_reference: '',
-    // ISO Clause linkage
     linked_clause_ids: [],
     suggested_clauses: []
   }
@@ -50,7 +48,6 @@ export function useQDDRForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
 
-  // Clause suggestion loading state
   const [clausesLoading, setClausesLoading] = useState(false)
   const [clausesError, setClausesError] = useState(null)
   const lastClassifiedReasonRef = useRef('')
@@ -85,30 +82,6 @@ export function useQDDRForm() {
     if (error) setError('')
   }
 
-  const selectNcr = async (id, reference, report = null) => {
-    setForm(prev => ({
-      ...prev,
-      ncr_id: prev.ncr_id === id ? null : id,
-      linked_ncr_reference: prev.ncr_id === id ? '' : reference
-    }))
-
-    // AI Classification (if linking)
-    if (form.ncr_id !== id && report?.description) {
-      try {
-        const data = await classifyDiscrepancyTags({ description: report.description, type: 'QDDR' })
-        if (data?.tags && data.tags.length > 0) {
-          setForm(prev => {
-            const updates = {}
-            data.tags.forEach(t => { updates[t] = true })
-            return { ...prev, ...updates }
-          })
-        }
-      } catch (err) {
-        console.warn('Auto classification failed', err)
-      }
-    }
-  }
-
   const resetForm = () => {
     setForm(initialState)
     setError(null)
@@ -119,7 +92,6 @@ export function useQDDRForm() {
     setForm({
       ...initialState,
       ...existingQddr,
-      // Handle potential null values to prevent uncontrolled input warnings
       location: existingQddr.location || '',
       date: existingQddr.date ? existingQddr.date.split('T')[0] : '',
       time: existingQddr.time || '',
@@ -155,10 +127,6 @@ export function useQDDRForm() {
       approved_by: existingQddr.approved_by || '',
       noted_by: existingQddr.noted_by || '',
       leader: existingQddr.leader || '',
-      ncr_id: Array.isArray(existingQddr.ncr_id)
-        ? (existingQddr.ncr_id[0] ?? null)
-        : (existingQddr.ncr_id || null),
-      linked_ncr_reference: existingQddr.linked_ncr_reference || '',
       linked_clause_ids: existingQddr.linked_clause_ids || [],
       suggested_clauses: existingQddr.suggested_clauses || []
     })
@@ -205,7 +173,6 @@ export function useQDDRForm() {
     }
 
     try {
-      const { suggestClausesForQddr } = await import('@/services/qddrService')
       const result = await suggestClausesForQddr(
         { description: form.reason_of_discrepancy, flags },
         userAuthId
@@ -261,12 +228,12 @@ export function useQDDRForm() {
       const result = await generateAiSuggestionFromText({
         description: fullDescription,
         issueType: checkedTypes || 'quality',
-        deptName: form.location || 'N/A'
+        deptName: form.location || 'N/A',
+        reportType: 'QDDR'
       })
 
       let res = result
       if (result?.jobId) {
-        const { fetchJobStatus } = await import('@/services/suggestionService')
         res = await new Promise((resolve, reject) => {
           const maxRetries = 20
           let retries = 0
@@ -327,7 +294,6 @@ export function useQDDRForm() {
     form,
     setForm,
     handleChange,
-    selectNcr,
     resetForm,
     initForm,
     error,

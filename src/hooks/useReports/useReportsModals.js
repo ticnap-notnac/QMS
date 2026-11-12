@@ -1,68 +1,45 @@
 import { useState } from 'react'
 
-export function useReportsModals({ clearEvidenceState, resetCreateForm, setRejectReason, setError }) {
-  const [isModalOpen, setIsModalOpen] = useState(false)
+export function useReportsModals() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false)
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
-  const [isPreventiveActionModalOpen, setIsPreventiveActionModalOpen] = useState(false)
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
   const [isCARModalOpen, setIsCARModalOpen] = useState(false)
   const [isQDDRModalOpen, setIsQDDRModalOpen] = useState(false)
-  
-  const [detailReport, setDetailReport] = useState(null)
-  const [isDetailOpen, setIsDetailOpen] = useState(false)
-  const [selectedReport, setSelectedReport] = useState(null)
-  const [selectedAssignmentReport, setSelectedAssignmentReport] = useState(null)
-  const [rejectTargetReport, setRejectTargetReport] = useState(null)
+
   const [selectedCARReport, setSelectedCARReport] = useState(null)
   const [selectedQDDRReport, setSelectedQDDRReport] = useState(null)
 
-  const openDetailView = (report) => { setDetailReport(report); setIsDetailOpen(true) }
-  const closeDetailView = () => { setIsDetailOpen(false); setDetailReport(null) }
+  const openCARModal = (report = null) => {
+    setSelectedCARReport(report)
+    setIsCARModalOpen(true)
+  }
+  const closeCARModal = () => {
+    setIsCARModalOpen(false)
+    setSelectedCARReport(null)
+  }
 
-  const openCreateModal = () => { setError(null); resetCreateForm(); setIsModalOpen(true) }
-  const closeCreateModal = () => { setIsModalOpen(false); clearEvidenceState() }
-
-  const openUpdateModal = (report) => { setSelectedReport(report); setIsUpdateModalOpen(true) }
-  const closeUpdateModal = () => { setIsUpdateModalOpen(false); setSelectedReport(null) }
-
-  const openAssignModal = (report) => { setSelectedAssignmentReport(report); setIsAssignModalOpen(true) }
-  const closeAssignModal = () => { setIsAssignModalOpen(false); setSelectedAssignmentReport(null) }
-
-  const openRejectModal = (report) => { setRejectTargetReport(report); setRejectReason(''); setIsRejectModalOpen(true) }
-  const closeRejectModal = () => { setIsRejectModalOpen(false); setRejectTargetReport(null); setRejectReason('') }
-
-  const openCARModal = (report = null) => { setSelectedCARReport(report); setIsCARModalOpen(true) }
-  const closeCARModal = () => { setIsCARModalOpen(false); setSelectedCARReport(null) }
-
-  const openQDDRModal = (report = null) => { setSelectedQDDRReport(report); setIsQDDRModalOpen(true) }
-  const closeQDDRModal = () => { setIsQDDRModalOpen(false); setSelectedQDDRReport(null) }
+  const openQDDRModal = (report = null) => {
+    setSelectedQDDRReport(report)
+    setIsQDDRModalOpen(true)
+  }
+  const closeQDDRModal = () => {
+    setIsQDDRModalOpen(false)
+    setSelectedQDDRReport(null)
+  }
 
   return {
-    isModalOpen, setIsModalOpen,
-    isFilterModalOpen, setIsFilterModalOpen,
-    isUpdateModalOpen, setIsUpdateModalOpen,
-    isAssignModalOpen, setIsAssignModalOpen,
-    isPreventiveActionModalOpen, setIsPreventiveActionModalOpen,
-    isRejectModalOpen, setIsRejectModalOpen,
-    isCARModalOpen, setIsCARModalOpen,
-    isQDDRModalOpen, setIsQDDRModalOpen,
-    isDetailOpen, setIsDetailOpen,
-    
-    detailReport, setDetailReport,
-    selectedReport, setSelectedReport,
-    selectedAssignmentReport, setSelectedAssignmentReport,
-    rejectTargetReport, setRejectTargetReport,
-    selectedCARReport, setSelectedCARReport,
-    selectedQDDRReport, setSelectedQDDRReport,
-
-    openDetailView, closeDetailView,
-    openCreateModal, closeCreateModal,
-    openUpdateModal, closeUpdateModal,
-    openAssignModal, closeAssignModal,
-    openRejectModal, closeRejectModal,
-    openCARModal, closeCARModal,
-    openQDDRModal, closeQDDRModal,
+    isFilterModalOpen,
+    setIsFilterModalOpen,
+    isCARModalOpen,
+    setIsCARModalOpen,
+    isQDDRModalOpen,
+    setIsQDDRModalOpen,
+    selectedCARReport,
+    setSelectedCARReport,
+    selectedQDDRReport,
+    setSelectedQDDRReport,
+    openCARModal,
+    closeCARModal,
+    openQDDRModal,
+    closeQDDRModal,
   }
 }
