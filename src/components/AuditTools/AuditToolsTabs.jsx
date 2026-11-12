@@ -1038,9 +1038,8 @@ export function AuditTemplatesTab({
                     <thead>
                       <tr>
                         <th style={{ width: '12%' }}>Clause ID</th>
-                        <th style={{ width: '22%' }}>Clause Title</th>
-                        <th style={{ width: '30%' }}>Requirement (Custom)</th>
-                        <th style={{ width: '28%' }}>What to look for and how?</th>
+                        <th style={{ width: '40%' }}>Requirement (Custom)</th>
+                        <th style={{ width: '40%' }}>What to look for and how?</th>
                         <th style={{ width: '8%', textAlign: 'center' }}>Actions</th>
                       </tr>
                     </thead>
@@ -1050,7 +1049,6 @@ export function AuditTemplatesTab({
                         return (
                           <tr key={item.rowKey || `${item.clause_id}-${index}`}>
                             <td><strong>{item.clause_number}</strong></td>
-                            <td style={{ fontSize: '13px' }}>{item.title}</td>
                             <td>
                               <textarea
                                 className="form-input"
