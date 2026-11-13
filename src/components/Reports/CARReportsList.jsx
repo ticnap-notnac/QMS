@@ -44,23 +44,18 @@ export default function CARReportsList({
         </div>
       ) : (
         <div className="glass-card-dcc reports-list-card-container">
+          <div className="reports-table-instruction-banner">
+            <span>💡 Click any row to view complete details, root causes, and CAPA actions.</span>
+          </div>
           <div className="reports-table-scroll-wrap">
             <table className="iso-table">
               <thead>
                 <tr>
                   <th>Ref No.</th>
+                  <th>Date</th>
                   <th>Issue Type</th>
-                  <th>Requestor</th>
-                  <th>Recipient</th>
-                  <th>Requesting Dept</th>
                   <th>Responsible Dept</th>
-                  <th className="text-center-important">Product&nbsp;/<br />Material</th>
-                  <th className="text-center-important">Model&nbsp;/<br />Type</th>
-                  <th className="text-center-important">Control No.</th>
-                  <th className="text-center-important">Affected Qty</th>
-                  <th>Nonconformance Details</th>
-                  <th>Request Date</th>
-                  <th className="text-center-important">Resolution Time</th>
+                  <th>Product / Material</th>
                   <th>Status</th>
                   {canEdit && <th className="text-center-important">Actions</th>}
                 </tr>
@@ -75,39 +70,29 @@ export default function CARReportsList({
                       key={car.id}
                       onClick={() => onSelectCar && onSelectCar(car)}
                       style={{ cursor: 'pointer' }}
-                      title="Click to view details and CAPA/VoE actions"
+                      title="Click to view full details and CAPA actions"
                     >
                       <td style={{ fontWeight: 600 }}>{car.reference_no?.trim() || '—'}</td>
                       <td>
-                        <div className="clause-description" title={issueTypeStr}>
+                        <div className="table-text-cell" style={{ whiteSpace: 'nowrap' }}>
+                          {car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="table-text-cell" title={issueTypeStr}>
                           {issueTypeStr}
                         </div>
                       </td>
-                      <td>{car.requestor?.trim() || '—'}</td>
-                      <td>{car.recipient?.trim() || '—'}</td>
-                      <td>{car.requesting_department?.trim() || '—'}</td>
-                      <td>{car.responsible_department?.trim() || '—'}</td>
-                      <td className="text-center-important">
-                        <div className="clause-description" title={car.product_material_name?.trim() || '—'}>
+                      <td>
+                        <div className="table-text-cell" title={car.responsible_department?.trim() || '—'}>
+                          {car.responsible_department?.trim() || '—'}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="table-text-cell" title={car.product_material_name?.trim() || '—'}>
                           {car.product_material_name?.trim() || '—'}
                         </div>
                       </td>
-                      <td className="text-center-important">
-                        <div className="clause-description" title={car.model_type?.trim() || '—'}>
-                          {car.model_type?.trim() || '—'}
-                        </div>
-                      </td>
-                      <td className="text-center-important">{car.control_no?.trim() || '—'}</td>
-                      <td className="text-center-important">{String(car.affected_quantity ?? '').trim() || '—'}</td>
-                      <td>
-                        <div className="clause-description" title={car.details_of_nonconformance}>
-                          {car.details_of_nonconformance ?? <span className="muted">No details</span>}
-                        </div>
-                      </td>
-                      <td>
-                        {car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}
-                      </td>
-                      <td className="text-center-important">{car.resolution_time ?? '—'}</td>
                       <td>
                         <span className={`iso-status-pill ${
                           statusClean === 'closed' ? 'is-closed' : statusClean === 'under_verification' ? 'is-active' : 'is-open'
