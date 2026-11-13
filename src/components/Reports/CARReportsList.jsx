@@ -1,4 +1,5 @@
-import { Edit2, Trash2 } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import CARReportCard from '../Cards/CARReportCard.jsx'
 
 export default function CARReportsList({
@@ -10,6 +11,21 @@ export default function CARReportsList({
   onDeleteCar,
   viewMode = 'feed'
 }) {
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil((carReports?.length || 0) / itemsPerPage))
+    if (currentPage > maxPage) {
+      setCurrentPage(1)
+    }
+  }, [carReports, itemsPerPage, currentPage])
+
+  const totalItems = carReports?.length || 0
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage))
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = Math.min(startIndex + itemsPerPage, totalItems)
+  const paginatedCars = (carReports || []).slice(startIndex, endIndex)
 
   if (isLoading) {
     return (
@@ -61,7 +77,7 @@ export default function CARReportsList({
                 </tr>
               </thead>
               <tbody>
-                {carReports.map((car) => {
+                {paginatedCars.map((car) => {
                   const statusClean = String(car.status || '').trim().toLowerCase()
                   const issueTypeStr = car.type_of_nonconformance || car.others || '—'
 
@@ -125,6 +141,81 @@ export default function CARReportsList({
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Pagination Footer */}
+          <div className="reports-table-pagination">
+            <div className="reports-table-pagination-info">
+              <span>
+                Showing <strong>{totalItems === 0 ? 0 : startIndex + 1}</strong> to <strong>{endIndex}</strong> of <strong>{totalItems}</strong> reports
+              </span>
+              <div className="reports-table-rows-select">
+                <span>Rows:</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value))
+                    setCurrentPage(1)
+                  }}
+                  className="pagination-select"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="reports-table-pagination-controls">
+              <button
+                type="button"
+                className="pagination-btn"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                title="Previous Page"
+              >
+                <ChevronLeft size={16} />
+                <span>Prev</span>
+              </button>
+
+              <div className="pagination-pages-group">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => {
+                    if (totalPages <= 7) return true
+                    if (page === 1 || page === totalPages) return true
+                    return Math.abs(page - currentPage) <= 1
+                  })
+                  .map((page, idx, arr) => {
+                    const prevPage = arr[idx - 1]
+                    const showEllipsis = prevPage && page - prevPage > 1
+
+                    return (
+                      <React.Fragment key={page}>
+                        {showEllipsis && <span className="pagination-ellipsis">...</span>}
+                        <button
+                          type="button"
+                          className={`pagination-page-btn ${page === currentPage ? 'active' : ''}`}
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </button>
+                      </React.Fragment>
+                    )
+                  })}
+              </div>
+
+              <button
+                type="button"
+                className="pagination-btn"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || totalItems === 0}
+                title="Next Page"
+              >
+                <span>Next</span>
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
       )}
