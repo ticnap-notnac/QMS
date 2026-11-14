@@ -16,6 +16,8 @@ function QDDRModal({
   usersLoading,
   suggesting,
   suggestActions,
+  generatingReason,
+  generateReasonFromEvidence,
   scanningLabel,
   scanMessage,
   handleScanLabel,
@@ -742,12 +744,40 @@ function QDDRModal({
               {/* Details: Reason, Corrective, Preventive */}
               <div className="qddr-form-row-3-col" style={isMobile ? { gridTemplateColumns: '1fr', gap: '10px' } : undefined}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label className="label-field">
-                    Reason of Discrepancy:
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
+                    <label className="label-field" style={{ marginBottom: 0 }}>
+                      Reason of Discrepancy:
+                    </label>
+                    {generateReasonFromEvidence && (
+                      <button
+                        type="button"
+                        onClick={() => generateReasonFromEvidence({ silent: false })}
+                        disabled={generatingReason}
+                        title="Use required fields and uploaded evidence photo to fill Reason of Discrepancy"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '2px 8px',
+                          fontSize: '11px',
+                          fontWeight: 500,
+                          background: 'rgba(8, 145, 178, 0.12)',
+                          border: '1px solid rgba(8, 145, 178, 0.3)',
+                          color: '#0891b2',
+                          borderRadius: '4px',
+                          cursor: generatingReason ? 'not-allowed' : 'pointer',
+                          opacity: generatingReason ? 0.65 : 1
+                        }}
+                      >
+                        {generatingReason ? <LoaderCircle size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                        {generatingReason ? 'Filling...' : 'Auto-Fill Reason'}
+                      </button>
+                    )}
+                  </div>
                   <textarea
                     value={form.reason_of_discrepancy}
                     onChange={(e) => handleChange('reason_of_discrepancy', e.target.value)}
+                    placeholder="Auto-fills when required fields and an evidence photo are provided, or click Auto-Fill Reason..."
                     className="input-field"
                     style={{ height: '80px', padding: '8px', resize: 'none' }}
                   />

@@ -391,6 +391,11 @@ export async function generateEvidenceDescription({
   severity = '',
   department = '',
   issueType = '',
+  reportType = 'CAR',
+  materialDescription = '',
+  materialCode = '',
+  qty = '',
+  discrepancyTypes = '',
 }) {
   const cleanBase64 = String(imageBase64 || '').replace(/^data:[^;]+;base64,/, '').trim()
   const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -398,7 +403,24 @@ export async function generateEvidenceDescription({
     ? String(mimeType).toLowerCase()
     : 'image/jpeg'
 
+  const isQddr =
+    String(reportType || '').toUpperCase() === 'QDDR' ||
+    Boolean(materialDescription || materialCode)
+
+  const resolvedMaterial = materialDescription || productType || 'affected material'
+
   const buildFallbackDescription = () => {
+    if (isQddr) {
+      const codeClause = materialCode ? ` (Item Code: ${materialCode})` : ''
+      const batchClause = batchNumber ? `, Batch/ISU No: ${batchNumber}` : ''
+      const qtyClause = qty !== '' && qty !== null && qty !== undefined ? ` involving ${qty} unit(s)/case(s)` : ''
+      const typeClause = discrepancyTypes ? ` exhibiting ${discrepancyTypes}` : ''
+      const photoClause = cleanBase64
+        ? 'Attached photographic evidence confirms the physical condition of the affected stock.'
+        : 'Reported condition requires immediate segregation, containment, and disposition review.'
+      return `Quality inspection at ${location || 'the warehouse'} identified discrepancy${qtyClause} of ${resolvedMaterial}${codeClause}${batchClause}${typeClause}. ${photoClause}`
+    }
+
     const sevLabel = severity ? `${String(severity).toUpperCase()}-severity` : 'reported'
     const deptClause = department ? ` assigned to the ${department} department` : ''
     const issueClause = issueType ? ` categorized under ${issueType}` : ''
@@ -406,10 +428,24 @@ export async function generateEvidenceDescription({
   }
 
   if (!cleanBase64) {
-    return { description: buildFallbackDescription(), source: 'heuristic' }
+    const fallbackDesc = buildFallbackDescription()
+    const tags = await autoClassifyTags(fallbackDesc, isQddr ? 'QDDR' : 'CAR')
+    return { description: fallbackDesc, tags, source: 'heuristic' }
   }
 
-  const prompt = `You are a Quality Assurance (QA) inspector writing an objective non-conformance description for a Quality Management System.
+  const prompt = isQddr
+    ? `You are a Quality Assurance (QA) warehouse inspector writing the "Reason of Discrepancy" for a Quality Defects / Damaged / Discrepancy Report (QDDR).
+Examine the uploaded evidence photo and write a concise, objective 2-3 sentence "Reason of Discrepancy" paragraph that:
+1. Clearly describes the visible physical defect, damage, or discrepancy shown in the photo (e.g., crushed/dented cans or cartons, wet/leaked packaging, torn wrap, broken seal, punctures, label/batch issue).
+2. Integrates these required report details naturally:
+   - Location: ${location || 'N/A'}
+   - Material Description: ${resolvedMaterial}
+   - Material Code: ${materialCode || 'N/A'}
+   - Batch / ISU Number: ${batchNumber || 'N/A'}
+   - Affected Quantity: ${qty !== '' && qty !== null && qty !== undefined ? qty : 'N/A'}
+   ${discrepancyTypes ? `- Selected Discrepancy Types: ${discrepancyTypes}` : ''}
+Return ONLY the plain-text paragraph without markdown, quotes, or bullet points.`
+    : `You are a Quality Assurance (QA) inspector writing an objective non-conformance description for a Quality Management System.
 Describe what is visible in the photo and connect it to Product: ${productType || 'N/A'}, Batch/Lot: ${batchNumber || 'N/A'}, Location: ${location || 'N/A'}. Return ONLY the plain-text description paragraph.`
 
   const geminiApiKey = process.env.GEMINI_API_KEY
@@ -448,7 +484,8 @@ Describe what is visible in the photo and connect it to Product: ${productType |
           .replace(/^["']|["']$/g, '')
           .trim()
         if (generatedText) {
-          return { description: generatedText, source: 'gemini-vision' }
+          const tags = await autoClassifyTags(generatedText, isQddr ? 'QDDR' : 'CAR')
+          return { description: generatedText, tags, source: 'gemini-vision' }
         }
       }
     } catch (err) {
@@ -456,7 +493,9 @@ Describe what is visible in the photo and connect it to Product: ${productType |
     }
   }
 
-  return { description: buildFallbackDescription(), source: 'heuristic' }
+  const fallbackDesc = buildFallbackDescription()
+  const tags = await autoClassifyTags(fallbackDesc, isQddr ? 'QDDR' : 'CAR')
+  return { description: fallbackDesc, tags, source: 'heuristic' }
 }
 
 /**

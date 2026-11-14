@@ -542,6 +542,8 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       usersLoading: dataState.usersLoading,
       suggesting: qddrFormState.suggesting,
       suggestActions: qddrFormState.suggestActions,
+      generatingReason: qddrFormState.generatingReason,
+      generateReasonFromEvidence: qddrFormState.generateReasonFromEvidence,
       scanningLabel: qddrFormState.scanningLabel,
       scanMessage: qddrFormState.scanMessage,
       handleScanLabel: qddrFormState.handleScanLabel,

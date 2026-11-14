@@ -82,9 +82,15 @@ export async function describeEvidence(req, res, next) {
       severity,
       department,
       issueType,
+      reportType,
+      materialDescription,
+      materialCode,
+      qty,
+      discrepancyTypes,
     } = req.body || {}
 
-    if (!imageBase64) {
+    const isQddr = String(reportType || '').toUpperCase() === 'QDDR'
+    if (!imageBase64 && !isQddr) {
       return res.status(400).json({ error: 'imageBase64 is required to inspect evidence.' })
     }
 
@@ -97,6 +103,11 @@ export async function describeEvidence(req, res, next) {
       severity,
       department,
       issueType,
+      reportType,
+      materialDescription,
+      materialCode,
+      qty,
+      discrepancyTypes,
     })
 
     return res.json(result)
