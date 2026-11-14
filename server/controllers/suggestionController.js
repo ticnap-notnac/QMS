@@ -1,4 +1,4 @@
-import { findSimilarCases, getCachedSuggestion, storeSuggestion, generateAiSuggestion, generateAiSuggestionFromText, autoClassifyTags, generateEvidenceDescription } from '../services/suggestionService.js'
+import { findSimilarCases, getCachedSuggestion, storeSuggestion, generateAiSuggestion, generateAiSuggestionFromText, autoClassifyTags, generateEvidenceDescription, scanPalletLabel } from '../services/suggestionService.js'
 import boss from '../utils/queue.js'
 
 export async function getSimilarCases(req, res, next) {
@@ -99,6 +99,20 @@ export async function describeEvidence(req, res, next) {
       issueType,
     })
 
+    return res.json(result)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function scanLabel(req, res, next) {
+  try {
+    const { imageBase64, mimeType, rawBarcode } = req.body || {}
+    if (!imageBase64 && !rawBarcode) {
+      return res.status(400).json({ error: 'Please provide a barcode or label image to scan.' })
+    }
+
+    const result = await scanPalletLabel({ imageBase64, mimeType, rawBarcode })
     return res.json(result)
   } catch (err) {
     next(err)

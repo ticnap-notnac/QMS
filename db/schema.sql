@@ -267,6 +267,7 @@ CREATE TABLE IF NOT EXISTS public.qddr_reports (
   material_description text NULL,
   material_code varchar NULL,
   batch_code_su_number varchar NULL,
+  evidence_urls jsonb NULL DEFAULT '[]'::jsonb,
   holes_punctures bool NULL,
   deformed_torn bool NULL,
   open_carton bool NULL,

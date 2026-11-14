@@ -458,3 +458,136 @@ Describe what is visible in the photo and connect it to Product: ${productType |
 
   return { description: buildFallbackDescription(), source: 'heuristic' }
 }
+
+/**
+ * Extracts warehouse pallet label & barcode fields (Material Code, Material Description + Expiry Date,
+ * and Batch Code) from an uploaded/captured label image and/or a raw barcode string.
+ */
+export async function scanPalletLabel({ imageBase64, mimeType = 'image/jpeg', rawBarcode = '' }) {
+  const cleanBase64 = String(imageBase64 || '').replace(/^data:[^;]+;base64,/, '').trim()
+  const cleanBarcode = String(rawBarcode || '').trim()
+  const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  const resolvedMimeType = allowedMimes.includes(String(mimeType || '').toLowerCase())
+    ? String(mimeType).toLowerCase()
+    : 'image/jpeg'
+
+  let extracted = {
+    material_code: '',
+    material_description: '',
+    batch_code_su_number: '',
+    expiry_date: '',
+    source: 'barcode'
+  }
+
+  // 1. If an image of the barcode/pallet sticker is provided, use Gemini Vision to read the label & barcode
+  const geminiApiKey = process.env.GEMINI_API_KEY
+  if (cleanBase64 && geminiApiKey) {
+    try {
+      const prompt = `You are a warehouse barcode and pallet sticker scanner.
+Inspect this warehouse pallet label / barcode image and extract the following fields:
+1. "material_code": The Material / Item Code (e.g., the number next to "Material", such as "1011" or "1165", or the item barcode digits).
+2. "material_description": The Item / Material Description text printed below or near the Material number (e.g., "AL Crema Asada Can 48x370ml" or "Cow Evapsarap 48x360ml").
+3. "batch_code_su_number": The Batch Code under "Batch / Expiry" (e.g., "10SE27JST2" or "20JL27TCB3"). If no batch code is shown, use the SU / SSCC barcode number (e.g., "1004230347").
+4. "expiry_date": The Expiry Date shown under "Batch / Expiry" (e.g., "10.09.2027" or "20.07.2027").
+${cleanBarcode ? `Note: A barcode scanner also detected this raw value from the label: "${cleanBarcode}".` : ''}
+
+Return ONLY valid JSON in this exact format:
+{
+  "material_code": "",
+  "material_description": "",
+  "batch_code_su_number": "",
+  "expiry_date": ""
+}`
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${geminiApiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: prompt },
+                  {
+                    inline_data: {
+                      mime_type: resolvedMimeType,
+                      data: cleanBase64,
+                    },
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              responseMimeType: 'application/json',
+            },
+          }),
+        }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        const rawText = (data.candidates?.[0]?.content?.parts?.[0]?.text || '')
+          .replace(/```json|```/g, '')
+          .trim()
+        if (rawText) {
+          const parsed = JSON.parse(rawText)
+          const rawDesc = String(parsed.material_description || '').trim()
+          const rawExp = String(parsed.expiry_date || '').trim()
+          const combinedDesc =
+            rawDesc && rawExp && !rawDesc.toLowerCase().includes(rawExp.toLowerCase())
+              ? `${rawDesc} (Exp: ${rawExp})`
+              : rawDesc || (rawExp ? `Exp: ${rawExp}` : '')
+
+          extracted = {
+            material_code: String(parsed.material_code || '').trim(),
+            material_description: combinedDesc,
+            batch_code_su_number: String(parsed.batch_code_su_number || '').trim(),
+            expiry_date: rawExp,
+            source: 'gemini-vision'
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[suggestionService] scanPalletLabel Gemini Vision error:', err.message)
+    }
+  }
+
+  // 2. If rawBarcode was provided (or some fields are still empty), parse barcode & check historical QDDR records
+  if (cleanBarcode) {
+    if (!extracted.material_code && /^\d{3,8}$/.test(cleanBarcode)) {
+      extracted.material_code = cleanBarcode
+    } else if (!extracted.batch_code_su_number) {
+      extracted.batch_code_su_number = cleanBarcode.replace(/^\(00\)\s*/, '')
+    }
+  }
+
+  // Lookup matching historical QDDR record if material_description is still missing
+  if ((extracted.material_code || extracted.batch_code_su_number) && !extracted.material_description) {
+    try {
+      let query = supabase
+        .from('qddr_reports')
+        .select('material_code, material_description, batch_code_su_number')
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (extracted.material_code) {
+        query = query.eq('material_code', extracted.material_code)
+      } else if (extracted.batch_code_su_number) {
+        query = query.eq('batch_code_su_number', extracted.batch_code_su_number)
+      }
+
+      const { data: match } = await query.maybeSingle()
+      if (match) {
+        extracted.material_code = extracted.material_code || match.material_code || ''
+        extracted.material_description = extracted.material_description || match.material_description || ''
+        extracted.batch_code_su_number = extracted.batch_code_su_number || match.batch_code_su_number || ''
+      }
+    } catch (dbErr) {
+      console.warn('[suggestionService] Historical QDDR lookup for barcode failed:', dbErr.message)
+    }
+  }
+
+  return extracted
+}

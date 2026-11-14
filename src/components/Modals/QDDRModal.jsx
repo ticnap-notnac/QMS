@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { X as CloseIcon, Sparkles, LoaderCircle } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { X as CloseIcon, Sparkles, LoaderCircle, ScanLine, Upload, Camera, CheckCircle2 } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 
 function QDDRModal({
@@ -15,9 +15,112 @@ function QDDRModal({
   users,
   usersLoading,
   suggesting,
-  suggestActions
+  suggestActions,
+  scanningLabel,
+  scanMessage,
+  handleScanLabel
 }) {
   const [isMobile, setIsMobile] = useState(false)
+  const [isScannerOpen, setIsScannerOpen] = useState(false)
+  const [cameraError, setCameraError] = useState('')
+  const labelFileInputRef = useRef(null)
+  const videoRef = useRef(null)
+  const streamRef = useRef(null)
+  const scanIntervalRef = useRef(null)
+
+  const stopCamera = () => {
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current)
+      scanIntervalRef.current = null
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+  }
+
+  useEffect(() => {
+    if (!isOpen || !isScannerOpen) {
+      stopCamera()
+      return
+    }
+
+    let cancelled = false
+    const startCamera = async () => {
+      setCameraError('')
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          setCameraError('Camera access is not supported in this browser. Please use "Upload Barcode / Label Image".')
+          return
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        })
+        if (cancelled) {
+          stream.getTracks().forEach(t => t.stop())
+          return
+        }
+        streamRef.current = stream
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+          await videoRef.current.play().catch(() => {})
+        }
+
+        // Optional native BarcodeDetector loop for live 1D/2D barcode auto-trigger
+        if ('BarcodeDetector' in window) {
+          try {
+            const detector = new window.BarcodeDetector()
+            scanIntervalRef.current = setInterval(async () => {
+              if (!videoRef.current || videoRef.current.readyState < 2 || scanningLabel) return
+              try {
+                const barcodes = await detector.detect(videoRef.current)
+                if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+                  const detectedValue = barcodes[0].rawValue
+                  const canvas = document.createElement('canvas')
+                  canvas.width = videoRef.current.videoWidth || 640
+                  canvas.height = videoRef.current.videoHeight || 480
+                  const ctx = canvas.getContext('2d')
+                  ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height)
+                  const frameDataUrl = canvas.toDataURL('image/jpeg', 0.85)
+                  setIsScannerOpen(false)
+                  stopCamera()
+                  if (handleScanLabel) {
+                    await handleScanLabel({ imageFileOrDataUrl: frameDataUrl, rawBarcode: detectedValue })
+                  }
+                }
+              } catch {
+                // ignore frame detection error
+              }
+            }, 900)
+          } catch {
+            // BarcodeDetector initialization failed, fallback to manual capture button
+          }
+        }
+      } catch (err) {
+        setCameraError('Could not access camera. Please check camera permissions or upload a label photo instead.')
+      }
+    }
+
+    startCamera()
+    return () => {
+      cancelled = true
+      stopCamera()
+    }
+  }, [isOpen, isScannerOpen])
+
+  const handleCaptureCameraFrame = async () => {
+    if (!videoRef.current || !handleScanLabel) return
+    const canvas = document.createElement('canvas')
+    canvas.width = videoRef.current.videoWidth || 1280
+    canvas.height = videoRef.current.videoHeight || 720
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height)
+    const frameDataUrl = canvas.toDataURL('image/jpeg', 0.85)
+    setIsScannerOpen(false)
+    stopCamera()
+    await handleScanLabel({ imageFileOrDataUrl: frameDataUrl })
+  }
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)')
@@ -227,7 +330,161 @@ function QDDRModal({
 
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
 
-              {/* Row 4: Material Details */}
+              {/* Material & Barcode / Pallet Label Scanner Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ color: '#1A435A', fontSize: '13px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Material &amp; Label Details
+                  </span>
+                  {scanMessage && (
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '11.5px',
+                      color: '#059669',
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      padding: '2px 8px',
+                      borderRadius: '999px',
+                      fontWeight: 500
+                    }}>
+                      <CheckCircle2 size={12} /> {scanMessage}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsScannerOpen(prev => !prev)}
+                    disabled={scanningLabel}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '5px 10px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      background: isScannerOpen ? 'rgba(8, 145, 178, 0.2)' : 'rgba(8, 145, 178, 0.1)',
+                      border: '1px solid rgba(8, 145, 178, 0.35)',
+                      color: '#0891b2',
+                      borderRadius: '6px',
+                      cursor: scanningLabel ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <ScanLine size={14} />
+                    {isScannerOpen ? 'Close Scanner' : 'Scan Barcode / Label'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => labelFileInputRef.current && labelFileInputRef.current.click()}
+                    disabled={scanningLabel}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '5px 10px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      background: '#f8fafc',
+                      border: '1px solid #cbd5e1',
+                      color: '#1A435A',
+                      borderRadius: '6px',
+                      cursor: scanningLabel ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {scanningLabel ? (
+                      <>
+                        <LoaderCircle size={14} className="iso-spinner" /> Scanning Label...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={14} /> Upload Barcode / Label Image
+                      </>
+                    )}
+                  </button>
+                  <input
+                    ref={labelFileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    style={{ display: 'none' }}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      e.target.value = ''
+                      if (file && handleScanLabel) {
+                        await handleScanLabel({ imageFileOrDataUrl: file })
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Live Camera Barcode / Label Viewfinder */}
+              {isScannerOpen && (
+                <div style={{
+                  background: '#0f172a',
+                  border: '1px solid #334155',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  {cameraError ? (
+                    <div style={{ color: '#fca5a5', fontSize: '12.5px', textAlign: 'center', padding: '8px' }}>
+                      {cameraError}
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ position: 'relative', width: '100%', maxWidth: '460px', borderRadius: '6px', overflow: 'hidden', border: '2px solid rgba(8, 145, 178, 0.6)' }}>
+                        <video
+                          ref={videoRef}
+                          playsInline
+                          muted
+                          style={{ width: '100%', maxHeight: '240px', objectFit: 'cover', display: 'block', background: '#000' }}
+                        />
+                        <div style={{
+                          position: 'absolute',
+                          inset: '16px',
+                          border: '1px dashed rgba(56, 189, 248, 0.75)',
+                          borderRadius: '6px',
+                          pointerEvents: 'none'
+                        }} />
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '460px', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ color: '#cbd5e1', fontSize: '12px' }}>
+                          Point camera at the pallet barcode or sticker to auto-fill fields.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleCaptureCameraFrame}
+                          disabled={scanningLabel}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 12px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            background: '#0891b2',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <Camera size={14} /> Capture &amp; Extract
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Row 4: Material Details (Item Description + Expiry, Item Code, Batch Code, Quantity) */}
               <div className="qddr-form-row-material-grid">
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <label className="label-field">
@@ -238,7 +495,7 @@ function QDDRModal({
                     value={form.material_description}
                     onChange={(e) => handleChange('material_description', e.target.value)}
                     className="input-field"
-                    placeholder="Description..."
+                    placeholder="e.g. AL Crema Asada Can 48x370ml (Exp: 10.09.2027)"
                     required
                   />
                 </div>
@@ -251,7 +508,7 @@ function QDDRModal({
                     value={form.material_code}
                     onChange={(e) => handleChange('material_code', e.target.value)}
                     className="input-field"
-                    placeholder="Code..."
+                    placeholder="e.g. 1011"
                     required
                   />
                 </div>
@@ -264,7 +521,7 @@ function QDDRModal({
                     value={form.batch_code_su_number}
                     onChange={(e) => handleChange('batch_code_su_number', e.target.value)}
                     className="input-field"
-                    placeholder="Batch..."
+                    placeholder="e.g. 10SE27JST2"
                     required
                   />
                 </div>

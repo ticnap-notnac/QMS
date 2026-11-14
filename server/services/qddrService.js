@@ -144,6 +144,7 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     material_description,
     material_code,
     batch_code_su_number,
+    evidence_urls,
     holes_punctures,
     deformed_torn,
     open_carton,
@@ -225,6 +226,7 @@ export async function createQddrReport({ body, reportedByAuthId }) {
       material_description,
       material_code,
       batch_code_su_number,
+      evidence_urls: Array.isArray(evidence_urls) ? evidence_urls : [],
       holes_punctures: Boolean(holes_punctures),
       deformed_torn: Boolean(deformed_torn),
       open_carton: Boolean(open_carton),
@@ -254,7 +256,11 @@ export async function createQddrReport({ body, reportedByAuthId }) {
       site_id: reporter.site_id || null
     }
 
-    const res = await supabase.from('qddr_reports').insert(payload).select('*').maybeSingle()
+    let res = await supabase.from('qddr_reports').insert(payload).select('*').maybeSingle()
+    if (res.error && /evidence_urls/i.test(res.error.message || '')) {
+      const { evidence_urls: _eu, ...fallbackPayload } = payload
+      res = await supabase.from('qddr_reports').insert(fallbackPayload).select('*').maybeSingle()
+    }
     if (!res.error) {
       data = res.data
       error = null
@@ -574,6 +580,9 @@ export async function editQddrReport({ id, body = {}, actorAuthId }) {
   if (body.time !== undefined) {
     payload.time = body.time ? body.time : null
   }
+  if (body.evidence_urls !== undefined) {
+    payload.evidence_urls = Array.isArray(body.evidence_urls) ? body.evidence_urls : []
+  }
   if (body.qty !== undefined) {
     payload.qty = body.qty ? parseInt(body.qty, 10) : null
   }
@@ -614,12 +623,24 @@ export async function editQddrReport({ id, body = {}, actorAuthId }) {
 
   let data = null
   if (Object.keys(payload).length > 0) {
-    const { data: updated, error } = await supabase
+    let { data: updated, error } = await supabase
       .from('qddr_reports')
       .update(payload)
       .eq('id', id)
       .select('*')
       .maybeSingle()
+
+    if (error && /evidence_urls/i.test(error.message || '')) {
+      const { evidence_urls: _eu, ...fallbackPayload } = payload
+      const retry = await supabase
+        .from('qddr_reports')
+        .update(fallbackPayload)
+        .eq('id', id)
+        .select('*')
+        .maybeSingle()
+      updated = retry.data
+      error = retry.error
+    }
 
     if (error) throw error
     data = updated

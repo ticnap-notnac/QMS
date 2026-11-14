@@ -507,7 +507,10 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       users: activeUserOptions,
       usersLoading: dataState.usersLoading,
       suggesting: qddrFormState.suggesting,
-      suggestActions: qddrFormState.suggestActions
+      suggestActions: qddrFormState.suggestActions,
+      scanningLabel: qddrFormState.scanningLabel,
+      scanMessage: qddrFormState.scanMessage,
+      handleScanLabel: qddrFormState.handleScanLabel
     },
     carDetailsModalProps: {
       isOpen: carDetails.isCarDetailsModalOpen,

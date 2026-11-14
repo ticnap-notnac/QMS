@@ -1,5 +1,54 @@
 import { useState, useEffect, useRef } from 'react'
-import { generateAiSuggestionFromText, classifyDiscrepancyTags, fetchJobStatus } from '@/services/suggestionService'
+import { generateAiSuggestionFromText, classifyDiscrepancyTags, fetchJobStatus, scanBarcodeOrLabel } from '@/services/suggestionService'
+
+/**
+ * Downscales & converts a File or Blob or DataURL image into a compact Base64 string + mimeType
+ * so label scanning is fast and stays well within request size limits.
+ */
+async function fileOrDataUrlToBase64(input) {
+  if (typeof input === 'string' && input.startsWith('data:')) {
+    const [meta, base64] = input.split(',')
+    const mimeMatch = meta.match(/data:([^;]+);/)
+    return { base64: base64 || '', mimeType: mimeMatch ? mimeMatch[1] : 'image/jpeg' }
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = String(reader.result || '')
+      const img = new Image()
+      img.onload = () => {
+        const maxDim = 1280
+        let { width, height } = img
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width)
+            width = maxDim
+          } else {
+            width = Math.round((width * maxDim) / height)
+            height = maxDim
+          }
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+        const compressedUrl = canvas.toDataURL('image/jpeg', 0.85)
+        const [, base64] = compressedUrl.split(',')
+        resolve({ base64: base64 || '', mimeType: 'image/jpeg' })
+      }
+      img.onerror = () => {
+        const [meta, base64] = dataUrl.split(',')
+        const mimeMatch = meta.match(/data:([^;]+);/)
+        resolve({ base64: base64 || '', mimeType: mimeMatch ? mimeMatch[1] : 'image/jpeg' })
+      }
+      img.src = dataUrl
+    }
+    reader.onerror = (err) => reject(err)
+    reader.readAsDataURL(input)
+  })
+}
 
 export function useQDDRForm() {
   const initialState = {
@@ -44,6 +93,8 @@ export function useQDDRForm() {
   const [error, setError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
+  const [scanningLabel, setScanningLabel] = useState(false)
+  const [scanMessage, setScanMessage] = useState(null)
   const lastClassifiedReasonRef = useRef('')
 
   useEffect(() => {
@@ -79,6 +130,7 @@ export function useQDDRForm() {
   const resetForm = () => {
     setForm(initialState)
     setError(null)
+    setScanMessage(null)
   }
 
   const initForm = (existingQddr) => {
@@ -232,6 +284,73 @@ export function useQDDRForm() {
     return true
   }
 
+  const handleScanLabel = async ({ imageFileOrDataUrl = null, rawBarcode = '' } = {}) => {
+    if (!imageFileOrDataUrl && !rawBarcode) return null
+
+    setScanningLabel(true)
+    setError(null)
+    setScanMessage(null)
+
+    try {
+      let imageBase64 = ''
+      let mimeType = 'image/jpeg'
+
+      if (imageFileOrDataUrl) {
+        const converted = await fileOrDataUrlToBase64(imageFileOrDataUrl)
+        imageBase64 = converted.base64
+        mimeType = converted.mimeType
+      }
+
+      const result = await scanBarcodeOrLabel({
+        imageBase64,
+        mimeType,
+        rawBarcode,
+      })
+
+      if (result) {
+        const filledFields = []
+        setForm(prev => {
+          const next = { ...prev }
+          if (result.material_code) {
+            next.material_code = result.material_code
+            filledFields.push('Item Code')
+          }
+          if (result.material_description) {
+            let desc = result.material_description
+            if (result.expiry_date && !desc.toLowerCase().includes(String(result.expiry_date).toLowerCase())) {
+              desc = `${desc} (Exp: ${result.expiry_date})`
+            }
+            next.material_description = desc
+            filledFields.push(result.expiry_date ? 'Item Description + Expiry Date' : 'Item Description')
+          } else if (result.expiry_date) {
+            next.material_description = prev.material_description
+              ? `${prev.material_description} (Exp: ${result.expiry_date})`
+              : `Exp: ${result.expiry_date}`
+            filledFields.push('Expiry Date')
+          }
+          if (result.batch_code_su_number) {
+            next.batch_code_su_number = result.batch_code_su_number
+            filledFields.push('Batch Code')
+          }
+          return next
+        })
+
+        if (filledFields.length > 0) {
+          setScanMessage(`Auto-filled: ${filledFields.join(', ')}`)
+        } else {
+          setError('Could not detect label fields from the barcode/image. Please try a clearer image.')
+        }
+      }
+      return result
+    } catch (err) {
+      console.error('Label scan error:', err)
+      setError('Failed to scan barcode/label image. Please try again.')
+      return null
+    } finally {
+      setScanningLabel(false)
+    }
+  }
+
   return {
     form,
     setForm,
@@ -244,6 +363,10 @@ export function useQDDRForm() {
     isSubmitting,
     setIsSubmitting,
     suggesting,
-    suggestActions
+    suggestActions,
+    scanningLabel,
+    scanMessage,
+    setScanMessage,
+    handleScanLabel
   }
 }

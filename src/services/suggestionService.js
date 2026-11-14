@@ -33,3 +33,10 @@ export async function describeEvidenceWithAi(payload) {
     body: JSON.stringify(payload),
   })
 }
+
+export async function scanBarcodeOrLabel(payload) {
+  return await request('/suggestions/scan-label', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
