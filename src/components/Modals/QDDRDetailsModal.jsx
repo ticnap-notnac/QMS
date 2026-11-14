@@ -321,6 +321,74 @@ export default function QDDRDetailsModal({
             }}>{qddr.reason_of_discrepancy}</div>
           </div>
 
+          {/* Evidence / Attachments */}
+          {Array.isArray(qddr.evidence_urls) && qddr.evidence_urls.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label className="label-field" style={{ fontSize: '12px', color: 'var(--muted)', textTransform: 'uppercase' }}>
+                Evidence / Attachments ({qddr.evidence_urls.length})
+              </label>
+              <div style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                padding: '12px',
+                borderRadius: '6px',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '12px'
+              }}>
+                {qddr.evidence_urls.map((url, idx) => {
+                  const lower = String(url || '').toLowerCase()
+                  const isImg = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(lower) || lower.startsWith('data:image/')
+                  const label = url.startsWith('data:')
+                    ? `Evidence Photo ${idx + 1}`
+                    : decodeURIComponent(url.split('/').pop()?.split('?')[0] || `Attachment ${idx + 1}`)
+                  return isImg ? (
+                    <a
+                      key={idx}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Click to view full image"
+                      style={{
+                        display: 'block',
+                        width: '120px',
+                        height: '90px',
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                        border: '1px solid #cbd5e1',
+                        background: '#f8fafc'
+                      }}
+                    >
+                      <img src={url} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </a>
+                  ) : (
+                    <a
+                      key={idx}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        background: '#f8fafc',
+                        color: '#0891b2',
+                        fontSize: '12.5px',
+                        fontWeight: 500,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      📄 {label}
+                    </a>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {/* RESOLUTION SECTION */}
           {!readOnly ? (
             <form onSubmit={handleUpdateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid #cbd5e1', paddingTop: '16px' }}>

@@ -137,6 +137,22 @@ const QDDRPrintTemplate = forwardRef(({ report }, ref) => {
               <div className="details-text" style={{ minHeight: '60px' }}>
                 {report.reason_of_discrepancy || 'No reason provided.'}
               </div>
+              {Array.isArray(report.evidence_urls) && report.evidence_urls.length > 0 && (
+                <div style={{ marginTop: '10px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {report.evidence_urls.map((url, idx) => {
+                    const lower = String(url || '').toLowerCase()
+                    const isImg = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(lower) || lower.startsWith('data:image/')
+                    return isImg ? (
+                      <img
+                        key={idx}
+                        src={url}
+                        alt={`Evidence ${idx + 1}`}
+                        style={{ maxHeight: '110px', maxWidth: '160px', objectFit: 'contain', border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                      />
+                    ) : null
+                  })}
+                </div>
+              )}
             </td>
           </tr>
 

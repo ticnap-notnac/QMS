@@ -305,8 +305,42 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     qddrFormState.setError(null)
 
     try {
+      const finalEvidenceUrls = []
+      for (const item of qddrFormState.evidenceItems || []) {
+        if (item.isExisting && item.url) {
+          finalEvidenceUrls.push(item.url)
+        } else if (item.file) {
+          const fileExt = item.file.name.split('.').pop() || 'bin'
+          const safeName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`
+          const filePath = `qddr/${safeName}`
+
+          const { error: uploadErr } = await supabase.storage
+            .from('audit-evidence')
+            .upload(filePath, item.file)
+
+          if (!uploadErr) {
+            const { data: urlData } = supabase.storage
+              .from('audit-evidence')
+              .getPublicUrl(filePath)
+            if (urlData?.publicUrl) {
+              finalEvidenceUrls.push(urlData.publicUrl)
+              continue
+            }
+          }
+
+          // Fallback if storage bucket policy is not yet active for client uploads
+          if (item.file.type?.startsWith('image/') && qddrFormState.fileOrDataUrlToBase64) {
+            const converted = await qddrFormState.fileOrDataUrlToBase64(item.file)
+            if (converted?.base64) {
+              finalEvidenceUrls.push(`data:${converted.mimeType};base64,${converted.base64}`)
+            }
+          }
+        }
+      }
+
       const payload = {
-        ...qddrFormState.form
+        ...qddrFormState.form,
+        evidence_urls: finalEvidenceUrls
       }
 
       if (qddrFormState.form.id) {
@@ -510,7 +544,11 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       suggestActions: qddrFormState.suggestActions,
       scanningLabel: qddrFormState.scanningLabel,
       scanMessage: qddrFormState.scanMessage,
-      handleScanLabel: qddrFormState.handleScanLabel
+      handleScanLabel: qddrFormState.handleScanLabel,
+      evidenceItems: qddrFormState.evidenceItems,
+      evidenceError: qddrFormState.evidenceError,
+      handleEvidenceFiles: qddrFormState.handleEvidenceFiles,
+      removeEvidenceFile: qddrFormState.removeEvidenceFile
     },
     carDetailsModalProps: {
       isOpen: carDetails.isCarDetailsModalOpen,

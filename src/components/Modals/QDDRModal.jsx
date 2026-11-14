@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { X as CloseIcon, Sparkles, LoaderCircle, ScanLine, Upload, Camera, CheckCircle2 } from 'lucide-react'
+import { X as CloseIcon, Sparkles, LoaderCircle, ScanLine, Upload, Camera, CheckCircle2, FileText } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 
 function QDDRModal({
@@ -18,12 +18,17 @@ function QDDRModal({
   suggestActions,
   scanningLabel,
   scanMessage,
-  handleScanLabel
+  handleScanLabel,
+  evidenceItems = [],
+  evidenceError = null,
+  handleEvidenceFiles,
+  removeEvidenceFile
 }) {
   const [isMobile, setIsMobile] = useState(false)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [cameraError, setCameraError] = useState('')
   const labelFileInputRef = useRef(null)
+  const evidenceFileInputRef = useRef(null)
   const videoRef = useRef(null)
   const streamRef = useRef(null)
   const scanIntervalRef = useRef(null)
@@ -569,6 +574,143 @@ function QDDRModal({
                   className="input-field"
                   placeholder="Specify other discrepancy..."
                 />
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />
+
+              {/* Evidence Upload Section (Images, PDF, Word Docs) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#1A435A', fontSize: '13px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Evidence / Attachments (Max 3 files)
+                  </span>
+                  <span style={{ fontSize: '11.5px', color: '#64748b' }}>
+                    {evidenceItems.length} / 3 uploaded
+                  </span>
+                </div>
+
+                {evidenceItems.length > 0 && (
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    {evidenceItems.map((item, idx) => {
+                      const isImage = item.type?.includes('image') || /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(item.url || '')
+                      return (
+                        <div
+                          key={`${item.name}-${idx}`}
+                          style={{
+                            position: 'relative',
+                            width: '92px',
+                            height: '92px',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            background: '#f8fafc',
+                            border: '1px solid #cbd5e1',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {isImage ? (
+                            <img
+                              src={item.url}
+                              alt={item.name || 'Evidence'}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '6px', textAlign: 'center', color: '#334155', width: '100%' }}>
+                              <FileText size={22} color="#0891b2" style={{ marginBottom: '4px' }} />
+                              <span style={{ fontSize: '10.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }} title={item.name}>
+                                {item.name}
+                              </span>
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            title="Remove attachment"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (removeEvidenceFile) removeEvidenceFile(idx)
+                            }}
+                            style={{
+                              position: 'absolute',
+                              top: '4px',
+                              right: '4px',
+                              background: 'rgba(15, 23, 42, 0.78)',
+                              border: 'none',
+                              color: '#ffffff',
+                              borderRadius: '50%',
+                              width: '20px',
+                              height: '20px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                              lineHeight: 1
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {evidenceItems.length < 3 && (
+                  <div
+                    onClick={() => evidenceFileInputRef.current && evidenceFileInputRef.current.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      if (e.dataTransfer?.files?.length && handleEvidenceFiles) {
+                        handleEvidenceFiles(Array.from(e.dataTransfer.files))
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      minHeight: '56px',
+                      background: '#f8fafc',
+                      border: '1.5px dashed #94a3b8',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      padding: '10px',
+                      boxSizing: 'border-box',
+                      transition: 'border-color 0.2s ease, background 0.2s ease'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', fontSize: '12.5px', fontWeight: 500 }}>
+                      <Upload size={16} color="#0891b2" />
+                      <span>Click or drop to upload evidence (Images, PDF, DOC)</span>
+                    </div>
+                    <input
+                      ref={evidenceFileInputRef}
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={(e) => {
+                        if (e.target.files?.length && handleEvidenceFiles) {
+                          handleEvidenceFiles(Array.from(e.target.files))
+                        }
+                        e.target.value = ''
+                      }}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+                )}
+
+                {evidenceError && (
+                  <div style={{ color: '#dc2626', fontSize: '12px' }}>
+                    {evidenceError}
+                  </div>
+                )}
               </div>
 
               <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '4px 0' }} />

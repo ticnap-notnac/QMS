@@ -86,7 +86,8 @@ export function useQDDRForm() {
     preventive_action: '',
     approved_by: '',
     noted_by: '',
-    leader: ''
+    leader: '',
+    evidence_urls: []
   }
 
   const [form, setForm] = useState(initialState)
@@ -95,6 +96,8 @@ export function useQDDRForm() {
   const [suggesting, setSuggesting] = useState(false)
   const [scanningLabel, setScanningLabel] = useState(false)
   const [scanMessage, setScanMessage] = useState(null)
+  const [evidenceItems, setEvidenceItems] = useState([])
+  const [evidenceError, setEvidenceError] = useState(null)
   const lastClassifiedReasonRef = useRef('')
 
   useEffect(() => {
@@ -131,9 +134,19 @@ export function useQDDRForm() {
     setForm(initialState)
     setError(null)
     setScanMessage(null)
+    setEvidenceError(null)
+    setEvidenceItems(prev => {
+      prev.forEach(item => {
+        if (!item.isExisting && item.url?.startsWith('blob:')) {
+          URL.revokeObjectURL(item.url)
+        }
+      })
+      return []
+    })
   }
 
   const initForm = (existingQddr) => {
+    const existingUrls = Array.isArray(existingQddr.evidence_urls) ? existingQddr.evidence_urls : []
     setForm({
       ...initialState,
       ...existingQddr,
@@ -171,9 +184,77 @@ export function useQDDRForm() {
       preventive_action: existingQddr.preventive_action || '',
       approved_by: existingQddr.approved_by || '',
       noted_by: existingQddr.noted_by || '',
-      leader: existingQddr.leader || ''
+      leader: existingQddr.leader || '',
+      evidence_urls: existingUrls
     })
+    setEvidenceItems(
+      existingUrls.map((url, idx) => {
+        const lower = String(url || '').toLowerCase()
+        const isImg = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(lower) || lower.startsWith('data:image/')
+        const name = url.startsWith('data:')
+          ? `Attachment ${idx + 1}`
+          : decodeURIComponent(url.split('/').pop()?.split('?')[0] || `Attachment ${idx + 1}`)
+        return {
+          file: null,
+          url,
+          name,
+          type: isImg ? 'image/jpeg' : 'application/octet-stream',
+          isExisting: true
+        }
+      })
+    )
+    setEvidenceError(null)
     setError(null)
+  }
+
+  const handleEvidenceFiles = (selectedFiles = []) => {
+    setEvidenceError(null)
+    const incoming = Array.from(selectedFiles || [])
+    if (incoming.length === 0) return
+
+    const maxFiles = 3
+    if (evidenceItems.length + incoming.length > maxFiles) {
+      setEvidenceError(`You can upload up to ${maxFiles} evidence files.`)
+      return
+    }
+
+    const allowedExtensions = /\.(jpg|jpeg|png|webp|gif|pdf|doc|docx)$/i
+    const maxBytes = 10 * 1024 * 1024 // 10 MB
+
+    const validNewItems = []
+    for (const file of incoming) {
+      if (!allowedExtensions.test(file.name) && !file.type.startsWith('image/')) {
+        setEvidenceError('Unsupported file format. Please upload an image (JPG, PNG, WEBP) or document (PDF, DOC, DOCX).')
+        return
+      }
+      if (file.size > maxBytes) {
+        setEvidenceError(`File "${file.name}" exceeds the 10 MB size limit.`)
+        return
+      }
+      validNewItems.push({
+        file,
+        url: URL.createObjectURL(file),
+        name: file.name,
+        type: file.type || (/\.(jpg|jpeg|png|webp|gif)$/i.test(file.name) ? 'image/jpeg' : 'application/octet-stream'),
+        isExisting: false
+      })
+    }
+
+    setEvidenceItems(prev => [...prev, ...validNewItems])
+  }
+
+  const removeEvidenceFile = (index) => {
+    setEvidenceError(null)
+    setEvidenceItems(prev => {
+      const target = prev[index]
+      if (target && !target.isExisting && target.url?.startsWith('blob:')) {
+        URL.revokeObjectURL(target.url)
+      }
+      const next = prev.filter((_, i) => i !== index)
+      const remainingExistingUrls = next.filter(i => i.isExisting).map(i => i.url)
+      setForm(f => ({ ...f, evidence_urls: remainingExistingUrls }))
+      return next
+    })
   }
 
   const suggestActions = async () => {
@@ -367,6 +448,11 @@ export function useQDDRForm() {
     scanningLabel,
     scanMessage,
     setScanMessage,
-    handleScanLabel
+    handleScanLabel,
+    evidenceItems,
+    evidenceError,
+    handleEvidenceFiles,
+    removeEvidenceFile,
+    fileOrDataUrlToBase64
   }
 }
