@@ -12,22 +12,22 @@ export default function IntroModal({ isOpen, onClose }) {
   };
 
   return (
-    <div style={overlayStyle}>
-      <div style={modalStyle}>
-        <button onClick={onClose} style={closeButtonStyle} aria-label="Close modal">
+    <div style={overlayStyle} className="modal-overlay intro-modal-overlay">
+      <div style={modalStyle} className="modal-card intro-modal-card">
+        <button onClick={onClose} style={closeButtonStyle} className="modal-close-button intro-modal-close" aria-label="Close modal">
           <X size={18} />
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
           <ShieldCheck size={26} color="#0891b2" />
-          <h2 style={{ ...titleStyle, margin: 0 }}>System Terms & ISO Compliance Agreement</h2>
+          <h2 style={{ ...titleStyle, margin: 0 }} className="intro-modal-title">System Terms & ISO Compliance Agreement</h2>
         </div>
 
         <p style={{ color: '#64748b', fontSize: '13.5px', marginTop: '4px', marginBottom: '20px' }}>
           Please review and accept the quality compliance terms governing ResQ before using the system.
         </p>
 
-        <div style={contentContainerStyle}>
+        <div style={contentContainerStyle} className="intro-modal-content">
           <div style={accentBoxStyle('#0891b2', '#f8fafc')}>
             <div style={iconHeaderStyle}>
               <FileText size={16} color="#0891b2" />

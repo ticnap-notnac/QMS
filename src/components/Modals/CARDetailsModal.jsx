@@ -171,16 +171,19 @@ export default function CARDetailsModal({
         <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* Metadata Grid */}
-          <div style={{
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            padding: '16px',
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '12px',
-            fontSize: '13px'
-          }}>
+          <div 
+            className="modal-metadata-grid"
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '16px',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '12px',
+              fontSize: '13px'
+            }}
+          >
             <div><span style={{ color: 'var(--muted)' }}>Requesting Dept:</span> <strong style={{ color: '#1A435A' }}>{car.requesting_department || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Responsible Dept:</span> <strong style={{ color: '#1A435A' }}>{car.responsible_department || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Requestor:</span> <strong style={{ color: '#1A435A' }}>{car.requestor || '—'}</strong></div>
@@ -205,7 +208,7 @@ export default function CARDetailsModal({
               </div>
             )}
             {car.others && (
-              <div style={{ gridColumn: 'span 2' }}>
+              <div className="modal-metadata-span-all" style={{ gridColumn: 'span 2' }}>
                 <span style={{ color: 'var(--muted)' }}>Others / Remarks:</span> <strong style={{ color: '#1A435A' }}>{car.others}</strong>
               </div>
             )}
@@ -726,17 +729,20 @@ export default function CARDetailsModal({
 
           {/* Multi-User 5-Star Rating Section when Closed */}
           {String(car.status || '').toLowerCase() === 'closed' && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '12px',
-              background: '#fffbeb',
-              border: '1px solid #fde68a',
-              borderRadius: '10px',
-              padding: '14px 16px'
-            }}>
+            <div 
+              className="modal-cbr-rating-banner"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '12px',
+                background: '#fffbeb',
+                border: '1px solid #fde68a',
+                borderRadius: '10px',
+                padding: '14px 16px'
+              }}
+            >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Star size={15} color="#eab308" fill="#eab308" /> Rate CAPA Effectiveness (CBR Feedback)

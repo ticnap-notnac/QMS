@@ -260,16 +260,19 @@ export default function QDDRDetailsModal({
         <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* Metadata Grid */}
-          <div style={{
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            padding: '16px',
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr 1fr',
-            gap: '12px',
-            fontSize: '13px'
-          }}>
+          <div 
+            className="modal-metadata-grid"
+            style={{
+              background: '#ffffff',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '16px',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              gap: '12px',
+              fontSize: '13px'
+            }}
+          >
             <div><span style={{ color: 'var(--muted)' }}>Location:</span> <strong style={{ color: '#1A435A' }}>{qddr.location || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Date:</span> <strong style={{ color: '#1A435A' }}>{qddr.date ? new Date(qddr.date).toLocaleDateString() : '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Time:</span> <strong style={{ color: '#1A435A' }}>{qddr.time || '—'}</strong></div>
@@ -565,7 +568,7 @@ export default function QDDRDetailsModal({
             <div style={{ borderTop: '1px solid #cbd5e1', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <h4 style={{ color: '#1A435A', fontSize: '14px', margin: '0' }}>Resolution Details</h4>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="modal-metadata-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
                   <span style={{ color: 'var(--muted)', fontSize: '12px' }}>Corrective Action:</span>
                   <div style={{
@@ -592,7 +595,7 @@ export default function QDDRDetailsModal({
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', fontSize: '13px', borderTop: '1px solid #cbd5e1', paddingTop: '12px' }}>
+              <div className="modal-metadata-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', fontSize: '13px', borderTop: '1px solid #cbd5e1', paddingTop: '12px' }}>
                 <div><span style={{ color: 'var(--muted)' }}>Leader / Supervisor:</span> <strong style={{ color: '#1A435A' }}>{resolveName(qddr.leader, qddr.leader_name) || '—'}</strong></div>
                 <div><span style={{ color: 'var(--muted)' }}>Approved By:</span> <strong style={{ color: '#1A435A' }}>{resolveName(qddr.approved_by, qddr.approved_by_name) || '—'}</strong></div>
                 <div><span style={{ color: 'var(--muted)' }}>Noted By:</span> <strong style={{ color: '#1A435A' }}>{resolveName(qddr.noted_by, qddr.noted_by_name) || '—'}</strong></div>
@@ -602,17 +605,20 @@ export default function QDDRDetailsModal({
 
           {/* Multi-User 5-Star Rating Section when Closed */}
           {String(qddr.status || '').toLowerCase() === 'closed' && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '12px',
-              background: '#fffbeb',
-              border: '1px solid #fde68a',
-              borderRadius: '10px',
-              padding: '14px 16px'
-            }}>
+            <div 
+              className="modal-cbr-rating-banner"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '12px',
+                background: '#fffbeb',
+                border: '1px solid #fde68a',
+                borderRadius: '10px',
+                padding: '14px 16px'
+              }}
+            >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Star size={15} color="#eab308" fill="#eab308" /> Rate Discrepancy Resolution (CBR Feedback)

@@ -37,6 +37,7 @@ export const StarRatingAction = ({
   if (activeEditMode) {
     return (
       <div
+        className={`star-rating-action ${activeEditMode ? 'is-editing' : 'is-rated'} star-rating-${variant}`}
         onClick={(e) => e.stopPropagation()}
         style={{
           display: 'inline-flex',
@@ -66,6 +67,7 @@ export const StarRatingAction = ({
             <button
               key={star}
               type="button"
+              className="star-rating-btn"
               disabled={isSubmitting}
               onMouseEnter={() => setHoverRating(star)}
               onMouseLeave={() => setHoverRating(0)}
@@ -94,6 +96,7 @@ export const StarRatingAction = ({
         {hasRated && (
           <button
             type="button"
+            className="star-rating-cancel-btn"
             disabled={isSubmitting}
             onClick={(e) => {
               e.stopPropagation();
@@ -121,6 +124,7 @@ export const StarRatingAction = ({
 
   return (
     <div
+      className={`star-rating-action ${activeEditMode ? 'is-editing' : 'is-rated'} star-rating-${variant}`}
       onClick={(e) => e.stopPropagation()}
       style={{
         display: 'inline-flex',
@@ -183,6 +187,7 @@ export const StarRatingAction = ({
 
       <button
         type="button"
+        className="star-rating-edit-btn"
         onClick={(e) => {
           e.stopPropagation();
           setIsEditing(true);

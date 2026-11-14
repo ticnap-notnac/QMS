@@ -1131,25 +1131,26 @@
     flex-direction: row !important;
     justify-content: space-between !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 6px !important;
     width: 100% !important;
     margin-bottom: 12px !important;
+    flex-wrap: wrap !important;
   }
   
   .reports-header-controls-left {
     display: flex !important;
     align-items: center !important;
-    gap: 4px !important;
-    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    flex-wrap: wrap !important;
     width: auto !important;
-    flex: 1 !important;
+    flex: 1 1 auto !important;
   }
   
   .reports-action-buttons-right {
     display: flex !important;
     justify-content: flex-end !important;
     width: auto !important;
-    flex-wrap: nowrap !important;
+    flex: 0 0 auto !important;
   }
 
   .reports-action-header-row .btn-action-icon {
@@ -1164,8 +1165,8 @@
 
   .reports-header-controls-left button,
   .reports-submit-primary {
-    padding: 6px 8px !important;
-    font-size: 14px !important;
+    padding: 6px 10px !important;
+    font-size: 13.5px !important;
     height: 32px !important;
     white-space: nowrap !important;
     display: inline-flex !important;
@@ -1191,14 +1192,156 @@
     justify-content: flex-start !important;
   }
 
+  .reports-user-name {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    gap: 6px !important;
+  }
+
+  .reports-ref-number {
+    font-size: 13px !important;
+    color: var(--muted) !important;
+    font-weight: 600 !important;
+    margin-left: 0 !important;
+  }
+
   .reports-grid-2-col {
     grid-template-columns: 1fr !important;
-    gap: 16px !important;
-    padding: 0 12px !important;
+    gap: 12px !important;
+    padding: 0 !important;
+  }
+
+  .reports-grid-2-col .grid-col-span-2 {
+    grid-column: span 1 !important;
   }
   
   .reports-card {
-    padding: 16px 12px !important;
+    padding: 14px 12px !important;
+    margin-bottom: 16px !important;
+    border-radius: 10px !important;
+  }
+
+  .reports-details-box {
+    padding: 10px 12px !important;
+    border-radius: 8px !important;
+  }
+
+  .reports-details-box .reports-workspace-text {
+    font-size: 13.5px !important;
+    line-height: 1.5 !important;
+  }
+
+  .action-btn-row {
+    margin-top: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+    width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+
+  .action-btn-row .btn-action-icon,
+  .action-btn-row .btn-action-icon-danger {
+    min-width: 36px !important;
+    min-height: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    touch-action: manipulation !important;
+  }
+
+  /* Star Rating on Phone UI */
+  .star-rating-action {
+    max-width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+
+  .star-rating-action .star-rating-btn {
+    min-width: 28px !important;
+    min-height: 28px !important;
+    padding: 4px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    touch-action: manipulation !important;
+  }
+
+  .star-rating-action .star-rating-edit-btn,
+  .star-rating-action .star-rating-cancel-btn {
+    min-height: 28px !important;
+    padding: 4px 6px !important;
+    touch-action: manipulation !important;
+  }
+
+  /* Reports Table & Pagination Mobile Styles */
+  .reports-table-instruction-banner {
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  .reports-table-pagination {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 12px 10px !important;
+  }
+
+  .reports-table-pagination-info {
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 8px !important;
+    font-size: 12px !important;
+  }
+
+  .reports-table-rows-select {
+    font-size: 12px !important;
+  }
+
+  .pagination-select {
+    padding: 3px 6px !important;
+    font-size: 12px !important;
+    height: 28px !important;
+  }
+
+  .reports-table-pagination-controls {
+    justify-content: center !important;
+    width: 100% !important;
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .pagination-pages-group {
+    max-width: 190px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+  }
+
+  .pagination-pages-group::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .pagination-btn {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    height: 30px !important;
+    min-width: 34px !important;
+    justify-content: center !important;
+    touch-action: manipulation !important;
+  }
+
+  .pagination-page-btn {
+    min-width: 28px !important;
+    height: 28px !important;
+    padding: 0 4px !important;
+    font-size: 12px !important;
+    touch-action: manipulation !important;
   }
   
   .reports-user-meta {
@@ -1255,6 +1398,34 @@
   }
 }
 
+@media (max-width: 480px) {
+  .reports-layout-container {
+    padding: 12px 8px 60px 8px !important;
+  }
+
+  .reports-action-header-row {
+    gap: 6px !important;
+  }
+
+  .reports-submit-primary {
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+  }
+
+  .reports-avatar {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .reports-user-name {
+    font-size: 16px !important;
+  }
+
+  .reports-user-meta {
+    font-size: 12.5px !important;
+  }
+}
+
 .reports-table-scroll-wrap .iso-table th.text-center-important,
 .reports-table-scroll-wrap .iso-table td.text-center-important {
   text-align: center !important;
@@ -1265,14 +1436,6 @@
   color: #334155;
   font-size: 16px;
   font-weight: 700;
-}
-@media (max-width: 768px) {
-  .reports-ref-number {
-    font-size: 13px;
-    color: var(--muted);
-    font-weight: 600;
-    margin-left: 12px;
-  }
 }
 
 /* ===================== RECURRING REPORTS & EMPTY STATES ===================== */

@@ -1205,7 +1205,7 @@ main.dcc-page-root {
   main.page-root .dcc-center-pane {
     padding: 10px !important;
     padding-top: 6px !important;
-    padding-bottom: 82px !important;
+    padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   main.page-root .dcc-center-pane .dcc-search-area {
@@ -1214,53 +1214,107 @@ main.dcc-page-root {
 
   main.page-root .dcc-center-pane .search-container-centered {
     max-width: none !important;
-    margin: 0 0 12px 0 !important;
+    margin: 0 0 10px 0 !important;
+    width: 100% !important;
   }
 
   main.page-root .dcc-center-pane .search-bar-field {
-    height: 38px !important;
-    padding: 0 40px 0 16px !important;
-    font-size: 15px !important;
+    height: 42px !important;
+    padding: 0 42px 0 40px !important;
+    font-size: 16px !important; /* Prevents iOS auto-zoom */
+    border-radius: 12px !important;
   }
 
   main.page-root .dcc-center-pane .search-icon-absolute {
-    right: 14px !important;
-    top: 11px !important;
+    left: 14px !important;
+    right: auto !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    pointer-events: none !important;
   }
 
+  main.page-root .dcc-center-pane .filter-icon-absolute {
+    right: 8px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    touch-action: manipulation !important;
+  }
+
+  /* Breadcrumbs on mobile */
+  .dcc-breadcrumbs-header {
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+    padding-bottom: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .back-button-mini {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    flex-shrink: 0 !important;
+    border-radius: 8px !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .dcc-breadcrumb-text {
+    font-size: 13.5px !important;
+    line-height: 1.35 !important;
+    word-break: break-word !important;
+    color: #475569 !important;
+  }
+
+  /* Slide-in details pane on mobile */
   main.page-root .dcc-right-pane {
     position: fixed !important;
-    top: 56px !important;
+    top: 76px !important;
     left: 0 !important;
     right: 0 !important;
-    bottom: 74px !important;
+    bottom: calc(65px + env(safe-area-inset-bottom, 0px)) !important;
     width: 100% !important;
     min-width: 100% !important;
     height: auto !important;
     background: #ffffff !important;
     z-index: 999 !important;
     border-left: none !important;
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.15) !important;
-    padding: 10px !important;
-    padding-bottom: 4px !important;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.15) !important;
+    padding: 14px 12px !important;
+    padding-bottom: 10px !important;
+    overflow-y: auto !important;
   }
 
   main.page-root .dcc-right-pane .dcc-details-container {
-    padding-top: 36px !important;
-    height: 100% !important;
+    padding-top: 32px !important;
+    height: auto !important;
+    min-height: 100% !important;
     box-sizing: border-box !important;
   }
 
   main.page-root .dcc-right-pane .dcc-details-close-btn {
-    top: 12px !important;
-    right: 12px !important;
+    top: 10px !important;
+    right: 10px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    touch-action: manipulation !important;
   }
 
   main.page-root .dcc-right-pane .dcc-details-preview-box {
-    width: 80px !important;
-    height: 80px !important;
-    margin-top: 16px !important;
-    margin-bottom: 12px !important;
+    width: 72px !important;
+    height: 72px !important;
+    margin-top: 8px !important;
+    margin-bottom: 10px !important;
     margin-left: auto !important;
     margin-right: auto !important;
   }
@@ -1271,16 +1325,17 @@ main.dcc-page-root {
   }
 
   main.page-root .dcc-right-pane .dcc-details-header {
-    margin-bottom: 12px !important;
-    padding-bottom: 10px !important;
+    margin-bottom: 10px !important;
+    padding-bottom: 8px !important;
   }
 
   main.page-root .dcc-right-pane .dcc-details-title {
-    font-size: 17px !important;
+    font-size: 16px !important;
+    word-break: break-word !important;
   }
 
   main.page-root .dcc-right-pane .dcc-details-subtitle {
-    font-size: 13px !important;
+    font-size: 12.5px !important;
   }
 
   main.page-root .dcc-right-pane .dcc-details-share-btn {
@@ -1290,19 +1345,23 @@ main.dcc-page-root {
   }
 
   main.page-root .dcc-right-pane .dcc-details-table-grid td {
-    padding: 5px 0 !important;
-    font-size: 14.5px !important;
+    padding: 6px 0 !important;
+    font-size: 13.5px !important;
   }
 
   main.page-root .dcc-right-pane .dcc-details-actions {
     margin-top: 14px !important;
     padding-top: 10px !important;
-    gap: 6px !important;
+    gap: 8px !important;
   }
 
   main.page-root .dcc-right-pane .dcc-details-action-btn {
-    height: 32px !important;
+    min-height: 40px !important;
+    height: auto !important;
     font-size: 14px !important;
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
+    touch-action: manipulation !important;
   }
 
   .dcc-document-grid {
@@ -1312,26 +1371,32 @@ main.dcc-page-root {
   }
 
   .dcc-document-card {
-    padding: 10px 8px !important;
+    padding: 12px 8px !important;
     gap: 8px !important;
+    border-radius: 10px !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
   }
 
   .document-card-icon-wrap {
-    width: 42px !important;
-    height: 42px !important;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 10px !important;
   }
 
   .document-card-icon-wrap svg {
-    width: 20px !important;
-    height: 20px !important;
+    width: 22px !important;
+    height: 22px !important;
   }
 
   .document-card-label {
-    font-size: 13px !important;
+    font-size: 12.5px !important;
+    line-height: 1.25 !important;
+    word-break: break-word !important;
   }
 
   .recently-viewed-heading {
-    font-size: 15px !important;
+    font-size: 14.5px !important;
     margin-bottom: 8px !important;
   }
 

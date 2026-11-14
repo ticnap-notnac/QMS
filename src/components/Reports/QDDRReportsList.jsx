@@ -46,18 +46,20 @@ export default function QDDRReportsList({
 
   if (viewMode === 'feed') {
     return (
-      <div className="reports-feed-list" style={{ marginTop: '24px' }}>
-        {qddrReports.map(qddr => (
-          <QDDRReportCard
-            key={qddr.id}
-            qddr={qddr}
-            canEdit={canEdit}
-            onSelectQddr={onSelectQddr}
-            onEditQddr={onEditQddr}
-            onDeleteQddr={onDeleteQddr}
-            onRateQddr={onRateQddr}
-          />
-        ))}
+      <div className="reports-content-container">
+        <div className="reports-list-stack">
+          {qddrReports.map(qddr => (
+            <QDDRReportCard
+              key={qddr.id}
+              qddr={qddr}
+              canEdit={canEdit}
+              onSelectQddr={onSelectQddr}
+              onEditQddr={onEditQddr}
+              onDeleteQddr={onDeleteQddr}
+              onRateQddr={onRateQddr}
+            />
+          ))}
+        </div>
       </div>
     )
   }

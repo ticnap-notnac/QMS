@@ -76,7 +76,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
       zIndex: 9999,
       padding: '16px'
     }}>
-      <div className="modal-card" style={{
+      <div className="modal-card dcc-details-modal-card" style={{
         background: '#ffffff',
         borderRadius: '16px',
         width: '100%',
@@ -90,7 +90,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
         transform: 'translateZ(0)'
       }}>
         {/* Header */}
-        <div style={{
+        <div className="modal-header dcc-details-modal-header" style={{
           padding: '20px 24px',
           borderBottom: '1px solid #e2e8f0',
           display: 'flex',
@@ -146,6 +146,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
           </div>
           <button
             onClick={onClose}
+            className="modal-close-button dcc-details-modal-close"
             style={{
               background: 'transparent',
               border: 'none',
@@ -163,7 +164,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
         </div>
 
         {/* Scrollable Modal Content */}
-        <div style={{
+        <div className="modal-form-content dcc-details-modal-content" style={{
           padding: '24px',
           overflowY: 'auto',
           flex: 1,
@@ -173,7 +174,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
         }}>
           {/* Metadata Grid */}
           {isQddr ? (
-            <div style={{
+            <div className="modal-metadata-grid dcc-metadata-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
               gap: '12px',
@@ -267,7 +268,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
               </div>
             </div>
           ) : (
-            <div style={{
+            <div className="modal-metadata-grid dcc-metadata-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
               gap: '12px',
@@ -639,7 +640,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
         </div>
 
         {/* Footer Actions */}
-        <div style={{
+        <div className="modal-footer-actions dcc-details-modal-footer" style={{
           padding: '16px 24px',
           borderTop: '1px solid #e2e8f0',
           background: '#f8fafc',

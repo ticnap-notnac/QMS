@@ -70,6 +70,7 @@ export default function FilterModal({
         
         {/* ── HEADER LAYER ── */}
         <div 
+          className="modal-header"
           style={{
             padding: '20px 24px',
             display: 'flex',
@@ -94,7 +95,7 @@ export default function FilterModal({
         </div>
 
         {/* 📜 MODAL CONTENT INTERNAL FORM DATA CANVAS ── */}
-        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', boxSizing: 'border-box', flex: 1 }}>
+        <div className="modal-form-content" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', boxSizing: 'border-box', flex: 1 }}>
           
           {/* Informational Subtext */}
           <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: '1.5' }}>
@@ -220,19 +221,20 @@ export default function FilterModal({
         </div>
 
         <div 
-  style={{
-    flexShrink: 0,
-    display: 'flex',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '16px 24px',
-    background: '#f8fafc',
-    borderTop: '1px solid #e2e8f0',
-    boxSizing: 'border-box',
-    width: '100%'
-  }}
->
+          className="modal-footer-actions"
+          style={{
+            flexShrink: 0,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '16px 24px',
+            background: '#f8fafc',
+            borderTop: '1px solid #e2e8f0',
+            boxSizing: 'border-box',
+            width: '100%'
+          }}
+        >
           <button 
             type="button" 
             className="btn-secondary-light" 

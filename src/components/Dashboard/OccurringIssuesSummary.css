@@ -547,3 +547,197 @@
   max-width: 380px;
 }
 
+/* ════════════════════════════════════════════════════════════════════════════════
+   PHONE / MOBILE ONLY STYLES (≤ 768px)
+   Strictly scoped to ensure zero visual regression on desktop/laptop mode.
+   ════════════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .occurring-issues-section {
+    padding: 14px 12px;
+    border-radius: 14px;
+    gap: 14px;
+  }
+
+  .occurring-issues-header {
+    gap: 10px;
+  }
+
+  .occurring-issues-title {
+    font-size: 16px;
+  }
+
+  .occurring-issues-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .occurring-issues-subtitle {
+    font-size: 12.5px;
+  }
+
+  .occurring-issues-header-actions {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-view-all-reports {
+    flex: 1;
+    justify-content: center;
+    min-height: 40px;
+    font-size: 13px;
+    touch-action: manipulation;
+  }
+
+  .btn-refresh-issues {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    touch-action: manipulation;
+  }
+
+  .occurring-summary-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .occurring-module-card {
+    padding: 14px 12px;
+    border-radius: 12px;
+    gap: 10px;
+    touch-action: manipulation;
+  }
+
+  .occurring-module-card:hover {
+    transform: none;
+  }
+
+  .module-name-title {
+    font-size: 14px;
+  }
+
+  .module-name-sub {
+    font-size: 11px;
+  }
+
+  .module-active-counter {
+    font-size: 22px;
+  }
+
+  .module-pill-row {
+    gap: 4px;
+  }
+
+  .module-pill {
+    font-size: 10.5px;
+    padding: 2px 6px;
+  }
+
+  .occurring-issues-interactive {
+    padding: 12px 10px;
+    border-radius: 12px;
+    gap: 12px;
+  }
+
+  .issues-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .issues-tabs-list {
+    width: 100%;
+    display: flex;
+    gap: 6px;
+  }
+
+  .issues-tab-btn {
+    flex: 1;
+    justify-content: center;
+    min-height: 38px;
+    padding: 6px 8px;
+    font-size: 12px;
+    touch-action: manipulation;
+    white-space: nowrap;
+  }
+
+  .issues-search-filter-box {
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .issues-search-input {
+    font-size: 16px !important; /* Prevents iOS auto-zoom */
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 10px;
+  }
+
+  .occurring-issues-list {
+    max-height: 380px;
+    gap: 8px;
+  }
+
+  .occurring-issue-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .occurring-issue-row:hover {
+    transform: none;
+  }
+
+  .issue-row-main {
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .issue-title-line {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .issue-headline {
+    white-space: normal !important;
+    max-width: 100%;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .issue-meta-line {
+    gap: 8px;
+    font-size: 11.5px;
+  }
+
+  .issue-row-right {
+    width: 100%;
+    justify-content: space-between;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 8px;
+    margin-top: 2px;
+  }
+
+  .issue-time {
+    font-size: 11.5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .occurring-issues-title {
+    font-size: 15px;
+  }
+
+  .module-card-top {
+    flex-direction: row;
+  }
+}
+

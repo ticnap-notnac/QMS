@@ -29,20 +29,20 @@ export default function ISOPage({ userRole, userPermissions, userName }) {
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div className="page-main iso-page-main">
         <div className="iso-top-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
+          <div className="iso-overview-header-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <h2 style={{ margin: 0, fontSize: '24px', color: '#0f172a' }}>ISO Compliance Overview</h2>
               <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>Monitor your quality management metrics and findings.</p>
             </div>
             {canManageIso && (
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div className="iso-overview-header-buttons" style={{ display: 'flex', gap: '12px' }}>
                 <button type="button" className="btn-metric-card" style={{ background: '#090d16', color: '#fff' }} onClick={fetchActiveModules}>ISO Modules</button>
                 <button type="button" className="btn-metric-card" style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1' }} onClick={fetchAndOpenTemplates}>ISO Templates</button>
               </div>
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+          <div className="iso-metrics-summary-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
             <div className="metric-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', borderTop: '4px solid #16a34a' }}>
               <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold', letterSpacing: '0.5px' }}>COMPLIANT CLAUSES</div>
               <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#16a34a', marginTop: '8px' }}>{compliantCount}</div>
@@ -62,7 +62,7 @@ export default function ISOPage({ userRole, userPermissions, userName }) {
 
         <div className="metric-card metric-card--padded iso-review-card" style={{ padding: '24px', height: 'auto', minHeight: 'max-content' }}>
           <h3 className="metric-card-title iso-review-title" style={{ margin: '0 0 16px 0', fontSize: '18px', color: '#0f172a' }}>Review Clause Status</h3>
-          <div className="iso-progress-stack" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+          <div className="iso-progress-stack iso-progress-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
               <span style={{ fontWeight: '600', color: '#166534' }}>Compliant</span>
               <span style={{ fontWeight: 'bold', color: '#15803d', fontSize: '18px' }}>{compliantCount}</span>

@@ -931,6 +931,27 @@
     width: 100%;
     justify-content: center;
   }
+  .iso-section-tabs,
+  .iso-subtabs {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 6px !important;
+    padding-bottom: 6px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .iso-section-tab,
+  .iso-subtab {
+    flex-shrink: 0 !important;
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+    min-height: 38px !important;
+    touch-action: manipulation !important;
+    white-space: nowrap !important;
+  }
 }
 
 .admin-actions-right {

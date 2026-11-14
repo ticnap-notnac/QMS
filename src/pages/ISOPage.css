@@ -413,8 +413,8 @@
 
 @media (max-width: 768px) {
   .iso-page-main {
-    padding-top: 68px !important; /* Space for Top Header */
-    padding-bottom: 80px !important; /* Space for Bottom Nav */
+    padding-top: 84px !important; /* Space for Top Header */
+    padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important; /* Space for Bottom Nav */
     padding-left: 8px !important;
     padding-right: 8px !important;
     gap: 12px !important;
@@ -424,12 +424,48 @@
     flex-shrink: 0 !important;
   }
 
+  /* ISO Overview Header Card on mobile */
+  .iso-overview-header-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 14px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .iso-overview-header-card h2 {
+    font-size: 18px !important;
+  }
+
+  .iso-overview-header-buttons {
+    width: 100% !important;
+    display: flex !important;
+    gap: 8px !important;
+  }
+
+  .btn-metric-card {
+    flex: 1 !important;
+    min-height: 40px !important;
+    height: auto !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    justify-content: center !important;
+    touch-action: manipulation !important;
+  }
+
+  /* 3-card metrics summary stack vertically on mobile */
+  .iso-metrics-summary-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
   .metric-card {
-    padding: 16px 12px !important;
+    padding: 14px 12px !important;
+    border-radius: 12px !important;
   }
 
   .iso-compliance-value {
-    font-size: 39px !important;
+    font-size: 34px !important;
     margin-top: 4px !important;
   }
 
@@ -451,8 +487,9 @@
 
   .iso-metric-button {
     font-size: 14px !important;
-    height: 32px !important;
+    height: 36px !important;
     padding: 6px 12px !important;
+    touch-action: manipulation !important;
   }
 
   .iso-graph-card {
@@ -461,16 +498,20 @@
 
   .iso-review-card,
   .iso-action-center-card {
-    padding: 16px 12px !important;
+    padding: 14px 12px !important;
+    border-radius: 12px !important;
   }
 
   .iso-review-title {
-    font-size: 17px !important;
-    margin-bottom: 16px !important;
+    font-size: 16px !important;
+    margin-bottom: 12px !important;
   }
 
-  .iso-progress-stack {
-    gap: 12px !important;
+  /* Progress grid stacks in 1 column */
+  .iso-progress-stack,
+  .iso-progress-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
   }
 
   .iso-progress-row {
@@ -483,21 +524,24 @@
   }
 
   .iso-progress-label-text {
-    font-size: 14px !important;
+    font-size: 13.5px !important;
   }
 
   .iso-progress-row span {
-    font-size: 14px !important;
+    font-size: 13.5px !important;
   }
 
   .iso-action-center-text {
-    font-size: 15px !important;
+    font-size: 13.5px !important;
     margin-bottom: 12px !important;
   }
 
   .iso-finding-item {
+    flex-direction: column !important;
+    align-items: stretch !important;
     padding: 12px !important;
-    gap: 12px !important;
+    gap: 10px !important;
+    border-radius: 10px !important;
   }
 
   .iso-finding-title-row {
@@ -506,22 +550,64 @@
   }
 
   .iso-finding-badge {
-    font-size: 13px !important;
-    padding: 1px 4px !important;
+    font-size: 12px !important;
+    padding: 2px 6px !important;
   }
 
   .iso-finding-title {
-    font-size: 15px !important;
+    font-size: 14px !important;
   }
 
   .iso-btn-generate-car {
-    padding: 6px 12px !important;
-    font-size: 14px !important;
+    width: 100% !important;
+    min-height: 38px !important;
+    padding: 8px 14px !important;
+    font-size: 13.5px !important;
+    justify-content: center !important;
+    touch-action: manipulation !important;
   }
 
   .iso-car-generated {
-    padding: 6px 12px !important;
-    font-size: 14px !important;
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 8px 12px !important;
+    font-size: 13.5px !important;
+  }
+
+  /* ISO Modals on mobile */
+  .iso-modal-overlay {
+    padding: 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  .iso-modal-card {
+    padding: 16px 14px !important;
+    border-radius: 14px !important;
+    max-height: 92vh !important;
+    width: 96vw !important;
+    max-width: 96vw !important;
+    min-height: auto !important;
+    gap: 14px !important;
+    overflow-y: auto !important;
+  }
+
+  .iso-modal-icon-button {
+    min-width: 36px !important;
+    min-height: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    touch-action: manipulation !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .iso-compliance-value {
+    font-size: 30px !important;
+  }
+
+  .iso-overview-header-buttons {
+    flex-direction: column;
   }
 }
 .iso-btn-generate-car {

@@ -431,6 +431,7 @@ export function AuditRunDetailsModal({
         onClick={() => setIsDetailsModalOpen(false)}
       >
         <div 
+          className="modal-card audit-run-details-card"
           style={{
             position: 'relative',
             width: '100%',
@@ -449,7 +450,7 @@ export function AuditRunDetailsModal({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-        <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="modal-header audit-run-details-header" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '18px', color: '#1A435A' }}>
               Audit Details: {selectedRunDetails.title}
@@ -460,6 +461,7 @@ export function AuditRunDetailsModal({
           </div>
           <button
             type="button"
+            className="modal-close-button audit-run-details-close"
             onClick={() => setIsDetailsModalOpen(false)}
             style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '18px' }}
           >

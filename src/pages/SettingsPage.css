@@ -607,7 +607,6 @@
     box-sizing: border-box;
     margin-left: auto !important;
     margin-right: auto !important;
-    zoom: 0.9 !important;
   }
   
   .form-row-2,
@@ -631,15 +630,92 @@
     width: 100% !important;
     box-sizing: border-box !important;
     position: sticky !important;
-    top: 56px !important;
+    top: 76px !important;
     background: #ffffff !important;
     z-index: 100 !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
   }
 
   .sidebar-button {
-    white-space: nowrap;
-    flex-shrink: 0;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    font-size: 13.5px !important;
+    padding: 8px 14px !important;
+    border-radius: 8px !important;
+    min-height: 40px !important;
+    touch-action: manipulation !important;
+  }
+
+  .settings-container input[type="text"],
+  .settings-container input[type="email"],
+  .settings-container input[type="password"],
+  .settings-container select,
+  .settings-container textarea,
+  .form-input {
+    font-size: 16px !important; /* Prevents iOS auto-zoom */
+    min-height: 42px !important;
+    border-radius: 10px !important;
+  }
+
+  .password-section button[type="button"] {
+    min-width: 38px !important;
+    min-height: 38px !important;
+    touch-action: manipulation !important;
+  }
+
+  .profile-header-strong,
+  .user-info-header--profile {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    text-align: left !important;
+    padding-bottom: 16px !important;
+  }
+
+  .profile-header-strong > div:last-child,
+  .user-info-header--profile > div:last-child {
+    text-align: left !important;
+    width: 100% !important;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 8px !important;
+  }
+
+  .profile-fields,
+  .user-info-fields--profile {
+    max-width: 100% !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .profile-field,
+  .user-info-field--profile {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+    padding: 10px 0 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+  }
+
+  .profile-field-label,
+  .user-info-field-label--profile {
+    width: 100% !important;
+    font-size: 12.5px !important;
+    color: #64748b !important;
+  }
+
+  .profile-field-value,
+  .user-info-field-value--profile {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+  }
+
+  .settings-save-button,
+  .settings-cancel-button {
+    min-height: 42px !important;
+    width: 100% !important;
+    justify-content: center !important;
+    touch-action: manipulation !important;
   }
 
   .settings-page-container,
@@ -699,8 +775,25 @@
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     gap: 8px !important;
-    padding: 4px 16px !important;
+    padding: 4px 8px !important;
     margin-bottom: 16px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .tab-button {
+    font-size: 13.5px !important;
+    padding: 8px 14px !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+    min-height: 38px !important;
+    touch-action: manipulation !important;
+    white-space: nowrap !important;
+  }
+
+  .audit-main input[type="text"],
+  .audit-main input[type="search"],
+  .audit-main select {
+    font-size: 16px !important; /* Prevents iOS auto-zoom */
   }
 
 }

@@ -315,3 +315,183 @@
   color: #475569;
   font-size: 16px;
 }
+
+/* ════════════════════════════════════════════════════════════════════════════════
+   PHONE / MOBILE ONLY STYLES (≤ 768px)
+   Strictly scoped to ensure zero visual regression on desktop/laptop mode.
+   ════════════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    gap: 14px;
+  }
+
+  /* 1. Metrics Cards: stack vertically on mobile */
+  .metrics-section {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .metric-card {
+    padding: 14px 16px;
+    border-radius: 14px;
+    min-height: auto;
+    cursor: default;
+    box-shadow: 0 2px 10px rgba(26, 67, 90, 0.04);
+  }
+
+  .metric-card:hover {
+    transform: none; /* No hover lift on touch */
+  }
+
+  .metric-card-title {
+    font-size: 14.5px;
+  }
+
+  .metric-card-value {
+    font-size: 26px;
+    margin: 4px 0 2px 0;
+  }
+
+  .metric-card-subtitle {
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+
+  /* 2. Double Column Info Widgets: single column stack */
+  .dashboard-widgets-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dashboard-widget-card {
+    padding: 14px 12px;
+    border-radius: 14px;
+    gap: 12px;
+  }
+
+  .widget-card-title {
+    font-size: 15.5px;
+  }
+
+  .widget-list {
+    gap: 8px;
+  }
+
+  .dashboard-clickable-row {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .audit-row {
+    padding: 10px 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    border-radius: 10px;
+  }
+
+  .car-row {
+    padding: 10px 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    border-radius: 10px;
+    border-bottom: none;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+  }
+
+  .row-left {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .row-title {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .row-subtitle {
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+
+  .row-date-audit {
+    font-size: 12px;
+    color: #475569;
+    padding-left: 34px;
+    align-self: flex-start;
+  }
+
+  .row-date-car {
+    font-size: 12px;
+    color: #94a3b8;
+    padding-left: 42px;
+    align-self: flex-start;
+  }
+
+  /* 3. Charts Section: compact mobile height & readability */
+  .charts-section {
+    gap: 12px;
+  }
+
+  .charts-section-title {
+    font-size: 16px;
+    margin: 4px 0 0 0;
+  }
+
+  .charts-grid {
+    gap: 12px;
+  }
+
+  .chart-wrapper {
+    padding: 12px 10px;
+    border-radius: 14px;
+    cursor: default;
+  }
+
+  .chart-header {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .chart-title {
+    font-size: 14px;
+  }
+
+  .chart-container {
+    height: 220px !important;
+  }
+
+  .custom-chart-tooltip {
+    padding: 8px 10px;
+    border-radius: 6px;
+  }
+
+  .tooltip-title {
+    font-size: 13.5px;
+  }
+
+  .tooltip-value {
+    font-size: 14.5px;
+  }
+
+  .tooltip-standard {
+    font-size: 12.5px;
+  }
+
+  .tooltip-resolution {
+    font-size: 13.5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .metric-card-value {
+    font-size: 24px;
+  }
+
+  .chart-container {
+    height: 200px !important;
+  }
+}
