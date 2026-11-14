@@ -150,11 +150,30 @@ export default function CARDetailsModal({
             <div><span style={{ color: 'var(--muted)' }}>Responsible Dept:</span> <strong style={{ color: '#1A435A' }}>{car.responsible_department || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Requestor:</span> <strong style={{ color: '#1A435A' }}>{car.requestor || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Recipient:</span> <strong style={{ color: '#1A435A' }}>{car.recipient || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Type of Non-Conformance:</span> <strong style={{ color: '#1A435A' }}>{car.type_of_nonconformance || car.others || '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Date Issued:</span> <strong style={{ color: '#1A435A' }}>{car.date ? new Date(car.date).toLocaleDateString() : '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Product / Material:</span> <strong style={{ color: '#1A435A' }}>{car.product_material_name || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Model / Type:</span> <strong style={{ color: '#1A435A' }}>{car.model_type || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Control No.:</span> <strong style={{ color: '#1A435A' }}>{car.control_no || '—'}</strong></div>
-            <div><span style={{ color: 'var(--muted)' }}>Affected Qty:</span> <strong style={{ color: '#1A435A' }}>{car.affected_quantity || '—'}</strong></div>
-            <div style={{ gridColumn: 'span 2' }}><span style={{ color: 'var(--muted)' }}>Request Date:</span> <strong style={{ color: '#1A435A' }}>{car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Affected Qty:</span> <strong style={{ color: '#1A435A' }}>{car.affected_quantity ?? '—'}</strong></div>
+            <div><span style={{ color: 'var(--muted)' }}>Request Date:</span> <strong style={{ color: '#1A435A' }}>{car.request_date ? new Date(car.request_date).toLocaleDateString() : '—'}</strong></div>
+            {(car.no_reply || car.re_corrective_action || car.reason_reissue) && (
+              <div>
+                <span style={{ color: 'var(--muted)' }}>Reason for Re-issue:</span>{' '}
+                <strong style={{ color: '#1A435A' }}>
+                  {[
+                    car.no_reply ? 'No Reply' : null,
+                    car.re_corrective_action ? 'Re-Corrective Action' : null,
+                    car.reason_reissue || null
+                  ].filter(Boolean).join(', ')}
+                </strong>
+              </div>
+            )}
+            {car.others && (
+              <div style={{ gridColumn: 'span 2' }}>
+                <span style={{ color: 'var(--muted)' }}>Others / Remarks:</span> <strong style={{ color: '#1A435A' }}>{car.others}</strong>
+              </div>
+            )}
           </div>
 
           {/* Details of Nonconformance */}
@@ -524,6 +543,13 @@ export default function CARDetailsModal({
                       {car.preventive_action}
                     </div>
                   </div>
+
+                  {car.target_verification_date && (
+                    <div style={{ fontSize: '12px', color: '#475569' }}>
+                      <span style={{ color: 'var(--muted)' }}>Target Verification Date:</span>{' '}
+                      <strong style={{ color: '#1A435A' }}>{new Date(car.target_verification_date).toLocaleDateString()}</strong>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -652,10 +678,10 @@ export default function CARDetailsModal({
                     <Calendar size={12} />
                     Verified On: {new Date(car.verification_date).toLocaleDateString()}
                   </span>
-                  {car.verified_by && (
+                  {(car.verified_by_name || car.verified_by) && (
                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <User size={12} />
-                      Verified By: {car.verified_by.slice(0, 8)}...
+                      Verified By: {car.verified_by_name || `${car.verified_by.slice(0, 8)}...`}
                     </span>
                   )}
                 </div>

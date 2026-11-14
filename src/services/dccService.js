@@ -44,7 +44,24 @@ export async function fetchCarReports() {
     .eq('status', 'closed')
     .order('created_at', { ascending: false })
   if (error) throw error
-  return data || []
+
+  const { data: usersData } = await supabase
+    .from('users')
+    .select('id, auth_id, user_name, first_name, last_name')
+
+  const authUserMap = new Map(
+    (usersData || [])
+      .filter((u) => u.auth_id)
+      .map((u) => [
+        String(u.auth_id),
+        `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.user_name || String(u.auth_id),
+      ])
+  )
+
+  return (data || []).map((c) => ({
+    ...c,
+    verified_by_name: c.verified_by ? (authUserMap.get(String(c.verified_by)) || '') : '',
+  }))
 }
 
 export async function fetchQddrReports() {

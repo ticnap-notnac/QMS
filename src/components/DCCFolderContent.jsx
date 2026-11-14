@@ -36,7 +36,7 @@ function groupReportsByMonthYear(reports, sortOrder = 'newest') {
   const groups = {}
 
   reports.forEach((item) => {
-    const rawDate = item.occurrence_date || item.created_at || item.request_date || item.audit_date
+    const rawDate = item.occurrence_date || item.date || item.created_at || item.request_date || item.audit_date
     const d = rawDate ? new Date(rawDate) : new Date()
     const validDate = isNaN(d.getTime()) ? new Date() : d
 
@@ -73,14 +73,14 @@ function groupReportsByMonthYear(reports, sortOrder = 'newest') {
       })
     } else if (sortOrder === 'oldest') {
       group.items.sort((a, b) => {
-        const dateA = new Date(a.occurrence_date || a.created_at || a.request_date || a.audit_date).getTime()
-        const dateB = new Date(b.occurrence_date || b.created_at || b.request_date || b.audit_date).getTime()
+        const dateA = new Date(a.occurrence_date || a.date || a.created_at || a.request_date || a.audit_date).getTime()
+        const dateB = new Date(b.occurrence_date || b.date || b.created_at || b.request_date || b.audit_date).getTime()
         return dateA - dateB
       })
     } else {
       group.items.sort((a, b) => {
-        const dateA = new Date(a.occurrence_date || a.created_at || a.request_date || a.audit_date).getTime()
-        const dateB = new Date(b.occurrence_date || b.created_at || b.request_date || b.audit_date).getTime()
+        const dateA = new Date(a.occurrence_date || a.date || a.created_at || a.request_date || a.audit_date).getTime()
+        const dateB = new Date(b.occurrence_date || b.date || b.created_at || b.request_date || b.audit_date).getTime()
         return dateB - dateA
       })
     }
@@ -370,19 +370,30 @@ export default function DCCFolderContent({
     (car.recipient && car.recipient.toLowerCase().includes(queryClean)) ||
     (car.requesting_department && car.requesting_department.toLowerCase().includes(queryClean)) ||
     (car.responsible_department && car.responsible_department.toLowerCase().includes(queryClean)) ||
+    (car.type_of_nonconformance && car.type_of_nonconformance.toLowerCase().includes(queryClean)) ||
     (car.product_material_name && car.product_material_name.toLowerCase().includes(queryClean)) ||
     (car.model_type && car.model_type.toLowerCase().includes(queryClean)) ||
     (car.control_no && car.control_no.toLowerCase().includes(queryClean)) ||
-    (car.details_of_nonconformance && car.details_of_nonconformance.toLowerCase().includes(queryClean))
+    (car.details_of_nonconformance && car.details_of_nonconformance.toLowerCase().includes(queryClean)) ||
+    (car.root_cause_analysis && car.root_cause_analysis.toLowerCase().includes(queryClean)) ||
+    (car.corrective_action && car.corrective_action.toLowerCase().includes(queryClean)) ||
+    (car.preventive_action && car.preventive_action.toLowerCase().includes(queryClean))
   )
 
   const filteredQddrReports = qddrReports.filter((q) =>
     !queryClean ||
     (q.reference_no && q.reference_no.toLowerCase().includes(queryClean)) ||
-    (q.recipient_name && q.recipient_name.toLowerCase().includes(queryClean)) ||
-    (q.discovery_location && q.discovery_location.toLowerCase().includes(queryClean)) ||
-    (q.defect_description && q.defect_description.toLowerCase().includes(queryClean)) ||
-    (q.root_cause_analysis && q.root_cause_analysis.toLowerCase().includes(queryClean))
+    (q.location && q.location.toLowerCase().includes(queryClean)) ||
+    (q.trucker_broker && q.trucker_broker.toLowerCase().includes(queryClean)) ||
+    (q.plate_number && q.plate_number.toLowerCase().includes(queryClean)) ||
+    (q.po_reference && q.po_reference.toLowerCase().includes(queryClean)) ||
+    (q.brand_supplier && q.brand_supplier.toLowerCase().includes(queryClean)) ||
+    (q.material_description && q.material_description.toLowerCase().includes(queryClean)) ||
+    (q.material_code && q.material_code.toLowerCase().includes(queryClean)) ||
+    (q.batch_code_su_number && q.batch_code_su_number.toLowerCase().includes(queryClean)) ||
+    (q.reason_of_discrepancy && q.reason_of_discrepancy.toLowerCase().includes(queryClean)) ||
+    (q.corrective_action && q.corrective_action.toLowerCase().includes(queryClean)) ||
+    (q.preventive_action && q.preventive_action.toLowerCase().includes(queryClean))
   )
 
   const filteredAuditReports = auditReports.filter((audit) =>
@@ -812,6 +823,10 @@ export default function DCCFolderContent({
                     {selectedDocument._type === 'CAR' && (
                       <>
                         <tr>
+                          <td className="dcc-details-label-col">Issue Type</td>
+                          <td className="dcc-details-value-col">{selectedDocument.type_of_nonconformance || '—'}</td>
+                        </tr>
+                        <tr>
                           <td className="dcc-details-label-col">Requestor</td>
                           <td className="dcc-details-value-col">{selectedDocument.requestor || '—'}</td>
                         </tr>
@@ -845,6 +860,14 @@ export default function DCCFolderContent({
 
                     {selectedDocument._type === 'QDDR' && (
                       <>
+                        <tr>
+                          <td className="dcc-details-label-col">Location</td>
+                          <td className="dcc-details-value-col">{selectedDocument.location || '—'}</td>
+                        </tr>
+                        <tr>
+                          <td className="dcc-details-label-col">Material</td>
+                          <td className="dcc-details-value-col">{selectedDocument.material_description || '—'}</td>
+                        </tr>
                         <tr>
                           <td className="dcc-details-label-col">PO Ref</td>
                           <td className="dcc-details-value-col">{selectedDocument.po_reference || '—'}</td>
