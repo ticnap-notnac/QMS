@@ -162,7 +162,7 @@
   gap: 8px;
   align-items: center;
   margin: 80px auto 20px auto;
-  max-width: 420px;
+  max-width: 520px;
   text-align: center;
   animation: rise 0.7s ease-out;
 }
@@ -207,11 +207,12 @@
 }
 
 .brand-subtitle {
-  font-size: 14px;
-  letter-spacing: 2px;
+  font-size: 13.5px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   color: #64748b;
   margin: 0;
+  font-weight: 500;
 }
 
 .layout {

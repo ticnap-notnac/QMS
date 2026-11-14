@@ -381,7 +381,7 @@ function AppInner() {
           <div className="logo">
             <img src="/resq_logo_transparent.png" alt="RESQ Logo" className="logo-img" />
           </div>
-          <p className="brand-subtitle">QUALITY MANAGEMENT SYSTEM</p>
+          <p className="brand-subtitle">NON-CONFORMANCE QUALITY MANAGEMENT REPORT</p>
         </header>
       ) : null}
 
