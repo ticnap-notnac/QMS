@@ -1,6 +1,6 @@
 import { getRequestActor } from '../lib/requestUtils.js'
 import { writeAudit } from '../lib/audit.js'
-import { createQddrReport, updateQddrReport } from '../services/qddrService.js'
+import { createQddrReport, updateQddrReport, rateQddrReport } from '../services/qddrService.js'
 import { suggestClausesForQddr } from '../services/clauseMatchService.js'
 import { safeCreateNotificationsForRoles } from '../lib/notificationHelper.js'
 
@@ -108,6 +108,24 @@ export async function getQddrRecurringTrends(req, res, next) {
     const { fetchRecurringTrends } = await import('../services/trendClusteringService.js')
     const clusters = await fetchRecurringTrends({ type: 'QDDR', days: Number(days) })
     return res.json(clusters.map(c => c.reports))
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function rateQddr(req, res, next) {
+  const actorAuthId = getRequestActor(req)
+  if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+  const { id } = req.params
+  const { rating } = req.body
+
+  try {
+    const { data } = await rateQddrReport({
+      qddrId: parseInt(id, 10),
+      rating,
+      actorAuthId
+    })
+    return res.json(data)
   } catch (err) {
     next(err)
   }

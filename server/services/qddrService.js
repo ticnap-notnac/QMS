@@ -729,6 +729,20 @@ export async function autoPromoteQddrToCaseRepository(qddr) {
       if (qddr[k]) defectCategories.push(k)
     }
 
+    // Compute effectiveness_score from report_ratings (sum / count / 5) or neutral baseline (0.60)
+    let effectivenessScore = 0.6
+    const { data: ratingRows } = await supabase
+      .from('report_ratings')
+      .select('rating')
+      .eq('report_type', 'QDDR')
+      .eq('report_id', qddr.id)
+
+    if (Array.isArray(ratingRows) && ratingRows.length > 0) {
+      const sum = ratingRows.reduce((acc, r) => acc + Number(r.rating || 0), 0)
+      const avg = sum / ratingRows.length
+      effectivenessScore = Number((avg / 5).toFixed(4))
+    }
+
     const record = {
       qddr_id: qddr.id,
       reference_no: qddr.reference_no,
@@ -738,7 +752,7 @@ export async function autoPromoteQddrToCaseRepository(qddr) {
       corrective_action: qddr.corrective_action || 'Approved for disposal',
       preventive_action: qddr.preventive_action || null,
       disposal_approved: true,
-      effectiveness_score: 1.0,
+      effectiveness_score: effectivenessScore,
       embedding: embedding ? `[${embedding.join(',')}]` : null
     }
 
@@ -760,5 +774,90 @@ export async function autoPromoteQddrToCaseRepository(qddr) {
     }
   } catch (err) {
     logger.warn('[qddrService] autoPromoteQddrToCaseRepository warning:', err.message)
+  }
+}
+
+/**
+ * Allows any user with access to rate a closed QDDR report (1-5 stars),
+ * computes Average = (Sum of Ratings) / (Number of Raters), and updates
+ * `qddr_reports` and `qddr_case_repository.effectiveness_score`.
+ */
+export async function rateQddrReport({ qddrId, rating, actorAuthId }) {
+  const num = Number(rating)
+  const parsedRating = Number.isFinite(num) && num >= 1 && num <= 5 ? Math.round(num) : null
+  if (!parsedRating) {
+    const err = new Error('Rating must be between 1 and 5 stars.')
+    err.status = 400
+    throw err
+  }
+
+  const { data: existing, error: findError } = await supabase
+    .from('qddr_reports')
+    .select('id, reference_no, status')
+    .eq('id', qddrId)
+    .maybeSingle()
+
+  if (findError) throw findError
+  if (!existing) {
+    const err = new Error('QDDR report not found.')
+    err.status = 404
+    throw err
+  }
+
+  if (String(existing.status || '').toLowerCase() !== 'closed') {
+    const err = new Error('Only closed QDDR reports can be rated.')
+    err.status = 400
+    throw err
+  }
+
+  const { error: upsertErr } = await supabase
+    .from('report_ratings')
+    .upsert(
+      [{
+        report_type: 'QDDR',
+        report_id: Number(qddrId),
+        user_auth_id: actorAuthId,
+        rating: parsedRating,
+        updated_at: new Date().toISOString()
+      }],
+      { onConflict: 'report_type,report_id,user_auth_id' }
+    )
+
+  if (upsertErr) throw upsertErr
+
+  const { data: allRatings, error: fetchErr } = await supabase
+    .from('report_ratings')
+    .select('rating')
+    .eq('report_type', 'QDDR')
+    .eq('report_id', Number(qddrId))
+
+  if (fetchErr) throw fetchErr
+
+  const ratingsCount = (allRatings || []).length
+  const sumRatings = (allRatings || []).reduce((acc, r) => acc + Number(r.rating || 0), 0)
+  const averageRating = ratingsCount > 0 ? Number((sumRatings / ratingsCount).toFixed(2)) : parsedRating
+  const effectivenessScore = Number((averageRating / 5).toFixed(4))
+
+  await supabase
+    .from('qddr_reports')
+    .update({
+      average_rating: averageRating,
+      ratings_count: ratingsCount
+    })
+    .eq('id', Number(qddrId))
+
+  await supabase
+    .from('qddr_case_repository')
+    .update({ effectiveness_score: effectivenessScore })
+    .eq('qddr_id', Number(qddrId))
+
+  return {
+    data: {
+      qddr_id: Number(qddrId),
+      my_rating: parsedRating,
+      average_rating: averageRating,
+      ratings_count: ratingsCount,
+      effectiveness_score: effectivenessScore
+    }
   }
 }

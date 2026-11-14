@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { createCar, submitCapa, verifyCar, getCarsForClause, getCarById, editCar, deleteCar, getCarRecurringTrends } from '../controllers/carController.js'
+import { createCar, submitCapa, verifyCar, getCarsForClause, getCarById, editCar, deleteCar, getCarRecurringTrends, rateCar } from '../controllers/carController.js'
 import { suggestClauses } from '../controllers/clauseMatchController.js'
 import { requirePermission } from '../middlewares/roleMiddleware.js'
 import { validateRequest } from '../middlewares/validateRequest.js'
@@ -13,6 +13,7 @@ router.get('/car/:id', requirePermission(['view_car_reports', 'reports', 'dcc', 
 router.post('/car/suggest-clauses', requirePermission(['create_car_report', 'create_report', 'reports']), suggestClauses)
 router.put('/car/:id/capa', requirePermission('submit_capa'), validateRequest(submitCapaSchema), submitCapa)
 router.put('/car/:id/verify', requirePermission('verify_car'), validateRequest(verifyCarSchema), verifyCar)
+router.post('/car/:id/rate', requirePermission(['view_car_reports', 'reports', 'dcc']), rateCar)
 router.get('/car/clause/:clauseId/cars', requirePermission(['view_car_reports', 'reports', 'dcc', 'iso']), getCarsForClause)
 
 router.put('/car/:id', requirePermission('edit_delete_report'), editCar)

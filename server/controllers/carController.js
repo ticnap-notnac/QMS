@@ -150,3 +150,22 @@ export async function getCarRecurringTrends(req, res, next) {
     next(err)
   }
 }
+
+export async function rateCar(req, res, next) {
+  const actorAuthId = getRequestActor(req)
+  if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+  const { id } = req.params
+  const { rating } = req.body
+
+  try {
+    const { rateCarReport } = await import('../services/carService.js')
+    const { data } = await rateCarReport({
+      carId: parseInt(id, 10),
+      rating,
+      actorAuthId
+    })
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}

@@ -453,9 +453,18 @@ export async function verifyCarEffectiveness({ carId, outcome, notes, verificati
   if (error) throw error
 
   if (status === CAR_STATUS.CLOSED && data) {
-    autoPromoteCarToCaseRepository(data).catch((err) => {
-      console.warn('[carService] Failed to auto-promote CAR to case repository:', err.message || err)
-    })
+    const initialStarRating = parseStarRatingValue(verificationRating)
+    autoPromoteCarToCaseRepository(data)
+      .then(async () => {
+        if (initialStarRating && actorAuthId) {
+          await rateCarReport({ carId: data.id, rating: initialStarRating, actorAuthId }).catch((rateErr) => {
+            console.warn('[carService] Failed to seed initial VoE rating:', rateErr.message || rateErr)
+          })
+        }
+      })
+      .catch((err) => {
+        console.warn('[carService] Failed to auto-promote CAR to case repository:', err.message || err)
+      })
   }
 
   try {
@@ -724,6 +733,19 @@ export async function updateCarReport({ carId, body = {}, actorAuthId }) {
   return { data }
 }
 
+function parseStarRatingValue(val) {
+  if (val === null || val === undefined || val === '') return null
+  const num = Number(val)
+  if (Number.isFinite(num) && num >= 1 && num <= 5) return Math.round(num)
+  const norm = String(val).trim().toLowerCase()
+  if (norm === 'excellent') return 5
+  if (norm === 'good') return 4
+  if (norm === 'ok' || norm === 'fair') return 3
+  if (norm === 'poor') return 2
+  if (norm === 'very poor') return 1
+  return null
+}
+
 /**
  * Automatically promotes a closed CAR report into the `car_case_repository`
  * for Case-Based Reasoning (CBR) retrieval and vector similarity search.
@@ -749,6 +771,25 @@ export async function autoPromoteCarToCaseRepository(car) {
 
     const issueCategory = normalizeText(car.type_of_nonconformance) || 'general'
 
+    // Compute effectiveness_score from report_ratings (sum / count / 5) or baseline
+    let effectivenessScore = 0.6
+    const mappedVoeRating = parseStarRatingValue(car.verification_rating)
+    if (mappedVoeRating) {
+      effectivenessScore = Number((mappedVoeRating / 5).toFixed(4))
+    }
+
+    const { data: ratingRows } = await supabase
+      .from('report_ratings')
+      .select('rating')
+      .eq('report_type', 'CAR')
+      .eq('report_id', car.id)
+
+    if (Array.isArray(ratingRows) && ratingRows.length > 0) {
+      const sum = ratingRows.reduce((acc, r) => acc + Number(r.rating || 0), 0)
+      const avg = sum / ratingRows.length
+      effectivenessScore = Number((avg / 5).toFixed(4))
+    }
+
     const record = {
       car_id: car.id,
       reference_no: car.reference_no,
@@ -760,7 +801,7 @@ export async function autoPromoteCarToCaseRepository(car) {
       requesting_department: car.requesting_department || null,
       responsible_department: car.responsible_department || null,
       product_material_name: car.product_material_name || null,
-      effectiveness_score: 1.0,
+      effectiveness_score: effectivenessScore,
       embedding: embedding ? `[${embedding.join(',')}]` : null
     }
 
@@ -782,5 +823,91 @@ export async function autoPromoteCarToCaseRepository(car) {
     }
   } catch (err) {
     console.warn('[carService] autoPromoteCarToCaseRepository warning:', err.message || err)
+  }
+}
+
+/**
+ * Allows any user with access to rate a closed CAR report (1-5 stars),
+ * computes Average = (Sum of Ratings) / (Number of Raters), and updates
+ * `car_reports` and `car_case_repository.effectiveness_score`.
+ */
+export async function rateCarReport({ carId, rating, actorAuthId }) {
+  const parsedRating = parseStarRatingValue(rating)
+  if (!parsedRating) {
+    const err = new Error('Rating must be between 1 and 5 stars.')
+    err.status = 400
+    throw err
+  }
+
+  const { data: existing, error: findError } = await supabase
+    .from('car_reports')
+    .select('id, reference_no, status')
+    .eq('id', carId)
+    .maybeSingle()
+
+  if (findError) throw findError
+  if (!existing) {
+    const err = new Error('CAR report not found.')
+    err.status = 404
+    throw err
+  }
+
+  if (String(existing.status || '').toLowerCase() !== CAR_STATUS.CLOSED) {
+    const err = new Error('Only closed CAR reports can be rated.')
+    err.status = 400
+    throw err
+  }
+
+  const { error: upsertErr } = await supabase
+    .from('report_ratings')
+    .upsert(
+      [{
+        report_type: 'CAR',
+        report_id: Number(carId),
+        user_auth_id: actorAuthId,
+        rating: parsedRating,
+        updated_at: new Date().toISOString()
+      }],
+      { onConflict: 'report_type,report_id,user_auth_id' }
+    )
+
+  if (upsertErr) throw upsertErr
+
+  const { data: allRatings, error: fetchErr } = await supabase
+    .from('report_ratings')
+    .select('rating')
+    .eq('report_type', 'CAR')
+    .eq('report_id', Number(carId))
+
+  if (fetchErr) throw fetchErr
+
+  const ratingsCount = (allRatings || []).length
+  const sumRatings = (allRatings || []).reduce((acc, r) => acc + Number(r.rating || 0), 0)
+  const averageRating = ratingsCount > 0 ? Number((sumRatings / ratingsCount).toFixed(2)) : parsedRating
+  const effectivenessScore = Number((averageRating / 5).toFixed(4))
+
+  // Update summary columns on car_reports (ignore error if migration 036 columns not yet added)
+  await supabase
+    .from('car_reports')
+    .update({
+      average_rating: averageRating,
+      ratings_count: ratingsCount
+    })
+    .eq('id', Number(carId))
+
+  // Update effectiveness_score in car_case_repository
+  await supabase
+    .from('car_case_repository')
+    .update({ effectiveness_score: effectivenessScore })
+    .eq('car_id', Number(carId))
+
+  return {
+    data: {
+      car_id: Number(carId),
+      my_rating: parsedRating,
+      average_rating: averageRating,
+      ratings_count: ratingsCount,
+      effectiveness_score: effectivenessScore
+    }
   }
 }

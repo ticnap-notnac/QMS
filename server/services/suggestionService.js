@@ -178,19 +178,34 @@ export async function generateAiSuggestionFromText({
   if (isQddr) {
     const qddrCandidates = await fetchQddrCaseCandidates(embedding)
 
-    // Check if we have a strong vector similarity or keyword match
+    // Filter out low-rated cases (< 2.5 / 5 stars => effectiveness_score < 0.50) and blend similarity (80%) + effectiveness (20%)
     if (qddrCandidates.length > 0) {
-      const topMatch = qddrCandidates[0]
-      const simScore = topMatch.similarity ?? 0
+      const queryKeywords = extractKeywords(combinedQueryText)
+      const scoredQddrCandidates = qddrCandidates
+        .filter(q => Number(q.effectiveness_score ?? 0.6) >= 0.5)
+        .map(q => {
+          const vectorSim = Number(q.similarity ?? 0)
+          const caseKeywords = extractKeywords(`${q.reason_of_discrepancy || ''} ${q.material_description || ''}`)
+          const keywordSim = jaccardSimilarity(queryKeywords, caseKeywords)
+          const baseSim = Math.max(vectorSim, (vectorSim * 0.75) + (keywordSim * 0.25))
+          const rawEff = Number(q.effectiveness_score ?? 0.6)
+          const effNorm = rawEff > 1 ? Math.min(rawEff / 5, 1) : Math.min(Math.max(rawEff, 0), 1)
+          const finalCbrScore = (baseSim * 0.80) + (effNorm * 0.20)
+          return { ...q, baseSim, effNorm, finalCbrScore }
+        })
+        .sort((a, b) => b.finalCbrScore - a.finalCbrScore)
 
-      // If semantic similarity is strong enough
-      if (simScore >= MIN_CBR_SCORE && topMatch.corrective_action) {
+      const topMatch = scoredQddrCandidates[0]
+
+      // If semantic/keyword similarity is strong enough, use the highest-rated matching case
+      if (topMatch && topMatch.baseSim >= MIN_CBR_SCORE && topMatch.corrective_action) {
+        const starDisplay = Number((topMatch.effNorm * 5).toFixed(1))
         return {
           suggestion: topMatch.corrective_action,
           preventive_suggestion: topMatch.preventive_action || 'Implement standard receiving inspection checks.',
-          confidence: Math.min(Math.max(simScore, 0.94), 0.99),
+          confidence: Math.min(Math.max(topMatch.finalCbrScore, 0.94), 0.99),
           sourceDetails: 'QDDR Case Repository (CBR)',
-          matchedFeatures: ['discrepancy matching', 'disposal resolution']
+          matchedFeatures: ['discrepancy matching', 'disposal resolution', `★ ${starDisplay}/5 rated solution`]
         }
       }
     }
@@ -251,6 +266,7 @@ Respond ONLY in this JSON format with no markdown:
     const rcaKeywords = cleanRca ? extractKeywords(cleanRca) : []
 
     const scoredCandidates = carCandidates
+      .filter(c => Number(c.effectiveness_score ?? 0.6) >= 0.5)
       .map(c => {
         const vectorSim = Number(c.similarity ?? 0)
         const caseKeywords = extractKeywords(`${c.details_of_nonconformance || ''} ${c.root_cause_analysis || ''}`)
@@ -259,15 +275,19 @@ Respond ONLY in this JSON format with no markdown:
         const rcaOverlap = rcaKeywords.length > 0 && caseRcaKeywords.length > 0
           ? jaccardSimilarity(rcaKeywords, caseRcaKeywords)
           : 0
-        const compositeScore = Math.max(vectorSim, (vectorSim * 0.65) + (keywordSim * 0.2) + (rcaOverlap * 0.15))
-        return { ...c, compositeScore, rcaOverlap }
+        const baseSim = Math.max(vectorSim, (vectorSim * 0.65) + (keywordSim * 0.2) + (rcaOverlap * 0.15))
+        const rawEff = Number(c.effectiveness_score ?? 0.6)
+        const effNorm = rawEff > 1 ? Math.min(rawEff / 5, 1) : Math.min(Math.max(rawEff, 0), 1)
+        const compositeScore = (baseSim * 0.80) + (effNorm * 0.20)
+        return { ...c, baseSim, effNorm, compositeScore, rcaOverlap }
       })
       .sort((a, b) => b.compositeScore - a.compositeScore)
 
     const topMatch = scoredCandidates[0]
-    const simScore = topMatch.compositeScore ?? 0
+    const simScore = topMatch?.baseSim ?? 0
 
-    if (simScore >= MIN_CBR_SCORE && topMatch.corrective_action) {
+    if (topMatch && simScore >= MIN_CBR_SCORE && topMatch.corrective_action) {
+      const starDisplay = Number((topMatch.effNorm * 5).toFixed(1))
       const rcaFeatureLabel =
         rcaMethod === 'fishbone'
           ? 'Fishbone (6M) RCA matching'
@@ -278,11 +298,11 @@ Respond ONLY in this JSON format with no markdown:
       return {
         suggestion: topMatch.corrective_action,
         preventive_suggestion: topMatch.preventive_action || 'Establish supervisory verification checkpoints.',
-        confidence: Math.min(Math.max(simScore, 0.94), 0.99),
+        confidence: Math.min(Math.max(topMatch.compositeScore, 0.94), 0.99),
         sourceDetails: 'CAR Case Repository (CBR)',
         matchedFeatures: cleanRca
-          ? [rcaFeatureLabel, 'non-conformance semantic matching', 'verified CAPA']
-          : ['non-conformance semantic matching', 'verified CAPA']
+          ? [rcaFeatureLabel, 'non-conformance semantic matching', `★ ${starDisplay}/5 rated CAPA`]
+          : ['non-conformance semantic matching', `★ ${starDisplay}/5 rated CAPA`]
       }
     }
   }
