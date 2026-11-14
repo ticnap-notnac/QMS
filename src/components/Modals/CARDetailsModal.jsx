@@ -15,6 +15,14 @@ export default function CARDetailsModal({
   // States
   rootCause,
   setRootCause,
+  rcaMethod = '5whys',
+  setRcaMethod,
+  fiveWhys = {},
+  handleFiveWhyChange,
+  fishbone = {},
+  handleFishboneChange,
+  rootCauseSummary = '',
+  handleRootCauseSummaryChange,
   correctiveAction,
   setCorrectiveAction,
   preventiveAction,
@@ -217,11 +225,176 @@ export default function CARDetailsModal({
           {/* CAPA SECTION */}
           {car.status === 'open' && !readOnly ? (
             canSubmitCapa ? (
-              <form onSubmit={handleCapaSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', borderTop: '1px solid #cbd5e1', paddingTop: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 4px 0' }}>
+              <form onSubmit={handleCapaSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid #cbd5e1', paddingTop: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                   <h4 style={{ color: '#0891b2', fontSize: '14px', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <CheckCircle size={16} /> Implement CAPA Action Plan
                   </h4>
+                </div>
+
+                {/* STEP 1: ROOT CAUSE ANALYSIS (5 WHYS / FISHBONE / BOTH) */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  padding: '14px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <label className="label-field" style={{ marginBottom: '2px', display: 'block', color: '#1A435A', fontWeight: 600 }}>
+                        1. Root Cause Analysis (RCA)
+                      </label>
+                      <span style={{ fontSize: '11px', color: '#64748b' }}>
+                        Investigate the root cause using 5 Whys, Fishbone (6M), or Both. Your RCA will serve as the basis for CBR action suggestions.
+                      </span>
+                    </div>
+
+                    {setRcaMethod && (
+                      <div style={{
+                        display: 'inline-flex',
+                        background: '#e2e8f0',
+                        padding: '3px',
+                        borderRadius: '6px',
+                        gap: '2px'
+                      }}>
+                        {[
+                          { id: '5whys', label: '5 Whys' },
+                          { id: 'fishbone', label: 'Fishbone (6M)' },
+                          { id: 'both', label: 'Both' }
+                        ].map((tab) => {
+                          const active = rcaMethod === tab.id
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => setRcaMethod(tab.id)}
+                              style={{
+                                padding: '4px 10px',
+                                fontSize: '11px',
+                                fontWeight: active ? 600 : 500,
+                                borderRadius: '4px',
+                                border: 'none',
+                                cursor: 'pointer',
+                                background: active ? '#ffffff' : 'transparent',
+                                color: active ? '#0891b2' : '#475569',
+                                boxShadow: active ? '0 1px 2px rgba(0,0,0,0.08)' : 'none'
+                              }}
+                            >
+                              {tab.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Fishbone (6M) Diagram Inputs */}
+                  {(rcaMethod === 'fishbone' || rcaMethod === 'both') && handleFishboneChange && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#0891b2', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Fishbone (6M) Contributing Factors
+                      </span>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                        gap: '8px'
+                      }}>
+                        {[
+                          { key: 'man', label: 'Man (People)', placeholder: 'e.g. Training gap, operator handling...' },
+                          { key: 'machine', label: 'Machine (Equipment)', placeholder: 'e.g. Equipment setting, tool wear...' },
+                          { key: 'material', label: 'Material', placeholder: 'e.g. Raw material defect, packaging...' },
+                          { key: 'method', label: 'Method (Process)', placeholder: 'e.g. Unclear SOP, skipped check...' },
+                          { key: 'measurement', label: 'Measurement', placeholder: 'e.g. Calibration, inspection error...' },
+                          { key: 'environment', label: 'Environment', placeholder: 'e.g. Temperature, humidity, storage...' }
+                        ].map((bone) => (
+                          <div key={bone.key} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                            <label style={{ fontSize: '11px', fontWeight: 600, color: '#334155' }}>
+                              {bone.label}
+                            </label>
+                            <input
+                              type="text"
+                              value={fishbone[bone.key] || ''}
+                              onChange={(e) => handleFishboneChange(bone.key, e.target.value)}
+                              placeholder={bone.placeholder}
+                              className="input-field"
+                              style={{ padding: '6px 8px', fontSize: '12px', background: '#ffffff' }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 5 Whys Method Inputs */}
+                  {(rcaMethod === '5whys' || rcaMethod === 'both') && handleFiveWhyChange && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#0891b2', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        5 Whys Cause Chain
+                      </span>
+                      {[1, 2, 3, 4, 5].map((num) => (
+                        <div key={num} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{
+                            minWidth: '54px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: '#0891b2',
+                            background: 'rgba(8, 145, 178, 0.1)',
+                            border: '1px solid rgba(8, 145, 178, 0.25)',
+                            borderRadius: '4px',
+                            padding: '4px 6px',
+                            textAlign: 'center'
+                          }}>
+                            Why {num}?
+                          </span>
+                          <input
+                            type="text"
+                            value={fiveWhys[`why${num}`] || ''}
+                            onChange={(e) => handleFiveWhyChange(`why${num}`, e.target.value)}
+                            placeholder={
+                              num === 1
+                                ? 'Why did the non-conformance occur?'
+                                : `Why did Why ${num - 1} happen?${num >= 4 ? ' (Optional if root cause already reached)' : ''}`
+                            }
+                            className="input-field"
+                            style={{ flex: 1, padding: '6px 8px', fontSize: '12px', background: '#ffffff' }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Concluding Root Cause Summary */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <label className="label-field" style={{ fontSize: '12px' }}>
+                      Concluding Root Cause Statement:
+                    </label>
+                    <textarea
+                      value={handleRootCauseSummaryChange ? rootCauseSummary : rootCause}
+                      onChange={(e) =>
+                        handleRootCauseSummaryChange
+                          ? handleRootCauseSummaryChange(e.target.value)
+                          : setRootCause(e.target.value)
+                      }
+                      className="input-field"
+                      placeholder="Summarize the primary root cause identified from your 5 Whys / Fishbone analysis..."
+                      style={{ height: '64px', padding: '8px', fontSize: '13px', resize: 'none', background: '#ffffff' }}
+                    />
+                  </div>
+                </div>
+
+                {/* STEP 2: CBR SUGGESTED CORRECTIVE & PREVENTIVE ACTIONS */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginTop: '2px' }}>
+                  <div>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#1A435A' }}>
+                      2. Corrective & Preventive Actions
+                    </span>
+                    <span style={{ display: 'block', fontSize: '11px', color: '#64748b' }}>
+                      Uses Non-Conformance Details + your Root Cause Analysis above to retrieve matching past cases.
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={handleSuggestActions}
@@ -231,21 +404,22 @@ export default function CARDetailsModal({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
-                      padding: '4px 10px',
+                      padding: '5px 12px',
                       fontSize: '12px',
+                      fontWeight: 500,
                       background: 'rgba(8, 145, 178, 0.12)',
                       border: '1px solid rgba(8, 145, 178, 0.3)',
                       color: '#0891b2',
                       borderRadius: '4px',
-                      cursor: 'pointer'
+                      cursor: suggesting ? 'not-allowed' : 'pointer'
                     }}
                   >
-                    <Sparkles size={13} /> {suggesting ? 'Analyzing...' : 'Suggest Actions (CBR)'}
+                    <Sparkles size={13} /> {suggesting ? 'Matching RCA & Cases...' : 'Suggest Actions from RCA (CBR)'}
                   </button>
                 </div>
 
                 {suggestionMeta && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                     <span style={{
                       fontSize: '11px', padding: '2px 8px', borderRadius: '99px',
                       background: 'rgba(59,130,246,0.1)', color: '#2563eb',
@@ -273,18 +447,6 @@ export default function CARDetailsModal({
                     )}
                   </div>
                 )}
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label className="label-field">Root Cause Analysis (RCA)</label>
-                  <textarea
-                    value={rootCause}
-                    onChange={(e) => setRootCause(e.target.value)}
-                    className="input-field"
-                    placeholder="Analyze why the non-conformance occurred..."
-                    required
-                    style={{ height: '80px', padding: '8px', fontSize: '13px', resize: 'none' }}
-                  />
-                </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label className="label-field">Immediate Corrective Action (Correction)</label>
@@ -344,7 +506,7 @@ export default function CARDetailsModal({
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span style={{ fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase' }}>Root Cause Analysis</span>
-                    <div style={{ padding: '10px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#1A435A' }}>
+                    <div style={{ padding: '10px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', color: '#1A435A', whiteSpace: 'pre-line' }}>
                       {car.root_cause_analysis}
                     </div>
                   </div>

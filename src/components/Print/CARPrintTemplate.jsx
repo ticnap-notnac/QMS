@@ -133,7 +133,7 @@ const CARPrintTemplate = forwardRef(({ report }, ref) => {
                 <td colSpan="3" style={{ padding: '12px 15px' }}>
                   <div style={{ marginBottom: '8px' }}>
                     <span className="print-label">Root Cause Analysis:</span>
-                    <div className="details-text" style={{ minHeight: '30px' }}>{report.root_cause_analysis || '—'}</div>
+                    <div className="details-text" style={{ minHeight: '30px', whiteSpace: 'pre-line' }}>{report.root_cause_analysis || '—'}</div>
                   </div>
                   <div style={{ marginBottom: '8px' }}>
                     <span className="print-label">Immediate Corrective Action:</span>
