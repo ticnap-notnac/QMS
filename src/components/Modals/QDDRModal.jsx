@@ -219,43 +219,18 @@ function QDDRModal({
         <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', paddingLeft: isMobile ? '14px' : '28px', paddingRight: isMobile ? '14px' : '28px', paddingBottom: isMobile ? '14px' : '24px' }}>
           <form className="modal-form" onSubmit={onSubmit} style={{ gap: isMobile ? '10px' : '16px', display: 'flex', flexDirection: 'column' }}>
 
-              {/* Row 1: Location, Date, Time */}
-              <div className="qddr-form-row-3-col">
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <SearchableDropdown
-                    label="Location:"
-                    value={form.location}
-                    onValueChange={(val) => handleChange('location', val)}
-                    options={locations}
-                    loading={locationsLoading}
-                    placeholder="Search location..."
-                    onSelectOption={(opt) => handleChange('location', opt.label)}
-                    required={true}
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label className="label-field">
-                    Date:
-                  </label>
-                  <input
-                    type="date"
-                    value={form.date}
-                    onChange={(e) => handleChange('date', e.target.value)}
-                    max="9999-12-31"
-                    className="input-field"
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label className="label-field">
-                    Time:
-                  </label>
-                  <input
-                    type="time"
-                    value={form.time}
-                    onChange={(e) => handleChange('time', e.target.value)}
-                    className="input-field"
-                  />
-                </div>
+              {/* Row 1: Location (Date and Time are automatically recorded on submission) */}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <SearchableDropdown
+                  label="Location:"
+                  value={form.location}
+                  onValueChange={(val) => handleChange('location', val)}
+                  options={locations}
+                  loading={locationsLoading}
+                  placeholder="Search location..."
+                  onSelectOption={(opt) => handleChange('location', opt.label)}
+                  required={true}
+                />
               </div>
 
               {/* Row 2: Trucker/Broker, Plate Number, Container Number */}

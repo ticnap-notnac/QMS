@@ -207,6 +207,10 @@ export async function createQddrReport({ body, reportedByAuthId }) {
   let data = null
   let error = null
 
+  const now = new Date()
+  const resolvedDate = date || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const resolvedTime = time || `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
+
   for (let attempt = 1; attempt <= 3; attempt++) {
     if (attempt > 1) {
       generatedReferenceNo = await getNextRef()
@@ -215,8 +219,8 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     const payload = {
       reference_no: generatedReferenceNo,
       location,
-      date: date ? date : null,
-      time: time ? time : null,
+      date: resolvedDate,
+      time: resolvedTime,
       trucker_broker,
       plate_number,
       container_number,
