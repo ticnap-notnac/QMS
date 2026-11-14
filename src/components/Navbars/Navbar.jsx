@@ -231,7 +231,7 @@ export default function Navbar({
               </div>
               <div className="sidebar-user-info">
                 <span className="sidebar-user-name" title={userName}>{userName || 'Name of the User'}</span>
-                <span className="sidebar-user-position">{userPosition || 'Position'}</span>
+                <span className="sidebar-user-position">{String(userRole || userPosition || 'Role').replace(/_/g, ' ')}</span>
               </div>
             </div>
 
