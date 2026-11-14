@@ -1,11 +1,17 @@
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X as CloseIcon, Clipboard, CheckCircle, AlertTriangle, User, Calendar, Sparkles } from 'lucide-react'
+import { X as CloseIcon, Clipboard, CheckCircle, AlertTriangle, User, Calendar, Sparkles, Star } from 'lucide-react'
 import { isAdminRole } from '@/utils/roleUtils.js'
+import { useAuth } from '@/hooks/useAuth'
+import { rateCarReport } from '@/services/carService'
+import StarRatingAction from '../UI/StarRatingAction.jsx'
 
 export default function CARDetailsModal({
   isOpen,
   onClose,
   car,
+  onRateCar,
+  authUserId,
   userRole,
   userPermissions,
   userDepartmentName,
@@ -45,7 +51,36 @@ export default function CARDetailsModal({
   handleCapaSubmit,
   handleVerificationSubmit
 }) {
+  const { user: authUser } = useAuth()
+  const resolvedAuthId = authUserId || authUser?.id || ''
+
+  const [localMyRating, setLocalMyRating] = useState(null)
+  const [localAvgRating, setLocalAvgRating] = useState(null)
+  const [localRatingsCount, setLocalRatingsCount] = useState(0)
+
+  useEffect(() => {
+    if (car) {
+      setLocalMyRating(car.my_rating ?? null)
+      setLocalAvgRating(car.average_rating ?? null)
+      setLocalRatingsCount(Number(car.ratings_count || 0))
+    }
+  }, [car])
+
   if (!isOpen || !car) return null
+
+  const handleModalRateCar = async (starValue) => {
+    if (typeof onRateCar === 'function') {
+      const res = await onRateCar(car.id, starValue)
+      setLocalMyRating(res?.my_rating ?? starValue)
+      setLocalAvgRating(res?.average_rating ?? starValue)
+      setLocalRatingsCount(res?.ratings_count ?? 1)
+    } else if (resolvedAuthId) {
+      const res = await rateCarReport(car.id, starValue, resolvedAuthId)
+      setLocalMyRating(res?.my_rating ?? starValue)
+      setLocalAvgRating(res?.average_rating ?? starValue)
+      setLocalRatingsCount(res?.ratings_count ?? 1)
+    }
+  }
 
   const normalize = (value) => String(value || '').trim().toLowerCase()
   const resolvedUserDepartmentName = normalize(userDepartmentName || userDepartmentId)
@@ -686,6 +721,37 @@ export default function CARDetailsModal({
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Multi-User 5-Star Rating Section when Closed */}
+          {String(car.status || '').toLowerCase() === 'closed' && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '12px',
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: '10px',
+              padding: '14px 16px'
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Star size={15} color="#eab308" fill="#eab308" /> Rate CAPA Effectiveness (CBR Feedback)
+                </span>
+                <span style={{ fontSize: '12px', color: '#b45309' }}>
+                  Your 1–5 star rating updates the overall case effectiveness score for future CBR suggestions.
+                </span>
+              </div>
+              <StarRatingAction
+                myRating={localMyRating}
+                averageRating={localAvgRating}
+                ratingsCount={localRatingsCount}
+                onRate={handleModalRateCar}
+                variant="detailed"
+              />
             </div>
           )}
 

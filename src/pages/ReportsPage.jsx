@@ -427,6 +427,7 @@ export default function ReportsPage({
         onClose={logic.closeQddrDetails}
         qddr={logic.selectedQddr}
         onUpdateQddr={logic.updateQddr}
+        onRateQddr={logic.handleRateQddr}
         users={logic.users}
         usersLoading={logic.usersLoading}
         userRole={userRole}

@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react'
-import { X as CloseIcon, Clipboard, CheckCircle, User, Calendar, Sparkles } from 'lucide-react'
+import { X as CloseIcon, Clipboard, CheckCircle, User, Calendar, Sparkles, Star } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 import { generateAiSuggestionFromText } from '../../services/suggestionService'
+import { rateQddrReport } from '../../services/qddrService'
+import { useAuth } from '@/hooks/useAuth'
 import { isAdminRole } from '@/utils/roleUtils.js'
+import StarRatingAction from '../UI/StarRatingAction.jsx'
 
 export default function QDDRDetailsModal({
   isOpen,
   onClose,
   qddr,
   onUpdateQddr,
+  onRateQddr,
   users,
   usersLoading,
   userRole,
@@ -16,6 +20,9 @@ export default function QDDRDetailsModal({
   authUserId,
   readOnly = false
 }) {
+  const { user: authUser } = useAuth()
+  const resolvedAuthId = authUserId || authUser?.id || ''
+
   const [correctiveAction, setCorrectiveAction] = useState('')
   const [preventiveAction, setPreventiveAction] = useState('')
   const [approvedBy, setApprovedBy] = useState('')
@@ -26,6 +33,9 @@ export default function QDDRDetailsModal({
   const [suggesting, setSuggesting] = useState(false)
   const [suggestionMeta, setSuggestionMeta] = useState(null)
   const [error, setError] = useState('')
+  const [localMyRating, setLocalMyRating] = useState(null)
+  const [localAvgRating, setLocalAvgRating] = useState(null)
+  const [localRatingsCount, setLocalRatingsCount] = useState(0)
 
   const resolveName = (userId, fallbackName = '') => {
     if (!userId && !fallbackName) return ''
@@ -44,12 +54,29 @@ export default function QDDRDetailsModal({
       setNotedBy(resolveName(qddr.noted_by, qddr.noted_by_name))
       setLeader(resolveName(qddr.leader, qddr.leader_name))
       setStatus(qddr.status || 'open')
+      setLocalMyRating(qddr.my_rating ?? null)
+      setLocalAvgRating(qddr.average_rating ?? null)
+      setLocalRatingsCount(Number(qddr.ratings_count || 0))
       setSuggestionMeta(null)
       setError('')
     }
   }, [qddr, users])
 
   if (!isOpen || !qddr) return null
+
+  const handleModalRateQddr = async (starValue) => {
+    if (typeof onRateQddr === 'function') {
+      const res = await onRateQddr(qddr.id, starValue)
+      setLocalMyRating(res?.my_rating ?? starValue)
+      setLocalAvgRating(res?.average_rating ?? starValue)
+      setLocalRatingsCount(res?.ratings_count ?? 1)
+    } else if (resolvedAuthId) {
+      const res = await rateQddrReport(qddr.id, starValue, resolvedAuthId)
+      setLocalMyRating(res?.my_rating ?? starValue)
+      setLocalAvgRating(res?.average_rating ?? starValue)
+      setLocalRatingsCount(res?.ratings_count ?? 1)
+    }
+  }
 
   const normalizedRole = String(userRole || '').trim().toLowerCase()
   const hasExplicitRights = Array.isArray(userPermissions?.rights)
@@ -570,6 +597,37 @@ export default function QDDRDetailsModal({
                 <div><span style={{ color: 'var(--muted)' }}>Approved By:</span> <strong style={{ color: '#1A435A' }}>{resolveName(qddr.approved_by, qddr.approved_by_name) || '—'}</strong></div>
                 <div><span style={{ color: 'var(--muted)' }}>Noted By:</span> <strong style={{ color: '#1A435A' }}>{resolveName(qddr.noted_by, qddr.noted_by_name) || '—'}</strong></div>
               </div>
+            </div>
+          )}
+
+          {/* Multi-User 5-Star Rating Section when Closed */}
+          {String(qddr.status || '').toLowerCase() === 'closed' && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '12px',
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: '10px',
+              padding: '14px 16px'
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '13.5px', fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Star size={15} color="#eab308" fill="#eab308" /> Rate Discrepancy Resolution (CBR Feedback)
+                </span>
+                <span style={{ fontSize: '12px', color: '#b45309' }}>
+                  Your 1–5 star rating updates the overall case effectiveness score for future CBR suggestions.
+                </span>
+              </div>
+              <StarRatingAction
+                myRating={localMyRating}
+                averageRating={localAvgRating}
+                ratingsCount={localRatingsCount}
+                onRate={handleModalRateQddr}
+                variant="detailed"
+              />
             </div>
           )}
 

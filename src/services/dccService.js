@@ -38,16 +38,29 @@ export async function fetchClausesByGroupIds(groupIds) {
 }
 
 export async function fetchCarReports() {
-  const { data, error } = await supabase
-    .from('car_reports')
-    .select('*, audit_schedules(id, title, scheduled_date)')
-    .eq('status', 'closed')
-    .order('created_at', { ascending: false })
+  const [
+    { data, error },
+    { data: usersData },
+    { data: ratingsData },
+    { data: authSessionData }
+  ] = await Promise.all([
+    supabase
+      .from('car_reports')
+      .select('*, audit_schedules(id, title, scheduled_date)')
+      .eq('status', 'closed')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('users')
+      .select('id, auth_id, user_name, first_name, last_name'),
+    supabase
+      .from('report_ratings')
+      .select('report_type, report_id, user_auth_id, rating')
+      .eq('report_type', 'CAR'),
+    supabase.auth.getUser()
+  ])
   if (error) throw error
 
-  const { data: usersData } = await supabase
-    .from('users')
-    .select('id, auth_id, user_name, first_name, last_name')
+  const currentAuthId = authSessionData?.user?.id || ''
 
   const authUserMap = new Map(
     (usersData || [])
@@ -58,23 +71,63 @@ export async function fetchCarReports() {
       ])
   )
 
-  return (data || []).map((c) => ({
-    ...c,
-    verified_by_name: c.verified_by ? (authUserMap.get(String(c.verified_by)) || '') : '',
-  }))
+  const statsByCarId = new Map()
+  for (const row of ratingsData || []) {
+    const idKey = Number(row.report_id)
+    if (!statsByCarId.has(idKey)) {
+      statsByCarId.set(idKey, { sum: 0, count: 0, myRating: null })
+    }
+    const entry = statsByCarId.get(idKey)
+    const val = Number(row.rating)
+    if (val >= 1 && val <= 5) {
+      entry.sum += val
+      entry.count += 1
+      if (currentAuthId && String(row.user_auth_id) === String(currentAuthId)) {
+        entry.myRating = val
+      }
+    }
+  }
+
+  return (data || []).map((c) => {
+    const stats = statsByCarId.get(Number(c.id))
+    const count = stats?.count ?? Number(c.ratings_count || 0)
+    const avg = stats && stats.count > 0
+      ? Number((stats.sum / stats.count).toFixed(2))
+      : (c.average_rating != null ? Number(c.average_rating) : null)
+    return {
+      ...c,
+      verified_by_name: c.verified_by ? (authUserMap.get(String(c.verified_by)) || '') : '',
+      my_rating: stats?.myRating ?? c.my_rating ?? null,
+      average_rating: avg,
+      ratings_count: count,
+    }
+  })
 }
 
 export async function fetchQddrReports() {
-  const { data, error } = await supabase
-    .from('qddr_reports')
-    .select('*')
-    .eq('status', 'closed')
-    .order('created_at', { ascending: false })
+  const [
+    { data, error },
+    { data: usersData },
+    { data: ratingsData },
+    { data: authSessionData }
+  ] = await Promise.all([
+    supabase
+      .from('qddr_reports')
+      .select('*')
+      .eq('status', 'closed')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('users')
+      .select('id, user_name, first_name, last_name'),
+    supabase
+      .from('report_ratings')
+      .select('report_type, report_id, user_auth_id, rating')
+      .eq('report_type', 'QDDR'),
+    supabase.auth.getUser()
+  ])
   if (error) throw error
 
-  const { data: usersData } = await supabase
-    .from('users')
-    .select('id, user_name, first_name, last_name')
+  const currentAuthId = authSessionData?.user?.id || ''
 
   const userMap = new Map(
     (usersData || []).map((u) => [
@@ -83,13 +136,40 @@ export async function fetchQddrReports() {
     ])
   )
 
-  return (data || []).map((q) => ({
-    ...q,
-    reported_by_name: q.reported_by ? (userMap.get(Number(q.reported_by)) || String(q.reported_by)) : '',
-    leader_name: q.leader ? (userMap.get(Number(q.leader)) || String(q.leader)) : '',
-    approved_by_name: q.approved_by ? (userMap.get(Number(q.approved_by)) || String(q.approved_by)) : '',
-    noted_by_name: q.noted_by ? (userMap.get(Number(q.noted_by)) || String(q.noted_by)) : '',
-  }))
+  const statsByQddrId = new Map()
+  for (const row of ratingsData || []) {
+    const idKey = Number(row.report_id)
+    if (!statsByQddrId.has(idKey)) {
+      statsByQddrId.set(idKey, { sum: 0, count: 0, myRating: null })
+    }
+    const entry = statsByQddrId.get(idKey)
+    const val = Number(row.rating)
+    if (val >= 1 && val <= 5) {
+      entry.sum += val
+      entry.count += 1
+      if (currentAuthId && String(row.user_auth_id) === String(currentAuthId)) {
+        entry.myRating = val
+      }
+    }
+  }
+
+  return (data || []).map((q) => {
+    const stats = statsByQddrId.get(Number(q.id))
+    const count = stats?.count ?? Number(q.ratings_count || 0)
+    const avg = stats && stats.count > 0
+      ? Number((stats.sum / stats.count).toFixed(2))
+      : (q.average_rating != null ? Number(q.average_rating) : null)
+    return {
+      ...q,
+      reported_by_name: q.reported_by ? (userMap.get(Number(q.reported_by)) || String(q.reported_by)) : '',
+      leader_name: q.leader ? (userMap.get(Number(q.leader)) || String(q.leader)) : '',
+      approved_by_name: q.approved_by ? (userMap.get(Number(q.approved_by)) || String(q.approved_by)) : '',
+      noted_by_name: q.noted_by ? (userMap.get(Number(q.noted_by)) || String(q.noted_by)) : '',
+      my_rating: stats?.myRating ?? q.my_rating ?? null,
+      average_rating: avg,
+      ratings_count: count,
+    }
+  })
 }
 
 export async function fetchAuditRuns() {

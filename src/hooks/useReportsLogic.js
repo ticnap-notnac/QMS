@@ -649,6 +649,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       car: carDetails.selectedCar,
       onSubmitCapa: handleCapaSubmit,
       onVerify: handleCarVerify,
+      onRateCar: handleRateCar,
       userRole,
       userPermissions,
       userDepartmentId,

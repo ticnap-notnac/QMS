@@ -1,5 +1,9 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { X, FileText, Download, CheckCircle, AlertTriangle, Clock, Star, MapPin, Tag, User, Calendar, Building } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import { rateCarReport } from '@/services/carService'
+import { rateQddrReport } from '@/services/qddrService'
+import StarRatingAction from '../UI/StarRatingAction.jsx'
 
 const QDDR_CHECKBOX_FIELDS = [
   { key: 'holes_punctures', label: 'Holes & Punctures' },
@@ -20,16 +24,45 @@ const QDDR_CHECKBOX_FIELDS = [
 ]
 
 export default function DCCReportDetailsModal({ isOpen, onClose, document, onDownloadPDF }) {
+  const { user: authUser } = useAuth()
+  const [localMyRating, setLocalMyRating] = useState(null)
+  const [localAvgRating, setLocalAvgRating] = useState(null)
+  const [localRatingsCount, setLocalRatingsCount] = useState(0)
+
+  useEffect(() => {
+    if (document) {
+      setLocalMyRating(document.my_rating ?? null)
+      setLocalAvgRating(document.average_rating ?? null)
+      setLocalRatingsCount(Number(document.ratings_count || 0))
+    }
+  }, [document])
+
   if (!isOpen || !document) return null
 
   const type = (document._type || 'REPORT').toUpperCase()
   const isQddr = type === 'QDDR'
+  const isCar = type === 'CAR'
   const statusStr = String(document.status || 'OPEN').toUpperCase()
   const isClosed = statusStr === 'CLOSED' || statusStr === 'COMPLETED'
   const activeDiscrepancies = isQddr ? QDDR_CHECKBOX_FIELDS.filter(f => document[f.key]) : []
   const qddrDateStr = document.date
     ? `${String(document.date).split('T')[0]}${document.time ? ` ${String(document.time).slice(0, 5)}` : ''}`
     : (document.occurrence_date || document.created_at?.split('T')[0] || '—')
+
+  const handleDccRate = async (starValue) => {
+    const authId = authUser?.id
+    if (!authId) return
+    const res = isQddr
+      ? await rateQddrReport(document.id, starValue, authId)
+      : isCar
+        ? await rateCarReport(document.id, starValue, authId)
+        : null
+    if (res) {
+      setLocalMyRating(res.my_rating ?? starValue)
+      setLocalAvgRating(res.average_rating ?? starValue)
+      setLocalRatingsCount(res.ratings_count ?? 1)
+    }
+  }
 
   return (
     <div className="modal-overlay" style={{
@@ -570,6 +603,37 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
                   </span>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Multi-User 5-Star Rating Section for Closed QDDR / CAR in DCC */}
+          {isClosed && (isQddr || isCar) && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '12px',
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: '10px',
+              padding: '14px 16px'
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Star size={15} color="#eab308" fill="#eab308" /> Rate Resolution Effectiveness (CBR Feedback)
+                </span>
+                <span style={{ fontSize: '0.78rem', color: '#b45309' }}>
+                  Your 1–5 star rating updates the overall case effectiveness score for future CBR suggestions.
+                </span>
+              </div>
+              <StarRatingAction
+                myRating={localMyRating}
+                averageRating={localAvgRating}
+                ratingsCount={localRatingsCount}
+                onRate={handleDccRate}
+                variant="detailed"
+              />
             </div>
           )}
         </div>
