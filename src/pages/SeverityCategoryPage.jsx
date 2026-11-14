@@ -29,7 +29,7 @@ export default function SeverityCategoryPage({ userRole, userPermissions }) {
     <div className="page-root">
       {canAccess ? (
         <main className="page-main-wide">
-          <h1 className="page-title">Manage Severity Category</h1>
+          <h1 className="page-title">Manage Non-Conformance Types</h1>
           <SettingsNavbar userRole={userRole} />
 
           <div className="glass-card-rounded-bottom">
@@ -37,23 +37,23 @@ export default function SeverityCategoryPage({ userRole, userPermissions }) {
               <div className="search-row">
                 <div className="admin-top-row">
                   <div className="admin-tabs-wrap">
-                    <AdminNavbar activeTab="Severity Category" />
+                    <AdminNavbar activeTab="Non-Conformance Types" />
                   </div>
                 </div>
 
                 <div className="admin-search-actions-row">
                   <div className="admin-search-container">
-                    <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reload} placeholder="Search severity categories..." />
+                    <SearchForm value={searchQuery} onChange={setSearchQuery} onSubmit={reload} placeholder="Search non-conformance types..." />
                   </div>
                   <div className="admin-actions-right">
-                    <button onClick={openCategoryModal} className="btn-add-action">+ Add Category</button>
+                    <button onClick={openCategoryModal} className="btn-add-action">+ Add Type</button>
                   </div>
                 </div>
               </div>
 
               <div className="glass-card-content">
                 <div className="panel-narrow">
-                  <p className="glass-card-subtext">Please click the "+ Add Category" button to add a new Severity Category.</p>
+                  <p className="glass-card-subtext">Please click the "+ Add Type" button to add a new Non-Conformance Type.</p>
                   <AdminListPanel {...listPanelProps} />
                 </div>
               </div>

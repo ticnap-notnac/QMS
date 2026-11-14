@@ -81,6 +81,7 @@ export default function AppRouter({ sharedProps, refreshUserData }) {
         <Route path="/settings/product-types" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><ProductTypesPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/iso-standards" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_iso" sharedProps={sharedProps}><ISOStandardsPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/severity-category" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><SeverityCategoryPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/non-conformance-types" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><SeverityCategoryPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/positions" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><PositionsPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_users" sharedProps={sharedProps}><AddUserPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/audit-tools" element={<ProtectedRoute pageKey="audit_tools" sharedProps={sharedProps}><AuditToolsPage {...sharedProps} /></ProtectedRoute>} />
