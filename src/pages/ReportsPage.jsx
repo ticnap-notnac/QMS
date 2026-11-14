@@ -398,6 +398,7 @@ export default function ReportsPage({
                 canEdit={canEditDeleteReports}
                 onEditCar={logic.openEditCarModal}
                 onDeleteCar={handleDeleteCar}
+                onRateCar={logic.handleRateCar}
                 viewMode={carViewMode}
               />
             )}
@@ -409,6 +410,7 @@ export default function ReportsPage({
                 canEdit={canEditDeleteReports}
                 onEditQddr={logic.openEditQddrModal}
                 onDeleteQddr={handleDeleteQddr}
+                onRateQddr={logic.handleRateQddr}
                 viewMode={qddrViewMode}
               />
             )}

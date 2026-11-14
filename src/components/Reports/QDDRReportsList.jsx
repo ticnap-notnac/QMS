@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import QDDRReportCard from '../Cards/QDDRReportCard.jsx'
+import StarRatingAction from '../UI/StarRatingAction.jsx'
 
 export default function QDDRReportsList({
   qddrReports,
@@ -9,6 +10,7 @@ export default function QDDRReportsList({
   canEdit,
   onEditQddr,
   onDeleteQddr,
+  onRateQddr,
   viewMode = 'table'
 }) {
   const [currentPage, setCurrentPage] = useState(1)
@@ -53,11 +55,14 @@ export default function QDDRReportsList({
             onSelectQddr={onSelectQddr}
             onEditQddr={onEditQddr}
             onDeleteQddr={onDeleteQddr}
+            onRateQddr={onRateQddr}
           />
         ))}
       </div>
     )
   }
+
+  const showActionsCol = canEdit || paginatedQddrs.some(q => String(q.status || '').trim().toLowerCase() === 'closed')
 
   return (
     <div className="reports-content-container">
@@ -76,12 +81,13 @@ export default function QDDRReportsList({
                 <th>Material Description</th>
                 <th className="text-center-important">Qty</th>
                 <th>Status</th>
-                {canEdit && <th className="text-center-important">Actions</th>}
+                {showActionsCol && <th className="text-center-important">Actions</th>}
               </tr>
             </thead>
             <tbody>
               {paginatedQddrs.map((qddr) => {
                 const statusClean = String(qddr.status || '').trim().toLowerCase()
+                const isClosed = statusClean === 'closed'
                 return (
                   <tr
                     key={qddr.id}
@@ -106,29 +112,40 @@ export default function QDDRReportsList({
                     </td>
                     <td>
                       <span className={`iso-status-pill ${
-                        statusClean === 'closed' ? 'is-closed' : 'is-open'
+                        isClosed ? 'is-closed' : 'is-open'
                       }`}>
-                        {statusClean === 'closed' ? 'Closed' : 'Open'}
+                        {isClosed ? 'Closed' : 'Open'}
                       </span>
                     </td>
-                    {canEdit && (
+                    {showActionsCol && (
                       <td className="text-center-important" onClick={(e) => e.stopPropagation()}>
-                        <div className="action-btn-row" style={{ marginTop: 0 }}>
-                          <button
-                            className="btn-action-icon"
-                            title="Edit Report"
-                            onClick={() => onEditQddr && onEditQddr(qddr)}
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            className="btn-action-icon-danger"
-                            title="Delete Report"
-                            onClick={() => onDeleteQddr && onDeleteQddr(qddr.id)}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
+                        {isClosed ? (
+                          <StarRatingAction
+                            myRating={qddr.my_rating}
+                            averageRating={qddr.average_rating}
+                            ratingsCount={qddr.ratings_count}
+                            onRate={(rating) => onRateQddr && onRateQddr(qddr.id, rating)}
+                          />
+                        ) : canEdit ? (
+                          <div className="action-btn-row" style={{ marginTop: 0 }}>
+                            <button
+                              className="btn-action-icon"
+                              title="Edit Report"
+                              onClick={() => onEditQddr && onEditQddr(qddr)}
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              className="btn-action-icon-danger"
+                              title="Delete Report"
+                              onClick={() => onDeleteQddr && onDeleteQddr(qddr.id)}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span style={{ color: '#94a3b8' }}>—</span>
+                        )}
                       </td>
                     )}
                   </tr>

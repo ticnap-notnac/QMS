@@ -143,3 +143,15 @@ export async function deleteCarReport(carId, userAuthId) {
 export async function fetchCarRecurringTrends(days = 14) {
   return await request(`/car/recurring-trends?days=${days}`)
 }
+
+export async function rateCarReport(carId, rating, userAuthId) {
+  if (!userAuthId) throw new Error('Missing authentication. Please log in.')
+
+  return await request(`/car/${carId}/rate`, {
+    method: 'POST',
+    body: JSON.stringify({ rating }),
+    headers: {
+      'x-user-auth-id': userAuthId
+    }
+  })
+}

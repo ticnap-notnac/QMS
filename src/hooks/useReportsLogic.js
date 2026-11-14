@@ -13,12 +13,14 @@ import {
   verifyCarPlan,
   updateCarReport,
   fetchLinkedClausesForCar,
-  fetchCarReportById
+  fetchCarReportById,
+  rateCarReport
 } from '@/services/carService'
 import {
   submitQddrReport,
   updateQddrReport,
-  editQddrReport
+  editQddrReport,
+  rateQddrReport
 } from '@/services/qddrService'
 import { supabase } from '@/utils/supabase'
 import { useCARDetails } from './useCARDetails'
@@ -85,7 +87,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     setLoadingCar(true)
     setLoadingQddr(true)
     try {
-      const [carRes, qddrRes] = await Promise.all([
+      const [carRes, qddrRes, ratingsRes] = await Promise.all([
         supabase
           .from('car_reports')
           .select('*, audit_schedules(id, title, scheduled_date)')
@@ -93,11 +95,46 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         supabase
           .from('qddr_reports')
           .select('*')
-          .order('created_at', { ascending: false })
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('report_ratings')
+          .select('report_type, report_id, user_auth_id, rating')
       ])
 
       if (carRes.error) throw carRes.error
       if (qddrRes.error) throw qddrRes.error
+
+      const allRatings = !ratingsRes.error && Array.isArray(ratingsRes.data) ? ratingsRes.data : []
+      const ratingStatsMap = new Map()
+      for (const row of allRatings) {
+        const key = `${String(row.report_type || '').toUpperCase()}_${row.report_id}`
+        if (!ratingStatsMap.has(key)) {
+          ratingStatsMap.set(key, { sum: 0, count: 0, myRating: null })
+        }
+        const entry = ratingStatsMap.get(key)
+        const val = Number(row.rating)
+        if (val >= 1 && val <= 5) {
+          entry.sum += val
+          entry.count += 1
+          if (currentAuthId && String(row.user_auth_id) === String(currentAuthId)) {
+            entry.myRating = val
+          }
+        }
+      }
+
+      const enrichWithRatings = (item, reportType) => {
+        const stats = ratingStatsMap.get(`${reportType}_${item.id}`)
+        const count = stats?.count ?? Number(item.ratings_count || 0)
+        const avg = stats && stats.count > 0
+          ? Number((stats.sum / stats.count).toFixed(2))
+          : (item.average_rating != null ? Number(item.average_rating) : null)
+        return {
+          ...item,
+          my_rating: stats?.myRating ?? item.my_rating ?? null,
+          average_rating: avg,
+          ratings_count: count,
+        }
+      }
 
       const normRole = String(userRole || '').trim().toLowerCase()
       const pagesList = Array.isArray(userPermissions?.pages) ? userPermissions.pages : []
@@ -153,7 +190,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       if (formState.reportFilters?.date) {
         filteredCars = filteredCars.filter(car => String(car.created_at || '').startsWith(formState.reportFilters.date))
       }
-      setCarReports(filteredCars)
+      setCarReports(filteredCars.map(car => enrichWithRatings(car, 'CAR')))
 
       // 2. QDDR department scoping & filtering
       let filteredQddrs = qddrRes.data || []
@@ -190,7 +227,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       if (formState.reportFilters?.date) {
         filteredQddrs = filteredQddrs.filter(q => String(q.created_at || '').startsWith(formState.reportFilters.date))
       }
-      setQddrReports(filteredQddrs)
+      setQddrReports(filteredQddrs.map(q => enrichWithRatings(q, 'QDDR')))
     } catch (err) {
       setToast({ message: 'We could not load the CAR/QDDR lists. Please refresh the page.', type: 'error' })
     } finally {
@@ -198,6 +235,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       setLoadingQddr(false)
     }
   }, [
+    currentAuthId,
     currentUserId,
     userRole,
     userPermissions,
@@ -454,6 +492,50 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     modalsState.openQDDRModal(qddr)
   }
 
+  const handleRateCar = async (carId, rating) => {
+    try {
+      const res = await rateCarReport(carId, rating, currentAuthId)
+      const updatedFields = {
+        my_rating: res?.my_rating ?? rating,
+        average_rating: res?.average_rating ?? rating,
+        ratings_count: res?.ratings_count ?? 1
+      }
+      setCarReports(prev =>
+        prev.map(c => (Number(c.id) === Number(carId) ? { ...c, ...updatedFields } : c))
+      )
+      if (carDetails.selectedCar && Number(carDetails.selectedCar.id) === Number(carId)) {
+        carDetails.setSelectedCar(prev => (prev ? { ...prev, ...updatedFields } : prev))
+      }
+      setToast({ message: `Rated CAR ${rating}/5 stars`, type: 'success' })
+      return res
+    } catch (err) {
+      setToast({ message: err?.message || 'Failed to save rating.', type: 'error' })
+      throw err
+    }
+  }
+
+  const handleRateQddr = async (qddrId, rating) => {
+    try {
+      const res = await rateQddrReport(qddrId, rating, currentAuthId)
+      const updatedFields = {
+        my_rating: res?.my_rating ?? rating,
+        average_rating: res?.average_rating ?? rating,
+        ratings_count: res?.ratings_count ?? 1
+      }
+      setQddrReports(prev =>
+        prev.map(q => (Number(q.id) === Number(qddrId) ? { ...q, ...updatedFields } : q))
+      )
+      if (selectedQddr && Number(selectedQddr.id) === Number(qddrId)) {
+        setSelectedQddr(prev => (prev ? { ...prev, ...updatedFields } : prev))
+      }
+      setToast({ message: `Rated QDDR ${rating}/5 stars`, type: 'success' })
+      return res
+    } catch (err) {
+      setToast({ message: err?.message || 'Failed to save rating.', type: 'error' })
+      throw err
+    }
+  }
+
   return {
     toast,
     setToast,
@@ -476,12 +558,14 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     closeCarDetails: carDetails.closeCarDetails,
     submitCapa: handleCapaSubmit,
     verifyCar: handleCarVerify,
+    handleRateCar,
 
     selectedQddr,
     isQddrDetailsModalOpen,
     openQddrDetails: handleOpenQddrDetails,
     closeQddrDetails: handleCloseQddrDetails,
     updateQddr: handleUpdateQddr,
+    handleRateQddr,
 
     users: activeUserOptions,
     usersLoading: dataState.usersLoading,

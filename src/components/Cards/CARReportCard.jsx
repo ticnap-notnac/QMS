@@ -1,8 +1,9 @@
 import { User, SquarePen, Trash2 } from 'lucide-react'
 import { formatDate, getStatusStyle } from '@/utils/themeHelpers'
 import { REPORT_STATUS } from '../../../shared/constants'
+import StarRatingAction from '../UI/StarRatingAction.jsx'
 
-function CARReportCard({ car, canEdit, onSelectCar, onEditCar, onDeleteCar }) {
+function CARReportCard({ car, canEdit, onSelectCar, onEditCar, onDeleteCar, onRateCar }) {
   const requestor = car.requestor?.trim() || 'Requestor'
   const recipient = car.recipient?.trim() || 'Recipient'
   const reqDept = car.requesting_department?.trim() || 'Requesting Dept'
@@ -118,7 +119,16 @@ function CARReportCard({ car, canEdit, onSelectCar, onEditCar, onDeleteCar }) {
       </div>
 
       {/* ── Action row ──────────────────────────────────────────────────── */}
-      {canEdit && (
+      {isClosed ? (
+        <div className="action-btn-row" onClick={(e) => e.stopPropagation()}>
+          <StarRatingAction
+            myRating={car.my_rating}
+            averageRating={car.average_rating}
+            ratingsCount={car.ratings_count}
+            onRate={(rating) => onRateCar && onRateCar(car.id, rating)}
+          />
+        </div>
+      ) : canEdit ? (
         <div className="action-btn-row" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
@@ -137,7 +147,7 @@ function CARReportCard({ car, canEdit, onSelectCar, onEditCar, onDeleteCar }) {
             <Trash2 size={16} />
           </button>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

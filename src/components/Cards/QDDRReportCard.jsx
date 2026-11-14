@@ -1,6 +1,7 @@
 import { User, SquarePen, Trash2 } from 'lucide-react'
+import StarRatingAction from '../UI/StarRatingAction.jsx'
 
-function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr }) {
+function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr, onRateQddr }) {
   const statusClean = String(qddr.status || '').trim().toLowerCase()
   const isClosed = statusClean === 'closed'
   const isUnderVerification = statusClean === 'under_verification'
@@ -130,7 +131,16 @@ function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr 
       </div>
 
       {/* Action row */}
-      {canEdit && (
+      {isClosed ? (
+        <div className="action-btn-row" onClick={(e) => e.stopPropagation()}>
+          <StarRatingAction
+            myRating={qddr.my_rating}
+            averageRating={qddr.average_rating}
+            ratingsCount={qddr.ratings_count}
+            onRate={(rating) => onRateQddr && onRateQddr(qddr.id, rating)}
+          />
+        </div>
+      ) : canEdit ? (
         <div className="action-btn-row" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
@@ -149,7 +159,7 @@ function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr 
             <Trash2 size={16} />
           </button>
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

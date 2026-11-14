@@ -98,3 +98,15 @@ export async function fetchLinkedClausesForQddr(qddrId) {
 export async function fetchQddrRecurringTrends(days = 14) {
   return await request(`/qddr/recurring-trends?days=${days}`)
 }
+
+export async function rateQddrReport(qddrId, rating, userAuthId) {
+  if (!userAuthId) throw new Error('Missing authentication. Please log in.')
+
+  return await request(`/qddr/${qddrId}/rate`, {
+    method: 'POST',
+    body: JSON.stringify({ rating }),
+    headers: {
+      'x-user-auth-id': userAuthId
+    }
+  })
+}
