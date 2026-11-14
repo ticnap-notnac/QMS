@@ -1,12 +1,35 @@
 import React from 'react'
 import { X, FileText, Download, CheckCircle, AlertTriangle, Clock, Star, MapPin, Tag, User, Calendar, Building } from 'lucide-react'
 
+const QDDR_CHECKBOX_FIELDS = [
+  { key: 'holes_punctures', label: 'Holes & Punctures' },
+  { key: 'deformed_torn', label: 'Deformed or Torn' },
+  { key: 'open_carton', label: 'Open Carton' },
+  { key: 'crushed_dented', label: 'Crushed or Dented' },
+  { key: 'wet_leaked', label: 'Wet or Leaked' },
+  { key: 'stain_graffiti', label: 'Stain or Graffiti' },
+  { key: 'bulging', label: 'Bulging' },
+  { key: 'improper_stretch_wrapping', label: 'Improper Stretch Wrapping' },
+  { key: 'wrong_no_batchcode', label: 'Wrong/No Batchcode' },
+  { key: 'opened_seal', label: 'Opened Seal' },
+  { key: 'no_label_broken_label', label: 'No Label/Broken Label' },
+  { key: 'short_pack', label: 'Short Pack' },
+  { key: 'excess_shipment', label: 'Excess Shipment' },
+  { key: 'documentation_error', label: 'Documentation Error' },
+  { key: 'picking_discrepancy', label: 'Picking Discrepancy' }
+]
+
 export default function DCCReportDetailsModal({ isOpen, onClose, document, onDownloadPDF }) {
   if (!isOpen || !document) return null
 
   const type = (document._type || 'REPORT').toUpperCase()
+  const isQddr = type === 'QDDR'
   const statusStr = String(document.status || 'OPEN').toUpperCase()
   const isClosed = statusStr === 'CLOSED' || statusStr === 'COMPLETED'
+  const activeDiscrepancies = isQddr ? QDDR_CHECKBOX_FIELDS.filter(f => document[f.key]) : []
+  const qddrDateStr = document.date
+    ? `${String(document.date).split('T')[0]}${document.time ? ` ${String(document.time).slice(0, 5)}` : ''}`
+    : (document.occurrence_date || document.created_at?.split('T')[0] || '—')
 
   return (
     <div className="modal-overlay" style={{
@@ -116,70 +139,215 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
           gap: '20px'
         }}>
           {/* Metadata Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '12px',
-            background: '#f8fafc',
-            padding: '16px',
-            borderRadius: '12px',
-            border: '1px solid #e2e8f0'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Building size={16} color="#64748b" />
-              <div>
-                <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Department</span>
-                <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.department_name || document.department || '—'}</strong>
+          {isQddr ? (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '12px',
+              background: '#f8fafc',
+              padding: '16px',
+              borderRadius: '12px',
+              border: '1px solid #e2e8f0'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <MapPin size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Location</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.location || '—'}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Calendar size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Date &amp; Time</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{qddrDateStr}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Building size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Brand / Supplier</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.brand_supplier || '—'}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Tag size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Material Description</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.material_description || '—'}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Tag size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Material Code</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.material_code || '—'}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Batch / ISU No. &amp; Qty</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>
+                    {document.batch_code_su_number || '—'}{document.qty !== null && document.qty !== undefined && document.qty !== '' ? ` (Qty: ${document.qty})` : ''}
+                  </strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>PO Reference</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.po_reference || '—'}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>DR / WB Number</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.drwb_number || '—'}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Building size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Trucker / Broker</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.trucker_broker || '—'}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Plate / Container No.</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>
+                    {[document.plate_number, document.container_number].filter(Boolean).join(' / ') || '—'}
+                  </strong>
+                </div>
               </div>
             </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '12px',
+              background: '#f8fafc',
+              padding: '16px',
+              borderRadius: '12px',
+              border: '1px solid #e2e8f0'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Building size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Department</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.department_name || document.department || '—'}</strong>
+                </div>
+              </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={16} color="#64748b" />
-              <div>
-                <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Location</span>
-                <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.complaint_location || document.location_name || document.location || '—'}</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <MapPin size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Location</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.complaint_location || document.location_name || document.location || '—'}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Tag size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Product Type</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.product_type || document.product_type_name || '—'}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Batch Number</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.batch_number || '—'}</strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangle size={16} color={document.severity === 'HIGH' ? '#dc2626' : document.severity === 'MEDIUM' ? '#d97706' : '#2563eb'} />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Severity</span>
+                  <strong style={{ fontSize: '0.875rem', color: document.severity === 'HIGH' ? '#dc2626' : document.severity === 'MEDIUM' ? '#d97706' : '#2563eb' }}>
+                    {document.severity || '—'}
+                  </strong>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Calendar size={16} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Occurrence Date</span>
+                  <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.occurrence_date || document.created_at?.split('T')[0] || '—'}</strong>
+                </div>
               </div>
             </div>
+          )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Tag size={16} color="#64748b" />
-              <div>
-                <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Product Type</span>
-                <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.product_type || document.product_type_name || '—'}</strong>
+          {/* Discrepancy Checkboxes for QDDR */}
+          {isQddr && (
+            <div>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                Types of Discrepancy Checked
+              </h4>
+              <div style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px'
+              }}>
+                {activeDiscrepancies.length > 0 ? (
+                  activeDiscrepancies.map(f => (
+                    <span key={f.key} style={{
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      color: '#dc2626',
+                      padding: '4px 10px',
+                      borderRadius: '100px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600
+                    }}>
+                      {f.label}
+                    </span>
+                  ))
+                ) : (
+                  !document.others && <span style={{ color: '#64748b', fontSize: '0.85rem' }}>None checked</span>
+                )}
+                {document.others && (
+                  <span style={{
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    color: '#334155',
+                    padding: '4px 10px',
+                    borderRadius: '100px',
+                    fontSize: '0.75rem',
+                    fontWeight: 500
+                  }}>
+                    Other: {document.others}
+                  </span>
+                )}
               </div>
             </div>
+          )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FileText size={16} color="#64748b" />
-              <div>
-                <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Batch Number</span>
-                <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.batch_number || '—'}</strong>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertTriangle size={16} color={document.severity === 'HIGH' ? '#dc2626' : document.severity === 'MEDIUM' ? '#d97706' : '#2563eb'} />
-              <div>
-                <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Severity</span>
-                <strong style={{ fontSize: '0.875rem', color: document.severity === 'HIGH' ? '#dc2626' : document.severity === 'MEDIUM' ? '#d97706' : '#2563eb' }}>
-                  {document.severity || '—'}
-                </strong>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Calendar size={16} color="#64748b" />
-              <div>
-                <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b' }}>Occurrence Date</span>
-                <strong style={{ fontSize: '0.875rem', color: '#1A435A' }}>{document.occurrence_date || document.created_at?.split('T')[0] || '—'}</strong>
-              </div>
-            </div>
-          </div>
-
-          {/* Description Section */}
+          {/* Description / Reason of Discrepancy Section */}
           <div>
             <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-              Details of Non-Conformance / Description
+              {isQddr ? 'Reason of Discrepancy' : 'Details of Non-Conformance / Description'}
             </h4>
             <div style={{
               background: '#ffffff',
@@ -188,11 +356,80 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
               padding: '12px 16px',
               fontSize: '0.9rem',
               color: '#1e293b',
-              lineHeight: 1.6
+              lineHeight: 1.6,
+              whiteSpace: 'pre-wrap'
             }}>
-              {document.description || document.details_of_nonconformance || 'No description provided.'}
+              {document.reason_of_discrepancy || document.description || document.details_of_nonconformance || 'No description provided.'}
             </div>
           </div>
+
+          {/* Evidence / Attachments */}
+          {Array.isArray(document.evidence_urls) && document.evidence_urls.length > 0 && (
+            <div>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                Evidence / Attachments ({document.evidence_urls.length})
+              </h4>
+              <div style={{
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '12px'
+              }}>
+                {document.evidence_urls.map((url, idx) => {
+                  const lower = String(url || '').toLowerCase()
+                  const isImg = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(lower) || lower.startsWith('data:image/')
+                  const label = url.startsWith('data:')
+                    ? `Evidence Photo ${idx + 1}`
+                    : decodeURIComponent(url.split('/').pop()?.split('?')[0] || `Attachment ${idx + 1}`)
+                  return isImg ? (
+                    <a
+                      key={idx}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Click to view full image"
+                      style={{
+                        display: 'block',
+                        width: '120px',
+                        height: '90px',
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                        border: '1px solid #cbd5e1',
+                        background: '#f8fafc'
+                      }}
+                    >
+                      <img src={url} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </a>
+                  ) : (
+                    <a
+                      key={idx}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        background: '#f8fafc',
+                        color: '#0891b2',
+                        fontSize: '0.8rem',
+                        fontWeight: 500,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      📄 {label}
+                    </a>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Investigation & Root Cause */}
           {(document.investigation_details || document.investigation) && (
@@ -238,7 +475,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
           {(document.resolution_details || document.preventive_action) && (
             <div>
               <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                Preventive Action & Resolution Details
+                Preventive Action &amp; Resolution Details
               </h4>
               <div style={{
                 background: '#eff6ff',
@@ -250,6 +487,48 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
                 lineHeight: 1.6
               }}>
                 {document.resolution_details || document.preventive_action}
+              </div>
+            </div>
+          )}
+
+          {/* QDDR Signatories */}
+          {isQddr && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+              gap: '12px',
+              background: '#f8fafc',
+              padding: '14px 16px',
+              borderRadius: '10px',
+              border: '1px solid #e2e8f0'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <User size={15} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.72rem', color: '#64748b' }}>Reported By</span>
+                  <strong style={{ fontSize: '0.85rem', color: '#1A435A' }}>{document.reported_by_name || document.reported_by || '—'}</strong>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <User size={15} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.72rem', color: '#64748b' }}>Leader / Supervisor</span>
+                  <strong style={{ fontSize: '0.85rem', color: '#1A435A' }}>{document.leader_name || document.leader || '—'}</strong>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <User size={15} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.72rem', color: '#64748b' }}>Approved By</span>
+                  <strong style={{ fontSize: '0.85rem', color: '#1A435A' }}>{document.approved_by_name || document.approved_by || '—'}</strong>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <User size={15} color="#64748b" />
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.72rem', color: '#64748b' }}>Noted By</span>
+                  <strong style={{ fontSize: '0.85rem', color: '#1A435A' }}>{document.noted_by_name || document.noted_by || '—'}</strong>
+                </div>
               </div>
             </div>
           )}
