@@ -24,7 +24,7 @@ export default function IntroModal({ isOpen, onClose }) {
         </div>
 
         <p style={{ color: '#64748b', fontSize: '13.5px', marginTop: '4px', marginBottom: '20px' }}>
-          Please review and accept the quality compliance terms governing QFlow before using the system.
+          Please review and accept the quality compliance terms governing ResQ before using the system.
         </p>
 
         <div style={contentContainerStyle}>
@@ -35,7 +35,7 @@ export default function IntroModal({ isOpen, onClose }) {
             <div>
               <strong style={{ color: '#1A435A', fontSize: '14px', display: 'block', marginBottom: '4px' }}>1. Quality & ISO Standard Adherence</strong>
               <p style={paragraphStyle}>
-                All Quality Defect Reports (NCR, CAR, QDDR) submitted into QFlow must accurately reflect verified operational data and comply with active ISO 22000 food safety and quality management standards.
+                All Quality Defect Reports (NCR, CAR, QDDR) submitted into ResQ must accurately reflect verified operational data and comply with active ISO 22000 food safety and quality management standards.
               </p>
             </div>
           </div>

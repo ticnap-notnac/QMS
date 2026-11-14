@@ -229,7 +229,7 @@ export function useAuditRunDetails() {
                         </tbody>
                       </table>
                       <div style="margin-top: 40px; font-size: 12px; color: #94a3b8; text-align: center;">
-                        Report generated on ${escapeHtml(new Date().toLocaleString())} by QFlow System
+                        Report generated on ${escapeHtml(new Date().toLocaleString())} by ResQ System
                       </div>
                     `
                     setTimeout(() => {

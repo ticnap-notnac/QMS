@@ -68,7 +68,7 @@ export default function HelpSidebar({ isOpen, onClose, topic = "General" }) {
           <a href="https://www.iso.org/iso-9001-quality-management.html" target="_blank" rel="noopener noreferrer" className="help-quick-link">
             <FileText size={16} /> ISO 9001 Guidelines
           </a>
-          <a href="mailto:support@qflow.com" className="help-quick-link">
+          <a href="mailto:support@resq.com" className="help-quick-link">
             <ExternalLink size={16} /> Contact Support
           </a>
         </div>
