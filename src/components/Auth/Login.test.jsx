@@ -17,7 +17,7 @@ describe('Login Component', () => {
     render(<Login />);
     
     // Check if the Welcome message is present
-    expect(screen.getByRole('heading', { name: /Welcome to QFlow/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Welcome to ResQ/i })).toBeInTheDocument();
     
     // Check if the inputs are present
     expect(screen.getByPlaceholderText(/Enter your email/i)).toBeInTheDocument();

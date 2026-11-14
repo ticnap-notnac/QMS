@@ -96,7 +96,7 @@ function Login({
     <main className="layout layout--center">
       <section className="auth auth--center">
         <div className="card">
-          <h1>Welcome to QFlow</h1>
+          <h1>Welcome to ResQ</h1>
           <p className="subtitle">Sign in to track inspections and stay audit-ready.</p>
 
           <form className="form" onSubmit={handleSubmit}>
