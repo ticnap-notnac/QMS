@@ -150,15 +150,28 @@ function generateFallbackHeuristicSuggestion({ description, issueType, deptName,
  * @param {string} [params.deptName] - Department name
  * @returns {Promise<Object>}
  */
-export async function generateAiSuggestionFromText({ description, issueType, deptName, reportType = 'CAR' }) {
+export async function generateAiSuggestionFromText({
+  description,
+  rootCause = '',
+  rcaMethod = '',
+  issueType,
+  deptName,
+  reportType = 'CAR'
+}) {
   const isQddr = String(reportType || '').trim().toUpperCase() === 'QDDR' ||
     String(issueType || '').trim().toUpperCase() === 'QDDR' ||
     ['holes_punctures', 'crushed_dented', 'disposal', 'warehouse'].some(k => String(description || '').toLowerCase().includes(k))
 
+  const cleanRca = String(rootCause || '').trim()
+  const combinedQueryText = [
+    String(description || '').trim(),
+    cleanRca ? `Root Cause Analysis: ${cleanRca}` : ''
+  ].filter(Boolean).join('\n')
+
   const apiKey = process.env.GEMINI_API_KEY
   let embedding = null
-  if (apiKey && description) {
-    embedding = await generateEmbedding(description, apiKey)
+  if (apiKey && combinedQueryText) {
+    embedding = await generateEmbedding(combinedQueryText, apiKey)
   }
 
   // ── ROUTE 1: QDDR CASE REPOSITORY (Warehouse Defect & Disposal) ─────────────
@@ -230,41 +243,67 @@ Respond ONLY in this JSON format with no markdown:
     }
   }
 
-  // ── ROUTE 2: CAR CASE REPOSITORY (Customer Complaints & Audits) ────────────
+  // ── ROUTE 2: CAR CASE REPOSITORY (Non-Conformance + 5 Whys / Fishbone RCA) ──
   const carCandidates = await fetchCarCaseCandidates(embedding, issueType)
 
   if (carCandidates.length > 0) {
-    const topMatch = carCandidates[0]
-    const simScore = topMatch.similarity ?? 0
+    const queryKeywords = extractKeywords(combinedQueryText)
+    const rcaKeywords = cleanRca ? extractKeywords(cleanRca) : []
+
+    const scoredCandidates = carCandidates
+      .map(c => {
+        const vectorSim = Number(c.similarity ?? 0)
+        const caseKeywords = extractKeywords(`${c.details_of_nonconformance || ''} ${c.root_cause_analysis || ''}`)
+        const caseRcaKeywords = extractKeywords(c.root_cause_analysis || '')
+        const keywordSim = jaccardSimilarity(queryKeywords, caseKeywords)
+        const rcaOverlap = rcaKeywords.length > 0 && caseRcaKeywords.length > 0
+          ? jaccardSimilarity(rcaKeywords, caseRcaKeywords)
+          : 0
+        const compositeScore = Math.max(vectorSim, (vectorSim * 0.65) + (keywordSim * 0.2) + (rcaOverlap * 0.15))
+        return { ...c, compositeScore, rcaOverlap }
+      })
+      .sort((a, b) => b.compositeScore - a.compositeScore)
+
+    const topMatch = scoredCandidates[0]
+    const simScore = topMatch.compositeScore ?? 0
 
     if (simScore >= MIN_CBR_SCORE && topMatch.corrective_action) {
+      const rcaFeatureLabel =
+        rcaMethod === 'fishbone'
+          ? 'Fishbone (6M) RCA matching'
+          : rcaMethod === 'both'
+            ? 'Fishbone (6M) + 5 Whys RCA matching'
+            : '5 Whys RCA matching'
+
       return {
         suggestion: topMatch.corrective_action,
         preventive_suggestion: topMatch.preventive_action || 'Establish supervisory verification checkpoints.',
-        root_cause_suggestion: topMatch.root_cause_analysis || null,
         confidence: Math.min(Math.max(simScore, 0.94), 0.99),
         sourceDetails: 'CAR Case Repository (CBR)',
-        matchedFeatures: ['non-conformance semantic matching', 'verified CAPA']
+        matchedFeatures: cleanRca
+          ? [rcaFeatureLabel, 'non-conformance semantic matching', 'verified CAPA']
+          : ['non-conformance semantic matching', 'verified CAPA']
       }
     }
   }
 
-  // Fallback to Gemini with CAR few-shot context
+  // Fallback to Gemini with CAR + 5 Whys / Fishbone RCA context (ONLY Corrective & Preventive Actions)
   if (apiKey) {
     try {
-      const prompt = `You are an ISO 9001 Quality Assurance expert. Suggest a corrective action, a preventive action, and a probable root cause for this Non-Conformance / Customer Complaint / Audit issue.
+      const prompt = `You are an ISO 9001 Quality Assurance expert. Based on the Non-Conformance Details and the Root Cause Analysis (5 Whys / Fishbone 6M) already conducted by the team, suggest an Immediate Corrective Action and a Preventive Action Plan.
+Do NOT generate a Root Cause Analysis—only generate the Corrective Action and Preventive Action that directly resolve and prevent the identified Root Cause.
 
-Non-Conformance Details:
-- Details: ${description}
+Non-Conformance & Root Cause Details:
+- Non-Conformance Details: ${description}
+- Root Cause Analysis (${rcaMethod || '5 Whys / Fishbone'}): ${cleanRca || 'Not specified'}
 - Category: ${issueType || 'General'}
 - Department: ${deptName || 'N/A'}
 
 Historical Closed CAR Cases (for reference):
 ${carCandidates.slice(0, 5).map((c, i) => `${i + 1}. Non-Conformance: ${c.details_of_nonconformance} | RCA: ${c.root_cause_analysis || 'N/A'} | Corrective: ${c.corrective_action} | Preventive: ${c.preventive_action || 'N/A'}`).join('\n') || 'None'}
 
-Provide an actionable corrective action (to fix the current issue), a preventive action (to prevent recurrence), and a brief root cause note.
 Respond ONLY in this JSON format with no markdown:
-{"suggestion": "corrective action here", "preventive_suggestion": "preventive action here", "root_cause_suggestion": "root cause analysis here", "confidence": 0.96}`
+{"suggestion": "immediate corrective action here", "preventive_suggestion": "long-term preventive action plan here", "confidence": 0.96}`
 
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
         method: 'POST',
@@ -282,10 +321,9 @@ Respond ONLY in this JSON format with no markdown:
         return {
           suggestion: parsed.suggestion,
           preventive_suggestion: parsed.preventive_suggestion,
-          root_cause_suggestion: parsed.root_cause_suggestion || null,
           confidence: parsed.confidence || 0.95,
           sourceDetails: 'Generative AI (Gemini Flash)',
-          matchedFeatures: []
+          matchedFeatures: cleanRca ? ['RCA-aligned CAPA synthesis'] : []
         }
       }
     } catch (geminiErr) {
@@ -294,7 +332,7 @@ Respond ONLY in this JSON format with no markdown:
   }
 
   return {
-    ...generateFallbackHeuristicSuggestion({ description, issueType, deptName, isQddr: false }),
+    ...generateFallbackHeuristicSuggestion({ description: combinedQueryText, issueType, deptName, isQddr: false }),
     sourceDetails: 'System Heuristics'
   }
 }

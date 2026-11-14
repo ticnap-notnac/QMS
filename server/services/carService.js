@@ -740,7 +740,11 @@ export async function autoPromoteCarToCaseRepository(car) {
     let embedding = null
     if (apiKey) {
       const { generateEmbedding } = await import('../utils/cbr.js')
-      embedding = await generateEmbedding(details, apiKey)
+      const compositeCaseText = [
+        details,
+        car.root_cause_analysis ? `Root Cause Analysis: ${String(car.root_cause_analysis).trim()}` : ''
+      ].filter(Boolean).join('\n')
+      embedding = await generateEmbedding(compositeCaseText, apiKey)
     }
 
     const issueCategory = normalizeText(car.type_of_nonconformance) || 'general'

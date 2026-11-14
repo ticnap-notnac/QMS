@@ -5,10 +5,17 @@ export async function fetchJobStatus(jobId, queue) {
   return await request(`/suggestions/job/${jobId}${qs}`)
 }
 
-export async function generateAiSuggestionFromText({ description, issueType, deptName, reportType = 'CAR' }) {
+export async function generateAiSuggestionFromText({
+  description,
+  rootCause = '',
+  rcaMethod = '',
+  issueType,
+  deptName,
+  reportType = 'CAR'
+}) {
   return await request('/suggestions/generate-text', {
     method: 'POST',
-    body: JSON.stringify({ description, issueType, deptName, reportType }),
+    body: JSON.stringify({ description, rootCause, rcaMethod, issueType, deptName, reportType }),
   })
 }
 
