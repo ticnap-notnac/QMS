@@ -516,11 +516,22 @@ export function useQDDRForm() {
 
       if (result) {
         const filledFields = []
+        if (result.material_code) {
+          filledFields.push('Item Code')
+        }
+        if (result.material_description) {
+          filledFields.push(result.expiry_date ? 'Item Description + Expiry Date' : 'Item Description')
+        } else if (result.expiry_date) {
+          filledFields.push('Expiry Date')
+        }
+        if (result.batch_code_su_number) {
+          filledFields.push('Batch Code')
+        }
+
         setForm(prev => {
           const next = { ...prev }
           if (result.material_code) {
             next.material_code = result.material_code
-            filledFields.push('Item Code')
           }
           if (result.material_description) {
             let desc = result.material_description
@@ -528,16 +539,13 @@ export function useQDDRForm() {
               desc = `${desc} (Exp: ${result.expiry_date})`
             }
             next.material_description = desc
-            filledFields.push(result.expiry_date ? 'Item Description + Expiry Date' : 'Item Description')
           } else if (result.expiry_date) {
             next.material_description = prev.material_description
               ? `${prev.material_description} (Exp: ${result.expiry_date})`
               : `Exp: ${result.expiry_date}`
-            filledFields.push('Expiry Date')
           }
           if (result.batch_code_su_number) {
             next.batch_code_su_number = result.batch_code_su_number
-            filledFields.push('Batch Code')
           }
           return next
         })
