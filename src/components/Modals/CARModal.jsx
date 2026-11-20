@@ -20,7 +20,9 @@ function CARModal({
   users,
   usersLoading,
   nonConformanceTypes = [],
-  nonConformanceTypesLoading = false
+  nonConformanceTypesLoading = false,
+  products = [],
+  productsLoading = false
 }) {
   const [isMobile, setIsMobile] = useState(false)
 
@@ -226,15 +228,14 @@ function CARModal({
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label className="label-field">
-                    Product / Material Name:
-                  </label>
-                  <input 
-                    type="text" 
-                    value={form.product_material_name} 
-                    onChange={(e) => handleChange('product_material_name', e.target.value)} 
-                    className="input-field" 
-                    placeholder="e.g. Evaporada, Milk..."
+                  <SearchableDropdown
+                    label="Product / Material Name:"
+                    value={form.product_material_name}
+                    onValueChange={(val) => handleChange('product_material_name', val)}
+                    options={products}
+                    loading={productsLoading}
+                    placeholder="Search or enter product/material (e.g. Evaporada, Milk...)"
+                    onSelectOption={(opt) => handleChange('product_material_name', opt.label)}
                   />
                 </div>
 

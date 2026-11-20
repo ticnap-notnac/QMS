@@ -2,6 +2,7 @@ import useAddUserLogic from './useAdminPanel/useAddUserLogic'
 import useDepartmentsLogic from './useAdminPanel/useDepartmentsLogic'
 import useLocationsLogic from './useAdminPanel/useLocationsLogic'
 import useProductTypesLogic from './useAdminPanel/useProductTypesLogic'
+import useProductsLogic from './useAdminPanel/useProductsLogic'
 import useISOStandardsLogic from './useAdminPanel/useISOStandardsLogic'
 import useSeverityCategoryLogic from './useAdminPanel/useSeverityCategoryLogic'
 import usePositionsLogic from './useAdminPanel/usePositionsLogic'
@@ -12,6 +13,7 @@ export function useAdminPanel({ userRole, userName } = {}) {
   const departments = useDepartmentsLogic({ userRole })
   const locations = useLocationsLogic({ userRole })
   const productTypes = useProductTypesLogic({ userRole })
+  const products = useProductsLogic({ userRole })
   const isoStandards = useISOStandardsLogic({ userRole, userName })
   const severityCategory = useSeverityCategoryLogic({ userRole })
   const positions = usePositionsLogic({ userRole })
@@ -21,6 +23,7 @@ export function useAdminPanel({ userRole, userName } = {}) {
     departments,
     locations,
     productTypes,
+    products,
     isoStandards,
     severityCategory,
     positions
@@ -33,6 +36,7 @@ export {
   useDepartmentsLogic,
   useLocationsLogic,
   useProductTypesLogic,
+  useProductsLogic,
   useISOStandardsLogic,
   useSeverityCategoryLogic,
   usePositionsLogic

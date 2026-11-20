@@ -1,6 +1,6 @@
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
-import AddCategoryModal from '@/components/Modals/AddCategoryModal'
+import ProductTypeModal from '@/components/Modals/ProductTypeModal'
 import AdminListPanel from '@/components/Panels/AdminListPanel'
 import SearchForm from '@/components/Forms/SearchForm'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
@@ -11,15 +11,27 @@ import './AdminPanel.css'
 
 export default function ProductTypesPage({ userRole, userPermissions }) {
   const {
+    items,
     searchQuery,
     setSearchQuery,
     reload,
+    isCategoryModalOpen,
     openCategoryModal,
+    closeCategoryModal,
+    categoryInput,
+    setCategoryInput,
+    availableProducts,
+    selectedProductIds,
+    toggleProductSelection,
+    formError,
+    formMessage,
+    creating,
+    editingItem,
+    handleSubmitCategory,
     error,
     toast,
     setToast,
     listPanelProps,
-    categoryModalProps,
     confirmDialogProps
   } = useProductTypesLogic()
 
@@ -53,14 +65,31 @@ export default function ProductTypesPage({ userRole, userPermissions }) {
 
               <div className="glass-card-content">
                 <div className="panel-narrow">
-                  <p className="glass-card-subtext">Please click the "+ Add Product Type" button to add a new Product Type.</p>
+                  <p className="glass-card-subtext">Please click the "+ Add Product Type" button to add a new Product Type and assign products to it.</p>
                   <AdminListPanel {...listPanelProps} />
                 </div>
               </div>
             </div>
           </div>
 
-          <AddCategoryModal {...categoryModalProps} />
+          <ProductTypeModal
+            isOpen={isCategoryModalOpen}
+            onClose={closeCategoryModal}
+            onSubmit={handleSubmitCategory}
+            title={editingItem ? 'Edit Product Type' : 'Add Product Type'}
+            productTypeName={categoryInput}
+            onProductTypeNameChange={(e) => setCategoryInput(e.target.value)}
+            availableProducts={availableProducts}
+            productTypes={items}
+            editingProductTypeId={editingItem?.id}
+            selectedProductIds={selectedProductIds}
+            onProductToggle={toggleProductSelection}
+            loading={creating}
+            error={formError}
+            message={formMessage}
+            submitLabel={editingItem ? 'Save Changes' : 'Add Product Type'}
+            helperText="Create a product type category (e.g., Liquid Milk) and select which products belong under it."
+          />
           <ConfirmDialog {...confirmDialogProps} />
           {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
           {error && !toast && <Toast message={error} type="error" onClose={() => {}} />}

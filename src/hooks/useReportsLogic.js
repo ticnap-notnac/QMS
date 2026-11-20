@@ -190,6 +190,28 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       if (formState.reportFilters?.date) {
         filteredCars = filteredCars.filter(car => String(car.created_at || '').startsWith(formState.reportFilters.date))
       }
+      if (formState.reportFilters?.productTypeId) {
+        const targetPt = (dataState.productTypes || []).find(pt => String(pt.id) === String(formState.reportFilters.productTypeId))
+        if (targetPt) {
+          const allowedNames = new Set(
+            (targetPt.products || [])
+              .map(p => String(p.product_name || '').trim().toLowerCase())
+              .filter(Boolean)
+          )
+          const ptNameLower = String(targetPt.product_type_name || '').trim().toLowerCase()
+          filteredCars = filteredCars.filter(car => {
+            const carProd = String(car.product_material_name || '').trim().toLowerCase()
+            if (!carProd) return false
+            return allowedNames.has(carProd) || (ptNameLower && carProd.includes(ptNameLower))
+          })
+        }
+      }
+      if (formState.reportFilters?.productMaterialName) {
+        const targetProd = String(formState.reportFilters.productMaterialName).trim().toLowerCase()
+        filteredCars = filteredCars.filter(car =>
+          String(car.product_material_name || '').trim().toLowerCase().includes(targetProd)
+        )
+      }
       setCarReports(filteredCars.map(car => enrichWithRatings(car, 'CAR')))
 
       // 2. QDDR department scoping & filtering
@@ -243,7 +265,10 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     formState.reportFilters.departmentId,
     formState.reportFilters.status,
     formState.reportFilters.date,
+    formState.reportFilters.productTypeId,
+    formState.reportFilters.productMaterialName,
     dataState.departmentNameById,
+    dataState.productTypes,
     dataState.users
   ])
 
@@ -290,7 +315,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   }
 
   const handleFilterClear = async () => {
-    const cleared = { departmentId: '', status: '', severities: [], date: '' }
+    const cleared = { departmentId: '', status: '', severities: [], date: '', productTypeId: '', productMaterialName: '' }
     formState.setReportFilters(cleared)
     modalsState.setIsFilterModalOpen(false)
   }
@@ -322,6 +347,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
 
       modalsState.closeCARModal()
       carFormState.resetForm()
+      await dataState.loadLookupData()
       await refreshCarAndQddrLists()
       return { success: true }
     } catch (submitError) {
@@ -588,6 +614,8 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       filters: formState.reportFilters,
       setFilters: formState.setReportFilters,
       departments: dataState.departments,
+      productTypes: dataState.productTypes,
+      products: dataState.products,
       onClear: handleFilterClear,
       onApply: handleFilterApply,
       userRole,
@@ -614,7 +642,9 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       users: activeUserOptions,
       usersLoading: dataState.usersLoading,
       nonConformanceTypes: dataState.nonConformanceTypeOptions,
-      nonConformanceTypesLoading: dataState.issueTypesLoading
+      nonConformanceTypesLoading: dataState.issueTypesLoading,
+      products: dataState.productOptions,
+      productsLoading: dataState.productsLoading
     },
     qddrModalProps: {
       isOpen: modalsState.isQDDRModalOpen,

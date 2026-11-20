@@ -13,6 +13,7 @@ const AddUserPage = lazy(() => import('@/pages/AddUserPage.jsx'))
 const RolesPage = lazy(() => import('@/pages/RolesPage.jsx'))
 const DepartmentsPage = lazy(() => import('@/pages/DepartmentsPage.jsx'))
 const LocationsPage = lazy(() => import('@/pages/LocationsPage.jsx'))
+const ProductsPage = lazy(() => import('@/pages/ProductsPage.jsx'))
 const ProductTypesPage = lazy(() => import('@/pages/ProductTypesPage.jsx'))
 const ISOStandardsPage = lazy(() => import('@/pages/ISOStandardsPage.jsx'))
 const SeverityCategoryPage = lazy(() => import('@/pages/SeverityCategoryPage.jsx'))
@@ -78,6 +79,7 @@ export default function AppRouter({ sharedProps, refreshUserData }) {
         <Route path="/settings/permissions" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_roles" sharedProps={sharedProps}><PermissionsPage {...sharedProps} onPermissionsUpdated={refreshUserData} /></ProtectedRoute>} />
         <Route path="/settings/departments" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><DepartmentsPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/locations" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><LocationsPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/products" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><ProductsPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/product-types" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><ProductTypesPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/iso-standards" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_iso" sharedProps={sharedProps}><ISOStandardsPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/severity-category" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><SeverityCategoryPage {...sharedProps} /></ProtectedRoute>} />

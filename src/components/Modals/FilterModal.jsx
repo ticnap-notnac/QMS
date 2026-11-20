@@ -14,6 +14,8 @@ export default function FilterModal({
   filters = {}, 
   setFilters,
   departments = [],
+  productTypes = [],
+  products = [],
   onClear,
   onApply,
   userRole,
@@ -44,6 +46,13 @@ export default function FilterModal({
   const currentDate = filters?.date || ''
   const currentStatus = filters?.status || ''
   const currentSeverity = filters?.severity || ''
+  const currentProductTypeId = filters?.productTypeId || ''
+  const currentProductMaterialName = filters?.productMaterialName || ''
+
+  const selectedProductType = productTypes.find(pt => String(pt.id) === String(currentProductTypeId))
+  const availableProductChoices = currentProductTypeId && selectedProductType && Array.isArray(selectedProductType.products)
+    ? selectedProductType.products
+    : products
 
   return (
     <div 
@@ -150,7 +159,46 @@ export default function FilterModal({
             )
           })()}
 
-          {/* 📐 ROW 2: Status Selection Array */}
+          {/* 📐 ROW 2: Product Type & Product / Material Name (CAR Only) */}
+          {activeTab === 'car' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label className="label-field" style={{ margin: 0 }}>Product Type</label>
+                <select
+                  value={currentProductTypeId}
+                  onChange={(e) => setFilters && setFilters(prev => ({
+                    ...prev,
+                    productTypeId: e.target.value,
+                    productMaterialName: ''
+                  }))}
+                  className="input-field"
+                  style={{ width: '100%', height: '38px' }}
+                >
+                  <option value="">All product types…</option>
+                  {productTypes.map((pt) => (
+                    <option key={pt.id} value={String(pt.id)}>{pt.product_type_name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label className="label-field" style={{ margin: 0 }}>Product / Material Name</label>
+                <select
+                  value={currentProductMaterialName}
+                  onChange={(e) => setFilters && setFilters(prev => ({ ...prev, productMaterialName: e.target.value }))}
+                  className="input-field"
+                  style={{ width: '100%', height: '38px' }}
+                >
+                  <option value="">All products / materials…</option>
+                  {availableProductChoices.map((p) => (
+                    <option key={p.id} value={p.product_name}>{p.product_name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* 📐 ROW 3: Status Selection Array */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label className="label-field" style={{ margin: 0 }}>Status</label>
             <div style={{ display: 'flex', gap: '10px' }}>

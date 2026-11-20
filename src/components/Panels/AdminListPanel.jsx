@@ -92,6 +92,28 @@ export default function AdminListPanel({
                       ))}
                     </div>
                   )}
+
+                  {/* 🏷️ Products Badges (Child products linked to this product type) */}
+                  {Array.isArray(item.products) && item.products.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '2px' }}>
+                      {item.products.map((prod) => (
+                        <span
+                          key={prod.id}
+                          style={{
+                            background: '#f1f5f9',
+                            color: '#475569',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '11px',
+                            fontWeight: '500',
+                            padding: '2px 8px',
+                            borderRadius: '12px'
+                          }}
+                        >
+                          {prod.product_name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* 🎯 Layout context cluster wrapper to securely house multiple side-by-side action points */}

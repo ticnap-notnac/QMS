@@ -13,6 +13,7 @@ import roleRoutes from './routes/roleRoutes.js'
 import departmentRoutes from './routes/departmentRoutes.js'
 import locationRoutes from './routes/locationRoutes.js'
 import productTypeRoutes from './routes/productTypeRoutes.js'
+import productRoutes from './routes/productRoutes.js'
 import issueTypeRoutes from './routes/issueTypeRoutes.js'
 import positionRoutes from './routes/positionRoutes.js'
 import logRoutes from './routes/logRoutes.js'
@@ -111,6 +112,7 @@ app.use('/api/roles', authMiddleware, roleRoutes)
 app.use('/api/departments', authMiddleware, departmentRoutes)
 app.use('/api', authMiddleware, locationRoutes)
 app.use('/api', authMiddleware, productTypeRoutes)
+app.use('/api', authMiddleware, productRoutes)
 app.use('/api', authMiddleware, issueTypeRoutes)
 app.use('/api', authMiddleware, positionRoutes)
 // Client-side error reporting — must be before authMiddleware so unauthenticated

@@ -3,6 +3,7 @@ import { loadRoles as loadRolesController } from '@/services/roleService'
 import { loadDepartments as loadDepartmentsController } from '@/services/departmentService'
 import { fetchSites } from '@/services/siteService'
 import { fetchPositions } from '@/services/positionService'
+import { fetchProducts } from '@/services/productService'
 import { supabase } from '@/utils/supabase'
 
 const LookupContext = createContext({
@@ -10,6 +11,7 @@ const LookupContext = createContext({
   departments: [],
   sites: [],
   positions: [],
+  products: [],
   userSiteId: null,
   userSiteName: null,
   loading: false,
@@ -22,6 +24,7 @@ export function LookupProvider({ children }) {
   const [departments, setDepartments] = useState([])
   const [sites, setSites] = useState([])
   const [positions, setPositions] = useState([])
+  const [products, setProducts] = useState([])
   const [userSiteId, setUserSiteId] = useState(null)
   const [userSiteName, setUserSiteName] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -52,11 +55,12 @@ export function LookupProvider({ children }) {
     setLoading(true)
     setError('')
     try {
-      const [r, d, s, p] = await Promise.all([
+      const [r, d, s, p, prod] = await Promise.all([
         loadRolesController(),
         loadDepartmentsController(),
         fetchSites(),
         fetchPositions(),
+        fetchProducts().catch(() => []),
       ])
       // If a reload unexpectedly returns empty arrays but we already have values,
       // preserve the existing lookups to avoid wiping the UI due to a transient API glitch.
@@ -78,6 +82,7 @@ export function LookupProvider({ children }) {
       })
       setSites(Array.isArray(s) ? s : [])
       setPositions(Array.isArray(p) ? p : [])
+      setProducts(Array.isArray(prod) ? prod : [])
       await resolveUserSite(session)
     } catch (err) {
       console.error('Lookup reload error:', err)
@@ -85,6 +90,7 @@ export function LookupProvider({ children }) {
       setDepartments([])
       setSites([])
       setPositions([])
+      setProducts([])
       setError('We could not load reference data (departments, roles, etc.). Please refresh the page.')
     } finally {
       setLoading(false)
@@ -108,7 +114,7 @@ export function LookupProvider({ children }) {
   }, [reloadLookups])
 
   return (
-    <LookupContext.Provider value={{ roles, departments, sites, positions, userSiteId, userSiteName, loading, error, reloadLookups }}>
+    <LookupContext.Provider value={{ roles, departments, sites, positions, products, userSiteId, userSiteName, loading, error, reloadLookups }}>
       {children}
     </LookupContext.Provider>
   )

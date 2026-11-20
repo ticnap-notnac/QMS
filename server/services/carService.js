@@ -160,6 +160,32 @@ async function upsertNonConformanceType(typeName) {
   }
 }
 
+async function upsertProductMaterialName(productName) {
+  const trimmed = normalizeText(productName)
+  if (!trimmed) return null
+
+  try {
+    const { data: existing } = await supabase
+      .from('products')
+      .select('id, product_name')
+      .ilike('product_name', trimmed)
+      .maybeSingle()
+
+    if (existing) return existing.product_name
+
+    const { data: inserted } = await supabase
+      .from('products')
+      .upsert([{ product_name: trimmed }], { onConflict: 'product_name', ignoreDuplicates: true })
+      .select('product_name')
+      .maybeSingle()
+
+    return inserted?.product_name || trimmed
+  } catch (err) {
+    console.warn('[carService] Failed to upsert product/material name into products:', err.message || err)
+    return trimmed
+  }
+}
+
 export async function createCarReport({ body, reportedByAuthId }) {
   const {
     requesting_department,
@@ -215,6 +241,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
   }
 
   const resolvedTypeOfNonconformance = await upsertNonConformanceType(type_of_nonconformance)
+  const resolvedProductMaterialName = await upsertProductMaterialName(product_material_name)
 
   let generatedReferenceNo = await getNextRef()
   let data = null
@@ -237,7 +264,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
       re_corrective_action: Boolean(re_corrective_action),
       type_of_nonconformance: resolvedTypeOfNonconformance,
       others,
-      product_material_name,
+      product_material_name: resolvedProductMaterialName,
       model_type,
       control_no,
       affected_quantity: affected_quantity ? parseInt(affected_quantity, 10) : null,
@@ -652,6 +679,10 @@ export async function updateCarReport({ carId, body = {}, actorAuthId }) {
 
   if (body.type_of_nonconformance !== undefined) {
     payload.type_of_nonconformance = await upsertNonConformanceType(body.type_of_nonconformance)
+  }
+
+  if (body.product_material_name !== undefined) {
+    payload.product_material_name = await upsertProductMaterialName(body.product_material_name)
   }
 
   const dateKeys = ['date', 'request_date']

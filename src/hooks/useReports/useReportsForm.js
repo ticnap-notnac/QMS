@@ -5,7 +5,9 @@ export function useReportsForm() {
     departmentId: '',
     status: '',
     severities: [],
-    date: ''
+    date: '',
+    productTypeId: '',
+    productMaterialName: ''
   })
 
   return {

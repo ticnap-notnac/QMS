@@ -6,7 +6,8 @@ import { useLookup } from '@/context/LookupContext'
 
 export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, fetchComplianceData }) {
   const [isCarModalOpen, setIsCarModalOpen] = useState(false)
-  const { userSiteId } = useLookup()
+  const { userSiteId, products = [], reloadLookups } = useLookup()
+  const productOptions = (products || []).map(p => ({ id: p.id, label: p.product_name }))
   
   const initialFormState = {
     requesting_department: '',
@@ -212,6 +213,7 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
 
       setCreatedCars(prev => ({ ...prev, [activeFinding.id]: nextRef }))
       setIsCarModalOpen(false)
+      await reloadLookups().catch(() => {})
       await fetchComplianceData()
     } catch (err) {
       console.error('[useISOCARForm] Error generating CAR:', err)
@@ -230,6 +232,7 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
     activeFinding,
     departments,
     users,
+    productOptions,
     allReports,
     loadingDropdowns,
     clausesLoading,

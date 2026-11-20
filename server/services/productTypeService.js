@@ -8,9 +8,27 @@ export async function fetchAllProductTypes() {
     .order('product_name', { ascending: true })
 
   if (error) return { data: null, error }
+
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, product_name, product_type_id')
+    .order('product_name', { ascending: true })
+
+  const prodMap = new Map()
+  if (products) {
+    for (const p of products) {
+      if (p.product_type_id) {
+        const key = String(p.product_type_id)
+        if (!prodMap.has(key)) prodMap.set(key, [])
+        prodMap.get(key).push({ id: p.id, product_name: p.product_name })
+      }
+    }
+  }
+
   const mapped = (data || []).map((item) => ({
     id: item.id,
-    product_type_name: item.product_name
+    product_type_name: item.product_name,
+    products: prodMap.get(String(item.id)) || []
   }))
   return { data: mapped, error: null }
 }

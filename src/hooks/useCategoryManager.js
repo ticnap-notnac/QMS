@@ -29,8 +29,9 @@ export default function useCategoryManager({ loadFn, createFn, updateFn, deleteF
     setError('')
     setCreating(true)
     try {
-      await createFn(name)
+      const created = await createFn(name)
       reload()
+      return created
     } catch (err) {
       setError('This item could not be created. Please try again.')
       throw err
