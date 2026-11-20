@@ -159,8 +159,8 @@ export default function FilterModal({
             )
           })()}
 
-          {/* 📐 ROW 2: Product Type & Product / Material Name (CAR Only) */}
-          {activeTab === 'car' && (
+          {/* 📐 ROW 2: Product Type & Product / Material Name (CAR & QDDR) */}
+          {(activeTab === 'car' || activeTab === 'qddr') && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label className="label-field" style={{ margin: 0 }}>Product Type</label>

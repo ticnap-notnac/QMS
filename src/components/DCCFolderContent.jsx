@@ -8,6 +8,8 @@ import CARPrintTemplate from './Print/CARPrintTemplate.jsx'
 import NCRPrintTemplate from './Print/NCRPrintTemplate.jsx'
 import QDDRPrintTemplate from './Print/QDDRPrintTemplate.jsx'
 import DCCReportDetailsModal from './Modals/DCCReportDetailsModal.jsx'
+import { fetchProducts } from '../services/productService'
+import { fetchProductTypes } from '../services/productTypeService'
 
 
 const SEVERITY_COLORS = {
@@ -158,6 +160,20 @@ export default function DCCFolderContent({
   const [shareSuccess, setShareSuccess] = useState(false)
   const [showFilterMenu, setShowFilterMenu] = useState(false)
   const [sortOrder, setSortOrder] = useState('newest')
+  const [productTypesList, setProductTypesList] = useState([])
+  const [productsList, setProductsList] = useState([])
+  const [selectedProductTypeId, setSelectedProductTypeId] = useState('')
+  const [selectedProductName, setSelectedProductName] = useState('')
+
+  useEffect(() => {
+    Promise.all([
+      fetchProductTypes().catch(() => []),
+      fetchProducts().catch(() => [])
+    ]).then(([pts, prods]) => {
+      setProductTypesList(Array.isArray(pts) ? pts : [])
+      setProductsList(Array.isArray(prods) ? prods : [])
+    })
+  }, [])
   
   // PDF Download State & Refs
   const [downloadingReport, setDownloadingReport] = useState(null)
@@ -170,6 +186,8 @@ export default function DCCFolderContent({
   // Reset selected document whenever directories change
   useEffect(() => {
     setSelectedDocument(null)
+    setSelectedProductTypeId('')
+    setSelectedProductName('')
   }, [selectedFolder, selectedTaskFolder, selectedStandard])
 
   const handleShareClick = () => {
@@ -363,38 +381,66 @@ export default function DCCFolderContent({
     (ncr.location_name && ncr.location_name.toLowerCase().includes(queryClean))
   )
 
-  const filteredCarReports = carReports.filter((car) =>
-    !queryClean ||
-    (car.reference_no && car.reference_no.toLowerCase().includes(queryClean)) ||
-    (car.requestor && car.requestor.toLowerCase().includes(queryClean)) ||
-    (car.recipient && car.recipient.toLowerCase().includes(queryClean)) ||
-    (car.requesting_department && car.requesting_department.toLowerCase().includes(queryClean)) ||
-    (car.responsible_department && car.responsible_department.toLowerCase().includes(queryClean)) ||
-    (car.type_of_nonconformance && car.type_of_nonconformance.toLowerCase().includes(queryClean)) ||
-    (car.product_material_name && car.product_material_name.toLowerCase().includes(queryClean)) ||
-    (car.model_type && car.model_type.toLowerCase().includes(queryClean)) ||
-    (car.control_no && car.control_no.toLowerCase().includes(queryClean)) ||
-    (car.details_of_nonconformance && car.details_of_nonconformance.toLowerCase().includes(queryClean)) ||
-    (car.root_cause_analysis && car.root_cause_analysis.toLowerCase().includes(queryClean)) ||
-    (car.corrective_action && car.corrective_action.toLowerCase().includes(queryClean)) ||
-    (car.preventive_action && car.preventive_action.toLowerCase().includes(queryClean))
-  )
+  const activeProductTypeObj = productTypesList.find(pt => String(pt.id) === String(selectedProductTypeId))
+  const availableDccProducts = selectedProductTypeId && activeProductTypeObj && Array.isArray(activeProductTypeObj.products)
+    ? activeProductTypeObj.products
+    : productsList
 
-  const filteredQddrReports = qddrReports.filter((q) =>
-    !queryClean ||
-    (q.reference_no && q.reference_no.toLowerCase().includes(queryClean)) ||
-    (q.location && q.location.toLowerCase().includes(queryClean)) ||
-    (q.trucker_broker && q.trucker_broker.toLowerCase().includes(queryClean)) ||
-    (q.plate_number && q.plate_number.toLowerCase().includes(queryClean)) ||
-    (q.po_reference && q.po_reference.toLowerCase().includes(queryClean)) ||
-    (q.brand_supplier && q.brand_supplier.toLowerCase().includes(queryClean)) ||
-    (q.material_description && q.material_description.toLowerCase().includes(queryClean)) ||
-    (q.material_code && q.material_code.toLowerCase().includes(queryClean)) ||
-    (q.batch_code_su_number && q.batch_code_su_number.toLowerCase().includes(queryClean)) ||
-    (q.reason_of_discrepancy && q.reason_of_discrepancy.toLowerCase().includes(queryClean)) ||
-    (q.corrective_action && q.corrective_action.toLowerCase().includes(queryClean)) ||
-    (q.preventive_action && q.preventive_action.toLowerCase().includes(queryClean))
-  )
+  const matchesProductFilters = (rawProductText) => {
+    const textLower = String(rawProductText || '').trim().toLowerCase()
+    if (selectedProductTypeId && activeProductTypeObj) {
+      if (!textLower) return false
+      const allowedNames = (activeProductTypeObj.products || [])
+        .map(p => String(p.product_name || '').trim().toLowerCase())
+        .filter(Boolean)
+      const ptNameLower = String(activeProductTypeObj.product_type_name || '').trim().toLowerCase()
+      const matchesType = allowedNames.some(prodName => textLower.includes(prodName)) || (ptNameLower && textLower.includes(ptNameLower))
+      if (!matchesType) return false
+    }
+    if (selectedProductName) {
+      if (!textLower.includes(String(selectedProductName).trim().toLowerCase())) return false
+    }
+    return true
+  }
+
+  const filteredCarReports = carReports.filter((car) => {
+    if (!matchesProductFilters(car.product_material_name)) return false
+    return (
+      !queryClean ||
+      (car.reference_no && car.reference_no.toLowerCase().includes(queryClean)) ||
+      (car.requestor && car.requestor.toLowerCase().includes(queryClean)) ||
+      (car.recipient && car.recipient.toLowerCase().includes(queryClean)) ||
+      (car.requesting_department && car.requesting_department.toLowerCase().includes(queryClean)) ||
+      (car.responsible_department && car.responsible_department.toLowerCase().includes(queryClean)) ||
+      (car.type_of_nonconformance && car.type_of_nonconformance.toLowerCase().includes(queryClean)) ||
+      (car.product_material_name && car.product_material_name.toLowerCase().includes(queryClean)) ||
+      (car.model_type && car.model_type.toLowerCase().includes(queryClean)) ||
+      (car.control_no && car.control_no.toLowerCase().includes(queryClean)) ||
+      (car.details_of_nonconformance && car.details_of_nonconformance.toLowerCase().includes(queryClean)) ||
+      (car.root_cause_analysis && car.root_cause_analysis.toLowerCase().includes(queryClean)) ||
+      (car.corrective_action && car.corrective_action.toLowerCase().includes(queryClean)) ||
+      (car.preventive_action && car.preventive_action.toLowerCase().includes(queryClean))
+    )
+  })
+
+  const filteredQddrReports = qddrReports.filter((q) => {
+    if (!matchesProductFilters(q.material_description)) return false
+    return (
+      !queryClean ||
+      (q.reference_no && q.reference_no.toLowerCase().includes(queryClean)) ||
+      (q.location && q.location.toLowerCase().includes(queryClean)) ||
+      (q.trucker_broker && q.trucker_broker.toLowerCase().includes(queryClean)) ||
+      (q.plate_number && q.plate_number.toLowerCase().includes(queryClean)) ||
+      (q.po_reference && q.po_reference.toLowerCase().includes(queryClean)) ||
+      (q.brand_supplier && q.brand_supplier.toLowerCase().includes(queryClean)) ||
+      (q.material_description && q.material_description.toLowerCase().includes(queryClean)) ||
+      (q.material_code && q.material_code.toLowerCase().includes(queryClean)) ||
+      (q.batch_code_su_number && q.batch_code_su_number.toLowerCase().includes(queryClean)) ||
+      (q.reason_of_discrepancy && q.reason_of_discrepancy.toLowerCase().includes(queryClean)) ||
+      (q.corrective_action && q.corrective_action.toLowerCase().includes(queryClean)) ||
+      (q.preventive_action && q.preventive_action.toLowerCase().includes(queryClean))
+    )
+  })
 
   const filteredAuditReports = auditReports.filter((audit) =>
     !queryClean ||
@@ -526,23 +572,119 @@ export default function DCCFolderContent({
                 <SlidersHorizontal size={18} />
               </button>
               {showFilterMenu && (
-                <div style={{ position: 'absolute', top: '100%', right: '0', marginTop: '8px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 50, minWidth: '180px', padding: '8px' }}>
-                  <div style={{ padding: '8px 12px', fontSize: '12px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sort By</div>
-                  <div onClick={() => { setSortOrder('newest'); setShowFilterMenu(false); }} style={{ padding: '10px 12px', cursor: 'pointer', borderRadius: '8px', background: sortOrder === 'newest' ? '#f1f5f9' : 'transparent', fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ position: 'absolute', top: '100%', right: '0', marginTop: '8px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 50, minWidth: '240px', padding: '10px' }}>
+                  <div style={{ padding: '6px 10px', fontSize: '12px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sort By</div>
+                  <div onClick={() => { setSortOrder('newest'); setShowFilterMenu(false); }} style={{ padding: '8px 10px', cursor: 'pointer', borderRadius: '8px', background: sortOrder === 'newest' ? '#f1f5f9' : 'transparent', fontSize: '13.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: sortOrder === 'newest' ? '#0891b2' : 'transparent' }}></div>
                     Newest First
                   </div>
-                  <div onClick={() => { setSortOrder('oldest'); setShowFilterMenu(false); }} style={{ padding: '10px 12px', cursor: 'pointer', borderRadius: '8px', background: sortOrder === 'oldest' ? '#f1f5f9' : 'transparent', fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div onClick={() => { setSortOrder('oldest'); setShowFilterMenu(false); }} style={{ padding: '8px 10px', cursor: 'pointer', borderRadius: '8px', background: sortOrder === 'oldest' ? '#f1f5f9' : 'transparent', fontSize: '13.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: sortOrder === 'oldest' ? '#0891b2' : 'transparent' }}></div>
                     Oldest First
                   </div>
-                  <div onClick={() => { setSortOrder('alpha'); setShowFilterMenu(false); }} style={{ padding: '10px 12px', cursor: 'pointer', borderRadius: '8px', background: sortOrder === 'alpha' ? '#f1f5f9' : 'transparent', fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div onClick={() => { setSortOrder('alpha'); setShowFilterMenu(false); }} style={{ padding: '8px 10px', cursor: 'pointer', borderRadius: '8px', background: sortOrder === 'alpha' ? '#f1f5f9' : 'transparent', fontSize: '13.5px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: sortOrder === 'alpha' ? '#0891b2' : 'transparent' }}></div>
                     Alphabetical (A-Z)
                   </div>
+
+                  {selectedFolder?.id === 'task_reports' && (selectedTaskFolder?.id === 'car' || selectedTaskFolder?.id === 'qddr') && (
+                    <>
+                      <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
+                      <div style={{ padding: '4px 10px', fontSize: '12px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Filter by Product
+                      </div>
+                      <div style={{ padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <span style={{ fontSize: '12px', color: '#475569', fontWeight: 500 }}>Product Type</span>
+                          <select
+                            value={selectedProductTypeId}
+                            onChange={(e) => {
+                              setSelectedProductTypeId(e.target.value)
+                              setSelectedProductName('')
+                            }}
+                            style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', color: '#0f172a', background: '#f8fafc' }}
+                          >
+                            <option value="">All Product Types</option>
+                            {productTypesList.map((pt) => (
+                              <option key={pt.id} value={String(pt.id)}>{pt.product_type_name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <span style={{ fontSize: '12px', color: '#475569', fontWeight: 500 }}>Product / Material</span>
+                          <select
+                            value={selectedProductName}
+                            onChange={(e) => setSelectedProductName(e.target.value)}
+                            style={{ width: '100%', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', color: '#0f172a', background: '#f8fafc' }}
+                          >
+                            <option value="">All Products / Materials</option>
+                            {availableDccProducts.map((p) => (
+                              <option key={p.id} value={p.product_name}>{p.product_name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {(selectedProductTypeId || selectedProductName) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedProductTypeId('')
+                              setSelectedProductName('')
+                            }}
+                            style={{ marginTop: '4px', padding: '6px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', color: '#475569', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}
+                          >
+                            Clear Product Filters
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
+
+            {selectedFolder?.id === 'task_reports' && (selectedTaskFolder?.id === 'car' || selectedTaskFolder?.id === 'qddr') && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '12px', width: '100%', maxWidth: '600px', margin: '12px auto 0 auto' }}>
+                <select
+                  value={selectedProductTypeId}
+                  onChange={(e) => {
+                    setSelectedProductTypeId(e.target.value)
+                    setSelectedProductName('')
+                  }}
+                  style={{ flex: '1 1 180px', height: '36px', padding: '0 12px', borderRadius: '999px', border: '1px solid #cbd5e1', fontSize: '13px', color: '#0f172a', background: '#ffffff', cursor: 'pointer', outline: 'none' }}
+                >
+                  <option value="">All Product Types</option>
+                  {productTypesList.map((pt) => (
+                    <option key={pt.id} value={String(pt.id)}>{pt.product_type_name}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={selectedProductName}
+                  onChange={(e) => setSelectedProductName(e.target.value)}
+                  style={{ flex: '1 1 200px', height: '36px', padding: '0 12px', borderRadius: '999px', border: '1px solid #cbd5e1', fontSize: '13px', color: '#0f172a', background: '#ffffff', cursor: 'pointer', outline: 'none' }}
+                >
+                  <option value="">All Products / Materials</option>
+                  {availableDccProducts.map((p) => (
+                    <option key={p.id} value={p.product_name}>{p.product_name}</option>
+                  ))}
+                </select>
+
+                {(selectedProductTypeId || selectedProductName) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProductTypeId('')
+                      setSelectedProductName('')
+                    }}
+                    style={{ height: '36px', padding: '0 14px', borderRadius: '999px', border: '1px solid #cbd5e1', background: '#f8fafc', color: '#475569', fontSize: '12.5px', fontWeight: 500, cursor: 'pointer' }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

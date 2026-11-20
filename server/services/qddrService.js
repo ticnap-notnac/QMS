@@ -115,6 +115,33 @@ export async function findUserIdByName(name) {
 }
 
 /**
+ * Strips trailing "(Exp: ...)" from a QDDR material_description and upserts
+ * the clean product/material name into `public.products` if not already present.
+ */
+async function upsertCleanProductFromQddrDescription(rawDesc) {
+  const raw = String(rawDesc || '').trim()
+  if (!raw) return
+  const cleanName = raw.replace(/\s*\(\s*exp\s*:?.*?\)\s*$/i, '').trim()
+  if (!cleanName) return
+
+  try {
+    const { data: existing } = await supabase
+      .from('products')
+      .select('id, product_name')
+      .ilike('product_name', cleanName)
+      .maybeSingle()
+
+    if (!existing) {
+      await supabase
+        .from('products')
+        .upsert([{ product_name: cleanName }], { onConflict: 'product_name', ignoreDuplicates: true })
+    }
+  } catch (err) {
+    logger.warn(`[qddrService] Failed to upsert clean product from material_description: ${err?.message || err}`)
+  }
+}
+
+/**
  * Creates a new QDDR report.
  * @param {Object} params - The parameters for creating a QDDR report.
  * @param {Object} params.body - The report data payload.
@@ -177,6 +204,8 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     findUserIdByName(noted_by),
     findUserIdByName(leader)
   ])
+
+  await upsertCleanProductFromQddrDescription(material_description)
 
   const getNextRef = async () => {
     if (typeof supabase.rpc === 'function') {
@@ -576,6 +605,10 @@ export async function editQddrReport({ id, body = {}, actorAuthId }) {
     if (body[key] !== undefined) {
       payload[key] = body[key]
     }
+  }
+
+  if (body.material_description !== undefined) {
+    await upsertCleanProductFromQddrDescription(body.material_description)
   }
 
   if (body.date !== undefined) {

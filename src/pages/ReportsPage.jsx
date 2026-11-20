@@ -295,6 +295,45 @@ export default function ReportsPage({
                             ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase()).length 
                             : logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed').length})`}
                     </button>
+                    <select
+                      value={logic.reportFilters?.productTypeId || ''}
+                      onChange={(e) => logic.setReportFilters(prev => ({
+                        ...prev,
+                        productTypeId: e.target.value,
+                        productMaterialName: ''
+                      }))}
+                      className="btn-quick-toggle"
+                      style={{ height: '36px', padding: '0 12px', borderRadius: '999px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#1e293b', fontSize: '13px', cursor: 'pointer', outline: 'none', maxWidth: '180px' }}
+                      title="Filter by Product Type"
+                    >
+                      <option value="">All Product Types</option>
+                      {(logic.filterModalProps?.productTypes || []).map((pt) => (
+                        <option key={pt.id} value={String(pt.id)}>{pt.product_type_name}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={logic.reportFilters?.productMaterialName || ''}
+                      onChange={(e) => logic.setReportFilters(prev => ({
+                        ...prev,
+                        productMaterialName: e.target.value
+                      }))}
+                      className="btn-quick-toggle"
+                      style={{ height: '36px', padding: '0 12px', borderRadius: '999px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#1e293b', fontSize: '13px', cursor: 'pointer', outline: 'none', maxWidth: '210px' }}
+                      title="Filter by Product / Material"
+                    >
+                      <option value="">All Products / Materials</option>
+                      {(() => {
+                        const pts = logic.filterModalProps?.productTypes || []
+                        const prods = logic.filterModalProps?.products || []
+                        const selectedPt = pts.find(pt => String(pt.id) === String(logic.reportFilters?.productTypeId))
+                        const list = (logic.reportFilters?.productTypeId && selectedPt && Array.isArray(selectedPt.products))
+                          ? selectedPt.products
+                          : prods
+                        return list.map((p) => (
+                          <option key={p.id} value={p.product_name}>{p.product_name}</option>
+                        ))
+                      })()}
+                    </select>
                     {trendClusters.length > 0 && (
                       <button 
                         type="button" 

@@ -24,7 +24,9 @@ function QDDRModal({
   evidenceItems = [],
   evidenceError = null,
   handleEvidenceFiles,
-  removeEvidenceFile
+  removeEvidenceFile,
+  products = [],
+  productsLoading = false
 }) {
   const [isMobile, setIsMobile] = useState(false)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
@@ -469,16 +471,15 @@ function QDDRModal({
               {/* Row 4: Material Details (Item Description + Expiry, Item Code, Batch Code, Quantity) */}
               <div className="qddr-form-row-material-grid">
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label className="label-field">
-                    Material Description: <span className="required-asterisk">*</span>
-                  </label>
-                  <input
-                    type="text"
+                  <SearchableDropdown
+                    label="Material Description:"
                     value={form.material_description}
-                    onChange={(e) => handleChange('material_description', e.target.value)}
-                    className="input-field"
+                    onValueChange={(val) => handleChange('material_description', val)}
+                    options={products}
+                    loading={productsLoading}
                     placeholder="e.g. AL Crema Asada Can 48x370ml (Exp: 10.09.2027)"
-                    required
+                    onSelectOption={(opt) => handleChange('material_description', opt.label)}
+                    required={true}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>

@@ -249,6 +249,26 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       if (formState.reportFilters?.date) {
         filteredQddrs = filteredQddrs.filter(q => String(q.created_at || '').startsWith(formState.reportFilters.date))
       }
+      if (formState.reportFilters?.productTypeId) {
+        const targetPt = (dataState.productTypes || []).find(pt => String(pt.id) === String(formState.reportFilters.productTypeId))
+        if (targetPt) {
+          const allowedNames = (targetPt.products || [])
+            .map(p => String(p.product_name || '').trim().toLowerCase())
+            .filter(Boolean)
+          const ptNameLower = String(targetPt.product_type_name || '').trim().toLowerCase()
+          filteredQddrs = filteredQddrs.filter(q => {
+            const qDesc = String(q.material_description || '').trim().toLowerCase()
+            if (!qDesc) return false
+            return allowedNames.some(prodName => qDesc.includes(prodName)) || (ptNameLower && qDesc.includes(ptNameLower))
+          })
+        }
+      }
+      if (formState.reportFilters?.productMaterialName) {
+        const targetProd = String(formState.reportFilters.productMaterialName).trim().toLowerCase()
+        filteredQddrs = filteredQddrs.filter(q =>
+          String(q.material_description || '').trim().toLowerCase().includes(targetProd)
+        )
+      }
       setQddrReports(filteredQddrs.map(q => enrichWithRatings(q, 'QDDR')))
     } catch (err) {
       setToast({ message: 'We could not load the CAR/QDDR lists. Please refresh the page.', type: 'error' })
@@ -424,6 +444,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
 
       modalsState.closeQDDRModal()
       qddrFormState.resetForm()
+      await dataState.loadLookupData()
       await refreshCarAndQddrLists()
       return { success: true }
     } catch (submitError) {
@@ -671,7 +692,9 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       evidenceItems: qddrFormState.evidenceItems,
       evidenceError: qddrFormState.evidenceError,
       handleEvidenceFiles: qddrFormState.handleEvidenceFiles,
-      removeEvidenceFile: qddrFormState.removeEvidenceFile
+      removeEvidenceFile: qddrFormState.removeEvidenceFile,
+      products: dataState.productOptions,
+      productsLoading: dataState.productsLoading
     },
     carDetailsModalProps: {
       isOpen: carDetails.isCarDetailsModalOpen,
