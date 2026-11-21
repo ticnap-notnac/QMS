@@ -690,7 +690,8 @@ main.page-root .dcc-glass-main-card .car-group-card .dcc-scrollable-table-box {
 .dcc-layout-container {
   display: flex !important;
   align-items: stretch !important;
-  height: 100vh !important;
+  height: 100% !important;
+  max-height: 100% !important;
   width: 100% !important;
   box-sizing: border-box !important;
   background: #ffffff !important;
@@ -871,6 +872,83 @@ main.page-root .dcc-glass-main-card .dcc-center-pane,
   position: relative !important;
 }
 
+/* Quick Product Filters Row */
+.dcc-quick-filter-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+  width: 100% !important;
+}
+
+.dcc-quick-filter-select {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  max-width: 215px !important;
+  height: 32px !important;
+  padding: 0 30px 0 12px !important;
+  border-radius: 999px !important;
+  border: 1px solid #cbd5e1 !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  color: #1e293b !important;
+  background-color: #ffffff !important;
+  cursor: pointer !important;
+  outline: none !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  transition: all 0.15s ease !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23475569%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 13px !important;
+}
+
+.dcc-quick-filter-select:hover {
+  border-color: #94a3b8 !important;
+}
+
+.dcc-quick-filter-select:focus {
+  border-color: #1A435A !important;
+}
+
+.dcc-quick-filter-select.active {
+  background-color: #f0fdf4 !important;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23166534%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E") !important;
+  border-color: #86efac !important;
+  color: #166534 !important;
+  font-weight: 600 !important;
+}
+
+.dcc-quick-filter-clear-btn {
+  height: 32px !important;
+  padding: 0 12px !important;
+  border-radius: 999px !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  transition: all 0.15s ease !important;
+}
+
+.dcc-quick-filter-clear-btn:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
 main.page-root .dcc-glass-main-card .dcc-explorer-viewport,
 .dcc-explorer-viewport {
   flex: 1 !important;
@@ -978,12 +1056,29 @@ main.page-root .dcc-glass-main-card .dcc-explorer-viewport .flex-column.full-hei
   width: 320px !important;
   min-width: 320px !important;
   height: 100% !important;
+  max-height: 100% !important;
   background: #f8fafc !important;
   border-left: 1px solid #cbd5e1 !important;
-  padding: 24px !important;
+  padding: 20px !important;
   display: flex !important;
   flex-direction: column !important;
   overflow-y: auto !important;
+  box-sizing: border-box !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #cbd5e1 #f8fafc !important;
+}
+
+.dcc-right-pane::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.dcc-right-pane::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 4px !important;
+}
+
+.dcc-right-pane::-webkit-scrollbar-track {
+  background: transparent !important;
 }
 
 .dcc-details-close-btn {
@@ -1012,7 +1107,10 @@ main.page-root .dcc-glass-main-card .dcc-explorer-viewport .flex-column.full-hei
 .dcc-details-container {
   display: flex !important;
   flex-direction: column !important;
-  height: 100% !important;
+  min-height: 100% !important;
+  height: auto !important;
+  box-sizing: border-box !important;
+  padding-bottom: 0 !important;
 }
 
 .dcc-details-header {
@@ -1040,8 +1138,11 @@ main.page-root .dcc-glass-main-card .dcc-explorer-viewport .flex-column.full-hei
 }
 
 .dcc-details-preview-box {
-  width: 100px !important;
-  height: 100px !important;
+  min-width: 96px !important;
+  width: fit-content !important;
+  max-width: 150px !important;
+  min-height: 80px !important;
+  height: auto !important;
   background: #f1f5f9 !important;
   border: 1px solid #e2e8f0 !important;
   border-radius: 8px !important;
@@ -1049,23 +1150,36 @@ main.page-root .dcc-glass-main-card .dcc-explorer-viewport .flex-column.full-hei
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  margin-top: 24px !important;
-  margin-bottom: 20px !important;
+  padding: 8px 14px !important;
+  margin-top: 8px !important;
+  margin-bottom: 14px !important;
   margin-left: auto !important;
   margin-right: auto !important;
   position: relative !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
 }
 
 .preview-icon-svg {
+  width: 32px !important;
+  height: 32px !important;
   color: #64748b !important;
   margin-bottom: 4px !important;
+  flex-shrink: 0 !important;
 }
 
 .preview-extension-text {
-  font-size: 14px !important;
+  font-size: 11.5px !important;
   font-weight: 700 !important;
-  color: #64748b !important;
+  color: #475569 !important;
   text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  text-align: center !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.2 !important;
 }
 
 .dcc-details-share-btn {
@@ -1112,8 +1226,8 @@ main.page-root .dcc-glass-main-card .dcc-explorer-viewport .flex-column.full-hei
 }
 
 .dcc-details-table-grid td {
-  padding: 8px 0 !important;
-  font-size: 15.5px !important;
+  padding: 5px 0 !important;
+  font-size: 14.5px !important;
   vertical-align: top !important;
   border: none !important;
 }
@@ -1131,12 +1245,14 @@ main.page-root .dcc-glass-main-card .dcc-explorer-viewport .flex-column.full-hei
 }
 
 .dcc-details-actions {
-  margin-top: 24px !important;
-  padding-top: 16px !important;
+  margin-top: 16px !important;
+  padding-top: 14px !important;
+  padding-bottom: 0 !important;
   border-top: 1px solid #cbd5e1 !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 8px !important;
+  flex-shrink: 0 !important;
 }
 
 .dcc-details-status-box {
@@ -1144,6 +1260,10 @@ main.page-root .dcc-glass-main-card .dcc-explorer-viewport .flex-column.full-hei
   align-items: center !important;
   justify-content: space-between !important;
   margin-bottom: 8px !important;
+}
+
+.dcc-details-status-box:last-child {
+  margin-bottom: 0 !important;
 }
 
 .dcc-details-status-box .dcc-details-label {
@@ -1159,12 +1279,14 @@ main.page-root .dcc-glass-main-card .dcc-explorer-viewport .flex-column.full-hei
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 6px !important;
-  height: 36px !important;
-  font-size: 15px !important;
+  gap: 8px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  font-size: 14.5px !important;
   font-weight: 600 !important;
   border-radius: 6px !important;
   font-family: inherit !important;
+  box-sizing: border-box !important;
 }
 
 .dcc-details-placeholder {
@@ -1311,12 +1433,17 @@ main.dcc-page-root {
   }
 
   main.page-root .dcc-right-pane .dcc-details-preview-box {
-    width: 72px !important;
-    height: 72px !important;
+    min-width: 88px !important;
+    width: fit-content !important;
+    max-width: 140px !important;
+    min-height: 72px !important;
+    height: auto !important;
+    padding: 6px 12px !important;
     margin-top: 8px !important;
     margin-bottom: 10px !important;
     margin-left: auto !important;
     margin-right: auto !important;
+    box-sizing: border-box !important;
   }
 
   main.page-root .dcc-right-pane .preview-icon-svg {

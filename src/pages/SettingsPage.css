@@ -770,24 +770,44 @@
     width: 100% !important;
     box-sizing: border-box !important;
     overflow-x: auto !important;
+    overflow-y: hidden !important;
     white-space: nowrap !important;
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     gap: 8px !important;
-    padding: 4px 8px !important;
+    padding: 4px 8px 12px 8px !important;
     margin-bottom: 16px !important;
     -webkit-overflow-scrolling: touch !important;
+    flex-shrink: 0 !important;
+    min-height: 54px !important;
+    border-bottom: 1px solid #cbd5e1 !important;
   }
 
   .tab-button {
     font-size: 13.5px !important;
-    padding: 8px 14px !important;
+    font-weight: 600 !important;
+    padding: 8px 16px !important;
     border-radius: 8px !important;
     flex-shrink: 0 !important;
     min-height: 38px !important;
+    height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     touch-action: manipulation !important;
     white-space: nowrap !important;
+    background: #f8fafc !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .tab-button.active {
+    background: #090d16 !important;
+    color: #ffffff !important;
+    border-color: #090d16 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
   }
 
   .audit-main input[type="text"],

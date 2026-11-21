@@ -1,7 +1,7 @@
-import { User, SquarePen, Trash2 } from 'lucide-react'
+import { User, SquarePen, Trash2, CheckCircle2 } from 'lucide-react'
 import StarRatingAction from '../UI/StarRatingAction.jsx'
 
-function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr, onRateQddr }) {
+function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr, onRateQddr, isNewlySubmitted }) {
   const statusClean = String(qddr.status || '').trim().toLowerCase()
   const isClosed = statusClean === 'closed'
   const isUnderVerification = statusClean === 'under_verification'
@@ -48,7 +48,7 @@ function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr,
     : '—'
 
   return (
-    <div className="reports-card" id={`qddr-report-card-${qddr.id}`} onClick={() => onSelectQddr && onSelectQddr(qddr)} style={{ cursor: onSelectQddr ? 'pointer' : 'default' }}>
+    <div className={`reports-card ${isNewlySubmitted ? 'newly-submitted' : ''}`} id={`qddr-report-card-${qddr.id}`} onClick={() => onSelectQddr && onSelectQddr(qddr)} style={{ cursor: onSelectQddr ? 'pointer' : 'default' }}>
       {/* Header */}
       <div className="reports-card-header">
         <div className="reports-user-block">
@@ -65,6 +65,11 @@ function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr,
           </div>
         </div>
         <div className="badges-row" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {isNewlySubmitted && (
+            <span className="newly-submitted-badge">
+              <CheckCircle2 size={13} style={{ marginRight: '4px' }} /> Just Submitted
+            </span>
+          )}
           <span style={{ ...unifiedBadgeStyle, background: statusBg, color: statusColor, border: statusBorder }}>
             {statusText}
           </span>

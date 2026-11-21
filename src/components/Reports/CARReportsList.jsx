@@ -11,7 +11,8 @@ export default function CARReportsList({
   onEditCar,
   onDeleteCar,
   onRateCar,
-  viewMode = 'feed'
+  viewMode = 'feed',
+  newlySubmittedId
 }) {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
@@ -58,6 +59,7 @@ export default function CARReportsList({
               onEditCar={onEditCar}
               onDeleteCar={onDeleteCar}
               onRateCar={onRateCar}
+              isNewlySubmitted={String(car.id) === String(newlySubmittedId)}
             />
           ))}
         </div>
@@ -91,6 +93,8 @@ export default function CARReportsList({
                       return (
                         <tr
                           key={car.id}
+                          id={`car-table-row-${car.id}`}
+                          className={String(car.id) === String(newlySubmittedId) ? 'newly-submitted-table-row' : ''}
                           onClick={() => onSelectCar && onSelectCar(car)}
                           style={{ cursor: 'pointer' }}
                           title="Click to view full details and CAPA actions"

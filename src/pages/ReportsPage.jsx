@@ -256,7 +256,7 @@ export default function ReportsPage({
 
         {/* Mobile Dropdown (shown only on mobile) */}
         {availableTabs.length > 1 && (
-          <div className="mobile-only-tabs" style={{ width: '100%', marginBottom: '16px' }}>
+          <div className="mobile-only-tabs">
             <select 
               className="reports-tab-mobile-dropdown"
               value={logic.activeTab}
@@ -264,7 +264,6 @@ export default function ReportsPage({
                 logic.setActiveTab(e.target.value)
                 setIsRecurringMode(false)
               }}
-              style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
             >
               {availableTabs.map(t => {
                 const tabNamesMobile = {
@@ -282,150 +281,164 @@ export default function ReportsPage({
         )}
 
         <div className="reports-main-wrap">
-          {availableTabs.length > 0 && (
-            <div className="reports-action-header-row">
-              <div className="reports-header-controls-left">
-                {canViewActiveTab && (
-                  <>
-                    <button type="button" onClick={() => logic.setIsFilterModalOpen(true)} className="btn-glass-action" title="Open Filters"><SlidersHorizontal size={18} /></button>
-                    <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>
-                      {logic.isClosedMode 
-                        ? 'Show Open' 
-                        : `Closed (${logic.activeTab === 'car' 
-                            ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase()).length 
-                            : logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed').length})`}
-                    </button>
-                    <select
-                      value={logic.reportFilters?.productTypeId || ''}
-                      onChange={(e) => logic.setReportFilters(prev => ({
-                        ...prev,
-                        productTypeId: e.target.value,
-                        productMaterialName: ''
-                      }))}
-                      className="btn-quick-toggle"
-                      style={{ height: '36px', padding: '0 12px', borderRadius: '999px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#1e293b', fontSize: '13px', cursor: 'pointer', outline: 'none', maxWidth: '180px' }}
-                      title="Filter by Product Type"
-                    >
-                      <option value="">All Product Types</option>
-                      {(logic.filterModalProps?.productTypes || []).map((pt) => (
-                        <option key={pt.id} value={String(pt.id)}>{pt.product_type_name}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={logic.reportFilters?.productMaterialName || ''}
-                      onChange={(e) => logic.setReportFilters(prev => ({
-                        ...prev,
-                        productMaterialName: e.target.value
-                      }))}
-                      className="btn-quick-toggle"
-                      style={{ height: '36px', padding: '0 12px', borderRadius: '999px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#1e293b', fontSize: '13px', cursor: 'pointer', outline: 'none', maxWidth: '210px' }}
-                      title="Filter by Product / Material"
-                    >
-                      <option value="">All Products / Materials</option>
-                      {(() => {
-                        const pts = logic.filterModalProps?.productTypes || []
-                        const prods = logic.filterModalProps?.products || []
-                        const selectedPt = pts.find(pt => String(pt.id) === String(logic.reportFilters?.productTypeId))
-                        const list = (logic.reportFilters?.productTypeId && selectedPt && Array.isArray(selectedPt.products))
-                          ? selectedPt.products
-                          : prods
-                        return list.map((p) => (
-                          <option key={p.id} value={p.product_name}>{p.product_name}</option>
-                        ))
-                      })()}
-                    </select>
-                    {trendClusters.length > 0 && (
-                      <button 
-                        type="button" 
-                        className={`btn-quick-toggle ${isRecurringMode ? 'active recurring-active' : 'recurring-inactive'}`} 
-                        onClick={() => {
-                          setIsRecurringMode(!isRecurringMode)
-                          if (!isRecurringMode) {
-                            logic.setIsClosedMode(false)
-                          }
-                        }}
-                      >
-                        Recurring Trends ({allRecurringReportIds.length})
+          <div className="reports-sticky-toolbar">
+            {availableTabs.length > 0 && (
+              <div className="reports-action-header-row">
+                <div className="reports-header-controls-left">
+                  {canViewActiveTab && (
+                    <>
+                      <button type="button" onClick={() => logic.setIsFilterModalOpen(true)} className="btn-glass-action" title="Open Filters"><SlidersHorizontal size={18} /></button>
+                      <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>
+                        {logic.isClosedMode 
+                          ? 'Show Open' 
+                          : `Closed (${logic.activeTab === 'car' 
+                              ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase()).length 
+                              : logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed').length})`}
                       </button>
-                    )}
-                  </>
-                )}
+                      <select
+                        value={logic.reportFilters?.productTypeId || ''}
+                        onChange={(e) => logic.setReportFilters(prev => ({
+                          ...prev,
+                          productTypeId: e.target.value,
+                          productMaterialName: ''
+                        }))}
+                        className={`reports-quick-filter-select ${logic.reportFilters?.productTypeId ? 'active' : ''}`}
+                        title="Filter by Product Type"
+                      >
+                        <option value="">All Product Types</option>
+                        {(logic.filterModalProps?.productTypes || []).map((pt) => (
+                          <option key={pt.id} value={String(pt.id)}>{pt.product_type_name}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={logic.reportFilters?.productMaterialName || ''}
+                        onChange={(e) => logic.setReportFilters(prev => ({
+                          ...prev,
+                          productMaterialName: e.target.value
+                        }))}
+                        className={`reports-quick-filter-select ${logic.reportFilters?.productMaterialName ? 'active' : ''}`}
+                        title="Filter by Product / Material"
+                      >
+                        <option value="">All Products / Materials</option>
+                        {(() => {
+                          const pts = logic.filterModalProps?.productTypes || []
+                          const prods = logic.filterModalProps?.products || []
+                          const selectedPt = pts.find(pt => String(pt.id) === String(logic.reportFilters?.productTypeId))
+                          const list = (logic.reportFilters?.productTypeId && selectedPt && Array.isArray(selectedPt.products))
+                            ? selectedPt.products
+                            : prods
+                          return list.map((p) => (
+                            <option key={p.id} value={p.product_name}>{p.product_name}</option>
+                          ))
+                        })()}
+                      </select>
+                      {(logic.reportFilters?.productTypeId || logic.reportFilters?.productMaterialName) && (
+                        <button
+                          type="button"
+                          onClick={() => logic.setReportFilters(prev => ({
+                            ...prev,
+                            productTypeId: '',
+                            productMaterialName: ''
+                          }))}
+                          className="reports-quick-filter-clear-btn"
+                          title="Clear product filters"
+                        >
+                          Clear
+                        </button>
+                      )}
+                      {trendClusters.length > 0 && (
+                        <button 
+                          type="button" 
+                          className={`btn-quick-toggle ${isRecurringMode ? 'active recurring-active' : 'recurring-inactive'}`} 
+                          onClick={() => {
+                            setIsRecurringMode(!isRecurringMode)
+                            if (!isRecurringMode) {
+                              logic.setIsClosedMode(false)
+                            }
+                          }}
+                        >
+                          Recurring Trends ({allRecurringReportIds.length})
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+                <div className="reports-action-buttons-right">
+                  {logic.activeTab === 'car' && canCreateCar && (
+                    <button 
+                      type="button" 
+                      onClick={logic.openCARModal} 
+                      className="btn-gradient-primary reports-submit-primary"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                      title="Submit a new CAR"
+                    >
+                      + Submit CAR
+                    </button>
+                  )}
+                  {logic.activeTab === 'qddr' && canCreateQddr && (
+                    <button 
+                      type="button" 
+                      onClick={logic.openQDDRModal} 
+                      className="btn-gradient-primary reports-submit-primary"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                      title="Submit a new QDDR"
+                    >
+                      + Submit QDDR
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="reports-action-buttons-right">
-                {logic.activeTab === 'car' && canCreateCar && (
-                  <button 
-                    type="button" 
-                    onClick={logic.openCARModal} 
-                    className="btn-gradient-primary reports-submit-primary"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-                    title="Submit a new CAR"
-                  >
-                    + Submit CAR
-                  </button>
-                )}
-                {logic.activeTab === 'qddr' && canCreateQddr && (
-                  <button 
-                    type="button" 
-                    onClick={logic.openQDDRModal} 
-                    className="btn-gradient-primary reports-submit-primary"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-                    title="Submit a new QDDR"
-                  >
-                    + Submit QDDR
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
+            )}
 
-          {availableTabs.length > 0 && canViewActiveTab && (
-            <div className="reports-tab-nav-container">
-              {logic.activeTab === 'car' && (
-                <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
-                  <button
-                    type="button"
-                    className={`btn-quick-toggle reports-tab-nav-btn ${carViewMode === 'feed' ? 'active' : ''}`}
-                    onClick={() => setCarViewMode('feed')}
-                    title="Card View"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                  >
-                    <LayoutGrid size={18} /> FEED
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn-quick-toggle reports-tab-nav-btn ${carViewMode === 'table' ? 'active' : ''}`}
-                    onClick={() => setCarViewMode('table')}
-                    title="Table View"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                  >
-                    <List size={18} /> TABLE
-                  </button>
-                </div>
-              )}
-              {logic.activeTab === 'qddr' && (
-                <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
-                  <button
-                    type="button"
-                    className={`btn-quick-toggle reports-tab-nav-btn ${qddrViewMode === 'feed' ? 'active' : ''}`}
-                    onClick={() => setQddrViewMode('feed')}
-                    title="Card View"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                  >
-                    <LayoutGrid size={18} /> FEED
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn-quick-toggle reports-tab-nav-btn ${qddrViewMode === 'table' ? 'active' : ''}`}
-                    onClick={() => setQddrViewMode('table')}
-                    title="Table View"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                  >
-                    <List size={18} /> TABLE
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+            {availableTabs.length > 0 && canViewActiveTab && (
+              <div className="reports-tab-nav-container">
+                {logic.activeTab === 'car' && (
+                  <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
+                    <button
+                      type="button"
+                      className={`btn-quick-toggle reports-tab-nav-btn ${carViewMode === 'feed' ? 'active' : ''}`}
+                      onClick={() => setCarViewMode('feed')}
+                      title="Card View"
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <LayoutGrid size={18} /> FEED
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn-quick-toggle reports-tab-nav-btn ${carViewMode === 'table' ? 'active' : ''}`}
+                      onClick={() => setCarViewMode('table')}
+                      title="Table View"
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <List size={18} /> TABLE
+                    </button>
+                  </div>
+                )}
+                {logic.activeTab === 'qddr' && (
+                  <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
+                    <button
+                      type="button"
+                      className={`btn-quick-toggle reports-tab-nav-btn ${qddrViewMode === 'feed' ? 'active' : ''}`}
+                      onClick={() => setQddrViewMode('feed')}
+                      title="Card View"
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <LayoutGrid size={18} /> FEED
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn-quick-toggle reports-tab-nav-btn ${qddrViewMode === 'table' ? 'active' : ''}`}
+                      onClick={() => setQddrViewMode('table')}
+                      title="Table View"
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <List size={18} /> TABLE
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {logic.error && <div className="user-info-error">{logic.error}</div>}
           <div className="facebook-feed-layout-wrapper">
@@ -439,6 +452,7 @@ export default function ReportsPage({
                 onDeleteCar={handleDeleteCar}
                 onRateCar={logic.handleRateCar}
                 viewMode={carViewMode}
+                newlySubmittedId={logic.newlySubmittedReport?.type === 'car' ? logic.newlySubmittedReport?.id : null}
               />
             )}
             {logic.activeTab === 'qddr' && canAccessQddr && (
@@ -451,6 +465,7 @@ export default function ReportsPage({
                 onDeleteQddr={handleDeleteQddr}
                 onRateQddr={logic.handleRateQddr}
                 viewMode={qddrViewMode}
+                newlySubmittedId={logic.newlySubmittedReport?.type === 'qddr' ? logic.newlySubmittedReport?.id : null}
               />
             )}
           </div>

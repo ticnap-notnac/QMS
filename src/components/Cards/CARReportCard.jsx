@@ -1,9 +1,9 @@
-import { User, SquarePen, Trash2 } from 'lucide-react'
+import { User, SquarePen, Trash2, CheckCircle2 } from 'lucide-react'
 import { formatDate, getStatusStyle } from '@/utils/themeHelpers'
 import { REPORT_STATUS } from '../../../shared/constants'
 import StarRatingAction from '../UI/StarRatingAction.jsx'
 
-function CARReportCard({ car, canEdit, onSelectCar, onEditCar, onDeleteCar, onRateCar }) {
+function CARReportCard({ car, canEdit, onSelectCar, onEditCar, onDeleteCar, onRateCar, isNewlySubmitted }) {
   const requestor = car.requestor?.trim() || 'Requestor'
   const recipient = car.recipient?.trim() || 'Recipient'
   const reqDept = car.requesting_department?.trim() || 'Requesting Dept'
@@ -53,7 +53,7 @@ function CARReportCard({ car, canEdit, onSelectCar, onEditCar, onDeleteCar, onRa
   }
 
   return (
-    <div className="reports-card" id={`car-report-card-${car.id}`} onClick={() => onSelectCar && onSelectCar(car)} style={{ cursor: onSelectCar ? 'pointer' : 'default' }}>
+    <div className={`reports-card ${isNewlySubmitted ? 'newly-submitted' : ''}`} id={`car-report-card-${car.id}`} onClick={() => onSelectCar && onSelectCar(car)} style={{ cursor: onSelectCar ? 'pointer' : 'default' }}>
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="reports-card-header">
         <div className="reports-user-block">
@@ -74,6 +74,11 @@ function CARReportCard({ car, canEdit, onSelectCar, onEditCar, onDeleteCar, onRa
         </div>
 
         <div className="badges-row" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {isNewlySubmitted && (
+            <span className="newly-submitted-badge">
+              <CheckCircle2 size={13} style={{ marginRight: '4px' }} /> Just Submitted
+            </span>
+          )}
           {/* Status Badge */}
           <span style={{ ...unifiedBadgeStyle, background: statusBg, color: statusColor, border: statusBorder }}>
             {statusText}

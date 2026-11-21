@@ -63,6 +63,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
   const carDetails = useCARDetails()
   const [selectedQddr, setSelectedQddr] = useState(null)
   const [isQddrDetailsModalOpen, setIsQddrDetailsModalOpen] = useState(false)
+  const [newlySubmittedReport, setNewlySubmittedReport] = useState(null)
 
   // ── Sub-hooks ──────────────────────────────────────────────────────────────
   const formState = useReportsForm()
@@ -201,16 +202,22 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
           const ptNameLower = String(targetPt.product_type_name || '').trim().toLowerCase()
           filteredCars = filteredCars.filter(car => {
             const carProd = String(car.product_material_name || '').trim().toLowerCase()
-            if (!carProd) return false
-            return allowedNames.has(carProd) || (ptNameLower && carProd.includes(ptNameLower))
+            const carModel = String(car.model_type || '').trim().toLowerCase()
+            if (!carProd && !carModel) return false
+            return allowedNames.has(carProd) ||
+                   allowedNames.has(carModel) ||
+                   (ptNameLower && carProd.includes(ptNameLower)) ||
+                   (ptNameLower && carModel.includes(ptNameLower))
           })
         }
       }
       if (formState.reportFilters?.productMaterialName) {
         const targetProd = String(formState.reportFilters.productMaterialName).trim().toLowerCase()
-        filteredCars = filteredCars.filter(car =>
-          String(car.product_material_name || '').trim().toLowerCase().includes(targetProd)
-        )
+        filteredCars = filteredCars.filter(car => {
+          const carProd = String(car.product_material_name || '').trim().toLowerCase()
+          const carModel = String(car.model_type || '').trim().toLowerCase()
+          return carProd.includes(targetProd) || carModel.includes(targetProd)
+        })
       }
       setCarReports(filteredCars.map(car => enrichWithRatings(car, 'CAR')))
 
@@ -357,11 +364,14 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         clause_ids: carFormState.form.linked_clause_ids || []
       }
 
+      let newReportId = null
       if (carFormState.form.id) {
         await updateCarReport(carFormState.form.id, payload, currentAuthId)
+        newReportId = carFormState.form.id
         setToast({ message: 'CAR report updated successfully', type: 'success' })
       } else {
-        await submitCarReport(payload, currentAuthId)
+        const res = await submitCarReport(payload, currentAuthId)
+        newReportId = res?.id || res?.data?.id
         setToast({ message: 'CAR report submitted successfully', type: 'success' })
       }
 
@@ -369,6 +379,20 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       carFormState.resetForm()
       await dataState.loadLookupData()
       await refreshCarAndQddrLists()
+      setActiveTab('car')
+      setIsClosedMode(false)
+      if (newReportId) {
+        setNewlySubmittedReport({ type: 'car', id: newReportId })
+        setTimeout(() => {
+          const el = document.getElementById(`car-report-card-${newReportId}`) || document.getElementById(`car-table-row-${newReportId}`)
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 200)
+        setTimeout(() => {
+          setNewlySubmittedReport((prev) => (prev?.id === newReportId ? null : prev))
+        }, 15000)
+      }
       return { success: true }
     } catch (submitError) {
       carFormState.setError(submitError?.message || 'Failed to submit CAR.')
@@ -434,11 +458,14 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         evidence_urls: finalEvidenceUrls
       }
 
+      let newReportId = null
       if (qddrFormState.form.id) {
         await editQddrReport(qddrFormState.form.id, payload, currentAuthId)
+        newReportId = qddrFormState.form.id
         setToast({ message: 'QDDR report updated successfully', type: 'success' })
       } else {
-        await submitQddrReport(payload, currentAuthId)
+        const res = await submitQddrReport(payload, currentAuthId)
+        newReportId = res?.id || res?.data?.id
         setToast({ message: 'QDDR report submitted successfully', type: 'success' })
       }
 
@@ -446,6 +473,20 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       qddrFormState.resetForm()
       await dataState.loadLookupData()
       await refreshCarAndQddrLists()
+      setActiveTab('qddr')
+      setIsClosedMode(false)
+      if (newReportId) {
+        setNewlySubmittedReport({ type: 'qddr', id: newReportId })
+        setTimeout(() => {
+          const el = document.getElementById(`qddr-report-card-${newReportId}`) || document.getElementById(`qddr-table-row-${newReportId}`)
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 200)
+        setTimeout(() => {
+          setNewlySubmittedReport((prev) => (prev?.id === newReportId ? null : prev))
+        }, 15000)
+      }
       return { success: true }
     } catch (submitError) {
       qddrFormState.setError(submitError?.message || 'Failed to submit QDDR.')
@@ -598,6 +639,8 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     qddrReports,
     loadingQddr,
     refreshCarAndQddrLists,
+    newlySubmittedReport,
+    setNewlySubmittedReport,
 
     selectedCar: carDetails.selectedCar,
     isCarDetailsModalOpen: carDetails.isCarDetailsModalOpen,

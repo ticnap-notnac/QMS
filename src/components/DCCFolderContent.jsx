@@ -645,14 +645,15 @@ export default function DCCFolderContent({
             </div>
 
             {selectedFolder?.id === 'task_reports' && (selectedTaskFolder?.id === 'car' || selectedTaskFolder?.id === 'qddr') && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '12px', width: '100%', maxWidth: '600px', margin: '12px auto 0 auto' }}>
+              <div className="dcc-quick-filter-row">
                 <select
                   value={selectedProductTypeId}
                   onChange={(e) => {
                     setSelectedProductTypeId(e.target.value)
                     setSelectedProductName('')
                   }}
-                  style={{ flex: '1 1 180px', height: '36px', padding: '0 12px', borderRadius: '999px', border: '1px solid #cbd5e1', fontSize: '13px', color: '#0f172a', background: '#ffffff', cursor: 'pointer', outline: 'none' }}
+                  className={`dcc-quick-filter-select ${selectedProductTypeId ? 'active' : ''}`}
+                  title="Filter by Product Type"
                 >
                   <option value="">All Product Types</option>
                   {productTypesList.map((pt) => (
@@ -663,7 +664,8 @@ export default function DCCFolderContent({
                 <select
                   value={selectedProductName}
                   onChange={(e) => setSelectedProductName(e.target.value)}
-                  style={{ flex: '1 1 200px', height: '36px', padding: '0 12px', borderRadius: '999px', border: '1px solid #cbd5e1', fontSize: '13px', color: '#0f172a', background: '#ffffff', cursor: 'pointer', outline: 'none' }}
+                  className={`dcc-quick-filter-select ${selectedProductName ? 'active' : ''}`}
+                  title="Filter by Product / Material"
                 >
                   <option value="">All Products / Materials</option>
                   {availableDccProducts.map((p) => (
@@ -678,7 +680,8 @@ export default function DCCFolderContent({
                       setSelectedProductTypeId('')
                       setSelectedProductName('')
                     }}
-                    style={{ height: '36px', padding: '0 14px', borderRadius: '999px', border: '1px solid #cbd5e1', background: '#f8fafc', color: '#475569', fontSize: '12.5px', fontWeight: 500, cursor: 'pointer' }}
+                    className="dcc-quick-filter-clear-btn"
+                    title="Clear product filters"
                   >
                     Clear
                   </button>
@@ -924,7 +927,7 @@ export default function DCCFolderContent({
             <div className="dcc-details-container">
               {/* Mockup Top Preview Box */}
               <div className="dcc-details-preview-box">
-                <File size={48} className="preview-icon-svg" />
+                <File size={32} className="preview-icon-svg" />
                 <span className="preview-extension-text">.{selectedDocument._type.toLowerCase()}</span>
               </div>
 
@@ -1020,6 +1023,35 @@ export default function DCCFolderContent({
                         </tr>
                       </>
                     )}
+
+                    {selectedDocument._type === 'AUDIT_SCHED' && (
+                      <>
+                        {selectedDocument.standard_name && (
+                          <tr>
+                            <td className="dcc-details-label-col">Standard</td>
+                            <td className="dcc-details-value-col">{selectedDocument.standard_name}</td>
+                          </tr>
+                        )}
+                        {selectedDocument.auditor_name && (
+                          <tr>
+                            <td className="dcc-details-label-col">Auditor</td>
+                            <td className="dcc-details-value-col">{selectedDocument.auditor_name}</td>
+                          </tr>
+                        )}
+                        {selectedDocument.scheduled_date && (
+                          <tr>
+                            <td className="dcc-details-label-col">Scheduled Date</td>
+                            <td className="dcc-details-value-col">{selectedDocument.scheduled_date}</td>
+                          </tr>
+                        )}
+                        {selectedDocument.department && (
+                          <tr>
+                            <td className="dcc-details-label-col">Department</td>
+                            <td className="dcc-details-value-col">{selectedDocument.department}</td>
+                          </tr>
+                        )}
+                      </>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1045,7 +1077,7 @@ export default function DCCFolderContent({
                     onClick={() => setViewDetailsDoc(selectedDocument)} 
                     className="btn btn-outline dcc-details-action-btn"
                   >
-                    <Eye size={13} style={{ marginRight: '6px' }} />
+                    <Eye size={15} style={{ marginRight: '6px' }} />
                     View Details
                   </button>
                 )}
@@ -1056,7 +1088,7 @@ export default function DCCFolderContent({
                     onClick={() => onSelectCar(selectedDocument)} 
                     className="btn btn-outline dcc-details-action-btn"
                   >
-                    <Eye size={13} style={{ marginRight: '6px' }} />
+                    <Eye size={15} style={{ marginRight: '6px' }} />
                     View Details
                   </button>
                 )}
@@ -1067,7 +1099,7 @@ export default function DCCFolderContent({
                     onClick={() => onFetchRunDetails(selectedDocument)} 
                     className="btn btn-outline dcc-details-action-btn"
                   >
-                    <Eye size={13} style={{ marginRight: '6px' }} />
+                    <Eye size={15} style={{ marginRight: '6px' }} />
                     View Details
                   </button>
                 )}
@@ -1078,7 +1110,7 @@ export default function DCCFolderContent({
                     onClick={() => handleDownloadPDF(selectedDocument, selectedDocument._type)}
                     className="btn btn-outline dcc-details-action-btn"
                   >
-                    <Download size={13} style={{ marginRight: '6px' }} /> PDF
+                    <Download size={15} style={{ marginRight: '6px' }} /> Download PDF
                   </button>
                 )}
               </div>

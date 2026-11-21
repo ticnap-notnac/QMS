@@ -11,7 +11,8 @@ export default function QDDRReportsList({
   onEditQddr,
   onDeleteQddr,
   onRateQddr,
-  viewMode = 'table'
+  viewMode = 'table',
+  newlySubmittedId
 }) {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
@@ -57,6 +58,7 @@ export default function QDDRReportsList({
               onEditQddr={onEditQddr}
               onDeleteQddr={onDeleteQddr}
               onRateQddr={onRateQddr}
+              isNewlySubmitted={String(qddr.id) === String(newlySubmittedId)}
             />
           ))}
         </div>
@@ -93,6 +95,8 @@ export default function QDDRReportsList({
                 return (
                   <tr
                     key={qddr.id}
+                    id={`qddr-table-row-${qddr.id}`}
+                    className={String(qddr.id) === String(newlySubmittedId) ? 'newly-submitted-table-row' : ''}
                     onClick={() => onSelectQddr && onSelectQddr(qddr)}
                     style={{ cursor: 'pointer' }}
                     title="Click to view full details and resolve discrepancy"
