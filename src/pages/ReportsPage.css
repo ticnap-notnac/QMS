@@ -134,6 +134,19 @@
   border-radius: 10px;
 }
 
+.reports-sidebar-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #cbd5e1;
+  border: none;
+  margin: 6px 0;
+}
+
+.reports-sidebar.collapsed .reports-sidebar-divider {
+  width: 32px;
+  margin: 6px auto;
+}
+
 .reports-sidebar-btn-icon {
   flex-shrink: 0;
   color: inherit;

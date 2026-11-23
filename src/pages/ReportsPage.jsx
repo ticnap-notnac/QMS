@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { SlidersHorizontal, LayoutGrid, List, PanelLeftClose, PanelLeftOpen, FileCheck, AlertTriangle } from 'lucide-react'
+import { SlidersHorizontal, LayoutGrid, List, PanelLeftClose, PanelLeftOpen, FileCheck, AlertTriangle, ClipboardList } from 'lucide-react'
 import Toast from '@/components/UI/Toast'
 import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import FilterModal from '../components/Modals/FilterModal.jsx'
@@ -10,6 +10,7 @@ import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
 import QDDRDetailsModal from '../components/Modals/QDDRDetailsModal.jsx'
 import CARReportsList from '../components/Reports/CARReportsList.jsx'
 import QDDRReportsList from '../components/Reports/QDDRReportsList.jsx'
+import MyReportsList from '../components/Reports/MyReportsList.jsx'
 import { deleteCarReport, fetchCarRecurringTrends } from '../services/carService.js'
 import { deleteQddrReport, fetchQddrRecurringTrends } from '../services/qddrService.js'
 import { CAR_STATUS } from '../../shared/constants'
@@ -27,7 +28,7 @@ export default function ReportsPage({
   setProfileTargetTab,
   userPermissions
 }) {
-  const logic = useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId })
+  const logic = useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId, userName })
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     return localStorage.getItem('reports_sidebar_collapsed') === 'true'
   })
@@ -42,7 +43,8 @@ export default function ReportsPage({
 
   const tabMeta = {
     car: { label: 'Corrective Actions (CAR)', icon: FileCheck },
-    qddr: { label: 'Defects & Disposal (QDDR)', icon: AlertTriangle }
+    qddr: { label: 'Defects & Disposal (QDDR)', icon: AlertTriangle },
+    my_reports: { label: 'My Reports', icon: ClipboardList }
   }
 
   const normalizedRole = String(userRole || '').trim().toLowerCase()
@@ -67,7 +69,8 @@ export default function ReportsPage({
 
   const availableTabs = [
     ...(canAccessCar ? ['car'] : []),
-    ...(canAccessQddr ? ['qddr'] : [])
+    ...(canAccessQddr ? ['qddr'] : []),
+    'my_reports'
   ]
 
   useEffect(() => {
@@ -84,6 +87,7 @@ export default function ReportsPage({
   const [isRecurringMode, setIsRecurringMode] = useState(false)
   const [carViewMode, setCarViewMode] = useState('feed')
   const [qddrViewMode, setQddrViewMode] = useState('feed')
+  const [myReportsViewMode, setMyReportsViewMode] = useState('feed')
 
   useEffect(() => {
     let isMounted = true
@@ -107,8 +111,8 @@ export default function ReportsPage({
   }, [trendClusters])
 
   // Aggregate loading states for premium overlay spinner feedback
-  const isOverlayLoading = logic.carModalProps.isSubmitting || 
-                            logic.qddrModalProps.isSubmitting
+  const isOverlayLoading = logic.carModalProps.isSubmitting ||
+    logic.qddrModalProps.isSubmitting
 
   let overlayMessage = ''
   if (logic.carModalProps.isSubmitting) overlayMessage = 'Submitting CAR report...'
@@ -133,6 +137,91 @@ export default function ReportsPage({
     }
     return list
   }, [logic.isClosedMode, logic.qddrReports, isRecurringMode, allRecurringReportIds])
+
+  const currentUserObj = useMemo(() => {
+    return (logic.users || []).find(u =>
+      (currentUserId && Number(u.id) === Number(currentUserId)) ||
+      (authUserId && u.auth_id === authUserId)
+    )
+  }, [logic.users, currentUserId, authUserId])
+
+  // Extract ONLY user-specific personal identifiers (strictly excluding role names)
+  const userStrictNames = useMemo(() => {
+    const names = new Set()
+    if (currentUserObj) {
+      if (currentUserObj.user_name) names.add(currentUserObj.user_name.trim().toLowerCase())
+      if (currentUserObj.first_name) names.add(currentUserObj.first_name.trim().toLowerCase())
+      const full = [currentUserObj.first_name, currentUserObj.last_name].filter(Boolean).join(' ').trim().toLowerCase()
+      if (full) names.add(full)
+    }
+    if (userName) {
+      const trimmed = userName.trim().toLowerCase()
+      const cleanBeforeDash = trimmed.split(/\s+[—–-]\s+/)[0].trim()
+      if (cleanBeforeDash) names.add(cleanBeforeDash)
+    }
+    return Array.from(names).filter(Boolean)
+  }, [userName, currentUserObj])
+
+  const myRawCars = useMemo(() => {
+    const targetUserId = currentUserId || currentUserObj?.id
+    return (logic.carReports || []).filter(car => {
+      if (!car) return false
+      // 1. Direct user ID match on prepared_by_audited_by
+      if (targetUserId && car.prepared_by_audited_by && Number(car.prepared_by_audited_by) === Number(targetUserId)) {
+        return true
+      }
+      // 2. Extract ONLY the username / user portion before " — " (strip the role!)
+      const req = String(car.requestor || '').trim().toLowerCase()
+      if (!req) return false
+      const reqUserPart = req.split(/\s+[—–-]\s+/)[0].trim()
+      // Strict exact match on user identity only (prevents reports matching because of shared role e.g. "Admin")
+      return userStrictNames.includes(reqUserPart)
+    })
+  }, [logic.carReports, currentUserId, currentUserObj, userStrictNames])
+
+  const myRawQddrs = useMemo(() => {
+    const targetUserId = currentUserId || currentUserObj?.id
+    return (logic.qddrReports || []).filter(q => {
+      if (!q) return false
+      // In QDDR, reported_by explicitly stores the user id of the person who submitted the report
+      if (targetUserId && q.reported_by && Number(q.reported_by) === Number(targetUserId)) {
+        return true
+      }
+      // Fallback: match reported_by_name strictly against user names (never role)
+      if (q.reported_by_name) {
+        const repName = String(q.reported_by_name).trim().toLowerCase()
+        const repUserPart = repName.split(/\s+[—–-]\s+/)[0].trim()
+        if (userStrictNames.includes(repUserPart)) return true
+      }
+      return false
+    })
+  }, [logic.qddrReports, currentUserId, currentUserObj, userStrictNames])
+
+  const displayedMyCars = useMemo(() => {
+    let list = logic.isClosedMode
+      ? myRawCars.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase())
+      : myRawCars.filter(c => String(c.status).toLowerCase() !== CAR_STATUS.CLOSED.toLowerCase())
+    if (isRecurringMode && allRecurringReportIds.length > 0) {
+      list = list.filter(c => allRecurringReportIds.includes(c.id))
+    }
+    return list
+  }, [logic.isClosedMode, myRawCars, isRecurringMode, allRecurringReportIds])
+
+  const displayedMyQddrs = useMemo(() => {
+    let list = logic.isClosedMode
+      ? myRawQddrs.filter(q => String(q.status).toLowerCase() === 'closed')
+      : myRawQddrs.filter(q => String(q.status).toLowerCase() !== 'closed')
+    if (isRecurringMode && allRecurringReportIds.length > 0) {
+      list = list.filter(q => allRecurringReportIds.includes(q.id))
+    }
+    return list
+  }, [logic.isClosedMode, myRawQddrs, isRecurringMode, allRecurringReportIds])
+
+  const myClosedCount = useMemo(() => {
+    const closedCars = myRawCars.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase()).length
+    const closedQddrs = myRawQddrs.filter(q => String(q.status).toLowerCase() === 'closed').length
+    return closedCars + closedQddrs
+  }, [myRawCars, myRawQddrs])
 
   const handleDeleteCar = (id) => setCarToDelete(id)
 
@@ -204,7 +293,8 @@ export default function ReportsPage({
 
   const canViewActiveTab =
     (logic.activeTab === 'car' && canAccessCar) ||
-    (logic.activeTab === 'qddr' && canAccessQddr)
+    (logic.activeTab === 'qddr' && canAccessQddr) ||
+    logic.activeTab === 'my_reports'
 
   return (
     <main className="reports-page-root page-root">
@@ -219,8 +309,8 @@ export default function ReportsPage({
           <aside className={`reports-sidebar desktop-only-tabs ${isSidebarCollapsed ? 'collapsed' : ''}`}>
             <div className={`reports-sidebar-header ${isSidebarCollapsed ? 'collapsed' : ''}`}>
               {!isSidebarCollapsed && <h3 className="reports-sidebar-title">Modules</h3>}
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="reports-sidebar-toggle-btn"
                 onClick={handleToggleSidebar}
                 title={isSidebarCollapsed ? "Expand Modules" : "Collapse Modules"}
@@ -233,22 +323,26 @@ export default function ReportsPage({
               const meta = tabMeta[t] || { label: t.toUpperCase(), icon: FileCheck }
               const IconComp = meta.icon
               return (
-                <button 
-                  key={t} 
-                  type="button" 
-                  className={`reports-sidebar-btn ${logic.activeTab === t ? 'active' : ''}`} 
-                  onClick={() => {
-                    logic.setActiveTab(t)
-                    setIsRecurringMode(false)
-                  }}
-                  title={meta.label}
-                  aria-label={meta.label}
-                >
-                  <IconComp size={18} className="reports-sidebar-btn-icon" />
-                  {!isSidebarCollapsed && (
-                    <span className="reports-sidebar-btn-text">{meta.label}</span>
+                <React.Fragment key={t}>
+                  {t === 'my_reports' && (
+                    <div className="reports-sidebar-divider" />
                   )}
-                </button>
+                  <button
+                    type="button"
+                    className={`reports-sidebar-btn ${logic.activeTab === t ? 'active' : ''}`}
+                    onClick={() => {
+                      logic.setActiveTab(t)
+                      setIsRecurringMode(false)
+                    }}
+                    title={meta.label}
+                    aria-label={meta.label}
+                  >
+                    <IconComp size={18} className="reports-sidebar-btn-icon" />
+                    {!isSidebarCollapsed && (
+                      <span className="reports-sidebar-btn-text">{meta.label}</span>
+                    )}
+                  </button>
+                </React.Fragment>
               );
             })}
           </aside>
@@ -257,7 +351,7 @@ export default function ReportsPage({
         {/* Mobile Dropdown (shown only on mobile) */}
         {availableTabs.length > 1 && (
           <div className="mobile-only-tabs">
-            <select 
+            <select
               className="reports-tab-mobile-dropdown"
               value={logic.activeTab}
               onChange={(e) => {
@@ -268,7 +362,8 @@ export default function ReportsPage({
               {availableTabs.map(t => {
                 const tabNamesMobile = {
                   car: 'Corrective Actions (CAR)',
-                  qddr: 'Defects & Disposal (QDDR)'
+                  qddr: 'Defects & Disposal (QDDR)',
+                  my_reports: 'My Reports'
                 };
                 return (
                   <option key={t} value={t}>
@@ -289,11 +384,13 @@ export default function ReportsPage({
                     <>
                       <button type="button" onClick={() => logic.setIsFilterModalOpen(true)} className="btn-glass-action" title="Open Filters"><SlidersHorizontal size={18} /></button>
                       <button type="button" className={`btn-quick-toggle ${logic.isClosedMode ? 'active' : ''}`} onClick={() => logic.setIsClosedMode((c) => !c)}>
-                        {logic.isClosedMode 
-                          ? 'Show Open' 
-                          : `Closed (${logic.activeTab === 'car' 
-                              ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase()).length 
-                              : logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed').length})`}
+                        {logic.isClosedMode
+                          ? 'Show Open'
+                          : `Closed (${logic.activeTab === 'car'
+                            ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase()).length
+                            : logic.activeTab === 'qddr'
+                              ? logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed').length
+                              : myClosedCount})`}
                       </button>
                       <select
                         value={logic.reportFilters?.productTypeId || ''}
@@ -347,9 +444,9 @@ export default function ReportsPage({
                         </button>
                       )}
                       {trendClusters.length > 0 && (
-                        <button 
-                          type="button" 
-                          className={`btn-quick-toggle ${isRecurringMode ? 'active recurring-active' : 'recurring-inactive'}`} 
+                        <button
+                          type="button"
+                          className={`btn-quick-toggle ${isRecurringMode ? 'active recurring-active' : 'recurring-inactive'}`}
                           onClick={() => {
                             setIsRecurringMode(!isRecurringMode)
                             if (!isRecurringMode) {
@@ -365,9 +462,9 @@ export default function ReportsPage({
                 </div>
                 <div className="reports-action-buttons-right">
                   {logic.activeTab === 'car' && canCreateCar && (
-                    <button 
-                      type="button" 
-                      onClick={logic.openCARModal} 
+                    <button
+                      type="button"
+                      onClick={logic.openCARModal}
                       className="btn-gradient-primary reports-submit-primary"
                       style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                       title="Submit a new CAR"
@@ -376,9 +473,9 @@ export default function ReportsPage({
                     </button>
                   )}
                   {logic.activeTab === 'qddr' && canCreateQddr && (
-                    <button 
-                      type="button" 
-                      onClick={logic.openQDDRModal} 
+                    <button
+                      type="button"
+                      onClick={logic.openQDDRModal}
                       className="btn-gradient-primary reports-submit-primary"
                       style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                       title="Submit a new QDDR"
@@ -436,6 +533,28 @@ export default function ReportsPage({
                     </button>
                   </div>
                 )}
+                {logic.activeTab === 'my_reports' && (
+                  <div className="reports-tab-nav reports-tab-nav-bar" style={{ marginBottom: 0, alignSelf: 'center' }}>
+                    <button
+                      type="button"
+                      className={`btn-quick-toggle reports-tab-nav-btn ${myReportsViewMode === 'feed' ? 'active' : ''}`}
+                      onClick={() => setMyReportsViewMode('feed')}
+                      title="Card View"
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <LayoutGrid size={18} /> FEED
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn-quick-toggle reports-tab-nav-btn ${myReportsViewMode === 'table' ? 'active' : ''}`}
+                      onClick={() => setMyReportsViewMode('table')}
+                      title="Table View"
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <List size={18} /> TABLE
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -443,10 +562,10 @@ export default function ReportsPage({
           {logic.error && <div className="user-info-error">{logic.error}</div>}
           <div className="facebook-feed-layout-wrapper">
             {logic.activeTab === 'car' && canAccessCar && (
-              <CARReportsList 
-                carReports={displayedCars} 
-                isLoading={logic.loadingCar} 
-                onSelectCar={logic.openCarDetails} 
+              <CARReportsList
+                carReports={displayedCars}
+                isLoading={logic.loadingCar}
+                onSelectCar={logic.openCarDetails}
                 canEdit={canEditDeleteReports}
                 onEditCar={logic.openEditCarModal}
                 onDeleteCar={handleDeleteCar}
@@ -456,16 +575,34 @@ export default function ReportsPage({
               />
             )}
             {logic.activeTab === 'qddr' && canAccessQddr && (
-              <QDDRReportsList 
-                qddrReports={displayedQddrs} 
-                isLoading={logic.loadingQddr} 
-                onSelectQddr={logic.openQddrDetails} 
+              <QDDRReportsList
+                qddrReports={displayedQddrs}
+                isLoading={logic.loadingQddr}
+                onSelectQddr={logic.openQddrDetails}
                 canEdit={canEditDeleteReports}
                 onEditQddr={logic.openEditQddrModal}
                 onDeleteQddr={handleDeleteQddr}
                 onRateQddr={logic.handleRateQddr}
                 viewMode={qddrViewMode}
                 newlySubmittedId={logic.newlySubmittedReport?.type === 'qddr' ? logic.newlySubmittedReport?.id : null}
+              />
+            )}
+            {logic.activeTab === 'my_reports' && (
+              <MyReportsList
+                carReports={displayedMyCars}
+                qddrReports={displayedMyQddrs}
+                isLoading={logic.loadingCar || logic.loadingQddr}
+                onSelectCar={logic.openCarDetails}
+                onSelectQddr={logic.openQddrDetails}
+                canEdit={canEditDeleteReports}
+                onEditCar={logic.openEditCarModal}
+                onEditQddr={logic.openEditQddrModal}
+                onDeleteCar={handleDeleteCar}
+                onDeleteQddr={handleDeleteQddr}
+                onRateCar={logic.handleRateCar}
+                onRateQddr={logic.handleRateQddr}
+                viewMode={myReportsViewMode}
+                newlySubmittedReport={logic.newlySubmittedReport}
               />
             )}
           </div>

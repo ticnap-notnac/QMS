@@ -717,10 +717,10 @@ function QDDRModal({
                 </button>
               </div>
 
-              {/* Details: Reason, Corrective, Preventive */}
-              <div className="qddr-form-row-3-col" style={isMobile ? { gridTemplateColumns: '1fr', gap: '10px' } : undefined}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
+              {/* Details: Reason, Corrective, Preventive - Vertically stacked full-width fields */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <label className="label-field" style={{ marginBottom: 0 }}>
                       Reason of Discrepancy:
                     </label>
@@ -755,29 +755,31 @@ function QDDRModal({
                     onChange={(e) => handleChange('reason_of_discrepancy', e.target.value)}
                     placeholder="Auto-fills when required fields and an evidence photo are provided, or click Auto-Fill Reason..."
                     className="input-field"
-                    style={{ height: '80px', padding: '8px', resize: 'none' }}
+                    style={{ minHeight: '75px', height: '75px', padding: '10px 12px', resize: 'vertical' }}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label className="label-field">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label className="label-field" style={{ marginBottom: 0 }}>
                     Corrective Action:
                   </label>
                   <textarea
                     value={form.corrective_action}
                     onChange={(e) => handleChange('corrective_action', e.target.value)}
+                    placeholder="Enter corrective action..."
                     className="input-field"
-                    style={{ height: '80px', padding: '8px', resize: 'none' }}
+                    style={{ minHeight: '75px', height: '75px', padding: '10px 12px', resize: 'vertical' }}
                   />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label className="label-field">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label className="label-field" style={{ marginBottom: 0 }}>
                     Preventive Action:
                   </label>
                   <textarea
                     value={form.preventive_action}
                     onChange={(e) => handleChange('preventive_action', e.target.value)}
+                    placeholder="Enter preventive action..."
                     className="input-field"
-                    style={{ height: '80px', padding: '8px', resize: 'none' }}
+                    style={{ minHeight: '75px', height: '75px', padding: '10px 12px', resize: 'vertical' }}
                   />
                 </div>
               </div>
