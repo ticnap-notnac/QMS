@@ -258,6 +258,19 @@ function isPreviouslySuggested(correctiveText, preventiveText, prevList = []) {
   })
 }
 
+/**
+ * Computes a deterministic mathematical Confidence Score for Tier 2 (RAG Case Adaptation)
+ * based on the retrieval grounding strength of the top CBR reference case and input completeness.
+ * Range: 0.65 (ungrounded zero-shot generation) to 0.87 (strongly grounded RAG adaptation).
+ */
+function computeRagConfidence(ragCases = [], hasStructuredContext = false) {
+  const topCase = Array.isArray(ragCases) && ragCases.length > 0 ? ragCases[0] : null
+  const topGroundingScore = Number(topCase?.finalCbrScore ?? topCase?.compositeScore ?? topCase?.baseSim ?? 0)
+  const groundingBonus = Math.min(Math.max(topGroundingScore, 0), 1) * 0.18
+  const contextBonus = hasStructuredContext ? 0.04 : 0.0
+  return Number(Math.min(0.65 + groundingBonus + contextBonus, 0.87).toFixed(2))
+}
+
 // ─── Defect-Specific Fallback Heuristics ─────────────────────────────────────
 
 function pickUnseenVariation(variations, prevList = []) {
@@ -289,17 +302,17 @@ function generateFallbackHeuristicSuggestion({
         {
           suggestion: 'Immediately isolate and quarantine all leaking, bulging, or moisture-compromised stock away from dry inventory. Inspect adjacent cases for cross-contamination and coordinate with the Inventory Manager for QA condemnation and disposal write-off.',
           preventive_suggestion: 'Verify container seal integrity and humidity/temperature conditions prior to receiving, and require carriers to inspect trailer roof and floor dryness before loading.',
-          confidence: 0.95
+          confidence: 0.62
         },
         {
           suggestion: 'Transfer all moisture-damaged or swollen units to hazardous/wet containment pallets. Photograph batch numbers for supplier quality notification and schedule immediate sanity cleaning of affected warehouse racking.',
           preventive_suggestion: 'Mandate moisture-barrier pallet liners and perform pre-unloading thermal and visual leak checks on all inbound liquid or canned shipments.',
-          confidence: 0.94
+          confidence: 0.60
         },
         {
           suggestion: 'Segregate stained or leaking cartons at the receiving dock and reject compromised units back to the carrier/vendor on the delivery manifest before inventory posting.',
           preventive_suggestion: 'Audit vendor seaming/sealing quality certificates per lot and enforce strict climate control monitoring inside the storage zone.',
-          confidence: 0.94
+          confidence: 0.59
         }
       ], prevList)
     }
@@ -310,17 +323,17 @@ function generateFallbackHeuristicSuggestion({
         {
           suggestion: 'Place the affected pallet/lot on QA Hold immediately. Reconcile physical batch codes and seal integrity against the Certificate of Analysis (COA) and receiving manifest; request vendor relabeling or reject unverified units.',
           preventive_suggestion: 'Enforce mandatory barcode and batch/expiry verification scanning at the receiving dock before generating put-away labels.',
-          confidence: 0.95
+          confidence: 0.62
         },
         {
           suggestion: 'Quarantine unlabeled or unsealed cartons in the QA inspection bay. Verify lot traceability with the supplier and re-apply controlled warehouse batch/expiry stickers only after formal QA sign-off.',
           preventive_suggestion: 'Require suppliers to use high-adhesion thermal labels and tamper-evident security tape on all master cartons prior to dispatch.',
-          confidence: 0.94
+          confidence: 0.60
         },
         {
           suggestion: 'Suspend order picking for the affected SU/batch number. Conduct a full lot trace across adjacent rack locations and return any units with broken primary seals or mismatched batch codes to vendor quarantine.',
           preventive_suggestion: 'Integrate automated batch-code format validation in the WMS receiving workflow to block put-away of untraceable stock.',
-          confidence: 0.94
+          confidence: 0.59
         }
       ], prevList)
     }
@@ -331,17 +344,17 @@ function generateFallbackHeuristicSuggestion({
         {
           suggestion: 'Conduct a 100% blind recount of the affected SKU/lot against the delivery receipt and Purchase Order. Hold discrepant quantities in the staging reconciliation zone and issue a formal Vendor/Logistics Discrepancy Notice for inventory adjustment.',
           preventive_suggestion: 'Implement dual-checker quantity and SKU verification during staging and require automated ASN/manifest validation prior to dock release.',
-          confidence: 0.95
+          confidence: 0.62
         },
         {
           suggestion: 'Freeze WMS stock movement for the affected PO/DRWB reference. Reconcile physical case counts with the warehouse team leader and process a debit/credit memo with Procurement and Finance.',
           preventive_suggestion: 'Enforce barcode scan-per-case verification during order picking and inbound tallying instead of manual paper sheet checkoffs.',
-          confidence: 0.94
+          confidence: 0.60
         },
         {
           suggestion: 'Segregate over-shipped or mispicked items in the discrepancy staging lane, update the receiving tally sheet with signed trucker/checker acknowledgment, and coordinate return-to-vendor or system receipt correction.',
           preventive_suggestion: 'Conduct daily cycle counts on high-velocity SKUs and audit pre-dispatch shipping manifests against physical pallet loads.',
-          confidence: 0.94
+          confidence: 0.59
         }
       ], prevList)
     }
@@ -352,17 +365,17 @@ function generateFallbackHeuristicSuggestion({
         {
           suggestion: 'Halt pallet movement and inspect open cartons to verify internal unit count and primary packaging integrity. Re-seal intact cartons and re-apply tensioned stretch-wrapping with corner boards before rack put-away.',
           preventive_suggestion: 'Standardize pallet wrapping tension and minimum wrap-revolution specifications on the warehouse outbound/inbound dock checklist.',
-          confidence: 0.95
+          confidence: 0.61
         },
         {
           suggestion: 'Down-stack unstable or loosely wrapped pallets in the staging area. Check open boxes for missing or pilfered units, reseal with reinforced packaging tape, and cross-wrap the pallet from base to top.',
           preventive_suggestion: 'Calibrate automated stretch-wrap machines weekly and train warehouse handlers on interlocking pallet stacking patterns.',
-          confidence: 0.94
+          confidence: 0.60
         },
         {
           suggestion: 'Isolate open or poorly wrapped cases for QA unit-count verification. Repack intact units into new master cartons and log a carrier handling observation report.',
           preventive_suggestion: 'Require mandatory top-sheet and 3-layer bottom/top stretch-film overlaps on all palletized warehouse transfers.',
-          confidence: 0.94
+          confidence: 0.59
         }
       ], prevList)
     }
@@ -372,17 +385,17 @@ function generateFallbackHeuristicSuggestion({
       {
         suggestion: 'Segregate punctured, crushed, or deformed cases in the designated QA quarantine cage. Sort and salvage undamaged inner units for repackaging if primary seals are intact, and process severely damaged units for scrap disposal or vendor claim.',
         preventive_suggestion: 'Enforce forklift handling clearance, pallet stacking weight limits, and protective slip-sheet/corner-board placement during transit and storage.',
-        confidence: 0.94
+        confidence: 0.60
       },
       {
         suggestion: 'Remove crushed or punctured units from salable stock and transfer to the disposal/rework hold zone. Document unit quantities for Inventory Manager write-off approval and file a transit damage claim with the trucker/broker.',
         preventive_suggestion: 'Audit pallet overhang and maximum tier-stacking heights in the warehouse and require shock-absorbing dunnage inside delivery containers.',
-        confidence: 0.94
+        confidence: 0.59
       },
       {
         suggestion: 'Perform 100% sorting of the affected pallet lot to separate cosmetically dented outer cartons from compromised primary containers. Repackage intact goods into replacement master cartons and condemn ruptured units.',
         preventive_suggestion: 'Conduct refresher training for material handling equipment (MHE) operators on fork-tine alignment and inspect rack beam clearances.',
-        confidence: 0.93
+        confidence: 0.58
       }
     ], prevList)
   }
@@ -394,12 +407,12 @@ function generateFallbackHeuristicSuggestion({
       {
         suggestion: `Immediately isolate and quarantine affected materials. Sanitize all contact surfaces and review daily temperature logs with Quality Assurance.${deptSuffix}`,
         preventive_suggestion: 'Calibrate temperature and humidity sensors bi-weekly and increase sanitation verification frequency.',
-        confidence: 0.97
+        confidence: 0.62
       },
       {
         suggestion: `Place affected production/storage lots on QA Hold for microbiological and sensory evaluation, and execute deep-cleaning protocols across the affected line.${deptSuffix}`,
         preventive_suggestion: 'Enforce automated continuous cold-chain/hygiene monitoring alarms and conduct unannounced GMP line audits.',
-        confidence: 0.96
+        confidence: 0.60
       }
     ], prevList)
   }
@@ -409,12 +422,12 @@ function generateFallbackHeuristicSuggestion({
       {
         suggestion: `Isolate the hazard area immediately, perform a Job Safety Analysis (JSA), and conduct an urgent safety toolbox briefing with all team members.${deptSuffix}`,
         preventive_suggestion: 'Revise safety checklists, install additional physical safeguards, and audit PPE compliance monthly.',
-        confidence: 0.97
+        confidence: 0.62
       },
       {
         suggestion: `Deploy spill/hazard containment barriers, verify engineering controls and safety interlocks, and clear the work zone only after EHS Officer inspection.${deptSuffix}`,
         preventive_suggestion: 'Incorporate hazard identification walkthroughs into weekly shift handovers and upgrade preventive maintenance on safety equipment.',
-        confidence: 0.96
+        confidence: 0.60
       }
     ], prevList)
   }
@@ -424,12 +437,12 @@ function generateFallbackHeuristicSuggestion({
       {
         suggestion: `Review non-conformance against the relevant ISO quality standard, revise controlled documentation, and train process owners.${deptSuffix}`,
         preventive_suggestion: 'Schedule internal mock audits every quarter to verify consistent adherence to QMS protocols.',
-        confidence: 0.96
+        confidence: 0.61
       },
       {
         suggestion: `Conduct a gap remediation review with the process owner, update the affected SOP/work instruction in Document Control, and collect signed training records.${deptSuffix}`,
         preventive_suggestion: 'Add the non-conforming ISO clause requirement to the monthly departmental self-audit checklist.',
-        confidence: 0.95
+        confidence: 0.59
       }
     ], prevList)
   }
@@ -439,12 +452,12 @@ function generateFallbackHeuristicSuggestion({
       {
         suggestion: `Issue an immediate containment response to the customer. Quarantine remaining finished goods from the same lot and initiate formal 8D problem-solving.${deptSuffix}`,
         preventive_suggestion: 'Implement pre-shipment quality gate checks and review customer specifications during production scheduling.',
-        confidence: 0.96
+        confidence: 0.61
       },
       {
         suggestion: `Inspect retained warehouse samples from the affected batch code, arrange product replacement or credit disposition with the customer, and audit outbound inspection logs.${deptSuffix}`,
         preventive_suggestion: 'Tighten final QA release sampling criteria and add poka-yoke verification steps prior to dispatch.',
-        confidence: 0.95
+        confidence: 0.59
       }
     ], prevList)
   }
@@ -453,12 +466,12 @@ function generateFallbackHeuristicSuggestion({
     {
       suggestion: `Perform a detailed root-cause investigation (5 Whys) with the process owner. Retrain personnel on the approved standard operating procedure (SOP).${deptSuffix}`,
       preventive_suggestion: 'Establish periodic supervisory verification audits and incorporate an explicit verification checkpoint in the process checklist.',
-      confidence: 0.94
+      confidence: 0.58
     },
     {
       suggestion: `Contain the non-conforming output immediately, review process parameters against control plan tolerances, and document corrective adjustments with supervisor sign-off.${deptSuffix}`,
       preventive_suggestion: 'Standardize shift handover verification checks and schedule a 30-day Verification of Effectiveness (VoE) review.',
-      confidence: 0.93
+      confidence: 0.56
     }
   ], prevList)
 }
@@ -570,7 +583,7 @@ export async function generateAiSuggestionFromText({
         return {
           suggestion: topUnseenMatch.corrective_action,
           preventive_suggestion: topUnseenMatch.preventive_action || 'Implement standard receiving inspection checks.',
-          confidence: Math.min(Math.max(topUnseenMatch.finalCbrScore, 0.94), 0.99),
+          confidence: Number(Math.min(Math.max(topUnseenMatch.finalCbrScore, 0.75), 0.99).toFixed(2)),
           sourceDetails: 'QDDR Case Repository (CBR)',
           matchedFeatures: [
             `defect category match (${Math.round(topUnseenMatch.defectCategorySim * 100)}%)`,
@@ -603,7 +616,7 @@ Historical Closed QDDR Cases (Retrieved via CBR for reference):
 ${ragReferenceCases.map((q, i) => `${i + 1}. [Similarity: ${Math.round((q.baseSim || 0) * 100)}%] Material: ${q.material_description || 'N/A'} | Discrepancy: ${q.reason_of_discrepancy} | Corrective: ${q.corrective_action} | Preventive: ${q.preventive_action || 'N/A'}`).join('\n') || 'None available'}
 
 Respond ONLY in this JSON format with no markdown:
-{"suggestion": "specific corrective/disposition action here", "preventive_suggestion": "specific preventive action here", "confidence": 0.96}`
+{"suggestion": "specific corrective/disposition action here", "preventive_suggestion": "specific preventive action here"}`
 
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
           method: 'POST',
@@ -625,7 +638,7 @@ Respond ONLY in this JSON format with no markdown:
             return {
               suggestion: parsed.suggestion,
               preventive_suggestion: parsed.preventive_suggestion,
-              confidence: parsed.confidence || 0.95,
+              confidence: computeRagConfidence(ragReferenceCases, queryDefectSet.size > 0),
               sourceDetails: ragReferenceCases.length > 0
                 ? 'CBR + RAG Case Adaptation (Gemini Flash)'
                 : 'Generative AI (Gemini Flash)',
@@ -726,7 +739,7 @@ Respond ONLY in this JSON format with no markdown:
       return {
         suggestion: topUnseenCarMatch.corrective_action,
         preventive_suggestion: topUnseenCarMatch.preventive_action || 'Establish supervisory verification checkpoints.',
-        confidence: Math.min(Math.max(topUnseenCarMatch.compositeScore, 0.94), 0.99),
+        confidence: Number(Math.min(Math.max(topUnseenCarMatch.compositeScore, 0.75), 0.99).toFixed(2)),
         sourceDetails: 'CAR Case Repository (CBR)',
         matchedFeatures: cleanRca
           ? [rcaFeatureLabel, `problem similarity (${Math.round(simScore * 100)}%)`, `★ ${starDisplay}/5 rated CAPA`]
@@ -756,7 +769,7 @@ Historical Closed CAR Cases (Retrieved via CBR for reference):
 ${ragCarCases.map((c, i) => `${i + 1}. [Similarity: ${Math.round((c.baseSim || 0) * 100)}%] Non-Conformance: ${c.details_of_nonconformance} | RCA: ${c.root_cause_analysis || 'N/A'} | Corrective: ${c.corrective_action} | Preventive: ${c.preventive_action || 'N/A'}`).join('\n') || 'None available'}
 
 Respond ONLY in this JSON format with no markdown:
-{"suggestion": "immediate corrective action here", "preventive_suggestion": "long-term preventive action plan here", "confidence": 0.96}`
+{"suggestion": "immediate corrective action here", "preventive_suggestion": "long-term preventive action plan here"}`
 
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
         method: 'POST',
@@ -778,7 +791,7 @@ Respond ONLY in this JSON format with no markdown:
           return {
             suggestion: parsed.suggestion,
             preventive_suggestion: parsed.preventive_suggestion,
-            confidence: parsed.confidence || 0.95,
+            confidence: computeRagConfidence(ragCarCases, Boolean(cleanRca)),
             sourceDetails: ragCarCases.length > 0
               ? 'CBR + RAG Case Adaptation (Gemini Flash)'
               : 'Generative AI (Gemini Flash)',

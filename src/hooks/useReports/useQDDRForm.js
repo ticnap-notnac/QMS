@@ -394,8 +394,12 @@ export function useQDDRForm() {
   ])
 
   const suggestActions = async () => {
-    if (!form.material_description?.trim() && !form.reason_of_discrepancy?.trim()) {
-      setError('Please fill in Material Description and Reason of Discrepancy first.')
+    const missingFields = []
+    if (!form.material_description?.trim()) missingFields.push('Material Description')
+    if (!form.reason_of_discrepancy?.trim()) missingFields.push('Reason of Discrepancy')
+
+    if (missingFields.length > 0) {
+      setError(`Please fill in ${missingFields.join(' and ')} first before suggesting actions.`)
       return
     }
 
