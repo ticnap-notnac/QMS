@@ -1,17 +1,17 @@
 /**
  * server/utils/cbr.js
  *
- * Case-Based Reasoning (CBR) utilities for corrective action suggestion.
+ * Case-Based Reasoning (CBR) & RAG utilities for CAR and QDDR corrective/preventive action suggestion.
  *
- * CBR Similarity Formula:
- *   score = 0.35 × issue_type_match
- *         + 0.35 × keyword_jaccard
- *         + 0.15 × severity_match
- *         + 0.10 × department_match
- *         + 0.05 × product_type_match
+ * Direct CBR Reuse Threshold:
+ *   DIRECT_CBR_THRESHOLD = 0.75 (75%)
  *
- * Final score is blended with effectiveness_score as a quality modifier:
- *   final = cbr_score × 0.85 + effectiveness_norm × 0.15
+ * Multi-Feature Base Similarity (baseSim):
+ *   - QDDR: 0.45 × vectorSim + 0.35 × defectCategorySim + 0.20 × canonicalKeywordSim
+ *   - CAR:  0.45 × vectorSim + 0.25 × rcaOverlap + 0.15 × categoryAndDeptSim + 0.15 × canonicalKeywordSim
+ *
+ * Final Score Blend:
+ *   finalCbrScore = 0.80 × baseSim + 0.20 × effectivenessNorm
  */
 
 // ─── Stopwords ────────────────────────────────────────────────────────────────
@@ -28,54 +28,228 @@ const STOPWORDS = new Set([
   'he', 'she', 'i', 'you', 'who', 'which', 'what', 'when', 'where', 'how',
   'there', 'here', 'our', 'their', 'any', 'all', 'into', 'about', 'per',
   'up', 'out', 'one', 'two', 'three', 'also', 'however', 'therefore', 'thus',
-  // QMS noise words
-  'report', 'ncr', 'issue', 'problem', 'department', 'found', 'observed',
+  // QMS / boilerplate template noise words
+  'report', 'qddr', 'car', 'issue', 'problem', 'department', 'found', 'observed',
   'noted', 'during', 'inspection', 'review', 'audit', 'nonconformance',
   'non', 'conformance', 'action', 'corrective', 'preventive', 'quality',
+  'identified', 'discrepancy', 'involving', 'unit', 'units', 'case', 'cases',
+  'attached', 'photographic', 'evidence', 'confirms', 'physical', 'condition',
+  'affected', 'stock', 'material', 'type', 'reason', 'item', 'code',
+  'exhibiting', 'reported', 'requires', 'immediate', 'root', 'cause', 'analysis'
 ])
+
+// ─── Domain Synonym Canonical Map ─────────────────────────────────────────────
+
+const SYNONYM_CANONICAL_MAP = {
+  // Holes / punctures / tears
+  hole: 'hole',
+  holes: 'hole',
+  puncture: 'hole',
+  punctured: 'hole',
+  punctures: 'hole',
+  pierce: 'hole',
+  pierced: 'hole',
+  tear: 'hole',
+  torn: 'hole',
+  rip: 'hole',
+  ripped: 'hole',
+  cut: 'hole',
+  burst: 'hole',
+
+  // Crushed / dented / deformed
+  crush: 'crush',
+  crushed: 'crush',
+  dent: 'crush',
+  dented: 'crush',
+  dents: 'crush',
+  collapse: 'crush',
+  collapsed: 'crush',
+  smash: 'crush',
+  smashed: 'crush',
+  bend: 'crush',
+  bent: 'crush',
+  deform: 'deform',
+  deformed: 'deform',
+  distort: 'deform',
+  distorted: 'deform',
+  warp: 'deform',
+  warped: 'deform',
+  mangle: 'deform',
+  mangled: 'deform',
+
+  // Wet / leaked / moisture
+  wet: 'leak',
+  leak: 'leak',
+  leaked: 'leak',
+  leaking: 'leak',
+  leaks: 'leak',
+  water: 'leak',
+  spill: 'leak',
+  spilled: 'leak',
+  soak: 'leak',
+  soaked: 'leak',
+  moisture: 'leak',
+  damp: 'leak',
+  drip: 'leak',
+  dripping: 'leak',
+
+  // Packaging / containers
+  box: 'carton',
+  boxes: 'carton',
+  carton: 'carton',
+  cartons: 'carton',
+  package: 'carton',
+  packages: 'carton',
+  packaging: 'carton',
+  tin: 'can',
+  tins: 'can',
+  can: 'can',
+  cans: 'can',
+  container: 'container',
+  containers: 'container',
+  pallet: 'pallet',
+  pallets: 'pallet',
+
+  // Bulging / pressure
+  bulge: 'bulge',
+  bulging: 'bulge',
+  swollen: 'bulge',
+  swell: 'bulge',
+  puffed: 'bulge',
+  expanded: 'bulge',
+
+  // Wrapping / sealing
+  wrap: 'wrap',
+  wrapped: 'wrap',
+  wrapping: 'wrap',
+  unwrapped: 'wrap',
+  shrink: 'wrap',
+  stretch: 'wrap',
+  seal: 'seal',
+  sealed: 'seal',
+  unsealed: 'seal',
+  tamper: 'seal',
+  tampered: 'seal',
+
+  // Stain / dirt / contamination
+  stain: 'stain',
+  stained: 'stain',
+  graffiti: 'stain',
+  dirt: 'stain',
+  dirty: 'stain',
+  soiled: 'stain',
+  smudge: 'stain',
+  discolored: 'stain',
+
+  // Batch / lot / label
+  batch: 'batch',
+  batchcode: 'batch',
+  lot: 'batch',
+  expiry: 'expiry',
+  expired: 'expiry',
+  label: 'label',
+  labels: 'label',
+  unlabeled: 'label',
+  unreadable: 'label',
+
+  // Quantity / short / excess / picking / docs
+  short: 'short',
+  shortage: 'short',
+  underpack: 'short',
+  incomplete: 'short',
+  missing: 'short',
+  excess: 'excess',
+  overpack: 'excess',
+  surplus: 'excess',
+  overage: 'excess',
+  extra: 'excess',
+  pick: 'pick',
+  picking: 'pick',
+  mispick: 'pick',
+  fulfillment: 'pick',
+  document: 'document',
+  documentation: 'document',
+  paperwork: 'document',
+  invoice: 'document',
+  manifest: 'document',
+  receipt: 'document',
+
+  // Parties
+  supplier: 'vendor',
+  suppliers: 'vendor',
+  vendor: 'vendor',
+  vendors: 'vendor',
+  carrier: 'vendor',
+  client: 'customer',
+  clients: 'customer',
+  customer: 'customer',
+  customers: 'customer'
+}
+
+/**
+ * Light stemmer and synonym canonicalizer for QMS/warehouse tokens.
+ * Maps synonyms and inflected word forms (-ing, -ed, -es, -s) to a canonical root.
+ * @param {string} word
+ * @returns {string}
+ */
+export function normalizeToken(word) {
+  if (!word) return ''
+  const w = String(word).toLowerCase().trim()
+  if (SYNONYM_CANONICAL_MAP[w]) return SYNONYM_CANONICAL_MAP[w]
+
+  let stemmed = w
+  if (stemmed.length > 5 && stemmed.endsWith('ing')) {
+    stemmed = stemmed.slice(0, -3)
+  } else if (stemmed.length > 4 && stemmed.endsWith('ed')) {
+    stemmed = stemmed.slice(0, -2)
+  } else if (stemmed.length > 4 && stemmed.endsWith('es')) {
+    stemmed = stemmed.slice(0, -2)
+  } else if (stemmed.length > 3 && stemmed.endsWith('s') && !stemmed.endsWith('ss')) {
+    stemmed = stemmed.slice(0, -1)
+  }
+
+  return SYNONYM_CANONICAL_MAP[stemmed] || stemmed
+}
 
 // ─── Keyword Extraction ───────────────────────────────────────────────────────
 
 /**
- * Extracts meaningful keywords from a text string.
- * Strips punctuation, lowercases, removes stopwords and short tokens.
+ * Extracts meaningful canonical keywords from a text string.
+ * Strips punctuation, lowercases, removes stopwords/boilerplate, and normalizes synonyms.
  * @param {string} text
  * @returns {Set<string>}
  */
 export function extractKeywords(text) {
   if (!text) return new Set()
-  return new Set(
-    String(text)
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter(word => word.length > 2 && !STOPWORDS.has(word))
-  )
-}
+  const rawTokens = String(text)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 2 && !STOPWORDS.has(word))
 
-/**
- * Returns a space-joined string of extracted keywords.
- * Used when storing problem_keywords in case_repository.
- * @param {string} text
- * @returns {string}
- */
-export function extractKeywordsAsString(text) {
-  return [...extractKeywords(text)].join(' ')
+  const canonicalSet = new Set()
+  for (const token of rawTokens) {
+    const norm = normalizeToken(token)
+    if (norm && norm.length > 2 && !STOPWORDS.has(norm)) {
+      canonicalSet.add(norm)
+    }
+  }
+  return canonicalSet
 }
 
 /**
  * Extracts semantic keywords using the Gemini LLM.
  * Acts as a query expansion step before Jaccard similarity.
- * @param {string} text 
- * @param {string} apiKey 
+ * @param {string} text
+ * @param {string} apiKey
  * @returns {Promise<Set<string>>}
  */
 export async function extractKeywordsWithLLM(text, apiKey) {
-  if (!text || !apiKey) return extractKeywords(text);
-  
+  if (!text || !apiKey) return extractKeywords(text)
+
   try {
-    const prompt = `Extract 5-10 core technical concepts from the following issue description. Return them ONLY as a comma-separated list of standardized keywords. No explanations.\n\nDescription: ${text}`;
-    
+    const prompt = `Extract 5-10 core technical concepts from the following issue description. Return them ONLY as a comma-separated list of standardized keywords. No explanations.\n\nDescription: ${text}`
+
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -83,43 +257,39 @@ export async function extractKeywordsWithLLM(text, apiKey) {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { temperature: 0.1 }
       })
-    });
+    })
 
     if (!response.ok) {
-      console.warn('Gemini extraction failed, falling back to lexical extraction.');
-      return extractKeywords(text);
+      console.warn('Gemini extraction failed, falling back to lexical extraction.')
+      return extractKeywords(text)
     }
 
-    const data = await response.json();
-    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    
-    // Parse comma separated list and clean
+    const data = await response.json()
+    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+
     const keywords = resultText
       .split(',')
-      .map(k => k.trim().toLowerCase().replace(/[^a-z0-9]/g, ''))
-      .filter(k => k.length > 2);
-      
-    if (keywords.length === 0) return extractKeywords(text);
-    return new Set(keywords);
+      .map(k => normalizeToken(k.trim().toLowerCase().replace(/[^a-z0-9]/g, '')))
+      .filter(k => k.length > 2 && !STOPWORDS.has(k))
+
+    if (keywords.length === 0) return extractKeywords(text)
+    return new Set(keywords)
   } catch (err) {
-    console.warn('Error during LLM keyword extraction, falling back:', err);
-    return extractKeywords(text);
+    console.warn('Error during LLM keyword extraction, falling back:', err)
+    return extractKeywords(text)
   }
 }
 
 /**
  * Generates vector embeddings for a given text using Google's gemini-embedding-001 model.
- * NOTE: text-embedding-004 was officially deprecated and shut down on January 14, 2026.
- * This function uses gemini-embedding-001 with outputDimensionality: 768 to stay within
- * pgvector's HNSW index limit (max 2000 dims). gemini-embedding-001 natively supports
- * Matryoshka truncation, so 768-dim output retains strong semantic quality.
- * @param {string} text 
- * @param {string} apiKey 
+ * Uses outputDimensionality: 768 to stay within pgvector's HNSW index limit (max 2000 dims).
+ * @param {string} text
+ * @param {string} apiKey
  * @returns {Promise<number[]|null>} Array of 768 floats (the embedding vector) or null
  */
 export async function generateEmbedding(text, apiKey) {
-  if (!text || !apiKey) return null;
-  
+  if (!text || !apiKey) return null
+
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`, {
       method: 'POST',
@@ -128,171 +298,104 @@ export async function generateEmbedding(text, apiKey) {
         content: {
           parts: [{ text: text }]
         },
-        outputDimensionality: 768  // Truncate to 768 dims — within pgvector HNSW limit (max 2000)
+        outputDimensionality: 768
       })
-    });
+    })
 
     if (!response.ok) {
-      const errText = await response.text();
-      console.warn(`Gemini embedding failed (${response.status}): ${errText}`);
-      return null;
+      const errText = await response.text()
+      console.warn(`Gemini embedding failed (${response.status}): ${errText}`)
+      return null
     }
 
-    const data = await response.json();
-    return data.embedding?.values || null;
+    const data = await response.json()
+    return data.embedding?.values || null
   } catch (err) {
-    console.warn('Error generating embeddings:', err);
-    return null;
+    console.warn('Error generating embeddings:', err)
+    return null
   }
 }
 
-// ─── Similarity Functions ─────────────────────────────────────────────────────
+// ─── Similarity & Rating Smoothing Functions ─────────────────────────────────
 
 /**
- * Jaccard similarity between two keyword sets.
+ * Jaccard similarity between two sets.
  * = |intersection| / |union|
- * @param {Set<string>} setA
- * @param {Set<string>} setB
+ * @param {Set<string>|string[]} setA
+ * @param {Set<string>|string[]} setB
  * @returns {number} 0.0 – 1.0
  */
 export function jaccardSimilarity(setA, setB) {
-  if (!setA.size || !setB.size) return 0
-  const intersection = [...setA].filter(w => setB.has(w))
-  const unionSize = setA.size + setB.size - intersection.length
-  return intersection.length / unionSize
-}
-
-const SEVERITY_ORDER = { low: 0, medium: 1, high: 2 }
-
-/**
- * Severity similarity:
- *   exact match    → 1.0
- *   one level diff → 0.5
- *   two+ levels    → 0.0
- * @param {string} a
- * @param {string} b
- * @returns {number} 0.0 – 1.0
- */
-export function severitySimilarity(a, b) {
-  if (!a || !b) return 0
-  const levelA = SEVERITY_ORDER[String(a).toLowerCase().trim()] ?? -1
-  const levelB = SEVERITY_ORDER[String(b).toLowerCase().trim()] ?? -1
-  if (levelA === -1 || levelB === -1) return 0
-  const diff = Math.abs(levelA - levelB)
-  if (diff === 0) return 1.0
-  if (diff === 1) return 0.5
-  return 0.0
-}
-
-// ─── CBR Core ─────────────────────────────────────────────────────────────────
-
-/**
- * Computes the weighted CBR similarity score between the current NCR report
- * and a past case (from case_repository or a rated NCR).
- *
- * @param {object} current  - The active NCR report
- * @param {object} past     - A candidate past case
- * @returns {{ score: number, matchedFeatures: string[] }}
- */
-export function computeCBRScore(current, past) {
-  const matchedFeatures = []
-
-  // ── Feature 1: Issue Type (weight 0.35) ──────────────────────────────────
-  let issueTypeScore = 0
-  if (current.issue_type && past.issue_type && current.issue_type === past.issue_type) {
-    issueTypeScore = 1.0
-    matchedFeatures.push('issue type')
-  }
-
-  // ── Feature 2: Semantic Similarity (weight 0.35) ───────────────────────
-  // If we have a pre-calculated vector_distance from the DB (0 = perfect match, 2 = opposite)
-  // we convert it to a similarity score (1 - distance). Cosine distance is usually 0 to 1 for positive vectors.
-  let semanticScore = 0;
-  if (typeof past.vector_distance === 'number') {
-    semanticScore = Math.max(0, 1 - past.vector_distance);
-    if (semanticScore > 0.6) matchedFeatures.push('semantic vector match');
-  } else {
-    // Fallback to Jaccard keyword matching if embeddings aren't available
-    const currentKw = current.llm_keywords || extractKeywords(current.description);
-    const pastKw = extractKeywords(past.problem_keywords || past.description || '');
-    semanticScore = jaccardSimilarity(currentKw, pastKw);
-    if (semanticScore > 0.05) matchedFeatures.push('problem keywords');
-  }
-
-  // ── Feature 3: Severity (weight 0.15) ────────────────────────────────────
-  const sevScore = severitySimilarity(current.severity, past.severity)
-  if (sevScore >= 0.5) matchedFeatures.push('severity')
-
-  // ── Feature 4: Department (weight 0.10) ──────────────────────────────────
-  let deptScore = 0
-  if (current.department_id && past.department_id &&
-      String(current.department_id) === String(past.department_id)) {
-    deptScore = 1.0
-    matchedFeatures.push('department')
-  }
-
-  // ── Feature 5: Product Type (weight 0.05) ────────────────────────────────
-  let productScore = 0
-  if (current.product_type && past.product_type &&
-      String(current.product_type).toLowerCase().trim() ===
-      String(past.product_type).toLowerCase().trim()) {
-    productScore = 1.0
-    matchedFeatures.push('product type')
-  }
-
-  const score =
-    0.35 * issueTypeScore +
-    0.35 * semanticScore +
-    0.15 * sevScore +
-    0.10 * deptScore +
-    0.05 * productScore
-
-  return { score, matchedFeatures }
+  const a = setA instanceof Set ? setA : new Set(setA || [])
+  const b = setB instanceof Set ? setB : new Set(setB || [])
+  if (!a.size || !b.size) return 0
+  const intersection = [...a].filter(w => b.has(w))
+  const unionSize = a.size + b.size - intersection.length
+  return unionSize > 0 ? intersection.length / unionSize : 0
 }
 
 /**
- * CBR RETRIEVE step.
- * Scores all candidate past cases against the current report,
- * blends with effectiveness_score as a quality modifier, and returns
- * the highest-scoring candidate.
- *
- * Blend formula: final = cbr_score × 0.85 + effectiveness_norm × 0.15
- *
- * @param {object}   currentReport
- * @param {object[]} candidates   - Normalised past cases (case_repository + rated NCRs)
- * @returns {object|null} Best match with cbr_score and matched_features, or null
+ * Returns the authority weight multiplier for a rater's role.
+ * Protects CBR effectiveness ratings against accidental single-user rating errors.
+ * @param {string} roleName
+ * @returns {number}
  */
-export function retrieveBestMatch(currentReport, candidates) {
-  if (!candidates?.length) return null
+export function getRoleRatingWeight(roleName) {
+  const norm = String(roleName || '').trim().toLowerCase()
+  if (
+    norm === 'admin' ||
+    norm === 'super admin' ||
+    norm === 'super_admin' ||
+    norm === 'system administrator' ||
+    norm === 'system_administrator' ||
+    norm === 'administrator' ||
+    norm === 'superadmin'
+  ) {
+    return 1.5
+  }
+  if (norm === 'qa officer' || norm === 'auditor' || norm === 'quality assurance') {
+    return 1.35
+  }
+  if (norm === 'department manager' || norm === 'inventory manager' || norm === 'team leader') {
+    return 1.15
+  }
+  return 1.0
+}
 
-  const scored = candidates
-    .filter(c => c.corrective_action) // only cases that have an actual solution
-    .map(candidate => {
-      const { score, matchedFeatures } = computeCBRScore(currentReport, candidate)
-      
-      // Normalise effectiveness_score (0-5 scale) to 0-1, default 0 if absent
-      let effectivenessNorm = Math.min((candidate.effectiveness_score || 0) / 5, 1)
-      
-      // Apply Role-Based Rating Hierarchy based on defined roles
-      const role = String(candidate.rater_role || '').toLowerCase().trim();
-      let roleMultiplier = 1.0; // default for 'User' level roles
-      
-      if (role === 'admin') {
-        roleMultiplier = 1.3;
-      } else if (role === 'qa officer') {
-        roleMultiplier = 1.2;
-      } else if (role === 'team leader') {
-        roleMultiplier = 1.1;
-      }
-      
-      // Apply multiplier, capping the maximum normalized effectiveness at 1.0
-      effectivenessNorm = Math.min(effectivenessNorm * roleMultiplier, 1.0)
+/**
+ * Computes a Bayesian-damped, role-weighted effectiveness score (0.0 to 1.0)
+ * from a list of { rating, role_name } entries.
+ *
+ * Prior: m = 2 virtual votes at C = 3.5 stars (0.70 baseline).
+ * Formula: smoothedStars = (2 * 3.5 + sum(rating_i * weight_i)) / (2 + sum(weight_i))
+ *
+ * With this damping, a single accidental 1-star click by one user moves an unrated case
+ * from 0.70 -> 0.5333 (keeping it above the 0.50 CBR eligibility cutoff), while
+ * repeated low ratings or low QA/Admin verification ratings properly demote it below 0.50.
+ *
+ * @param {Array<{ rating: number, role_name?: string }>} ratingsWithRoles
+ * @returns {number} Normalized effectiveness score in [0, 1] rounded to 4 decimals
+ */
+export function computeBayesianEffectivenessScore(ratingsWithRoles = []) {
+  const PRIOR_WEIGHT = 2.0
+  const PRIOR_STARS = 3.5
 
-      const finalScore = score * 0.85 + effectivenessNorm * 0.15
-      return { ...candidate, cbr_score: finalScore, matched_features: matchedFeatures }
-    })
+  if (!Array.isArray(ratingsWithRoles) || ratingsWithRoles.length === 0) {
+    return Number((PRIOR_STARS / 5).toFixed(4)) // 0.70
+  }
 
-  if (!scored.length) return null
-  scored.sort((a, b) => b.cbr_score - a.cbr_score)
-  return scored[0]
+  let weightedStarSum = PRIOR_WEIGHT * PRIOR_STARS
+  let totalWeight = PRIOR_WEIGHT
+
+  for (const r of ratingsWithRoles) {
+    const ratingVal = Number(r?.rating || 0)
+    if (ratingVal >= 1 && ratingVal <= 5) {
+      const w = getRoleRatingWeight(r?.role_name)
+      weightedStarSum += ratingVal * w
+      totalWeight += w
+    }
+  }
+
+  const smoothedStars = totalWeight > 0 ? weightedStarSum / totalWeight : PRIOR_STARS
+  return Number(Math.min(Math.max(smoothedStars / 5, 0), 1).toFixed(4))
 }

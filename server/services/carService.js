@@ -778,6 +778,42 @@ function parseStarRatingValue(val) {
 }
 
 /**
+ * Resolves role names for a list of rating rows [{ rating, user_auth_id }]
+ * and computes a role-weighted Bayesian effectiveness score (0.0 to 1.0).
+ */
+async function computeCarEffectivenessFromRatings(ratingRows = [], fallbackVoeStarRating = null) {
+  const { computeBayesianEffectivenessScore } = await import('../utils/cbr.js')
+  if (!Array.isArray(ratingRows) || ratingRows.length === 0) {
+    if (fallbackVoeStarRating) {
+      return computeBayesianEffectivenessScore([{ rating: fallbackVoeStarRating, role_name: 'qa officer' }])
+    }
+    return computeBayesianEffectivenessScore([])
+  }
+
+  const authIds = [...new Set(ratingRows.map(r => r.user_auth_id).filter(Boolean))]
+  const roleByAuthId = {}
+
+  if (authIds.length > 0) {
+    const { data: users } = await supabase
+      .from('users')
+      .select('auth_id, roles(role_name), positions(roles(role_name))')
+      .in('auth_id', authIds)
+
+    for (const u of users || []) {
+      const rName = u.roles?.role_name || u.positions?.roles?.role_name || 'user'
+      if (u.auth_id) roleByAuthId[u.auth_id] = rName
+    }
+  }
+
+  const ratingsWithRoles = ratingRows.map(r => ({
+    rating: Number(r.rating || 0),
+    role_name: roleByAuthId[r.user_auth_id] || 'user'
+  }))
+
+  return computeBayesianEffectivenessScore(ratingsWithRoles)
+}
+
+/**
  * Automatically promotes a closed CAR report into the `car_case_repository`
  * for Case-Based Reasoning (CBR) retrieval and vector similarity search.
  *
@@ -801,25 +837,15 @@ export async function autoPromoteCarToCaseRepository(car) {
     }
 
     const issueCategory = normalizeText(car.type_of_nonconformance) || 'general'
-
-    // Compute effectiveness_score from report_ratings (sum / count / 5) or baseline
-    let effectivenessScore = 0.6
     const mappedVoeRating = parseStarRatingValue(car.verification_rating)
-    if (mappedVoeRating) {
-      effectivenessScore = Number((mappedVoeRating / 5).toFixed(4))
-    }
 
     const { data: ratingRows } = await supabase
       .from('report_ratings')
-      .select('rating')
+      .select('rating, user_auth_id')
       .eq('report_type', 'CAR')
       .eq('report_id', car.id)
 
-    if (Array.isArray(ratingRows) && ratingRows.length > 0) {
-      const sum = ratingRows.reduce((acc, r) => acc + Number(r.rating || 0), 0)
-      const avg = sum / ratingRows.length
-      effectivenessScore = Number((avg / 5).toFixed(4))
-    }
+    const effectivenessScore = await computeCarEffectivenessFromRatings(ratingRows || [], mappedVoeRating)
 
     const record = {
       car_id: car.id,
@@ -859,8 +885,8 @@ export async function autoPromoteCarToCaseRepository(car) {
 
 /**
  * Allows any user with access to rate a closed CAR report (1-5 stars),
- * computes Average = (Sum of Ratings) / (Number of Raters), and updates
- * `car_reports` and `car_case_repository.effectiveness_score`.
+ * computes visible Average = (Sum of Ratings) / (Number of Raters), and updates
+ * `car_reports` and `car_case_repository.effectiveness_score` using role-weighted Bayesian smoothing.
  */
 export async function rateCarReport({ carId, rating, actorAuthId }) {
   const parsedRating = parseStarRatingValue(rating)
@@ -906,7 +932,7 @@ export async function rateCarReport({ carId, rating, actorAuthId }) {
 
   const { data: allRatings, error: fetchErr } = await supabase
     .from('report_ratings')
-    .select('rating')
+    .select('rating, user_auth_id')
     .eq('report_type', 'CAR')
     .eq('report_id', Number(carId))
 
@@ -915,7 +941,7 @@ export async function rateCarReport({ carId, rating, actorAuthId }) {
   const ratingsCount = (allRatings || []).length
   const sumRatings = (allRatings || []).reduce((acc, r) => acc + Number(r.rating || 0), 0)
   const averageRating = ratingsCount > 0 ? Number((sumRatings / ratingsCount).toFixed(2)) : parsedRating
-  const effectivenessScore = Number((averageRating / 5).toFixed(4))
+  const effectivenessScore = await computeCarEffectivenessFromRatings(allRatings || [])
 
   // Update summary columns on car_reports (ignore error if migration 036 columns not yet added)
   await supabase

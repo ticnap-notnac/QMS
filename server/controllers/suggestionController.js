@@ -1,52 +1,5 @@
-import { findSimilarCases, getCachedSuggestion, storeSuggestion, generateAiSuggestion, generateAiSuggestionFromText, autoClassifyTags, generateEvidenceDescription, scanPalletLabel } from '../services/suggestionService.js'
+import { generateAiSuggestionFromText, autoClassifyTags, generateEvidenceDescription, scanPalletLabel } from '../services/suggestionService.js'
 import boss from '../utils/queue.js'
-
-export async function getSimilarCases(req, res, next) {
-  try {
-    const { ncrId } = req.params
-    const data = await findSimilarCases(ncrId)
-    return res.json(data)
-  } catch (err) {
-    next(err)
-  }
-}
-
-export async function getCached(req, res, next) {
-  try {
-    const { ncrId } = req.params
-    const data = await getCachedSuggestion(ncrId)
-    return res.json(data)
-  } catch (err) {
-    next(err)
-  }
-}
-
-export async function saveSuggestion(req, res, next) {
-  try {
-    const { ncr_id, suggestion, preventive_suggestion, confidence } = req.body
-    await storeSuggestion({ ncrId: ncr_id, suggestion, confidence, type: 'corrective_action' })
-    if (preventive_suggestion) {
-      await storeSuggestion({ ncrId: ncr_id, suggestion: preventive_suggestion, confidence, type: 'preventive_action' })
-    }
-    return res.json({ success: true })
-  } catch (err) {
-    next(err)
-  }
-}
-
-export async function generateSuggestion(req, res, next) {
-  try {
-    const { ncrId } = req.params
-    const { deptName, previousSuggestions } = req.body
-    
-    // Enqueue the heavy CBR logic to pg-boss background worker
-    const jobId = await boss.send('cbr-suggestion', { ncrId, deptName, previousSuggestions })
-    
-    return res.status(202).json({ success: true, message: 'Suggestion generation started in the background', jobId, queue: 'cbr-suggestion' })
-  } catch (err) {
-    next(err)
-  }
-}
 
 export async function generateSuggestionFromText(req, res, next) {
   try {
@@ -140,11 +93,8 @@ export async function scanLabel(req, res, next) {
 export async function getJobStatus(req, res, next) {
   try {
     const { jobId } = req.params
-    // pg-boss v9+ requires the queue name as the first argument to getJobById.
-    // The queue name is passed as a query param (?queue=...) by the frontend.
-    // Fallback: try both known queue names if no queue param is provided.
     const queueName = req.query.queue
-    const knownQueues = ['cbr-suggestion-text', 'cbr-suggestion']
+    const knownQueues = ['cbr-suggestion-text']
     const queuesToTry = queueName ? [queueName] : knownQueues
 
     let job = null
@@ -161,14 +111,13 @@ export async function getJobStatus(req, res, next) {
       return res.status(404).json({ error: 'Job not found' })
     }
 
-    // Temporary debug: log full job so we can see failure reason in system.log
     if (job.state === 'failed') {
       const logger = (await import('../utils/logger.js')).default
       logger.error(`Job ${jobId} failed. Output: ${JSON.stringify(job.output)}`)
     }
 
-    return res.json({ 
-      state: job.state, 
+    return res.json({
+      state: job.state,
       output: job.output,
       startedon: job.startedon,
       completedon: job.completedon

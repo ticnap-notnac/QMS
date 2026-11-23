@@ -1,9 +1,98 @@
 import { supabase } from '../lib/supabase.js'
-import { CAR_STATUS } from '../../shared/constants.js'
-import { extractKeywords, extractKeywordsWithLLM, jaccardSimilarity, generateEmbedding } from '../utils/cbr.js'
+import { extractKeywords, jaccardSimilarity, generateEmbedding } from '../utils/cbr.js'
 
-/** Minimum CBR score to use a past case instead of falling back to AI */
-const MIN_CBR_SCORE = 0.2
+/**
+ * Minimum multi-attribute Base Similarity (75%) required for Tier 1 Direct CBR Reuse.
+ * Below 0.75, the system transitions to Tier 2: CBR-Guided RAG Case Adaptation.
+ */
+const DIRECT_CBR_THRESHOLD = 0.75
+
+// ─── QDDR Defect Category Normalization Helpers ──────────────────────────────
+
+const QDDR_LABEL_TO_TAG = {
+  'holes & punctures': 'holes_punctures',
+  'holes_punctures': 'holes_punctures',
+  'deformed or torn': 'deformed_torn',
+  'deformed_torn': 'deformed_torn',
+  'open carton': 'open_carton',
+  'open_carton': 'open_carton',
+  'crushed or dented': 'crushed_dented',
+  'crushed_dented': 'crushed_dented',
+  'wet or leaked': 'wet_leaked',
+  'wet_leaked': 'wet_leaked',
+  'stain or graffiti': 'stain_graffiti',
+  'stain_graffiti': 'stain_graffiti',
+  'bulging': 'bulging',
+  'improper stretch wrapping': 'improper_stretch_wrapping',
+  'improper_stretch_wrapping': 'improper_stretch_wrapping',
+  'wrong/no batchcode': 'wrong_no_batchcode',
+  'wrong_no_batchcode': 'wrong_no_batchcode',
+  'opened seal': 'opened_seal',
+  'opened_seal': 'opened_seal',
+  'no label/broken label': 'no_label_broken_label',
+  'no_label_broken_label': 'no_label_broken_label',
+  'short pack': 'short_pack',
+  'short_pack': 'short_pack',
+  'excess shipment': 'excess_shipment',
+  'excess_shipment': 'excess_shipment',
+  'documentation error': 'documentation_error',
+  'documentation_error': 'documentation_error',
+  'picking discrepancy': 'picking_discrepancy',
+  'picking_discrepancy': 'picking_discrepancy'
+}
+
+/**
+ * Extracts a canonical Set of QDDR defect category keys from explicit tags/labels
+ * and heuristic text classification.
+ * @param {string|string[]|null} explicitCategories
+ * @param {string} [text='']
+ * @returns {Promise<Set<string>>}
+ */
+async function extractQddrDefectCategorySet(explicitCategories, text = '') {
+  const tagSet = new Set()
+
+  if (Array.isArray(explicitCategories)) {
+    for (const item of explicitCategories) {
+      const norm = String(item || '').trim().toLowerCase()
+      if (QDDR_LABEL_TO_TAG[norm]) tagSet.add(QDDR_LABEL_TO_TAG[norm])
+    }
+  } else if (typeof explicitCategories === 'string' && explicitCategories.trim()) {
+    const parts = explicitCategories.split(/[,;|]+/)
+    for (const part of parts) {
+      const norm = part.trim().toLowerCase()
+      if (QDDR_LABEL_TO_TAG[norm]) tagSet.add(QDDR_LABEL_TO_TAG[norm])
+    }
+  }
+
+  if (text) {
+    const inferred = await autoClassifyTags(text, 'QDDR')
+    for (const t of inferred) {
+      tagSet.add(t)
+    }
+  }
+
+  return tagSet
+}
+
+/**
+ * Normalizes CAR issue category names / tags so e.g. 'Customer Complaint'
+ * matches 'customer_complaint'.
+ * @param {string} val
+ * @returns {string}
+ */
+function normalizeCarCategory(val) {
+  const s = String(val || '').trim().toLowerCase()
+  if (!s || s === 'general') return ''
+  if (s.includes('food') || s.includes('quality')) return 'quality_food_safety'
+  if (s.includes('environment') || s.includes('health') || s.includes('safety')) return 'environment_health_safety'
+  if (s.includes('security')) return 'security_issue'
+  if (s.includes('internal') && s.includes('audit')) return 'internal_audit'
+  if (s.includes('customer') && s.includes('audit')) return 'customer_audit_nonconformance'
+  if (s.includes('customer') || s.includes('complaint')) return 'customer_complaint'
+  if (s.includes('government') || s.includes('agency') || s.includes('regulatory')) return 'government_agency_audit'
+  if (s.includes('vendor') || s.includes('supplier')) return 'vendor_nonconformance'
+  return s.replace(/[^a-z0-9]+/g, '_')
+}
 
 // ─── Data Fetchers for the Dedicated Repositories ────────────────────────────
 
@@ -37,7 +126,7 @@ export async function fetchCarCaseCandidates(embedding = null, issueCategory = n
 
   let query = supabase
     .from('car_case_repository')
-    .select('id, reference_no, details_of_nonconformance, root_cause_analysis, corrective_action, preventive_action, issue_category, requesting_department, responsible_department, effectiveness_score')
+    .select('id, reference_no, details_of_nonconformance, root_cause_analysis, corrective_action, preventive_action, issue_category, requesting_department, responsible_department, product_material_name, effectiveness_score')
     .not('corrective_action', 'is', null)
     .order('effectiveness_score', { ascending: false })
     .limit(30)
@@ -56,7 +145,7 @@ export async function fetchCarCaseCandidates(embedding = null, issueCategory = n
 
 /**
  * Fetches candidate cases from `qddr_case_repository` using pgvector cosine
- * similarity or ordering by effectiveness score.
+ * similarity or ordering by effectiveness score, and hydrates `defect_categories`.
  *
  * @param {number[]|null} [embedding=null] - 768-dim float array
  * @returns {Promise<Object[]>}
@@ -70,8 +159,23 @@ export async function fetchQddrCaseCandidates(embedding = null) {
         match_count: 30
       })
       if (!error && Array.isArray(data) && data.length > 0) {
+        const ids = data.map(d => d.id).filter(Boolean)
+        let categoriesById = {}
+        if (ids.length > 0) {
+          const { data: catRows } = await supabase
+            .from('qddr_case_repository')
+            .select('id, defect_categories')
+            .in('id', ids)
+          if (Array.isArray(catRows)) {
+            for (const row of catRows) {
+              categoriesById[row.id] = row.defect_categories
+            }
+          }
+        }
+
         return data.map(d => ({
           ...d,
+          defect_categories: d.defect_categories ?? categoriesById[d.id] ?? null,
           similarity: d.similarity ?? 0,
           source: 'qddr_case_repository'
         }))
@@ -95,15 +199,54 @@ export async function fetchQddrCaseCandidates(embedding = null) {
   return (data || []).map(d => ({ ...d, source: 'qddr_case_repository' }))
 }
 
-// ─── Fallback Heuristics ─────────────────────────────────────────────────────
+// ─── Defect-Specific Fallback Heuristics ─────────────────────────────────────
 
-function generateFallbackHeuristicSuggestion({ description, issueType, deptName, isQddr = false }) {
-  const desc = (description || '').toLowerCase()
+function generateFallbackHeuristicSuggestion({ description, issueType, deptName, isQddr = false, defectSet = new Set() }) {
+  const desc = `${description || ''} ${issueType || ''}`.toLowerCase()
 
   if (isQddr) {
+    const hasTag = (...tags) => tags.some(t => defectSet.has(t))
+
+    // 1. Wet / Leaked / Bulging / Stain / Contamination
+    if (hasTag('wet_leaked', 'bulging', 'stain_graffiti') || /wet|leak|bulg|swell|swollen|stain|spill|moisture|soak/.test(desc)) {
+      return {
+        suggestion: 'Immediately isolate and quarantine all leaking, bulging, or moisture-compromised stock away from dry inventory. Inspect adjacent cases for cross-contamination and coordinate with the Inventory Manager for QA condemnation and disposal write-off.',
+        preventive_suggestion: 'Verify container seal integrity and humidity/temperature conditions prior to receiving, and require carriers to inspect trailer roof and floor dryness before loading.',
+        confidence: 0.95
+      }
+    }
+
+    // 2. Wrong/No Batch Code / No or Broken Label / Opened Seal
+    if (hasTag('wrong_no_batchcode', 'no_label_broken_label', 'opened_seal') || /batch|label|seal|traceability|expiry|code/.test(desc)) {
+      return {
+        suggestion: 'Place the affected pallet/lot on QA Hold immediately. Reconcile physical batch codes and seal integrity against the Certificate of Analysis (COA) and receiving manifest; request vendor relabeling or reject unverified units.',
+        preventive_suggestion: 'Enforce mandatory barcode and batch/expiry verification scanning at the receiving dock before generating put-away labels.',
+        confidence: 0.95
+      }
+    }
+
+    // 3. Short Pack / Excess Shipment / Picking Discrepancy / Documentation Error
+    if (hasTag('short_pack', 'excess_shipment', 'picking_discrepancy', 'documentation_error') || /short|excess|picking|mispick|document|invoice|manifest|overage/.test(desc)) {
+      return {
+        suggestion: 'Conduct a 100% blind recount of the affected SKU/lot against the delivery receipt and Purchase Order. Hold discrepant quantities in the staging reconciliation zone and issue a formal Vendor/Logistics Discrepancy Notice for inventory adjustment.',
+        preventive_suggestion: 'Implement dual-checker quantity and SKU verification during staging and require automated ASN/manifest validation prior to dock release.',
+        confidence: 0.95
+      }
+    }
+
+    // 4. Improper Stretch Wrapping / Open Carton
+    if (hasTag('improper_stretch_wrapping', 'open_carton') || /stretch|wrap|open carton|unsealed|loose/.test(desc)) {
+      return {
+        suggestion: 'Halt pallet movement and inspect open cartons to verify internal unit count and primary packaging integrity. Re-seal intact cartons and re-apply tensioned stretch-wrapping with corner boards before rack put-away.',
+        preventive_suggestion: 'Standardize pallet wrapping tension and minimum wrap-revolution specifications on the warehouse outbound/inbound dock checklist.',
+        confidence: 0.95
+      }
+    }
+
+    // 5. Physical / Structural Damage (Holes, Punctures, Crushed, Dented, Deformed, Torn)
     return {
-      suggestion: 'Segregate non-conforming inventory in the designated quarantine cage. Coordinate with the Inventory Manager to approve disposal or material scrap write-off.',
-      preventive_suggestion: 'Inspect incoming shipment pallets prior to unloading, verify stretch-wrap integrity, and notify vendor of recurring packaging discrepancies.',
+      suggestion: 'Segregate punctured, crushed, or deformed cases in the designated QA quarantine cage. Sort and salvage undamaged inner units for repackaging if primary seals are intact, and process severely damaged units for scrap disposal or vendor claim.',
+      preventive_suggestion: 'Enforce forklift handling clearance, pallet stacking weight limits, and protective slip-sheet/corner-board placement during transit and storage.',
       confidence: 0.94
     }
   }
@@ -140,14 +283,18 @@ function generateFallbackHeuristicSuggestion({ description, issueType, deptName,
 // ─── Main Suggestion API ─────────────────────────────────────────────────────
 
 /**
- * Generates an AI suggestion based on free-form text input and context.
- * Intelligently routes between `car_case_repository` (for complaints & audits)
- * and `qddr_case_repository` (for defects & disposals).
+ * Generates an AI suggestion based on free-form text input and structured context.
+ * Uses a two-tier CBR + RAG pipeline:
+ *  - Tier 1 (baseSim >= 0.75 + matching defect/category): Direct CBR Reuse of proven historical CAPA.
+ *  - Tier 2 (baseSim < 0.75): CBR-Guided RAG Case Adaptation via Gemini Flash using top scored cases.
  *
  * @param {Object} params
  * @param {string} params.description - Defect/discrepancy description
- * @param {string} [params.issueType] - Issue category or 'QDDR' / 'CAR'
- * @param {string} [params.deptName] - Department name
+ * @param {string} [params.rootCause=''] - Formatted 5 Whys / Fishbone RCA
+ * @param {string} [params.rcaMethod=''] - '5whys' | 'fishbone' | 'both'
+ * @param {string} [params.issueType] - Issue category or checked QDDR discrepancy labels
+ * @param {string} [params.deptName] - Department or warehouse location name
+ * @param {string} [params.reportType='CAR'] - 'CAR' | 'QDDR'
  * @returns {Promise<Object>}
  */
 export async function generateAiSuggestionFromText({
@@ -177,61 +324,100 @@ export async function generateAiSuggestionFromText({
   // ── ROUTE 1: QDDR CASE REPOSITORY (Warehouse Defect & Disposal) ─────────────
   if (isQddr) {
     const qddrCandidates = await fetchQddrCaseCandidates(embedding)
+    const queryDefectSet = await extractQddrDefectCategorySet(issueType, description)
+    const queryKeywords = extractKeywords(combinedQueryText)
+    let scoredQddrCandidates = []
 
-    // Filter out low-rated cases (< 2.5 / 5 stars => effectiveness_score < 0.50) and blend similarity (80%) + effectiveness (20%)
     if (qddrCandidates.length > 0) {
-      const queryKeywords = extractKeywords(combinedQueryText)
-      const scoredQddrCandidates = qddrCandidates
-        .filter(q => Number(q.effectiveness_score ?? 0.6) >= 0.5)
-        .map(q => {
+      // Filter out low-rated cases (< 2.5 / 5 stars => effectiveness_score < 0.50)
+      const eligible = qddrCandidates.filter(q => Number(q.effectiveness_score ?? 0.7) >= 0.5)
+
+      scoredQddrCandidates = await Promise.all(
+        eligible.map(async (q) => {
           const vectorSim = Number(q.similarity ?? 0)
+          const caseDefectSet = await extractQddrDefectCategorySet(q.defect_categories, q.reason_of_discrepancy)
+          const defectCategorySim =
+            queryDefectSet.size > 0 && caseDefectSet.size > 0
+              ? jaccardSimilarity(queryDefectSet, caseDefectSet)
+              : queryDefectSet.size === 0
+                ? 0.5
+                : 0
+
           const caseKeywords = extractKeywords(`${q.reason_of_discrepancy || ''} ${q.material_description || ''}`)
           const keywordSim = jaccardSimilarity(queryKeywords, caseKeywords)
-          const baseSim = Math.max(vectorSim, (vectorSim * 0.75) + (keywordSim * 0.25))
-          const rawEff = Number(q.effectiveness_score ?? 0.6)
-          const effNorm = rawEff > 1 ? Math.min(rawEff / 5, 1) : Math.min(Math.max(rawEff, 0), 1)
-          const finalCbrScore = (baseSim * 0.80) + (effNorm * 0.20)
-          return { ...q, baseSim, effNorm, finalCbrScore }
-        })
-        .sort((a, b) => b.finalCbrScore - a.finalCbrScore)
 
+          // Multi-attribute Base Similarity (45% Vector + 35% Defect Category + 20% Canonical Keywords)
+          const baseSim = vectorSim > 0
+            ? (0.45 * vectorSim) + (0.35 * defectCategorySim) + (0.20 * keywordSim)
+            : (0.55 * defectCategorySim) + (0.45 * keywordSim)
+
+          const rawEff = Number(q.effectiveness_score ?? 0.7)
+          const effNorm = rawEff > 1 ? Math.min(rawEff / 5, 1) : Math.min(Math.max(rawEff, 0), 1)
+          const finalCbrScore = (0.80 * baseSim) + (0.20 * effNorm)
+
+          return {
+            ...q,
+            vectorSim,
+            defectCategorySim,
+            keywordSim,
+            baseSim,
+            effNorm,
+            finalCbrScore
+          }
+        })
+      )
+
+      scoredQddrCandidates.sort((a, b) => b.finalCbrScore - a.finalCbrScore)
       const topMatch = scoredQddrCandidates[0]
 
-      // If semantic/keyword similarity is strong enough, use the highest-rated matching case
-      if (topMatch && topMatch.baseSim >= MIN_CBR_SCORE && topMatch.corrective_action) {
+      // Tier 1: Direct CBR Reuse requires baseSim >= 0.75 AND matching defect category
+      const hasDefectMatch = queryDefectSet.size === 0 || (topMatch && topMatch.defectCategorySim > 0)
+      if (topMatch && topMatch.baseSim >= DIRECT_CBR_THRESHOLD && hasDefectMatch && topMatch.corrective_action) {
         const starDisplay = Number((topMatch.effNorm * 5).toFixed(1))
         return {
           suggestion: topMatch.corrective_action,
           preventive_suggestion: topMatch.preventive_action || 'Implement standard receiving inspection checks.',
           confidence: Math.min(Math.max(topMatch.finalCbrScore, 0.94), 0.99),
           sourceDetails: 'QDDR Case Repository (CBR)',
-          matchedFeatures: ['discrepancy matching', 'disposal resolution', `★ ${starDisplay}/5 rated solution`]
+          matchedFeatures: [
+            `defect category match (${Math.round(topMatch.defectCategorySim * 100)}%)`,
+            `problem similarity (${Math.round(topMatch.baseSim * 100)}%)`,
+            `★ ${starDisplay}/5 rated solution`
+          ]
         }
       }
     }
 
-    // Fallback to Gemini with QDDR few-shot context
+    // Tier 2: CBR-Guided RAG Case Adaptation with Gemini Flash
     if (apiKey) {
       try {
-        const prompt = `You are a warehouse quality control and inventory manager. Suggest a corrective action (disposition/disposal) and a preventive action for this discrepancy.
+        const ragReferenceCases = scoredQddrCandidates.slice(0, 5)
+        const activeDefectList = [...queryDefectSet].join(', ') || issueType || 'General Warehouse Discrepancy'
 
-Discrepancy Details:
-- Description: ${description}
-- Department: ${deptName || 'Warehouse / Inventory'}
+        const prompt = `You are a Quality Assurance (QA) and Warehouse Inventory Manager.
+Based on the specific Discrepancy Details and Selected Defect Categories below, generate a tailored Immediate Corrective Action (containment, disposition, sorting/repackaging, vendor claim, or disposal) and a Preventive Action Plan.
+Adapt any relevant insights from the Historical Closed QDDR Cases below, but MUST tailor your actions specifically to the active material, location, and exact defect categories (do NOT repeat a generic quarantine response if the defect is a labeling, batch code, short pack, or stretch-wrapping issue).
 
-Historical Closed QDDR Cases (for reference):
-${qddrCandidates.slice(0, 5).map((q, i) => `${i + 1}. Discrepancy: ${q.reason_of_discrepancy} | Corrective: ${q.corrective_action} | Preventive: ${q.preventive_action || 'N/A'}`).join('\n') || 'None'}
+Active QDDR Details:
+- Full Description & Material: ${description}
+- Selected Defect Categories: ${activeDefectList}
+- Warehouse / Inspection Location: ${deptName || 'Warehouse / Inventory'}
 
-Provide a clear, practical corrective action (e.g., quarantine and write-off for disposal, return to vendor, repackage) and a preventive action.
+Historical Closed QDDR Cases (Retrieved via CBR for reference):
+${ragReferenceCases.map((q, i) => `${i + 1}. [Similarity: ${Math.round((q.baseSim || 0) * 100)}%] Material: ${q.material_description || 'N/A'} | Discrepancy: ${q.reason_of_discrepancy} | Corrective: ${q.corrective_action} | Preventive: ${q.preventive_action || 'N/A'}`).join('\n') || 'None available'}
+
 Respond ONLY in this JSON format with no markdown:
-{"suggestion": "corrective action here", "preventive_suggestion": "preventive action here", "confidence": 0.96}`
+{"suggestion": "specific corrective/disposition action here", "preventive_suggestion": "specific preventive action here", "confidence": 0.96}`
 
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: 'application/json' }
+            generationConfig: {
+              temperature: 0.35,
+              responseMimeType: 'application/json'
+            }
           })
         })
 
@@ -243,8 +429,10 @@ Respond ONLY in this JSON format with no markdown:
             suggestion: parsed.suggestion,
             preventive_suggestion: parsed.preventive_suggestion,
             confidence: parsed.confidence || 0.95,
-            sourceDetails: 'Generative AI (Gemini Flash)',
-            matchedFeatures: []
+            sourceDetails: ragReferenceCases.length > 0
+              ? 'CBR + RAG Case Adaptation (Gemini Flash)'
+              : 'Generative AI (Gemini Flash)',
+            matchedFeatures: [...queryDefectSet]
           }
         }
       } catch (geminiErr) {
@@ -253,40 +441,76 @@ Respond ONLY in this JSON format with no markdown:
     }
 
     return {
-      ...generateFallbackHeuristicSuggestion({ description, issueType, deptName, isQddr: true }),
+      ...generateFallbackHeuristicSuggestion({
+        description,
+        issueType,
+        deptName,
+        isQddr: true,
+        defectSet: queryDefectSet
+      }),
       sourceDetails: 'System Heuristics'
     }
   }
 
   // ── ROUTE 2: CAR CASE REPOSITORY (Non-Conformance + 5 Whys / Fishbone RCA) ──
   const carCandidates = await fetchCarCaseCandidates(embedding, issueType)
+  let scoredCandidates = []
 
   if (carCandidates.length > 0) {
     const queryKeywords = extractKeywords(combinedQueryText)
-    const rcaKeywords = cleanRca ? extractKeywords(cleanRca) : []
+    const rcaKeywords = cleanRca ? extractKeywords(cleanRca) : new Set()
+    const normQueryCategory = normalizeCarCategory(issueType)
+    const normQueryDept = String(deptName || '').trim().toLowerCase()
 
-    const scoredCandidates = carCandidates
-      .filter(c => Number(c.effectiveness_score ?? 0.6) >= 0.5)
+    scoredCandidates = carCandidates
+      .filter(c => Number(c.effectiveness_score ?? 0.7) >= 0.5)
       .map(c => {
         const vectorSim = Number(c.similarity ?? 0)
-        const caseKeywords = extractKeywords(`${c.details_of_nonconformance || ''} ${c.root_cause_analysis || ''}`)
+        const caseKeywords = extractKeywords(
+          `${c.details_of_nonconformance || ''} ${c.root_cause_analysis || ''} ${c.product_material_name || ''}`
+        )
         const caseRcaKeywords = extractKeywords(c.root_cause_analysis || '')
         const keywordSim = jaccardSimilarity(queryKeywords, caseKeywords)
-        const rcaOverlap = rcaKeywords.length > 0 && caseRcaKeywords.length > 0
+        const rcaOverlap = rcaKeywords.size > 0 && caseRcaKeywords.size > 0
           ? jaccardSimilarity(rcaKeywords, caseRcaKeywords)
           : 0
-        const baseSim = Math.max(vectorSim, (vectorSim * 0.65) + (keywordSim * 0.2) + (rcaOverlap * 0.15))
-        const rawEff = Number(c.effectiveness_score ?? 0.6)
+
+        const normCaseCategory = normalizeCarCategory(c.issue_category)
+        const categoryMatch = normQueryCategory && normCaseCategory && normQueryCategory === normCaseCategory ? 1.0 : 0.0
+
+        const respDept = String(c.responsible_department || '').trim().toLowerCase()
+        const reqDept = String(c.requesting_department || '').trim().toLowerCase()
+        const deptMatch = normQueryDept && (normQueryDept === respDept || normQueryDept === reqDept) ? 1.0 : 0.0
+
+        const categoryAndDeptSim = (0.60 * categoryMatch) + (0.40 * deptMatch)
+
+        // Multi-attribute Base Similarity (45% Vector + 25% RCA Overlap + 15% Category/Dept + 15% Keywords)
+        const baseSim = vectorSim > 0
+          ? (0.45 * vectorSim) + (0.25 * rcaOverlap) + (0.15 * categoryAndDeptSim) + (0.15 * keywordSim)
+          : (0.45 * rcaOverlap) + (0.25 * categoryAndDeptSim) + (0.30 * keywordSim)
+
+        const rawEff = Number(c.effectiveness_score ?? 0.7)
         const effNorm = rawEff > 1 ? Math.min(rawEff / 5, 1) : Math.min(Math.max(rawEff, 0), 1)
-        const compositeScore = (baseSim * 0.80) + (effNorm * 0.20)
-        return { ...c, baseSim, effNorm, compositeScore, rcaOverlap }
+        const compositeScore = (0.80 * baseSim) + (0.20 * effNorm)
+
+        return {
+          ...c,
+          vectorSim,
+          keywordSim,
+          rcaOverlap,
+          categoryAndDeptSim,
+          baseSim,
+          effNorm,
+          compositeScore
+        }
       })
       .sort((a, b) => b.compositeScore - a.compositeScore)
 
     const topMatch = scoredCandidates[0]
     const simScore = topMatch?.baseSim ?? 0
 
-    if (topMatch && simScore >= MIN_CBR_SCORE && topMatch.corrective_action) {
+    // Tier 1: Direct CBR Reuse requires baseSim >= 0.75
+    if (topMatch && simScore >= DIRECT_CBR_THRESHOLD && topMatch.corrective_action) {
       const starDisplay = Number((topMatch.effNorm * 5).toFixed(1))
       const rcaFeatureLabel =
         rcaMethod === 'fishbone'
@@ -301,26 +525,27 @@ Respond ONLY in this JSON format with no markdown:
         confidence: Math.min(Math.max(topMatch.compositeScore, 0.94), 0.99),
         sourceDetails: 'CAR Case Repository (CBR)',
         matchedFeatures: cleanRca
-          ? [rcaFeatureLabel, 'non-conformance semantic matching', `★ ${starDisplay}/5 rated CAPA`]
-          : ['non-conformance semantic matching', `★ ${starDisplay}/5 rated CAPA`]
+          ? [rcaFeatureLabel, `problem similarity (${Math.round(simScore * 100)}%)`, `★ ${starDisplay}/5 rated CAPA`]
+          : [`problem similarity (${Math.round(simScore * 100)}%)`, `★ ${starDisplay}/5 rated CAPA`]
       }
     }
   }
 
-  // Fallback to Gemini with CAR + 5 Whys / Fishbone RCA context (ONLY Corrective & Preventive Actions)
+  // Tier 2: CBR-Guided RAG Case Adaptation with Gemini Flash
   if (apiKey) {
     try {
-      const prompt = `You are an ISO 9001 Quality Assurance expert. Based on the Non-Conformance Details and the Root Cause Analysis (5 Whys / Fishbone 6M) already conducted by the team, suggest an Immediate Corrective Action and a Preventive Action Plan.
+      const ragCarCases = scoredCandidates.slice(0, 5)
+      const prompt = `You are an ISO 9001 Quality Assurance expert. Based on the Non-Conformance Details and the Root Cause Analysis (5 Whys / Fishbone 6M) already conducted by the team, suggest a tailored Immediate Corrective Action and a Preventive Action Plan.
 Do NOT generate a Root Cause Analysis—only generate the Corrective Action and Preventive Action that directly resolve and prevent the identified Root Cause.
 
 Non-Conformance & Root Cause Details:
 - Non-Conformance Details: ${description}
 - Root Cause Analysis (${rcaMethod || '5 Whys / Fishbone'}): ${cleanRca || 'Not specified'}
 - Category: ${issueType || 'General'}
-- Department: ${deptName || 'N/A'}
+- Responsible Department: ${deptName || 'N/A'}
 
-Historical Closed CAR Cases (for reference):
-${carCandidates.slice(0, 5).map((c, i) => `${i + 1}. Non-Conformance: ${c.details_of_nonconformance} | RCA: ${c.root_cause_analysis || 'N/A'} | Corrective: ${c.corrective_action} | Preventive: ${c.preventive_action || 'N/A'}`).join('\n') || 'None'}
+Historical Closed CAR Cases (Retrieved via CBR for reference):
+${ragCarCases.map((c, i) => `${i + 1}. [Similarity: ${Math.round((c.baseSim || 0) * 100)}%] Non-Conformance: ${c.details_of_nonconformance} | RCA: ${c.root_cause_analysis || 'N/A'} | Corrective: ${c.corrective_action} | Preventive: ${c.preventive_action || 'N/A'}`).join('\n') || 'None available'}
 
 Respond ONLY in this JSON format with no markdown:
 {"suggestion": "immediate corrective action here", "preventive_suggestion": "long-term preventive action plan here", "confidence": 0.96}`
@@ -330,7 +555,10 @@ Respond ONLY in this JSON format with no markdown:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' }
+          generationConfig: {
+            temperature: 0.35,
+            responseMimeType: 'application/json'
+          }
         })
       })
 
@@ -342,7 +570,9 @@ Respond ONLY in this JSON format with no markdown:
           suggestion: parsed.suggestion,
           preventive_suggestion: parsed.preventive_suggestion,
           confidence: parsed.confidence || 0.95,
-          sourceDetails: 'Generative AI (Gemini Flash)',
+          sourceDetails: ragCarCases.length > 0
+            ? 'CBR + RAG Case Adaptation (Gemini Flash)'
+            : 'Generative AI (Gemini Flash)',
           matchedFeatures: cleanRca ? ['RCA-aligned CAPA synthesis'] : []
         }
       }
@@ -355,33 +585,6 @@ Respond ONLY in this JSON format with no markdown:
     ...generateFallbackHeuristicSuggestion({ description: combinedQueryText, issueType, deptName, isQddr: false }),
     sourceDetails: 'System Heuristics'
   }
-}
-
-// ─── Legacy Compatibility Wrappers ──────────────────────────────────────────
-
-export async function findSimilarCases(reportId) {
-  const candidates = await fetchCarCaseCandidates(null, null)
-  return {
-    report: { id: reportId },
-    bestMatch: candidates[0] || null,
-    carCaseRepo: candidates
-  }
-}
-
-export async function getCachedSuggestion(_id) {
-  return null
-}
-
-export async function storeSuggestion(_params) {
-  // No-op: AI predictions table is superseded by direct car_case_repository & qddr_case_repository
-  return Promise.resolve()
-}
-
-export async function generateAiSuggestion({ ncrId, deptName }) {
-  return generateAiSuggestionFromText({
-    description: `Report #${ncrId}`,
-    deptName
-  })
 }
 
 // ─── Auto-Classification & Evidence Description ─────────────────────────────
@@ -576,7 +779,6 @@ export async function scanPalletLabel({ imageBase64, mimeType = 'image/jpeg', ra
     source: 'barcode'
   }
 
-  // 1. If an image of the barcode/pallet sticker is provided, use Gemini Vision to read the label & barcode
   const geminiApiKey = process.env.GEMINI_API_KEY
   if (cleanBase64 && geminiApiKey) {
     try {
@@ -651,7 +853,6 @@ Return ONLY valid JSON in this exact format:
     }
   }
 
-  // 2. If rawBarcode was provided (or some fields are still empty), parse barcode & check historical QDDR records
   if (cleanBarcode) {
     if (!extracted.material_code && /^\d{3,8}$/.test(cleanBarcode)) {
       extracted.material_code = cleanBarcode
@@ -660,7 +861,6 @@ Return ONLY valid JSON in this exact format:
     }
   }
 
-  // Lookup matching historical QDDR record if material_description is still missing
   if ((extracted.material_code || extracted.batch_code_su_number) && !extracted.material_description) {
     try {
       let query = supabase

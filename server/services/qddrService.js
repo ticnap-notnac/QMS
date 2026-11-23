@@ -733,6 +733,39 @@ export async function editQddrReport({ id, body = {}, actorAuthId }) {
 }
 
 /**
+ * Resolves role names for a list of rating rows [{ rating, user_auth_id }]
+ * and computes a role-weighted Bayesian effectiveness score (0.0 to 1.0).
+ */
+async function computeQddrEffectivenessFromRatings(ratingRows = []) {
+  const { computeBayesianEffectivenessScore } = await import('../utils/cbr.js')
+  if (!Array.isArray(ratingRows) || ratingRows.length === 0) {
+    return computeBayesianEffectivenessScore([])
+  }
+
+  const authIds = [...new Set(ratingRows.map(r => r.user_auth_id).filter(Boolean))]
+  const roleByAuthId = {}
+
+  if (authIds.length > 0) {
+    const { data: users } = await supabase
+      .from('users')
+      .select('auth_id, roles(role_name), positions(roles(role_name))')
+      .in('auth_id', authIds)
+
+    for (const u of users || []) {
+      const rName = u.roles?.role_name || u.positions?.roles?.role_name || 'user'
+      if (u.auth_id) roleByAuthId[u.auth_id] = rName
+    }
+  }
+
+  const ratingsWithRoles = ratingRows.map(r => ({
+    rating: Number(r.rating || 0),
+    role_name: roleByAuthId[r.user_auth_id] || 'user'
+  }))
+
+  return computeBayesianEffectivenessScore(ratingsWithRoles)
+}
+
+/**
  * Automatically promotes a closed QDDR report into the `qddr_case_repository`
  * for Case-Based Reasoning (CBR) retrieval and vector similarity search.
  *
@@ -744,13 +777,6 @@ export async function autoPromoteQddrToCaseRepository(qddr) {
   if (!discrepancy) return null
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY
-    let embedding = null
-    if (apiKey) {
-      const { generateEmbedding } = await import('../utils/cbr.js')
-      embedding = await generateEmbedding(discrepancy, apiKey)
-    }
-
     const defectCategories = []
     const boolKeys = [
       'holes_punctures', 'deformed_torn', 'open_carton', 'crushed_dented',
@@ -762,19 +788,21 @@ export async function autoPromoteQddrToCaseRepository(qddr) {
       if (qddr[k]) defectCategories.push(k)
     }
 
-    // Compute effectiveness_score from report_ratings (sum / count / 5) or neutral baseline (0.60)
-    let effectivenessScore = 0.6
+    const apiKey = process.env.GEMINI_API_KEY
+    let embedding = null
+    if (apiKey) {
+      const { generateEmbedding } = await import('../utils/cbr.js')
+      const compositeQddrText = `Material: ${qddr.material_description || ''}. Discrepancy Type: ${defectCategories.join(', ') || 'None'}. Reason: ${discrepancy}.`
+      embedding = await generateEmbedding(compositeQddrText, apiKey)
+    }
+
     const { data: ratingRows } = await supabase
       .from('report_ratings')
-      .select('rating')
+      .select('rating, user_auth_id')
       .eq('report_type', 'QDDR')
       .eq('report_id', qddr.id)
 
-    if (Array.isArray(ratingRows) && ratingRows.length > 0) {
-      const sum = ratingRows.reduce((acc, r) => acc + Number(r.rating || 0), 0)
-      const avg = sum / ratingRows.length
-      effectivenessScore = Number((avg / 5).toFixed(4))
-    }
+    const effectivenessScore = await computeQddrEffectivenessFromRatings(ratingRows || [])
 
     const record = {
       qddr_id: qddr.id,
@@ -812,8 +840,8 @@ export async function autoPromoteQddrToCaseRepository(qddr) {
 
 /**
  * Allows any user with access to rate a closed QDDR report (1-5 stars),
- * computes Average = (Sum of Ratings) / (Number of Raters), and updates
- * `qddr_reports` and `qddr_case_repository.effectiveness_score`.
+ * computes visible Average = (Sum of Ratings) / (Number of Raters), and updates
+ * `qddr_reports` and `qddr_case_repository.effectiveness_score` using role-weighted Bayesian smoothing.
  */
 export async function rateQddrReport({ qddrId, rating, actorAuthId }) {
   const num = Number(rating)
@@ -860,7 +888,7 @@ export async function rateQddrReport({ qddrId, rating, actorAuthId }) {
 
   const { data: allRatings, error: fetchErr } = await supabase
     .from('report_ratings')
-    .select('rating')
+    .select('rating, user_auth_id')
     .eq('report_type', 'QDDR')
     .eq('report_id', Number(qddrId))
 
@@ -869,7 +897,7 @@ export async function rateQddrReport({ qddrId, rating, actorAuthId }) {
   const ratingsCount = (allRatings || []).length
   const sumRatings = (allRatings || []).reduce((acc, r) => acc + Number(r.rating || 0), 0)
   const averageRating = ratingsCount > 0 ? Number((sumRatings / ratingsCount).toFixed(2)) : parsedRating
-  const effectivenessScore = Number((averageRating / 5).toFixed(4))
+  const effectivenessScore = await computeQddrEffectivenessFromRatings(allRatings || [])
 
   await supabase
     .from('qddr_reports')
