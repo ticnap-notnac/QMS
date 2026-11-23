@@ -910,17 +910,20 @@ export async function generateEvidenceDescription({
     return { description: fallbackDesc, tags, source: 'heuristic' }
   }
 
+  const optionalQddrContext = [
+    location ? `- Location: ${location}` : '',
+    materialDescription || productType ? `- Material Description: ${resolvedMaterial}` : '',
+    materialCode ? `- Material Code: ${materialCode}` : '',
+    batchNumber ? `- Batch / ISU Number: ${batchNumber}` : '',
+    qty !== '' && qty !== null && qty !== undefined ? `- Affected Quantity: ${qty}` : '',
+    discrepancyTypes ? `- Selected Discrepancy Types: ${discrepancyTypes}` : ''
+  ].filter(Boolean).join('\n   ')
+
   const prompt = isQddr
-    ? `You are a Quality Assurance (QA) warehouse inspector writing the "Reason of Discrepancy" for a Quality Defects / Damaged / Discrepancy Report (QDDR).
-Examine the uploaded evidence photo and write a concise, objective 2-3 sentence "Reason of Discrepancy" paragraph that:
-1. Clearly describes the visible physical defect, damage, or discrepancy shown in the photo (e.g., crushed/dented cans or cartons, wet/leaked packaging, torn wrap, broken seal, punctures, label/batch issue).
-2. Integrates these required report details naturally:
-   - Location: ${location || 'N/A'}
-   - Material Description: ${resolvedMaterial}
-   - Material Code: ${materialCode || 'N/A'}
-   - Batch / ISU Number: ${batchNumber || 'N/A'}
-   - Affected Quantity: ${qty !== '' && qty !== null && qty !== undefined ? qty : 'N/A'}
-   ${discrepancyTypes ? `- Selected Discrepancy Types: ${discrepancyTypes}` : ''}
+    ? `You are a Quality Assurance (QA) warehouse inspector converting an uploaded evidence photo into the "Reason of Discrepancy" description for a Quality Defects / Damaged / Discrepancy Report (QDDR).
+Examine the uploaded evidence photo carefully and write a concise, objective 2-3 sentence "Reason of Discrepancy" paragraph that:
+1. Directly describes the visible physical defect, damage, or discrepancy shown in the image (e.g., crushed/dented cans or cartons, wet/leaked packaging, torn stretch wrap, broken seal, punctures, stained boxes, or missing/damaged label).
+${optionalQddrContext ? `2. Naturally incorporates these provided report details where relevant (do NOT mention any field that is not listed here and never write "N/A"):\n   ${optionalQddrContext}` : '2. Focuses strictly on what is visually observable in the evidence image without inventing missing codes or writing "N/A".'}
 Return ONLY the plain-text paragraph without markdown, quotes, or bullet points.`
     : `You are a Quality Assurance (QA) inspector writing an objective non-conformance description for a Quality Management System.
 Describe what is visible in the photo and connect it to Product: ${productType || 'N/A'}, Batch/Lot: ${batchNumber || 'N/A'}, Location: ${location || 'N/A'}. Return ONLY the plain-text description paragraph.`

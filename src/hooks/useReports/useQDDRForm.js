@@ -295,42 +295,28 @@ export function useQDDRForm() {
       .join(', ')
 
   const generateReasonFromEvidence = async ({ silent = false } = {}) => {
-    const missing = []
-    if (!String(form.location || '').trim()) missing.push('Location')
-    if (!String(form.material_description || '').trim()) missing.push('Material Description')
-    if (!String(form.material_code || '').trim()) missing.push('Material Code')
-    if (!String(form.batch_code_su_number || '').trim()) missing.push('Batch Code / ISU No')
-    if (form.qty === '' || form.qty === null || form.qty === undefined || Number(form.qty) < 0) {
-      missing.push('Quantity')
-    }
-
-    if (missing.length > 0) {
-      if (!silent) {
-        setError(`Please fill in required fields first to generate Reason of Discrepancy: ${missing.join(', ')}.`)
-      }
-      return null
-    }
-
     const firstImageItem = (evidenceItems || []).find(item => {
       const isImgMime = String(item.type || '').startsWith('image/')
       const isImgExt = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(String(item.name || item.url || ''))
       const isDataUrl = String(item.url || '').startsWith('data:image/')
-      return (isImgMime || isImgExt || isDataUrl) && (item.file || isDataUrl)
+      return (isImgMime || isImgExt || isDataUrl) && (item.file || isDataUrl || item.url)
     })
+
+    if (!firstImageItem) {
+      if (!silent) {
+        setError('Please upload an evidence image first to use Image to Description.')
+      }
+      return null
+    }
 
     setGeneratingReason(true)
     if (!silent) setError(null)
 
     try {
-      let imageBase64 = ''
-      let mimeType = 'image/jpeg'
-
-      if (firstImageItem) {
-        const source = firstImageItem.file || firstImageItem.url
-        const converted = await fileOrDataUrlToBase64(source)
-        imageBase64 = converted.base64
-        mimeType = converted.mimeType
-      }
+      const source = firstImageItem.file || firstImageItem.url
+      const converted = await fileOrDataUrlToBase64(source)
+      const imageBase64 = converted.base64
+      const mimeType = converted.mimeType
 
       const checkedTypes = getCheckedDiscrepancyLabels()
 
@@ -360,9 +346,9 @@ export function useQDDRForm() {
       }
       return res
     } catch (err) {
-      console.error('Reason generation error:', err)
+      console.error('Image to description generation error:', err)
       if (!silent) {
-        setError('Could not auto-generate Reason of Discrepancy. Please try again.')
+        setError('Could not generate description from the evidence image. Please try again.')
       }
       return null
     } finally {

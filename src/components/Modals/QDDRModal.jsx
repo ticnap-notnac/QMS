@@ -729,7 +729,7 @@ function QDDRModal({
                         type="button"
                         onClick={() => generateReasonFromEvidence({ silent: false })}
                         disabled={generatingReason}
-                        title="Use required fields and uploaded evidence photo to fill Reason of Discrepancy"
+                        title="Analyze the uploaded evidence image to generate Reason of Discrepancy"
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -746,14 +746,14 @@ function QDDRModal({
                         }}
                       >
                         {generatingReason ? <LoaderCircle size={11} className="animate-spin" /> : <Sparkles size={11} />}
-                        {generatingReason ? 'Filling...' : 'Auto-Fill Reason'}
+                        {generatingReason ? 'Analyzing Image...' : 'Image to Description'}
                       </button>
                     )}
                   </div>
                   <textarea
                     value={form.reason_of_discrepancy}
                     onChange={(e) => handleChange('reason_of_discrepancy', e.target.value)}
-                    placeholder="Auto-fills when required fields and an evidence photo are provided, or click Auto-Fill Reason..."
+                    placeholder="Upload an evidence photo and click 'Image to Description', or type the reason of discrepancy..."
                     className="input-field"
                     style={{ minHeight: '75px', height: '75px', padding: '10px 12px', resize: 'vertical' }}
                   />
