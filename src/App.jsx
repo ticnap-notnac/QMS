@@ -230,6 +230,11 @@ function AppInner() {
   const handleSubmit = async (authData) => {
     try {
       if (authData && authData.user) {
+        try {
+          localStorage.setItem('resq_last_active_at', String(Date.now()))
+        } catch {
+          // ignore storage errors
+        }
         setUser(authData.user)
         setToast(null)
 
