@@ -130,3 +130,37 @@ export async function rateQddr(req, res, next) {
     next(err)
   }
 }
+
+export async function restoreQddr(req, res, next) {
+  const actorAuthId = getRequestActor(req)
+  if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+  const { id } = req.params
+
+  try {
+    const { restoreQddrReport } = await import('../services/qddrService.js')
+    const { data } = await restoreQddrReport({
+      id: parseInt(id, 10),
+      actorAuthId
+    })
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function permanentDeleteQddr(req, res, next) {
+  const actorAuthId = getRequestActor(req)
+  if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+  const { id } = req.params
+
+  try {
+    const { permanentDeleteQddrReport } = await import('../services/qddrService.js')
+    const { data } = await permanentDeleteQddrReport({
+      id: parseInt(id, 10),
+      actorAuthId
+    })
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}

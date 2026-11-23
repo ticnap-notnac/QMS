@@ -35,7 +35,7 @@ export function useComplianceData() {
       // Fetch non-compliant findings
       const findingsData = await isoService.fetchNonCompliantFindings()
 
-      // Fetch CAR reports
+      // Fetch CAR reports (excluding soft-deleted reports in Recycle Bin)
       const { data: carsList, error: carsError } = await supabase
         .from('car_reports')
         .select(`
@@ -44,6 +44,7 @@ export function useComplianceData() {
           audit_schedule_id,
           audit_result_id
         `)
+        .neq('status', 'deleted')
       if (carsError) throw carsError
 
       // Safely fetch clause links

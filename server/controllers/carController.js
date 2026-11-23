@@ -169,3 +169,37 @@ export async function rateCar(req, res, next) {
     next(err)
   }
 }
+
+export async function restoreCar(req, res, next) {
+  const actorAuthId = getRequestActor(req)
+  if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+  const { id } = req.params
+
+  try {
+    const { restoreCarReport } = await import('../services/carService.js')
+    const { data } = await restoreCarReport({
+      carId: parseInt(id, 10),
+      actorAuthId
+    })
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function permanentDeleteCar(req, res, next) {
+  const actorAuthId = getRequestActor(req)
+  if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
+  const { id } = req.params
+
+  try {
+    const { permanentDeleteCarReport } = await import('../services/carService.js')
+    const { data } = await permanentDeleteCarReport({
+      carId: parseInt(id, 10),
+      actorAuthId
+    })
+    return res.json(data)
+  } catch (err) {
+    next(err)
+  }
+}

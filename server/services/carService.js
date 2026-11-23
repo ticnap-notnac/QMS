@@ -544,6 +544,7 @@ export async function fetchCarsForClause(clauseId, actorAuthId = null) {
     .map(row => row.car_reports)
     .filter(car => {
       if (!car) return false
+      if (String(car.status || '').toLowerCase() === 'deleted') return false
       if (callerSiteId && car.site_id && String(car.site_id) !== String(callerSiteId)) return false
       return true
     })
@@ -604,6 +605,7 @@ export async function fetchLinkedCarsForClauses(clauseIds) {
   const map = {}
   for (const row of data || []) {
     if (!row.car_reports) continue
+    if (String(row.car_reports.status || '').toLowerCase() === 'deleted') continue
     if (!map[row.clause_id]) map[row.clause_id] = []
     map[row.clause_id].push(row.car_reports)
   }
@@ -611,7 +613,8 @@ export async function fetchLinkedCarsForClauses(clauseIds) {
 }
 
 /**
- * Soft deletes a CAR report and its clause links.
+ * Soft deletes a CAR report by moving it to the Recycle Bin (`status = 'deleted'`).
+ * Preserves clause links so the report can be restored intact from DCC > Recycle Bin.
  *
  * @param {Object} params
  * @param {string|number} params.carId
@@ -619,8 +622,100 @@ export async function fetchLinkedCarsForClauses(clauseIds) {
  * @returns {Promise<{data: Object}>}
  */
 export async function softDeleteCarReport({ carId, actorAuthId }) {
+  const { data, error } = await supabase
+    .from('car_reports')
+    .update({
+      status: 'deleted',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', carId)
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw error
+
+  try {
+    await writeAudit({
+      level: 'audit',
+      source: 'car_reports',
+      action: 'car_soft_delete',
+      userAuthId: actorAuthId,
+      details: { id: carId, reference_no: data?.reference_no }
+    })
+  } catch (err) {
+    console.warn('Failed to write audit log:', err.message || err)
+  }
+
+  return { data }
+}
+
+/**
+ * Restores a soft-deleted CAR report from the DCC Recycle Bin back to its active status.
+ *
+ * @param {Object} params
+ * @param {string|number} params.carId
+ * @param {string} params.actorAuthId
+ * @returns {Promise<{data: Object}>}
+ */
+export async function restoreCarReport({ carId, actorAuthId }) {
+  const { data: existing, error: findErr } = await supabase
+    .from('car_reports')
+    .select('*')
+    .eq('id', carId)
+    .maybeSingle()
+
+  if (findErr) throw findErr
+  if (!existing) {
+    const err = new Error('CAR report not found.')
+    err.status = 404
+    throw err
+  }
+
+  let restoredStatus = CAR_STATUS.OPEN
+  if (existing.verification_date && existing.verified_by) {
+    restoredStatus = CAR_STATUS.CLOSED
+  } else if (existing.capa_submitted_at || (existing.root_cause_analysis && existing.corrective_action)) {
+    restoredStatus = CAR_STATUS.UNDER_VERIFICATION
+  }
+
+  const { data, error } = await supabase
+    .from('car_reports')
+    .update({
+      status: restoredStatus,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', carId)
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw error
+
+  try {
+    await writeAudit({
+      level: 'audit',
+      source: 'car_reports',
+      action: 'car_restore',
+      userAuthId: actorAuthId,
+      details: { id: carId, reference_no: data?.reference_no, restored_status: restoredStatus }
+    })
+  } catch (err) {
+    console.warn('Failed to write audit log:', err.message || err)
+  }
+
+  return { data }
+}
+
+/**
+ * Permanently deletes a CAR report and its clause links from the Recycle Bin.
+ *
+ * @param {Object} params
+ * @param {string|number} params.carId
+ * @param {string} params.actorAuthId
+ * @returns {Promise<{data: Object}>}
+ */
+export async function permanentDeleteCarReport({ carId, actorAuthId }) {
   await supabase.from('car_clause_links').delete().eq('car_report_id', carId)
-  
+
   const { data, error } = await supabase
     .from('car_reports')
     .delete()
@@ -634,7 +729,7 @@ export async function softDeleteCarReport({ carId, actorAuthId }) {
     await writeAudit({
       level: 'audit',
       source: 'car_reports',
-      action: 'car_soft_delete',
+      action: 'car_permanent_delete',
       userAuthId: actorAuthId,
       details: { id: carId, reference_no: data?.reference_no }
     })

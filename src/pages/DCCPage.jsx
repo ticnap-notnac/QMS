@@ -25,12 +25,17 @@ export default function DCCPage({
     isAdminRole(userRole) ||
     (hasExplicitPages ? pages.includes('iso') : normRole === 'auditor') ||
     (hasExplicitRights && rights.includes('manage_iso'))
+  const canViewRecycleBin =
+    isAdminRole(userRole) ||
+    ['auditor', 'qa officer', 'quality assurance'].includes(normRole) ||
+    (hasExplicitRights && rights.includes('edit_delete_report'))
 
   const FOLDER_ITEMS = [
     ...(canViewSystemLogs ? [{ id: 'system_logs', label: 'System Logs' }] : []),
     ...(canViewIsoModules ? [{ id: 'iso_modules', label: 'ISO Modules' }] : []),
     { id: 'task_reports', label: 'Task Reports' },
     { id: 'terms_policy', label: 'ISO Terms & Compliance Policy' },
+    ...(canViewRecycleBin ? [{ id: 'recycle_bin', label: 'Recycle Bin' }] : []),
   ]
 
   const {
@@ -61,7 +66,7 @@ export default function DCCPage({
             loadingCar={loadingCar} onSelectCar={openCarDetails} qddrReports={qddrReports} loadingQddr={loadingQddr}
             auditReports={auditReports} loadingAudit={loadingAudit} auditSchedules={auditSchedules}
             loadingAuditSchedules={loadingAuditSchedules} userRole={userRole} userPermissions={userPermissions}
-            onFetchRunDetails={fetchRunDetails}
+            onFetchRunDetails={fetchRunDetails} authUserId={authUserId}
           />
         </div>
       </div>

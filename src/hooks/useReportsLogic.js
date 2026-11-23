@@ -92,10 +92,12 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         supabase
           .from('car_reports')
           .select('*, audit_schedules(id, title, scheduled_date)')
+          .neq('status', 'deleted')
           .order('created_at', { ascending: false }),
         supabase
           .from('qddr_reports')
           .select('*')
+          .neq('status', 'deleted')
           .order('created_at', { ascending: false }),
         supabase
           .from('report_ratings')

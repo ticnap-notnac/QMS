@@ -51,22 +51,24 @@ export default function OccurringIssuesSummary({ onRefresh }) {
           .from('car_reports')
           .select('*, audit_schedules(id, title, scheduled_date)')
           .not('status', 'ilike', 'closed')
+          .neq('status', 'deleted')
           .order('created_at', { ascending: false })
           .limit(100),
         supabase
           .from('qddr_reports')
           .select('*')
           .not('status', 'ilike', 'closed')
+          .neq('status', 'deleted')
           .order('created_at', { ascending: false })
           .limit(100),
         isManualRefresh && onRefresh ? onRefresh().catch(() => {}) : Promise.resolve()
       ])
 
       const carsList = (carResult?.data || [])
-        .filter(c => String(c.status || '').trim().toLowerCase() !== 'closed')
+        .filter(c => !['closed', 'deleted'].includes(String(c.status || '').trim().toLowerCase()))
 
       const qddrsList = (qddrResult?.data || [])
-        .filter(q => String(q.status || '').trim().toLowerCase() !== 'closed')
+        .filter(q => !['closed', 'deleted'].includes(String(q.status || '').trim().toLowerCase()))
 
       setActiveCars(carsList)
       setActiveQddrs(qddrsList)

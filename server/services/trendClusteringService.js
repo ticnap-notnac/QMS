@@ -30,6 +30,7 @@ export async function analyzeAndClusterCarReportInBackground(carId) {
       .from('car_reports')
       .select('id, details_of_nonconformance, site_id, trend_cluster_id')
       .neq('id', newReport.id)
+      .neq('status', 'deleted')
       .gte('created_at', thirtyDaysAgo.toISOString())
 
     if (newReport.site_id) query = query.eq('site_id', newReport.site_id)
@@ -128,6 +129,7 @@ export async function analyzeAndClusterQddrReportInBackground(qddrId) {
       .from('qddr_reports')
       .select('id, reason_of_discrepancy, material_description, brand_supplier, site_id, trend_cluster_id')
       .neq('id', newReport.id)
+      .neq('status', 'deleted')
       .gte('created_at', thirtyDaysAgo.toISOString())
 
     if (newReport.site_id) query = query.eq('site_id', newReport.site_id)
@@ -243,10 +245,12 @@ export async function fetchRecurringTrends({ type = 'all', days = 14, siteId = n
     supabase
       .from('car_reports')
       .select('id, reference_no, details_of_nonconformance, created_at, status, site_id, trend_cluster_id')
+      .neq('status', 'deleted')
       .in('trend_cluster_id', clusterIds),
     supabase
       .from('qddr_reports')
       .select('id, reference_no, reason_of_discrepancy, material_description, brand_supplier, created_at, status, site_id, trend_cluster_id')
+      .neq('status', 'deleted')
       .in('trend_cluster_id', clusterIds)
   ])
 

@@ -110,3 +110,25 @@ export async function rateQddrReport(qddrId, rating, userAuthId) {
     }
   })
 }
+
+export async function restoreQddrReport(qddrId, userAuthId) {
+  if (!userAuthId) throw new Error('Missing authentication. Please log in.')
+
+  return await request(`/qddr/${qddrId}/restore`, {
+    method: 'POST',
+    headers: {
+      'x-user-auth-id': userAuthId
+    }
+  })
+}
+
+export async function permanentDeleteQddrReport(qddrId, userAuthId) {
+  if (!userAuthId) throw new Error('Missing authentication. Please log in.')
+
+  return await request(`/qddr/${qddrId}/permanent`, {
+    method: 'DELETE',
+    headers: {
+      'x-user-auth-id': userAuthId
+    }
+  })
+}

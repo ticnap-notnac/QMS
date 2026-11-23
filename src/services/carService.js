@@ -155,3 +155,25 @@ export async function rateCarReport(carId, rating, userAuthId) {
     }
   })
 }
+
+export async function restoreCarReport(carId, userAuthId) {
+  if (!userAuthId) throw new Error('Missing authentication. Please log in.')
+
+  return await request(`/car/${carId}/restore`, {
+    method: 'POST',
+    headers: {
+      'x-user-auth-id': userAuthId
+    }
+  })
+}
+
+export async function permanentDeleteCarReport(carId, userAuthId) {
+  if (!userAuthId) throw new Error('Missing authentication. Please log in.')
+
+  return await request(`/car/${carId}/permanent`, {
+    method: 'DELETE',
+    headers: {
+      'x-user-auth-id': userAuthId
+    }
+  })
+}

@@ -230,7 +230,7 @@ export default function ReportsPage({
     setIsDeletingCar(true)
     try {
       await deleteCarReport(carToDelete, authUserId)
-      logic.setToast({ message: 'CAR deleted successfully', type: 'success' })
+      logic.setToast({ message: 'CAR moved to Recycle Bin (restore anytime in DCC)', type: 'success' })
       logic.refreshCarAndQddrLists()
     } catch (err) {
       logic.setToast({ message: 'This CAR could not be deleted. It may be linked to other records.', type: 'error' })
@@ -252,7 +252,7 @@ export default function ReportsPage({
     setIsDeletingQddr(true)
     try {
       await deleteQddrReport(qddrToDelete, authUserId)
-      logic.setToast({ message: 'QDDR deleted successfully', type: 'success' })
+      logic.setToast({ message: 'QDDR moved to Recycle Bin (restore anytime in DCC)', type: 'success' })
       logic.refreshCarAndQddrLists()
     } catch (err) {
       logic.setToast({ message: 'This QDDR could not be deleted. It may be linked to other records.', type: 'error' })
@@ -269,9 +269,9 @@ export default function ReportsPage({
 
   const confirmDeleteCarDialogProps = {
     isOpen: !!carToDelete,
-    title: 'Delete CAR Report',
-    message: 'Are you sure you want to delete this CAR report? This action cannot be fully undone.',
-    confirmText: 'Delete',
+    title: 'Move CAR to Recycle Bin',
+    message: 'Are you sure you want to delete this CAR report? It will be moved to the Recycle Bin in DCC where you can restore it if needed.',
+    confirmText: 'Move to Recycle Bin',
     cancelText: 'Cancel',
     isDestructive: true,
     isLoading: isDeletingCar,
@@ -281,9 +281,9 @@ export default function ReportsPage({
 
   const confirmDeleteQddrDialogProps = {
     isOpen: !!qddrToDelete,
-    title: 'Delete QDDR Report',
-    message: 'Are you sure you want to delete this QDDR report? This action cannot be fully undone.',
-    confirmText: 'Delete',
+    title: 'Move QDDR to Recycle Bin',
+    message: 'Are you sure you want to delete this QDDR report? It will be moved to the Recycle Bin in DCC where you can restore it if needed.',
+    confirmText: 'Move to Recycle Bin',
     cancelText: 'Cancel',
     isDestructive: true,
     isLoading: isDeletingQddr,

@@ -106,7 +106,7 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
         carsRes,
         qddrRes
       ] = await Promise.all([
-        supabase.from('car_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed'),
+        supabase.from('car_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed').neq('status', 'deleted'),
         request('/compliance'),
         request('/compliance/trends'),
         request('/dashboard/resolution-trends'),
@@ -117,8 +117,8 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
           .gte('scheduled_date', new Date().toISOString().split('T')[0])
           .order('scheduled_date', { ascending: true })
           .limit(3),
-        supabase.from('car_reports').select('id, reference_no, status, created_at, recipient').order('created_at', { ascending: false }).limit(4),
-        supabase.from('qddr_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed')
+        supabase.from('car_reports').select('id, reference_no, status, created_at, recipient').neq('status', 'deleted').order('created_at', { ascending: false }).limit(4),
+        supabase.from('qddr_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed').neq('status', 'deleted')
       ])
 
       const stats = statsRes || []

@@ -499,11 +499,12 @@ export async function updateQddrReport({ id, body, actorAuthId }) {
 }
 
 /**
- * Deletes a QDDR report and its associated clause links.
+ * Soft deletes a QDDR report by moving it to the Recycle Bin (`status = 'deleted'`).
+ * Preserves clause links so the report can be restored intact from DCC > Recycle Bin.
  * @param {Object} params - The parameters for deleting a QDDR report.
  * @param {number|string} params.id - The ID of the QDDR report to delete.
  * @param {string} params.actorAuthId - The auth ID of the user performing the deletion.
- * @returns {Promise<{data: Object}>} The deleted QDDR report data.
+ * @returns {Promise<{data: Object}>} The soft-deleted QDDR report data.
  */
 export async function softDeleteQddrReport({ id, actorAuthId }) {
   const { data: existing, error: findError } = await supabase
@@ -526,6 +527,118 @@ export async function softDeleteQddrReport({ id, actorAuthId }) {
     throw err
   }
 
+  const { data, error } = await supabase
+    .from('qddr_reports')
+    .update({
+      status: 'deleted',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw error
+
+  try {
+    const { writeAudit } = await import('../lib/audit.js')
+    await writeAudit({
+      level: 'audit',
+      source: 'qddr_reports',
+      action: 'qddr_soft_delete',
+      userAuthId: actorAuthId,
+      details: { id, reference_no: data?.reference_no }
+    })
+  } catch (err) {
+    console.warn('Failed to write audit log:', err.message || err)
+  }
+
+  return { data }
+}
+
+/**
+ * Restores a soft-deleted QDDR report from the DCC Recycle Bin back to active status.
+ * @param {Object} params
+ * @param {number|string} params.id
+ * @param {string} params.actorAuthId
+ * @returns {Promise<{data: Object}>}
+ */
+export async function restoreQddrReport({ id, actorAuthId }) {
+  const { data: existing, error: findError } = await supabase
+    .from('qddr_reports')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (findError) throw findError
+  if (!existing) {
+    const err = new Error('QDDR report not found')
+    err.status = 404
+    throw err
+  }
+
+  const caller = await getCallerQddrProfile(actorAuthId)
+  if (caller && !isAdminRole(caller.role_name) && caller.site_id && existing.site_id && String(caller.site_id) !== String(existing.site_id)) {
+    const err = new Error('You can only restore QDDRs belonging to your assigned site.')
+    err.status = 403
+    throw err
+  }
+
+  const { data, error } = await supabase
+    .from('qddr_reports')
+    .update({
+      status: 'open',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw error
+
+  try {
+    const { writeAudit } = await import('../lib/audit.js')
+    await writeAudit({
+      level: 'audit',
+      source: 'qddr_reports',
+      action: 'qddr_restore',
+      userAuthId: actorAuthId,
+      details: { id, reference_no: data?.reference_no }
+    })
+  } catch (err) {
+    console.warn('Failed to write audit log:', err.message || err)
+  }
+
+  return { data }
+}
+
+/**
+ * Permanently deletes a QDDR report and its associated clause links from the Recycle Bin.
+ * @param {Object} params
+ * @param {number|string} params.id
+ * @param {string} params.actorAuthId
+ * @returns {Promise<{data: Object}>}
+ */
+export async function permanentDeleteQddrReport({ id, actorAuthId }) {
+  const { data: existing, error: findError } = await supabase
+    .from('qddr_reports')
+    .select('id, site_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (findError) throw findError
+  if (!existing) {
+    const err = new Error('QDDR report not found')
+    err.status = 404
+    throw err
+  }
+
+  const caller = await getCallerQddrProfile(actorAuthId)
+  if (caller && !isAdminRole(caller.role_name) && caller.site_id && existing.site_id && String(caller.site_id) !== String(existing.site_id)) {
+    const err = new Error('You can only permanently delete QDDRs belonging to your assigned site.')
+    err.status = 403
+    throw err
+  }
+
   await supabase.from('qddr_clause_links').delete().eq('qddr_report_id', id)
 
   const { data, error } = await supabase
@@ -542,7 +655,7 @@ export async function softDeleteQddrReport({ id, actorAuthId }) {
     await writeAudit({
       level: 'audit',
       source: 'qddr_reports',
-      action: 'qddr_soft_delete',
+      action: 'qddr_permanent_delete',
       userAuthId: actorAuthId,
       details: { id, reference_no: data?.reference_no }
     })

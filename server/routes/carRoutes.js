@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { createCar, submitCapa, verifyCar, getCarsForClause, getCarById, editCar, deleteCar, getCarRecurringTrends, rateCar } from '../controllers/carController.js'
+import { createCar, submitCapa, verifyCar, getCarsForClause, getCarById, editCar, deleteCar, restoreCar, permanentDeleteCar, getCarRecurringTrends, rateCar } from '../controllers/carController.js'
 import { suggestClauses } from '../controllers/clauseMatchController.js'
 import { requirePermission } from '../middlewares/roleMiddleware.js'
 import { validateRequest } from '../middlewares/validateRequest.js'
@@ -14,6 +14,8 @@ router.post('/car/suggest-clauses', requirePermission(['create_car_report', 'cre
 router.put('/car/:id/capa', requirePermission('submit_capa'), validateRequest(submitCapaSchema), submitCapa)
 router.put('/car/:id/verify', requirePermission('verify_car'), validateRequest(verifyCarSchema), verifyCar)
 router.post('/car/:id/rate', requirePermission(['view_car_reports', 'reports', 'dcc']), rateCar)
+router.post('/car/:id/restore', requirePermission('edit_delete_report'), restoreCar)
+router.delete('/car/:id/permanent', requirePermission('edit_delete_report'), permanentDeleteCar)
 router.get('/car/clause/:clauseId/cars', requirePermission(['view_car_reports', 'reports', 'dcc', 'iso']), getCarsForClause)
 
 router.put('/car/:id', requirePermission('edit_delete_report'), editCar)

@@ -206,3 +206,51 @@ export async function fetchAuditorsForAuditMapping() {
   if (error) throw error
   return data || []
 }
+
+export async function fetchDeletedReports() {
+  const [
+    { data: deletedCars, error: carErr },
+    { data: deletedQddrs, error: qddrErr },
+    { data: usersData }
+  ] = await Promise.all([
+    supabase
+      .from('car_reports')
+      .select('*, audit_schedules(id, title, scheduled_date)')
+      .eq('status', 'deleted')
+      .order('updated_at', { ascending: false }),
+    supabase
+      .from('qddr_reports')
+      .select('*')
+      .eq('status', 'deleted')
+      .order('updated_at', { ascending: false }),
+    supabase
+      .from('users')
+      .select('id, auth_id, user_name, first_name, last_name')
+  ])
+
+  if (carErr) throw carErr
+  if (qddrErr) throw qddrErr
+
+  const userMap = new Map(
+    (usersData || []).map((u) => [
+      Number(u.id),
+      `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.user_name || `User #${u.id}`,
+    ])
+  )
+
+  const cars = (deletedCars || []).map((c) => ({
+    ...c,
+    _type: 'CAR'
+  }))
+
+  const qddrs = (deletedQddrs || []).map((q) => ({
+    ...q,
+    _type: 'QDDR',
+    reported_by_name: q.reported_by ? (userMap.get(Number(q.reported_by)) || String(q.reported_by)) : '',
+    leader_name: q.leader ? (userMap.get(Number(q.leader)) || String(q.leader)) : '',
+    approved_by_name: q.approved_by ? (userMap.get(Number(q.approved_by)) || String(q.approved_by)) : '',
+    noted_by_name: q.noted_by ? (userMap.get(Number(q.noted_by)) || String(q.noted_by)) : '',
+  }))
+
+  return { cars, qddrs }
+}

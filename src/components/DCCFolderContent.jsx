@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { isAdminRole } from '../utils/roleUtils.js'
-import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X, Calendar, SlidersHorizontal } from 'lucide-react'
+import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X, Calendar, SlidersHorizontal, Trash2, RotateCcw, RefreshCw } from 'lucide-react'
 import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
 import html2pdf from 'html2pdf.js'
@@ -8,8 +8,13 @@ import CARPrintTemplate from './Print/CARPrintTemplate.jsx'
 import NCRPrintTemplate from './Print/NCRPrintTemplate.jsx'
 import QDDRPrintTemplate from './Print/QDDRPrintTemplate.jsx'
 import DCCReportDetailsModal from './Modals/DCCReportDetailsModal.jsx'
+import ConfirmDialog from './Modals/ConfirmDialog.jsx'
+import Toast from './UI/Toast.jsx'
 import { fetchProducts } from '../services/productService'
 import { fetchProductTypes } from '../services/productTypeService'
+import { fetchDeletedReports } from '../services/dccService'
+import { restoreCarReport, permanentDeleteCarReport } from '../services/carService'
+import { restoreQddrReport, permanentDeleteQddrReport } from '../services/qddrService'
 
 
 const SEVERITY_COLORS = {
@@ -122,7 +127,8 @@ export default function DCCFolderContent({
   loadingAuditSchedules,
   userRole,
   userPermissions,
-  onFetchRunDetails
+  onFetchRunDetails,
+  authUserId
 }) {
   const normRole = String(userRole || '').trim().toLowerCase()
   const hasExplicitRights = Array.isArray(userPermissions?.rights)
@@ -164,6 +170,89 @@ export default function DCCFolderContent({
   const [productsList, setProductsList] = useState([])
   const [selectedProductTypeId, setSelectedProductTypeId] = useState('')
   const [selectedProductName, setSelectedProductName] = useState('')
+
+  // Recycle Bin States
+  const [deletedCars, setDeletedCars] = useState([])
+  const [deletedQddrs, setDeletedQddrs] = useState([])
+  const [loadingRecycleBin, setLoadingRecycleBin] = useState(false)
+  const [recycleBinFilter, setRecycleBinFilter] = useState('all')
+  const [restoringKey, setRestoringKey] = useState(null)
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = useState(null)
+  const [isPermanentDeleting, setIsPermanentDeleting] = useState(false)
+  const [dccToast, setDccToast] = useState(null)
+
+  const loadRecycleBin = useCallback(async () => {
+    setLoadingRecycleBin(true)
+    try {
+      const { cars, qddrs } = await fetchDeletedReports()
+      setDeletedCars(cars || [])
+      setDeletedQddrs(qddrs || [])
+    } catch (err) {
+      console.error('Failed to load Recycle Bin reports:', err)
+      setDccToast({ message: 'Could not load Recycle Bin items.', type: 'error' })
+    } finally {
+      setLoadingRecycleBin(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (selectedFolder?.id === 'recycle_bin') {
+      loadRecycleBin()
+    }
+  }, [selectedFolder?.id, loadRecycleBin])
+
+  const resolveAuthId = async () => {
+    if (authUserId) return authUserId
+    const { data } = await supabase.auth.getUser()
+    return data?.user?.id || ''
+  }
+
+  const handleRestoreReport = async (doc, e) => {
+    if (e) e.stopPropagation()
+    if (!doc) return
+    const key = `${doc._type}_${doc.id}`
+    setRestoringKey(key)
+    try {
+      const uid = await resolveAuthId()
+      if (doc._type === 'CAR') {
+        await restoreCarReport(doc.id, uid)
+      } else {
+        await restoreQddrReport(doc.id, uid)
+      }
+      setDccToast({ message: `${doc.reference_no || doc._type} restored to Reports!`, type: 'success' })
+      if (selectedDocument?.id === doc.id && selectedDocument?._type === doc._type) {
+        setSelectedDocument(null)
+      }
+      await loadRecycleBin()
+    } catch (err) {
+      setDccToast({ message: err?.message || `Failed to restore ${doc._type} report.`, type: 'error' })
+    } finally {
+      setRestoringKey(null)
+    }
+  }
+
+  const confirmPermanentDelete = async () => {
+    if (!permanentDeleteTarget) return
+    setIsPermanentDeleting(true)
+    try {
+      const uid = await resolveAuthId()
+      if (permanentDeleteTarget._type === 'CAR') {
+        await permanentDeleteCarReport(permanentDeleteTarget.id, uid)
+      } else {
+        await permanentDeleteQddrReport(permanentDeleteTarget.id, uid)
+      }
+      setDccToast({ message: `${permanentDeleteTarget.reference_no || permanentDeleteTarget._type} permanently deleted.`, type: 'success' })
+      if (selectedDocument?.id === permanentDeleteTarget.id && selectedDocument?._type === permanentDeleteTarget._type) {
+        setSelectedDocument(null)
+      }
+      await loadRecycleBin()
+    } catch (err) {
+      setDccToast({ message: err?.message || 'Failed to permanently delete report.', type: 'error' })
+    } finally {
+      setIsPermanentDeleting(false)
+      setPermanentDeleteTarget(null)
+    }
+  }
 
   useEffect(() => {
     Promise.all([
@@ -512,7 +601,13 @@ export default function DCCFolderContent({
                 onClick={() => handleNavFolderClick(item)} 
                 className={`dcc-nav-item ${isActive ? 'active' : ''}`}
               >
-                {item.id === 'system_logs' ? <Terminal size={16} /> : <Folder size={16} />}
+                {item.id === 'system_logs' ? (
+                  <Terminal size={16} />
+                ) : item.id === 'recycle_bin' ? (
+                  <Trash2 size={16} />
+                ) : (
+                  <Folder size={16} />
+                )}
                 <span>{item.label}</span>
               </button>
 
@@ -706,7 +801,7 @@ export default function DCCFolderContent({
                       className="dcc-document-card"
                     >
                       <div className="document-card-icon-wrap folder">
-                        <Folder size={24} />
+                        {item.id === 'recycle_bin' ? <Trash2 size={24} /> : <Folder size={24} />}
                       </div>
                       <span className="document-card-label">{item.label}</span>
                     </div>
@@ -752,6 +847,206 @@ export default function DCCFolderContent({
               </div>
             )
           )}
+
+          {/* RECYCLE BIN */}
+          {selectedFolder?.id === 'recycle_bin' && (() => {
+            const combinedDeleted = [
+              ...(recycleBinFilter !== 'qddr' ? deletedCars : []),
+              ...(recycleBinFilter !== 'car' ? deletedQddrs : [])
+            ].filter(doc => {
+              const rawProd = doc._type === 'CAR' ? doc.product_material_name : doc.material_description
+              if (!matchesProductFilters(rawProd)) return false
+              if (!queryClean) return true
+              const text = [
+                doc.reference_no,
+                doc._type,
+                doc.requestor,
+                doc.recipient,
+                doc.requesting_department,
+                doc.responsible_department,
+                doc.type_of_nonconformance,
+                doc.product_material_name,
+                doc.details_of_nonconformance,
+                doc.location,
+                doc.material_description,
+                doc.material_code,
+                doc.reason_of_discrepancy
+              ].filter(Boolean).join(' ').toLowerCase()
+              return text.includes(queryClean)
+            })
+
+            const sortedDeleted = applySort(combinedDeleted)
+
+            return (
+              <div className="flex-column" style={{ gap: '16px', padding: '4px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setRecycleBinFilter('all')}
+                      className={`btn-quick-toggle ${recycleBinFilter === 'all' ? 'active' : ''}`}
+                    >
+                      All Deleted ({deletedCars.length + deletedQddrs.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRecycleBinFilter('car')}
+                      className={`btn-quick-toggle ${recycleBinFilter === 'car' ? 'active' : ''}`}
+                    >
+                      CAR ({deletedCars.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRecycleBinFilter('qddr')}
+                      className={`btn-quick-toggle ${recycleBinFilter === 'qddr' ? 'active' : ''}`}
+                    >
+                      QDDR ({deletedQddrs.length})
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={loadRecycleBin}
+                    disabled={loadingRecycleBin}
+                    className="btn btn-outline"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '12.5px' }}
+                  >
+                    <RefreshCw size={14} className={loadingRecycleBin ? 'animate-spin' : ''} />
+                    Refresh
+                  </button>
+                </div>
+
+                {loadingRecycleBin ? (
+                  <div className="empty-state">Loading Recycle Bin...</div>
+                ) : sortedDeleted.length === 0 ? (
+                  <div className="empty-state">
+                    <Trash2 size={36} style={{ marginBottom: '10px', color: '#94a3b8' }} />
+                    <p style={{ margin: 0, fontWeight: 600, color: '#334155' }}>Recycle Bin is empty</p>
+                    <span style={{ fontSize: '12.5px', color: '#64748b' }}>Deleted CAR and QDDR reports will appear here so you can restore them anytime.</span>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {sortedDeleted.map((doc) => {
+                      const isCar = doc._type === 'CAR'
+                      const key = `${doc._type}_${doc.id}`
+                      const isSelected = selectedDocument?.id === doc.id && selectedDocument?._type === doc._type
+                      const isRestoring = restoringKey === key
+                      const deletedDateStr = doc.updated_at || doc.created_at
+                      const formattedDeletedDate = deletedDateStr ? new Date(deletedDateStr).toLocaleString() : 'N/A'
+                      const summaryText = isCar
+                        ? (doc.details_of_nonconformance || doc.type_of_nonconformance || 'No description')
+                        : (doc.reason_of_discrepancy || doc.material_description || 'No discrepancy details')
+                      const metaLabel = isCar
+                        ? `${doc.responsible_department || doc.requesting_department || 'No Dept'} • ${doc.product_material_name || doc.type_of_nonconformance || 'General'}`
+                        : `${doc.location || 'Warehouse'} • ${doc.material_description || 'No Material'}`
+
+                      return (
+                        <div
+                          key={key}
+                          onClick={() => setSelectedDocument(doc)}
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '14px',
+                            padding: '14px 16px',
+                            borderRadius: '10px',
+                            background: isSelected ? '#f0f9ff' : '#ffffff',
+                            border: isSelected ? '1.5px solid #0891b2' : '1px solid #e2e8f0',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 280px', minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <span style={{
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                background: isCar ? 'rgba(8, 145, 178, 0.12)' : 'rgba(217, 119, 6, 0.14)',
+                                color: isCar ? '#0891b2' : '#b45309'
+                              }}>
+                                {doc._type}
+                              </span>
+                              <span style={{ fontWeight: 700, fontSize: '14.5px', color: '#0f172a' }}>
+                                {doc.reference_no || `${doc._type} #${doc.id}`}
+                              </span>
+                              <span style={{ fontSize: '12px', color: '#64748b' }}>
+                                • {metaLabel}
+                              </span>
+                            </div>
+                            <p style={{
+                              margin: 0,
+                              fontSize: '13px',
+                              color: '#334155',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              {summaryText}
+                            </p>
+                            <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>
+                              Deleted: {formattedDeletedDate}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                            <button
+                              type="button"
+                              disabled={isRestoring}
+                              onClick={(e) => handleRestoreReport(doc, e)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                border: '1px solid rgba(16, 185, 129, 0.35)',
+                                background: 'rgba(16, 185, 129, 0.1)',
+                                color: '#059669',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                cursor: isRestoring ? 'not-allowed' : 'pointer'
+                              }}
+                              title="Restore this report back to active Reports"
+                            >
+                              <RotateCcw size={14} />
+                              {isRestoring ? 'Restoring...' : 'Restore'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPermanentDeleteTarget(doc)
+                              }}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                border: '1px solid rgba(220, 38, 38, 0.3)',
+                                background: 'rgba(220, 38, 38, 0.08)',
+                                color: '#dc2626',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                              }}
+                              title="Permanently delete this report from database"
+                            >
+                              <Trash2 size={14} />
+                              Delete Permanently
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {/* ISO TERMS & COMPLIANCE POLICY */}
           {selectedFolder?.id === 'terms_policy' && (
@@ -1113,6 +1408,31 @@ export default function DCCFolderContent({
                     <Download size={15} style={{ marginRight: '6px' }} /> Download PDF
                   </button>
                 )}
+
+                {/* Restore & Permanent Delete triggers when viewing a Recycle Bin item */}
+                {String(selectedDocument.status || '').toLowerCase() === 'deleted' && (
+                  <>
+                    <button
+                      type="button"
+                      disabled={restoringKey === `${selectedDocument._type}_${selectedDocument.id}`}
+                      onClick={(e) => handleRestoreReport(selectedDocument, e)}
+                      className="btn btn-outline dcc-details-action-btn"
+                      style={{ borderColor: '#10b981', color: '#059669' }}
+                    >
+                      <RotateCcw size={15} style={{ marginRight: '6px' }} />
+                      {restoringKey === `${selectedDocument._type}_${selectedDocument.id}` ? 'Restoring...' : 'Restore Report'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPermanentDeleteTarget(selectedDocument)}
+                      className="btn btn-outline dcc-details-action-btn"
+                      style={{ borderColor: '#ef4444', color: '#dc2626' }}
+                    >
+                      <Trash2 size={15} style={{ marginRight: '6px' }} />
+                      Delete Permanently
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ) : (
@@ -1123,6 +1443,26 @@ export default function DCCFolderContent({
           )}
         </div>
       )}
+
+      {dccToast && (
+        <div className="reports-toast-container">
+          <Toast message={dccToast.message} type={dccToast.type} onClose={() => setDccToast(null)} />
+        </div>
+      )}
+
+      <ConfirmDialog
+        isOpen={!!permanentDeleteTarget}
+        title={`Permanently Delete ${permanentDeleteTarget?._type || 'Report'}`}
+        message={`Are you sure you want to permanently delete ${permanentDeleteTarget?.reference_no || 'this report'}? This will remove it from the Recycle Bin forever and cannot be undone.`}
+        confirmText="Delete Permanently"
+        cancelText="Cancel"
+        isDestructive={true}
+        isLoading={isPermanentDeleting}
+        onConfirm={confirmPermanentDelete}
+        onCancel={() => {
+          if (!isPermanentDeleting) setPermanentDeleteTarget(null)
+        }}
+      />
 
       <DCCReportDetailsModal
         isOpen={!!viewDetailsDoc}
