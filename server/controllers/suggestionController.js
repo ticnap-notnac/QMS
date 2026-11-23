@@ -3,7 +3,15 @@ import boss from '../utils/queue.js'
 
 export async function generateSuggestionFromText(req, res, next) {
   try {
-    const { description, rootCause = '', rcaMethod = '', issueType, deptName, reportType = 'CAR' } = req.body
+    const {
+      description,
+      rootCause = '',
+      rcaMethod = '',
+      issueType,
+      deptName,
+      reportType = 'CAR',
+      previousSuggestions = []
+    } = req.body
 
     // Enqueue to pg-boss background worker
     const jobId = await boss.send('cbr-suggestion-text', {
@@ -12,7 +20,8 @@ export async function generateSuggestionFromText(req, res, next) {
       rcaMethod,
       issueType,
       deptName,
-      reportType
+      reportType,
+      previousSuggestions: Array.isArray(previousSuggestions) ? previousSuggestions : []
     })
 
     return res.status(202).json({ success: true, message: 'Text suggestion generation started in the background', jobId, queue: 'cbr-suggestion-text' })

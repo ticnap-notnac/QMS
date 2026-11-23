@@ -11,11 +11,20 @@ export async function generateAiSuggestionFromText({
   rcaMethod = '',
   issueType,
   deptName,
-  reportType = 'CAR'
+  reportType = 'CAR',
+  previousSuggestions = []
 }) {
   return await request('/suggestions/generate-text', {
     method: 'POST',
-    body: JSON.stringify({ description, rootCause, rcaMethod, issueType, deptName, reportType }),
+    body: JSON.stringify({
+      description,
+      rootCause,
+      rcaMethod,
+      issueType,
+      deptName,
+      reportType,
+      previousSuggestions
+    }),
   })
 }
 

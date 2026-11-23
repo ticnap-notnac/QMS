@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { fetchLinkedClausesForCar } from '@/services/carService'
 import { generateAiSuggestionFromText } from '@/services/suggestionService'
 
@@ -165,6 +165,7 @@ export function useCARDetails() {
 
   const [linkedClauses, setLinkedClauses] = useState([])
   const [loadingClauses, setLoadingClauses] = useState(false)
+  const previousSuggestionsRef = useRef([])
 
   const handleRcaMethodChange = useCallback((nextMethod) => {
     setRcaMethod(nextMethod)
@@ -213,6 +214,7 @@ export function useCARDetails() {
       setVerificationRating(car.verification_rating || '')
       setSuggestionMeta(null)
       setError('')
+      previousSuggestionsRef.current = []
 
       setLoadingClauses(true)
       fetchLinkedClausesForCar(car.id)
@@ -241,6 +243,7 @@ export function useCARDetails() {
     setFiveWhys(INITIAL_FIVE_WHYS)
     setFishbone(INITIAL_FISHBONE)
     setRootCauseSummary('')
+    previousSuggestionsRef.current = []
   }, [])
 
   const handleSuggestActions = async () => {
@@ -250,6 +253,18 @@ export function useCARDetails() {
     if (!String(currentFormattedRca || '').trim()) {
       setError('Please fill in the Root Cause Analysis (5 Whys / Fishbone) first so CBR can match the root cause and suggest appropriate actions.')
       return
+    }
+
+    // Include any currently populated corrective/preventive action so re-clicking never repeats it
+    const currentCa = String(correctiveAction || '').trim()
+    const currentPa = String(preventiveAction || '').trim()
+    if (currentCa || currentPa) {
+      const alreadyTracked = previousSuggestionsRef.current.some(
+        p => p.corrective === currentCa && p.preventive === currentPa
+      )
+      if (!alreadyTracked) {
+        previousSuggestionsRef.current.push({ corrective: currentCa, preventive: currentPa })
+      }
     }
 
     setSuggesting(true)
@@ -262,7 +277,8 @@ export function useCARDetails() {
         rcaMethod,
         issueType: selectedCar.type_of_nonconformance || 'general',
         deptName: selectedCar.responsible_department,
-        reportType: 'CAR'
+        reportType: 'CAR',
+        previousSuggestions: previousSuggestionsRef.current
       })
 
       let res = result
@@ -290,6 +306,14 @@ export function useCARDetails() {
             }
           }, 3000)
         })
+      }
+
+      if (res?.suggestion || res?.preventive_suggestion) {
+        const nextCa = String(res.suggestion || '').trim()
+        const nextPa = String(res.preventive_suggestion || '').trim()
+        if (nextCa || nextPa) {
+          previousSuggestionsRef.current.push({ corrective: nextCa, preventive: nextPa })
+        }
       }
 
       if (res?.suggestion) {

@@ -9,7 +9,15 @@ export const registerWorkers = async () => {
   // Worker for CAR & QDDR text CBR + RAG generation
   await boss.work('cbr-suggestion-text', async (jobs) => {
     const job = Array.isArray(jobs) ? jobs[0] : jobs
-    const { description, rootCause = '', rcaMethod = '', issueType, deptName, reportType = 'CAR' } = job.data
+    const {
+      description,
+      rootCause = '',
+      rcaMethod = '',
+      issueType,
+      deptName,
+      reportType = 'CAR',
+      previousSuggestions = []
+    } = job.data
     logger.info(`Processing text CBR job for reportType: ${reportType}, issueType: ${issueType}`)
     try {
       const result = await generateAiSuggestionFromText({
@@ -18,7 +26,8 @@ export const registerWorkers = async () => {
         rcaMethod,
         issueType,
         deptName,
-        reportType
+        reportType,
+        previousSuggestions
       })
       logger.info(`Successfully completed text CBR job`)
       return result
