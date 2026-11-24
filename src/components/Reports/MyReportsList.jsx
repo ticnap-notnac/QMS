@@ -189,29 +189,31 @@ export default function MyReportsList({
 
           {/* Pagination Controls for Combined Feed */}
           {combinedReports.length > itemsPerPage && (
-            <div className="reports-pagination-container" style={{ marginTop: '16px' }}>
-              <div className="reports-table-pagination-footer">
-                <div className="reports-table-pagination-info">
-                  Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, combinedReports.length)} of {combinedReports.length} reports
-                  <div className="reports-table-pagination-per-page" style={{ marginLeft: '12px' }}>
-                    <label>Per page:</label>
-                    <select
-                      value={itemsPerPage}
-                      onChange={(e) => {
-                        setItemsPerPage(Number(e.target.value))
-                        setCurrentPage(1)
-                      }}
-                      className="pagination-per-page-select"
-                    >
-                      <option value={5}>5</option>
-                      <option value={10}>10</option>
-                      <option value={25}>25</option>
-                      <option value={50}>50</option>
-                    </select>
-                  </div>
+            <div className="reports-feed-pagination">
+              <div className="reports-feed-pagination-info">
+                <span>
+                  Showing <strong>{(currentPage - 1) * itemsPerPage + 1}</strong> to <strong>{Math.min(currentPage * itemsPerPage, combinedReports.length)}</strong> of <strong>{combinedReports.length}</strong> reports
+                </span>
+                <div className="reports-feed-per-page">
+                  <label htmlFor="my-reports-per-page">Per page:</label>
+                  <select
+                    id="my-reports-per-page"
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value))
+                      setCurrentPage(1)
+                    }}
+                    className="pagination-select"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
                 </div>
+              </div>
 
-                <div className="reports-table-pagination-controls">
+              <div className="reports-table-pagination-controls">
                   <button
                     type="button"
                     className="pagination-btn"
@@ -261,7 +263,6 @@ export default function MyReportsList({
                   </button>
                 </div>
               </div>
-            </div>
           )}
         </>
       )}

@@ -49,7 +49,7 @@ export default function QDDRReportsList({
     return (
       <div className="reports-content-container">
         <div className="reports-list-stack">
-          {qddrReports.map(qddr => (
+          {paginatedQddrs.map(qddr => (
             <QDDRReportCard
               key={qddr.id}
               qddr={qddr}
@@ -62,6 +62,83 @@ export default function QDDRReportsList({
             />
           ))}
         </div>
+
+        {totalItems > itemsPerPage && (
+          <div className="reports-feed-pagination">
+            <div className="reports-feed-pagination-info">
+              <span>
+                Showing <strong>{totalItems === 0 ? 0 : startIndex + 1}</strong> to <strong>{endIndex}</strong> of <strong>{totalItems}</strong> reports
+              </span>
+              <div className="reports-feed-per-page">
+                <label htmlFor="qddr-feed-per-page">Per page:</label>
+                <select
+                  id="qddr-feed-per-page"
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value))
+                    setCurrentPage(1)
+                  }}
+                  className="pagination-select"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="reports-table-pagination-controls">
+              <button
+                type="button"
+                className="pagination-btn"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                title="Previous Page"
+              >
+                <ChevronLeft size={16} />
+                <span>Prev</span>
+              </button>
+
+              <div className="pagination-pages-group">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => {
+                    if (totalPages <= 7) return true
+                    if (page === 1 || page === totalPages) return true
+                    return Math.abs(page - currentPage) <= 1
+                  })
+                  .map((page, idx, arr) => {
+                    const prevPage = arr[idx - 1]
+                    const showEllipsis = prevPage && page - prevPage > 1
+
+                    return (
+                      <React.Fragment key={page}>
+                        {showEllipsis && <span className="pagination-ellipsis">...</span>}
+                        <button
+                          type="button"
+                          className={`pagination-page-btn ${page === currentPage ? 'active' : ''}`}
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </button>
+                      </React.Fragment>
+                    )
+                  })}
+              </div>
+
+              <button
+                type="button"
+                className="pagination-btn"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || totalItems === 0}
+                title="Next Page"
+              >
+                <span>Next</span>
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -167,8 +244,8 @@ export default function QDDRReportsList({
             <span>
               Showing <strong>{totalItems === 0 ? 0 : startIndex + 1}</strong> to <strong>{endIndex}</strong> of <strong>{totalItems}</strong> reports
             </span>
-            <div className="reports-table-rows-select">
-              <span>Rows:</span>
+            <div className="reports-feed-per-page">
+              <label>Per page:</label>
               <select
                 value={itemsPerPage}
                 onChange={(e) => {

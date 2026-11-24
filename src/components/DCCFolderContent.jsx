@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { isAdminRole } from '../utils/roleUtils.js'
-import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X, Calendar, SlidersHorizontal, Trash2, RotateCcw, RefreshCw } from 'lucide-react'
+import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X, Calendar, SlidersHorizontal, Trash2, RotateCcw, RefreshCw, Clock, AlertTriangle, FileCheck, Layers } from 'lucide-react'
 import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
 import html2pdf from 'html2pdf.js'
@@ -8,6 +8,7 @@ import CARPrintTemplate from './Print/CARPrintTemplate.jsx'
 import NCRPrintTemplate from './Print/NCRPrintTemplate.jsx'
 import QDDRPrintTemplate from './Print/QDDRPrintTemplate.jsx'
 import DCCReportDetailsModal from './Modals/DCCReportDetailsModal.jsx'
+import ImageLightboxModal from './Modals/ImageLightboxModal.jsx'
 import ConfirmDialog from './Modals/ConfirmDialog.jsx'
 import Toast from './UI/Toast.jsx'
 import { fetchProducts } from '../services/productService'
@@ -172,6 +173,7 @@ export default function DCCFolderContent({
   const [selectedProductName, setSelectedProductName] = useState('')
 
   // Recycle Bin States
+  const [activeLightbox, setActiveLightbox] = useState(null)
   const [deletedCars, setDeletedCars] = useState([])
   const [deletedQddrs, setDeletedQddrs] = useState([])
   const [loadingRecycleBin, setLoadingRecycleBin] = useState(false)
@@ -878,166 +880,530 @@ export default function DCCFolderContent({
             const sortedDeleted = applySort(combinedDeleted)
 
             return (
-              <div className="flex-column" style={{ gap: '16px', padding: '4px' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Informative Header Banner */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '16px 20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                  flexWrap: 'wrap'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '10px',
+                      background: 'rgba(239, 68, 68, 0.1)',
+                      color: '#dc2626',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <Trash2 size={22} />
+                    </div>
+                    <div>
+                      <h3 style={{ margin: '0 0 2px 0', fontSize: '16px', fontWeight: 700, color: '#0f172a' }}>
+                        Recycle Bin
+                      </h3>
+                      <p style={{ margin: 0, fontSize: '12.5px', color: '#64748b' }}>
+                        Soft-deleted reports are archived here. You can safely restore any report back to active status or delete it permanently.
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#0891b2'
+                    }}>
+                      {deletedCars.length} CAR
+                    </span>
+                    <span style={{
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#d97706'
+                    }}>
+                      {deletedQddrs.length} QDDR
+                    </span>
+                    <span style={{
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
+                      color: '#334155'
+                    }}>
+                      {deletedCars.length + deletedQddrs.length} Total Archived
+                    </span>
+                  </div>
+                </div>
+
+                {/* Filter and Action Bar */}
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  borderBottom: '1px solid #e2e8f0',
+                  paddingBottom: '12px'
+                }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button
                       type="button"
                       onClick={() => setRecycleBinFilter('all')}
                       className={`btn-quick-toggle ${recycleBinFilter === 'all' ? 'active' : ''}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
-                      All Deleted ({deletedCars.length + deletedQddrs.length})
+                      <Layers size={14} /> All Deleted ({deletedCars.length + deletedQddrs.length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setRecycleBinFilter('car')}
                       className={`btn-quick-toggle ${recycleBinFilter === 'car' ? 'active' : ''}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
-                      CAR ({deletedCars.length})
+                      <FileCheck size={14} /> CAR ({deletedCars.length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setRecycleBinFilter('qddr')}
                       className={`btn-quick-toggle ${recycleBinFilter === 'qddr' ? 'active' : ''}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
-                      QDDR ({deletedQddrs.length})
+                      <AlertTriangle size={14} /> QDDR ({deletedQddrs.length})
                     </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={loadRecycleBin}
-                    disabled={loadingRecycleBin}
-                    className="btn btn-outline"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '12.5px' }}
-                  >
-                    <RefreshCw size={14} className={loadingRecycleBin ? 'animate-spin' : ''} />
-                    Refresh
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '13px', color: '#64748b' }}>
+                      Showing {sortedDeleted.length} {sortedDeleted.length === 1 ? 'deleted report' : 'deleted reports'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={loadRecycleBin}
+                      disabled={loadingRecycleBin}
+                      className="btn btn-outline"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px 14px',
+                        fontSize: '12.5px',
+                        background: '#ffffff',
+                        borderRadius: '8px'
+                      }}
+                    >
+                      <RefreshCw size={14} className={loadingRecycleBin ? 'animate-spin' : ''} />
+                      Refresh
+                    </button>
+                  </div>
                 </div>
 
                 {loadingRecycleBin ? (
-                  <div className="empty-state">Loading Recycle Bin...</div>
+                  <div className="empty-state" style={{ padding: '40px 20px', textAlign: 'center' }}>Loading Recycle Bin...</div>
                 ) : sortedDeleted.length === 0 ? (
-                  <div className="empty-state">
-                    <Trash2 size={36} style={{ marginBottom: '10px', color: '#94a3b8' }} />
-                    <p style={{ margin: 0, fontWeight: 600, color: '#334155' }}>Recycle Bin is empty</p>
-                    <span style={{ fontSize: '12.5px', color: '#64748b' }}>Deleted CAR and QDDR reports will appear here so you can restore them anytime.</span>
+                  <div className="empty-state" style={{ padding: '48px 24px', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px auto', color: '#94a3b8' }}>
+                      <Trash2 size={28} />
+                    </div>
+                    <p style={{ margin: '0 0 6px 0', fontWeight: 700, fontSize: '16px', color: '#1e293b' }}>Recycle Bin is empty</p>
+                    <span style={{ fontSize: '13px', color: '#64748b', maxWidth: '440px', display: 'inline-block', lineHeight: 1.5 }}>
+                      Deleted CAR and QDDR reports will be preserved here so you can review, restore, or permanently remove them anytime.
+                    </span>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                     {sortedDeleted.map((doc) => {
                       const isCar = doc._type === 'CAR'
                       const key = `${doc._type}_${doc.id}`
                       const isSelected = selectedDocument?.id === doc.id && selectedDocument?._type === doc._type
                       const isRestoring = restoringKey === key
                       const deletedDateStr = doc.updated_at || doc.created_at
-                      const formattedDeletedDate = deletedDateStr ? new Date(deletedDateStr).toLocaleString() : 'N/A'
+                      const formattedDeletedDate = deletedDateStr ? new Date(deletedDateStr).toLocaleString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : 'N/A'
                       const summaryText = isCar
-                        ? (doc.details_of_nonconformance || doc.type_of_nonconformance || 'No description')
-                        : (doc.reason_of_discrepancy || doc.material_description || 'No discrepancy details')
-                      const metaLabel = isCar
-                        ? `${doc.responsible_department || doc.requesting_department || 'No Dept'} • ${doc.product_material_name || doc.type_of_nonconformance || 'General'}`
-                        : `${doc.location || 'Warehouse'} • ${doc.material_description || 'No Material'}`
+                        ? (doc.details_of_nonconformance || doc.type_of_nonconformance || '')
+                        : (doc.reason_of_discrepancy || doc.material_description || '')
 
                       return (
                         <div
                           key={key}
                           onClick={() => setSelectedDocument(doc)}
+                          className={`dcc-recycle-card ${isSelected ? 'selected' : ''}`}
                           style={{
                             display: 'flex',
-                            flexWrap: 'wrap',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
+                            flexDirection: 'column',
                             gap: '14px',
-                            padding: '14px 16px',
-                            borderRadius: '10px',
+                            padding: '18px 24px',
+                            borderRadius: '12px',
                             background: isSelected ? '#f0f9ff' : '#ffffff',
                             border: isSelected ? '1.5px solid #0891b2' : '1px solid #e2e8f0',
+                            borderLeft: `5px solid ${isCar ? '#0891b2' : '#f59e0b'}`,
+                            boxShadow: isSelected ? '0 0 0 3px rgba(8, 145, 178, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)',
                             cursor: 'pointer',
-                            transition: 'all 0.15s ease'
+                            transition: 'all 0.18s ease'
                           }}
                         >
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 280px', minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                              <span style={{
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                background: isCar ? 'rgba(8, 145, 178, 0.12)' : 'rgba(217, 119, 6, 0.14)',
-                                color: isCar ? '#0891b2' : '#b45309'
+                          {/* Card Header */}
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div style={{
+                                width: '42px',
+                                height: '42px',
+                                borderRadius: '10px',
+                                background: isCar ? 'rgba(8, 145, 178, 0.12)' : 'rgba(245, 158, 11, 0.14)',
+                                color: isCar ? '#0891b2' : '#d97706',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0
                               }}>
-                                {doc._type}
-                              </span>
-                              <span style={{ fontWeight: 700, fontSize: '14.5px', color: '#0f172a' }}>
-                                {doc.reference_no || `${doc._type} #${doc.id}`}
-                              </span>
-                              <span style={{ fontSize: '12px', color: '#64748b' }}>
-                                • {metaLabel}
-                              </span>
+                                {isCar ? <FileCheck size={22} /> : <AlertTriangle size={22} />}
+                              </div>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <span style={{
+                                    fontSize: '11px',
+                                    fontWeight: 800,
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                    background: isCar ? 'rgba(8, 145, 178, 0.12)' : 'rgba(245, 158, 11, 0.14)',
+                                    color: isCar ? '#0891b2' : '#b45309',
+                                    letterSpacing: '0.5px'
+                                  }}>
+                                    {doc._type}
+                                  </span>
+                                  <span style={{ fontWeight: 700, fontSize: '15.5px', color: '#0f172a' }}>
+                                    {doc.reference_no || `${doc._type} #${doc.id}`}
+                                  </span>
+                                  {isCar && doc.requestor && (
+                                    <span style={{ fontSize: '13.5px', color: '#475569', fontWeight: 500 }}>
+                                      — {doc.requestor}
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '3px' }}>
+                                  {isCar
+                                    ? `${doc.requesting_department || doc.responsible_department || 'General'} • Submitted: ${doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '—'}`
+                                    : `${doc.location || 'Warehouse Location'} • Submitted: ${doc.date || (doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '—')}`}
+                                </div>
+                              </div>
                             </div>
-                            <p style={{
-                              margin: 0,
-                              fontSize: '13px',
-                              color: '#334155',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
+
+                            {/* Status Badge */}
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              letterSpacing: '0.5px',
+                              background: '#fef2f2',
+                              color: '#991b1b',
+                              border: '1px solid #fecaca'
                             }}>
-                              {summaryText}
-                            </p>
-                            <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>
-                              Deleted: {formattedDeletedDate}
+                              <Trash2 size={12} /> DELETED
                             </span>
                           </div>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                            <button
-                              type="button"
-                              disabled={isRestoring}
-                              onClick={(e) => handleRestoreReport(doc, e)}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '6px 12px',
-                                borderRadius: '6px',
-                                border: '1px solid rgba(16, 185, 129, 0.35)',
-                                background: 'rgba(16, 185, 129, 0.1)',
-                                color: '#059669',
-                                fontSize: '12.5px',
-                                fontWeight: 600,
-                                cursor: isRestoring ? 'not-allowed' : 'pointer'
-                              }}
-                              title="Restore this report back to active Reports"
-                            >
-                              <RotateCcw size={14} />
-                              {isRestoring ? 'Restoring...' : 'Restore'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setPermanentDeleteTarget(doc)
-                              }}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '6px 12px',
-                                borderRadius: '6px',
-                                border: '1px solid rgba(220, 38, 38, 0.3)',
-                                background: 'rgba(220, 38, 38, 0.08)',
-                                color: '#dc2626',
-                                fontSize: '12.5px',
-                                fontWeight: 600,
-                                cursor: 'pointer'
-                              }}
-                              title="Permanently delete this report from database"
-                            >
-                              <Trash2 size={14} />
-                              Delete Permanently
-                            </button>
+                          {/* Metadata Grid */}
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+                            gap: '12px 18px',
+                            background: '#f8fafc',
+                            padding: '12px 16px',
+                            borderRadius: '10px',
+                            border: '1px solid #f1f5f9'
+                          }}>
+                            {isCar ? (
+                              <>
+                                <div>
+                                  <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                                    Product / Material
+                                  </div>
+                                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+                                    {doc.product_material_name || '—'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                                    Issue Type
+                                  </div>
+                                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+                                    {doc.type_of_nonconformance || '—'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                                    Responsible Dept
+                                  </div>
+                                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+                                    {doc.responsible_department || '—'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                                    Control No.
+                                  </div>
+                                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+                                    {doc.control_no || '—'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                                    Affected Qty
+                                  </div>
+                                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+                                    {doc.affected_qty || '—'}
+                                  </div>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div>
+                                  <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                                    Product / Material
+                                  </div>
+                                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+                                    {doc.material_description || '—'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                                    Location
+                                  </div>
+                                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+                                    {doc.location || '—'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                                    Trucker / Broker
+                                  </div>
+                                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+                                    {doc.trucker_broker || '—'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                                    Plate No.
+                                  </div>
+                                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+                                    {doc.plate_number || '—'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                                    Material Code
+                                  </div>
+                                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+                                    {doc.material_code || '—'}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                                    Affected Qty
+                                  </div>
+                                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#1e293b' }}>
+                                    {doc.quantity || '—'}
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Description Text Box */}
+                          {summaryText && (
+                            <div style={{
+                              background: '#ffffff',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              padding: '12px 16px'
+                            }}>
+                              <span style={{
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                color: '#64748b',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                                display: 'block',
+                                marginBottom: '4px'
+                              }}>
+                                {isCar ? 'Nonconformance Details' : 'Reason of Discrepancy'}
+                              </span>
+                              <p style={{
+                                margin: 0,
+                                fontSize: '13.5px',
+                                color: '#334155',
+                                lineHeight: '1.55',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 3,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden'
+                              }}>
+                                {summaryText}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Evidence Photos */}
+                          {Array.isArray(doc.evidence_urls) && doc.evidence_urls.length > 0 && (
+                            <div style={{ marginTop: '2px' }}>
+                              <span style={{
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                color: '#64748b',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                                display: 'block',
+                                marginBottom: '6px'
+                              }}>
+                                Evidence Photos ({doc.evidence_urls.length})
+                              </span>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                {doc.evidence_urls.map((url, idx) => {
+                                  const lower = String(url || '').toLowerCase()
+                                  const isImg = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(lower) || lower.startsWith('data:image/')
+                                  return isImg ? (
+                                    <div
+                                      key={idx}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setActiveLightbox({ images: doc.evidence_urls, index: idx, title: doc.control_no || doc.id })
+                                      }}
+                                      title="Click to expand image"
+                                      style={{
+                                        width: '110px',
+                                        height: '80px',
+                                        borderRadius: '8px',
+                                        overflow: 'hidden',
+                                        border: '1px solid #cbd5e1',
+                                        background: '#f8fafc',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+                                      }}
+                                    >
+                                      <img src={url} alt={`Evidence ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                  ) : (
+                                    <a
+                                      key={idx}
+                                      href={url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '6px 12px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #cbd5e1',
+                                        background: '#f8fafc',
+                                        color: '#0891b2',
+                                        fontSize: '12px',
+                                        fontWeight: 600,
+                                        textDecoration: 'none'
+                                      }}
+                                    >
+                                      📄 Attachment {idx + 1}
+                                    </a>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Footer Action Bar */}
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '12px',
+                            paddingTop: '8px',
+                            borderTop: '1px solid #f1f5f9'
+                          }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748b' }}>
+                              <Clock size={13} color="#94a3b8" />
+                              <span>Deleted on {formattedDeletedDate}</span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <button
+                                type="button"
+                                disabled={isRestoring}
+                                onClick={(e) => handleRestoreReport(doc, e)}
+                                className="btn-recycle-restore"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '7px 16px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #a7f3d0',
+                                  background: '#ecfdf5',
+                                  color: '#047857',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: isRestoring ? 'not-allowed' : 'pointer',
+                                  transition: 'all 0.15s ease'
+                                }}
+                                title="Restore this report back to active Reports"
+                              >
+                                <RotateCcw size={14} />
+                                {isRestoring ? 'Restoring...' : 'Restore'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setPermanentDeleteTarget(doc)
+                                }}
+                                className="btn-recycle-delete"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '7px 16px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #fecdd3',
+                                  background: '#fff1f2',
+                                  color: '#be123c',
+                                  fontSize: '12.5px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease'
+                                }}
+                                title="Permanently delete this report from database"
+                              >
+                                <Trash2 size={14} />
+                                Delete Permanently
+                              </button>
+                            </div>
                           </div>
                         </div>
                       )
@@ -1469,6 +1835,15 @@ export default function DCCFolderContent({
         onClose={() => setViewDetailsDoc(null)}
         document={viewDetailsDoc}
         onDownloadPDF={handleDownloadPDF}
+      />
+
+      {/* Lightbox Modal */}
+      <ImageLightboxModal
+        isOpen={Boolean(activeLightbox)}
+        onClose={() => setActiveLightbox(null)}
+        images={activeLightbox?.images || []}
+        initialIndex={activeLightbox?.index ?? 0}
+        title={activeLightbox?.title || 'Evidence'}
       />
 
       {/* Hidden Print Templates for PDF Generation */}

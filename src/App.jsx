@@ -377,20 +377,24 @@ function AppInner() {
   }
 
   return (
-    <div className="page">
+    <div className={`page ${!user ? 'page--auth' : ''}`}>
       <div className="bg-orb bg-orb--one" aria-hidden="true"></div>
       <div className="bg-orb bg-orb--two" aria-hidden="true"></div>
 
       {!user ? (
-        <header className="brand">
-          <div className="logo">
-            <img src="/resq_logo_transparent.png" alt="RESQ Logo" className="logo-img" />
-          </div>
-          <p className="brand-subtitle">NON-CONFORMANCE QUALITY MANAGEMENT REPORT</p>
-        </header>
-      ) : null}
-
-      {user ? (
+        <div className="auth-shell">
+          <header className="brand">
+            <div className="logo">
+              <img src="/resq_logo_transparent.png" alt="RESQ Logo" className="logo-img" />
+            </div>
+            <p className="brand-subtitle">NON-CONFORMANCE MANAGEMENT SYSTEM</p>
+          </header>
+          <Login
+            onSubmit={handleSubmit}
+            onLearnMore={() => setShowIntro(true)}
+          />
+        </div>
+      ) : (
         <MainLayout
           isUserMenuOpen={isUserMenuOpen}
           setIsUserMenuOpen={setIsUserMenuOpen}
@@ -411,11 +415,6 @@ function AppInner() {
           userSiteName={userSiteName}
           sharedProps={sharedProps}
           refreshUserData={refreshUserData}
-        />
-      ) : (
-        <Login
-          onSubmit={handleSubmit}
-          onLearnMore={() => setShowIntro(true)}
         />
       )}
 

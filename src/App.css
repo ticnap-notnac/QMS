@@ -150,9 +150,28 @@
   }
 
   /* Mobile Login Shell (Strictly phone viewport <= 768px) */
+  .page--auth {
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)) 16px !important;
+    box-sizing: border-box !important;
+  }
+  .auth-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: 420px !important;
+    margin: auto 0 !important;
+  }
   .brand {
-    margin: 24px auto 14px auto !important;
-    padding: 0 16px !important;
+    margin: 0 auto 16px auto !important;
+    padding: 0 !important;
   }
   .logo-img {
     height: 68px !important;
@@ -167,15 +186,37 @@
     padding: 0 16px 28px 16px !important;
     box-sizing: border-box !important;
   }
+  .auth-shell .layout {
+    padding: 0 !important;
+    width: 100% !important;
+  }
   .layout--center {
     min-height: auto !important;
+  }
+  .auth-shell .layout--center {
+    min-height: auto !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
   }
   .auth {
     gap: 16px !important;
   }
+  .auth-shell .auth {
+    width: 100% !important;
+  }
+  .auth-shell .auth--center {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
   .card {
     padding: 22px 18px 24px 18px !important;
     border-radius: 18px !important;
+  }
+  .auth-shell .card {
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
   .card h1 {
     font-size: 22px !important;
@@ -221,8 +262,11 @@
 }
 
 @media (max-width: 480px) {
+  .page--auth {
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px)) 12px !important;
+  }
   .brand {
-    margin: 18px auto 12px auto !important;
+    margin: 0 auto 12px auto !important;
   }
   .logo-img {
     height: 60px !important;
@@ -241,6 +285,10 @@
 }
 
 /* 2. Login Page Branding Alignment */
+.auth-shell {
+  display: contents;
+}
+
 .brand {
   display: flex;
   flex-direction: column;

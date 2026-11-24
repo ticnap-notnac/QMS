@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, ShieldCheck, CheckCircle2, FileText } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { ShieldCheck, CheckCircle2, FileText, X } from 'lucide-react';
 
 export default function IntroModal({ isOpen, onClose }) {
   const [agreed, setAgreed] = useState(false);
@@ -11,42 +12,53 @@ export default function IntroModal({ isOpen, onClose }) {
     onClose();
   };
 
-  return (
-    <div style={overlayStyle} className="modal-overlay intro-modal-overlay">
-      <div style={modalStyle} className="modal-card intro-modal-card">
-        <button onClick={onClose} style={closeButtonStyle} className="modal-close-button intro-modal-close" aria-label="Close modal">
+  const modalContent = (
+    <div
+      className="modal-overlay intro-modal-overlay"
+      onClick={onClose}
+    >
+      <div
+        className="modal-card intro-modal-card"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="intro-modal-close-btn"
+          aria-label="Close modal"
+        >
           <X size={18} />
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-          <ShieldCheck size={26} color="#0891b2" />
-          <h2 style={{ ...titleStyle, margin: 0 }} className="intro-modal-title">System Terms & ISO Compliance Agreement</h2>
+        <div className="intro-modal-header">
+          <ShieldCheck size={26} color="#0891b2" style={{ flexShrink: 0 }} />
+          <h2 className="intro-modal-title">System Terms & ISO Compliance Agreement</h2>
         </div>
 
-        <p style={{ color: '#64748b', fontSize: '13.5px', marginTop: '4px', marginBottom: '20px' }}>
+        <p className="intro-modal-subtext">
           Please review and accept the quality compliance terms governing ResQ before using the system.
         </p>
 
-        <div style={contentContainerStyle} className="intro-modal-content">
-          <div style={accentBoxStyle('#0891b2', '#f8fafc')}>
-            <div style={iconHeaderStyle}>
+        <div className="intro-modal-content">
+          <div className="intro-modal-box intro-modal-box-blue">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', marginBottom: '6px' }}>
               <FileText size={16} color="#0891b2" />
             </div>
             <div>
-              <strong style={{ color: '#1A435A', fontSize: '14px', display: 'block', marginBottom: '4px' }}>1. Quality & ISO Standard Adherence</strong>
-              <p style={paragraphStyle}>
+              <strong className="intro-modal-box-title">1. Quality & ISO Standard Adherence</strong>
+              <p className="intro-modal-box-desc">
                 All Quality Defect Reports (NCR, CAR, QDDR) submitted into ResQ must accurately reflect verified operational data and comply with active ISO 22000 food safety and quality management standards.
               </p>
             </div>
           </div>
 
-          <div style={accentBoxStyle('#1A435A', '#f8fafc')}>
-            <div style={iconHeaderStyle}>
+          <div className="intro-modal-box intro-modal-box-slate">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', marginBottom: '6px' }}>
               <ShieldCheck size={16} color="#1A435A" />
             </div>
             <div>
-              <strong style={{ color: '#1A435A', fontSize: '14px', display: 'block', marginBottom: '4px' }}>2. Data Integrity & Verification</strong>
-              <p style={paragraphStyle}>
+              <strong className="intro-modal-box-title">2. Data Integrity & Verification</strong>
+              <p className="intro-modal-box-desc">
                 Users agree that all reported non-conformances, investigation details, and root-cause evidence provided are genuine, non-falsified, and subject to audit verification.
               </p>
             </div>
@@ -54,20 +66,20 @@ export default function IntroModal({ isOpen, onClose }) {
         </div>
 
         {/* Agreement Action Footer */}
-        <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+        <div className="intro-modal-footer">
+          <label className="intro-modal-checkbox-label">
             <input
               type="checkbox"
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
-              style={{ accentColor: '#0891b2', width: '16px', height: '16px', cursor: 'pointer' }}
+              style={{ accentColor: '#0891b2', width: '16px', height: '16px', cursor: 'pointer', flexShrink: 0 }}
             />
-            <span style={{ fontSize: '13px', color: '#334155', fontWeight: 500 }}>
+            <span style={{ fontSize: '13px', color: '#334155', fontWeight: 500, lineHeight: 1.4 }}>
               I have read and agree to comply with the <strong style={{ color: '#1A435A' }}>ISO Compliance Terms & Conditions</strong>.
             </span>
           </label>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          <div className="intro-modal-actions">
             <button
               type="button"
               onClick={handleAgreeAndContinue}
@@ -90,98 +102,8 @@ export default function IntroModal({ isOpen, onClose }) {
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined'
+    ? createPortal(modalContent, document.body)
+    : modalContent;
 }
-
-/* --- Inline Symmetrical Presentation Styles --- */
-const overlayStyle = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  width: '100vw',
-  height: '100vh',
-  background: 'rgba(15, 23, 42, 0.3)',
-  backdropFilter: 'blur(8px)',
-  WebkitBackdropFilter: 'blur(8px)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 1000,
-  padding: '20px',
-  boxSizing: 'border-box'
-};
-
-const modalStyle = {
-  position: 'relative',
-  width: '100%',
-  maxWidth: '620px',
-  background: '#ffffff',
-  border: '1px solid #cbd5e1',
-  boxShadow: '0 24px 60px rgba(0, 0, 0, 0.1)',
-  borderRadius: '16px',
-  padding: '40px 32px 32px 32px',
-  boxSizing: 'border-box'
-};
-
-const closeButtonStyle = {
-  position: 'absolute',
-  top: '20px',
-  right: '20px',
-  background: 'rgba(0, 0, 0, 0.05)',
-  border: '1px solid #cbd5e1',
-  color: '#64748b',
-  borderRadius: '50%',
-  width: '32px',
-  height: '32px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  cursor: 'pointer',
-  transition: 'all 0.2s ease'
-};
-
-const titleStyle = {
-  margin: '0 0 24px 0',
-  fontSize: '18px',
-  fontWeight: '700',
-  letterSpacing: '0.5px',
-  textAlign: 'left',
-  color: '#1A435A',
-  borderBottom: '1px solid #e2e8f0',
-  paddingBottom: '16px'
-};
-
-const contentContainerStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '20px',
-  maxHeight: '65vh',
-  overflowY: 'auto',
-  paddingRight: '6px'
-};
-
-const accentBoxStyle = (borderColor, bgColor) => ({
-  borderLeft: `3px solid ${borderColor}`,
-  background: bgColor,
-  borderTop: '1px solid #e2e8f0',
-  borderRight: '1px solid #e2e8f0',
-  borderBottom: '1px solid #e2e8f0',
-  padding: '14px 16px',
-  borderRadius: '0 10px 10px 0',
-  textAlign: 'left'
-});
-
-const iconHeaderStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
-  fontSize: '13px',
-  marginBottom: '6px'
-};
-
-const paragraphStyle = {
-  margin: 0,
-  fontSize: '13.5px',
-  lineHeight: '1.6',
-  color: '#334155',
-  textAlign: 'justify'
-};

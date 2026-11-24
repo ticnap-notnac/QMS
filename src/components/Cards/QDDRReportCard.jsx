@@ -1,7 +1,10 @@
-import { User, SquarePen, Trash2, CheckCircle2 } from 'lucide-react'
+import React, { useState } from 'react'
+import { User, SquarePen, Trash2, CheckCircle2, Camera } from 'lucide-react'
 import StarRatingAction from '../UI/StarRatingAction.jsx'
+import ImageLightboxModal from '../Modals/ImageLightboxModal.jsx'
 
 function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr, onRateQddr, isNewlySubmitted }) {
+  const [lightboxIndex, setLightboxIndex] = useState(null)
   const statusClean = String(qddr.status || '').trim().toLowerCase()
   const isClosed = statusClean === 'closed'
   const isUnderVerification = statusClean === 'under_verification'
@@ -117,6 +120,118 @@ function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr,
         </span>
       </div>
 
+      {/* Evidence / Attachments */}
+      {Array.isArray(qddr.evidence_urls) && qddr.evidence_urls.length > 0 && (
+        <div style={{ marginTop: '14px', marginBottom: '14px' }}>
+          <div className="reports-section-label" style={{ marginBottom: '8px' }}>
+            <div className="reports-label-small" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Camera size={14} color="#0891b2" /> Evidence / Attachments ({qddr.evidence_urls.length})
+            </div>
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: qddr.evidence_urls.length === 1 
+              ? 'minmax(0, 600px)' 
+              : 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: '12px'
+          }}>
+            {qddr.evidence_urls.map((url, idx) => {
+              const lower = String(url || '').toLowerCase()
+              const isImg = /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(lower) || lower.startsWith('data:image/')
+              const label = url.startsWith('data:')
+                ? `Evidence Photo ${idx + 1}`
+                : decodeURIComponent(url.split('/').pop()?.split('?')[0] || `Attachment ${idx + 1}`)
+
+              return isImg ? (
+                <div
+                  key={idx}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setLightboxIndex(idx)
+                  }}
+                  title="Click to expand image"
+                  style={{
+                    position: 'relative',
+                    height: qddr.evidence_urls.length === 1 ? '360px' : '260px',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    border: '1px solid #cbd5e1',
+                    background: '#f8fafc',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+                    transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.015)'
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)'
+                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  <img
+                    src={url}
+                    alt={label}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      display: 'block'
+                    }}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    padding: '8px 12px',
+                    background: 'linear-gradient(transparent, rgba(15, 23, 42, 0.75))',
+                    color: '#ffffff',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    pointerEvents: 'none'
+                  }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {label}
+                    </span>
+                    <span style={{ fontSize: '11px', opacity: 0.9, flexShrink: 0, marginLeft: '8px' }}>
+                      🔍 Click to expand
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <a
+                  key={idx}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    background: '#f8fafc',
+                    color: '#0891b2',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    textDecoration: 'none'
+                  }}
+                >
+                  📄 {label}
+                </a>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="reports-section-label">
         <div className="reports-label-small">Corrective Action</div>
       </div>
@@ -165,6 +280,15 @@ function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr,
           </button>
         </div>
       ) : null}
+
+      {/* Lightbox Modal */}
+      <ImageLightboxModal
+        isOpen={lightboxIndex !== null}
+        onClose={() => setLightboxIndex(null)}
+        images={qddr.evidence_urls}
+        initialIndex={lightboxIndex ?? 0}
+        title={qddr.control_no || `QDDR-${qddr.id}`}
+      />
     </div>
   )
 }

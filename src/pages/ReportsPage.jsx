@@ -308,13 +308,13 @@ export default function ReportsPage({
         {availableTabs.length > 1 && (
           <aside className={`reports-sidebar desktop-only-tabs ${isSidebarCollapsed ? 'collapsed' : ''}`}>
             <div className={`reports-sidebar-header ${isSidebarCollapsed ? 'collapsed' : ''}`}>
-              {!isSidebarCollapsed && <h3 className="reports-sidebar-title">Modules</h3>}
+              {!isSidebarCollapsed && <h3 className="reports-sidebar-title">Non-Conformance</h3>}
               <button
                 type="button"
                 className="reports-sidebar-toggle-btn"
                 onClick={handleToggleSidebar}
-                title={isSidebarCollapsed ? "Expand Modules" : "Collapse Modules"}
-                aria-label={isSidebarCollapsed ? "Expand Modules" : "Collapse Modules"}
+                title={isSidebarCollapsed ? "Expand Non-Conformance" : "Collapse Non-Conformance"}
+                aria-label={isSidebarCollapsed ? "Expand Non-Conformance" : "Collapse Non-Conformance"}
               >
                 {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
               </button>

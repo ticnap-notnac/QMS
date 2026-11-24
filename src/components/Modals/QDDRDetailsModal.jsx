@@ -6,6 +6,7 @@ import { rateQddrReport } from '../../services/qddrService'
 import { useAuth } from '@/hooks/useAuth'
 import { isAdminRole } from '@/utils/roleUtils.js'
 import StarRatingAction from '../UI/StarRatingAction.jsx'
+import ImageLightboxModal from './ImageLightboxModal.jsx'
 
 export default function QDDRDetailsModal({
   isOpen,
@@ -22,6 +23,7 @@ export default function QDDRDetailsModal({
 }) {
   const { user: authUser } = useAuth()
   const resolvedAuthId = authUserId || authUser?.id || ''
+  const [lightboxIndex, setLightboxIndex] = useState(null)
 
   const [correctiveAction, setCorrectiveAction] = useState('')
   const [preventiveAction, setPreventiveAction] = useState('')
@@ -102,26 +104,26 @@ export default function QDDRDetailsModal({
       if (result?.jobId) {
         const { fetchJobStatus } = await import('../../services/suggestionService')
         res = await new Promise((resolve, reject) => {
-            const maxRetries = 20;
-            let retries = 0;
-            const interval = setInterval(async () => {
-                try {
-                    const status = await fetchJobStatus(result.jobId, result.queue)
-                    if (status.state === 'completed') {
-                        clearInterval(interval)
-                        resolve(status.output)
-                    } else if (status.state === 'failed' || status.state === 'cancelled') {
-                        clearInterval(interval)
-                        reject(new Error('Background job failed'))
-                    }
-                    if (++retries >= maxRetries) {
-                        clearInterval(interval)
-                        reject(new Error('Background job timeout'))
-                    }
-                } catch (e) {
-                    // ignore network errors
-                }
-            }, 3000)
+          const maxRetries = 20;
+          let retries = 0;
+          const interval = setInterval(async () => {
+            try {
+              const status = await fetchJobStatus(result.jobId, result.queue)
+              if (status.state === 'completed') {
+                clearInterval(interval)
+                resolve(status.output)
+              } else if (status.state === 'failed' || status.state === 'cancelled') {
+                clearInterval(interval)
+                reject(new Error('Background job failed'))
+              }
+              if (++retries >= maxRetries) {
+                clearInterval(interval)
+                reject(new Error('Background job timeout'))
+              }
+            } catch (e) {
+              // ignore network errors
+            }
+          }, 3000)
         })
       }
       if (res?.suggestion) {
@@ -214,11 +216,11 @@ export default function QDDRDetailsModal({
         }}
       >
         {/* ✕ ABSOLUTE CLOSE ICON WITH RESOLVED POSITION TARGETS */}
-        <button 
-          type="button" 
-          onClick={onClose} 
-          className="modal-close-button" 
-          style={{ 
+        <button
+          type="button"
+          onClick={onClose}
+          className="modal-close-button"
+          style={{
             position: 'absolute',
             top: '16px',
             right: '16px',
@@ -233,16 +235,16 @@ export default function QDDRDetailsModal({
         </button>
 
         {/* HEADER BLOCK — SHIFTED AWAY FROM ACTION ZONE COLLISION */}
-        <div 
-          className="modal-header-row" 
-          style={{ 
-            flexShrink: 0, 
-            marginBottom: '16px', 
-            display: 'flex', 
-            justifyContent: 'space-between', 
+        <div
+          className="modal-header-row"
+          style={{
+            flexShrink: 0,
+            marginBottom: '16px',
+            display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
             paddingLeft: '28px',
-            paddingRight: '48px', // 🎯 THE FIX: Keeps status pill elements left of the '✕' exit trigger
+            paddingRight: '72px', // Spacing away from the absolute close button
             paddingTop: '24px'
           }}
         >
@@ -258,9 +260,9 @@ export default function QDDRDetailsModal({
 
         {/* Scrollable Form Content */}
         <div className="modal-form-content" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
+
           {/* Metadata Grid */}
-          <div 
+          <div
             className="modal-metadata-grid"
             style={{
               background: '#ffffff',
@@ -276,19 +278,19 @@ export default function QDDRDetailsModal({
             <div><span style={{ color: 'var(--muted)' }}>Location:</span> <strong style={{ color: '#1A435A' }}>{qddr.location || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Date:</span> <strong style={{ color: '#1A435A' }}>{qddr.date ? new Date(qddr.date).toLocaleDateString() : '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Time:</span> <strong style={{ color: '#1A435A' }}>{qddr.time || '—'}</strong></div>
-            
+
             <div><span style={{ color: 'var(--muted)' }}>Trucker / Broker:</span> <strong style={{ color: '#1A435A' }}>{qddr.trucker_broker || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Plate Number:</span> <strong style={{ color: '#1A435A' }}>{qddr.plate_number || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Container Number:</span> <strong style={{ color: '#1A435A' }}>{qddr.container_number || '—'}</strong></div>
-            
+
             <div><span style={{ color: 'var(--muted)' }}>PO Reference:</span> <strong style={{ color: '#1A435A' }}>{qddr.po_reference || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>DR / WB Number:</span> <strong style={{ color: '#1A435A' }}>{qddr.drwb_number || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Brand / Supplier:</span> <strong style={{ color: '#1A435A' }}>{qddr.brand_supplier || '—'}</strong></div>
-            
+
             <div><span style={{ color: 'var(--muted)' }}>Material:</span> <strong style={{ color: '#1A435A' }}>{qddr.material_description || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Material Code:</span> <strong style={{ color: '#1A435A' }}>{qddr.material_code || '—'}</strong></div>
             <div><span style={{ color: 'var(--muted)' }}>Batch / ISU No:</span> <strong style={{ color: '#1A435A' }}>{qddr.batch_code_su_number || '—'}</strong></div>
-            
+
             <div><span style={{ color: 'var(--muted)' }}>Quantity:</span> <strong style={{ color: '#1A435A' }}>{qddr.qty || '—'}</strong></div>
           </div>
 
@@ -358,12 +360,12 @@ export default function QDDRDetailsModal({
                 Evidence / Attachments ({qddr.evidence_urls.length})
               </label>
               <div style={{
-                background: '#ffffff',
+                background: '#f8fafc',
                 border: '1px solid #e2e8f0',
                 padding: '12px',
-                borderRadius: '6px',
-                display: 'flex',
-                flexWrap: 'wrap',
+                borderRadius: '8px',
+                display: 'grid',
+                gridTemplateColumns: qddr.evidence_urls.length === 1 ? 'minmax(0, 560px)' : 'repeat(auto-fit, minmax(240px, 1fr))',
                 gap: '12px'
               }}>
                 {qddr.evidence_urls.map((url, idx) => {
@@ -373,24 +375,67 @@ export default function QDDRDetailsModal({
                     ? `Evidence Photo ${idx + 1}`
                     : decodeURIComponent(url.split('/').pop()?.split('?')[0] || `Attachment ${idx + 1}`)
                   return isImg ? (
-                    <a
+                    <div
                       key={idx}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Click to view full image"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setLightboxIndex(idx)
+                      }}
+                      title="Click to expand image"
                       style={{
+                        position: 'relative',
                         display: 'block',
-                        width: '120px',
-                        height: '90px',
-                        borderRadius: '6px',
+                        height: qddr.evidence_urls.length === 1 ? '340px' : '240px',
+                        borderRadius: '8px',
                         overflow: 'hidden',
                         border: '1px solid #cbd5e1',
-                        background: '#f8fafc'
+                        background: '#ffffff',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+                        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.015)'
+                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)'
+                        e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)'
                       }}
                     >
-                      <img src={url} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </a>
+                      <img
+                        src={url}
+                        alt={label}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          display: 'block'
+                        }}
+                      />
+                      <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        padding: '6px 10px',
+                        background: 'linear-gradient(transparent, rgba(15, 23, 42, 0.75))',
+                        color: '#ffffff',
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        pointerEvents: 'none'
+                      }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {label}
+                        </span>
+                        <span style={{ opacity: 0.9, flexShrink: 0, marginLeft: '6px' }}>
+                          🔍 Click to expand
+                        </span>
+                      </div>
+                    </div>
                   ) : (
                     <a
                       key={idx}
@@ -404,7 +449,7 @@ export default function QDDRDetailsModal({
                         padding: '8px 12px',
                         borderRadius: '6px',
                         border: '1px solid #cbd5e1',
-                        background: '#f8fafc',
+                        background: '#ffffff',
                         color: '#0891b2',
                         fontSize: '12.5px',
                         fontWeight: 500,
@@ -477,7 +522,7 @@ export default function QDDRDetailsModal({
                   )}
                 </div>
               )}
-              
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <label className="label-field">Corrective Action</label>
@@ -567,7 +612,7 @@ export default function QDDRDetailsModal({
           ) : (
             <div style={{ borderTop: '1px solid #cbd5e1', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <h4 style={{ color: '#1A435A', fontSize: '14px', margin: '0' }}>Resolution Details</h4>
-              
+
               <div className="modal-metadata-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
                   <span style={{ color: 'var(--muted)', fontSize: '12px' }}>Corrective Action:</span>
@@ -605,7 +650,7 @@ export default function QDDRDetailsModal({
 
           {/* Multi-User 5-Star Rating Section when Closed */}
           {String(qddr.status || '').toLowerCase() === 'closed' && (
-            <div 
+            <div
               className="modal-cbr-rating-banner"
               style={{
                 display: 'flex',
@@ -657,6 +702,15 @@ export default function QDDRDetailsModal({
           </button>
         </div>
       </div>
+
+      {/* Lightbox Modal */}
+      <ImageLightboxModal
+        isOpen={lightboxIndex !== null}
+        onClose={() => setLightboxIndex(null)}
+        images={qddr.evidence_urls}
+        initialIndex={lightboxIndex ?? 0}
+        title={qddr.control_no || `QDDR-${qddr.id}`}
+      />
     </div>
   )
 }

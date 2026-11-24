@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { rateCarReport } from '@/services/carService'
 import { rateQddrReport } from '@/services/qddrService'
 import StarRatingAction from '../UI/StarRatingAction.jsx'
+import ImageLightboxModal from './ImageLightboxModal.jsx'
 
 const QDDR_CHECKBOX_FIELDS = [
   { key: 'holes_punctures', label: 'Holes & Punctures' },
@@ -25,6 +26,7 @@ const QDDR_CHECKBOX_FIELDS = [
 
 export default function DCCReportDetailsModal({ isOpen, onClose, document, onDownloadPDF }) {
   const { user: authUser } = useAuth()
+  const [lightboxIndex, setLightboxIndex] = useState(null)
   const [localMyRating, setLocalMyRating] = useState(null)
   const [localAvgRating, setLocalAvgRating] = useState(null)
   const [localRatingsCount, setLocalRatingsCount] = useState(0)
@@ -404,12 +406,12 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
                 Evidence / Attachments ({document.evidence_urls.length})
               </h4>
               <div style={{
-                background: '#ffffff',
+                background: '#f8fafc',
                 border: '1px solid #e2e8f0',
                 borderRadius: '8px',
                 padding: '12px 16px',
-                display: 'flex',
-                flexWrap: 'wrap',
+                display: 'grid',
+                gridTemplateColumns: document.evidence_urls.length === 1 ? 'minmax(0, 560px)' : 'repeat(auto-fit, minmax(240px, 1fr))',
                 gap: '12px'
               }}>
                 {document.evidence_urls.map((url, idx) => {
@@ -419,24 +421,67 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
                     ? `Evidence Photo ${idx + 1}`
                     : decodeURIComponent(url.split('/').pop()?.split('?')[0] || `Attachment ${idx + 1}`)
                   return isImg ? (
-                    <a
+                    <div
                       key={idx}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Click to view full image"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setLightboxIndex(idx)
+                      }}
+                      title="Click to expand image"
                       style={{
+                        position: 'relative',
                         display: 'block',
-                        width: '120px',
-                        height: '90px',
-                        borderRadius: '6px',
+                        height: document.evidence_urls.length === 1 ? '340px' : '240px',
+                        borderRadius: '8px',
                         overflow: 'hidden',
                         border: '1px solid #cbd5e1',
-                        background: '#f8fafc'
+                        background: '#ffffff',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+                        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.015)'
+                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)'
+                        e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)'
                       }}
                     >
-                      <img src={url} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </a>
+                      <img
+                        src={url}
+                        alt={label}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          display: 'block'
+                        }}
+                      />
+                      <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        padding: '6px 10px',
+                        background: 'linear-gradient(transparent, rgba(15, 23, 42, 0.75))',
+                        color: '#ffffff',
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        pointerEvents: 'none'
+                      }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {label}
+                        </span>
+                        <span style={{ opacity: 0.9, flexShrink: 0, marginLeft: '6px' }}>
+                          🔍 Click to expand
+                        </span>
+                      </div>
+                    </div>
                   ) : (
                     <a
                       key={idx}
@@ -450,7 +495,7 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
                         padding: '8px 12px',
                         borderRadius: '6px',
                         border: '1px solid #cbd5e1',
-                        background: '#f8fafc',
+                        background: '#ffffff',
                         color: '#0891b2',
                         fontSize: '0.8rem',
                         fontWeight: 500,
@@ -688,6 +733,15 @@ export default function DCCReportDetailsModal({ isOpen, onClose, document, onDow
           </button>
         </div>
       </div>
+
+      {/* Lightbox Modal */}
+      <ImageLightboxModal
+        isOpen={lightboxIndex !== null}
+        onClose={() => setLightboxIndex(null)}
+        images={document.evidence_urls}
+        initialIndex={lightboxIndex ?? 0}
+        title={document.control_no || document.id}
+      />
     </div>
   )
 }

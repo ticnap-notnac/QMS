@@ -285,7 +285,7 @@ input::-ms-clear {
    ========================================================================== */
 .toast-alert-card {
   position: fixed;
-  top: 84px;
+  top: 28px;
   right: 28px;
   background: #ffffff;
   backdrop-filter: blur(12px);
@@ -298,6 +298,14 @@ input::-ms-clear {
   gap: 18px;
   z-index: 10001;
   animation: slideNotificationIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Offset cleanly below top navigation bars when present */
+body:has(.app-navbar) .toast-alert-card {
+  top: 78px;
+}
+body:has(.app-navbar-mobile-top) .toast-alert-card {
+  top: 68px;
 }
 
 .toast-modal-backdrop {
@@ -410,11 +418,15 @@ body.high-contrast-mode .reports-submit-dropdown-item:hover {
 
 /* Mobile Proportional Viewport Scale-down & Native Scroll */
 @media (max-width: 768px) {
-  html, body, #root, .page {
+  html, body, #root, .page, .page-root {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     height: auto !important;
     max-height: none !important;
+    min-height: 100% !important;
+  }
+  .page-root {
+    overflow-y: visible !important;
   }
   body {
     zoom: 0.9 !important;

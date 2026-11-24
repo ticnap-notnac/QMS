@@ -868,7 +868,7 @@ main.page-root .dcc-glass-main-card .dcc-center-pane,
 .dcc-search-area .search-container-centered {
   margin-bottom: 0 !important;
   width: 100% !important;
-  max-width: 480px !important;
+  max-width: 680px !important;
   position: relative !important;
 }
 
@@ -1620,5 +1620,29 @@ main.dcc-page-root {
     display: none !important;
   }
 }
+
+/* ===================== DCC RECYCLE BIN ===================== */
+.dcc-recycle-card {
+  transition: all 0.2s ease;
+}
+
+.dcc-recycle-card:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
+  transform: translateY(-1px);
+}
+
+.btn-recycle-restore:hover {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  border-color: #10b981 !important;
+}
+
+.btn-recycle-delete:hover {
+  background: #e11d48 !important;
+  color: #ffffff !important;
+  border-color: #e11d48 !important;
+}
+
 
 

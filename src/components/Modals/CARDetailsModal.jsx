@@ -153,7 +153,7 @@ export default function CARDetailsModal({
             justifyContent: 'space-between', 
             alignItems: 'center',
             paddingLeft: '28px',
-            paddingRight: '48px', // 🎯 THE FIX: Keeps elements left of the '✕' close handle area
+            paddingRight: '72px', // Spacing away from the absolute close button
             paddingTop: '24px'
           }}
         >

@@ -1046,7 +1046,7 @@
   display: block !important;
 }
 
-/* ─── Reports Table Pagination ──────────────────────────────────────────────── */
+/* ─── Reports Table & Feed Pagination ────────────────────────────────────────── */
 .reports-table-pagination {
   display: flex;
   align-items: center;
@@ -1060,6 +1060,56 @@
   font-size: 13px;
   color: #64748b;
   box-sizing: border-box;
+}
+
+.reports-feed-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 22px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 13px;
+  color: #64748b;
+  box-sizing: border-box;
+  margin-top: 16px;
+}
+
+.reports-feed-pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.reports-feed-pagination-info span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.reports-feed-pagination-info strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.reports-feed-per-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748b;
+  padding-left: 14px;
+  border-left: 1px solid #e2e8f0;
+}
+
+.reports-feed-per-page label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
 }
 
 .reports-table-pagination-info {
@@ -1180,7 +1230,7 @@
 .reports-toast-container {
   position: fixed;
   right: 24px;
-  top: 88px;
+  top: 78px;
   z-index: 50;
 }
 .reports-dept-select {
@@ -1475,18 +1525,25 @@
     line-height: 1.4 !important;
   }
 
-  .reports-table-pagination {
+  .reports-table-pagination,
+  .reports-feed-pagination {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 12px !important;
-    padding: 12px 10px !important;
+    padding: 12px 14px !important;
   }
 
-  .reports-table-pagination-info {
+  .reports-table-pagination-info,
+  .reports-feed-pagination-info {
     justify-content: space-between !important;
     width: 100% !important;
     gap: 8px !important;
     font-size: 12px !important;
+  }
+
+  .reports-feed-per-page {
+    font-size: 12px !important;
+    padding-left: 8px !important;
   }
 
   .reports-table-rows-select {
