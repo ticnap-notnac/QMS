@@ -493,6 +493,11 @@ export async function updateQddrReport({ id, body, actorAuthId }) {
     autoPromoteQddrToCaseRepository(data).catch((promoteErr) => {
       logger.warn('[qddrService] Failed to auto-promote QDDR to case repository:', promoteErr.message)
     })
+    import('./integrationService.js')
+      .then((m) => m.dispatchClosedQddrToInventoryIntegration(data))
+      .catch((intErr) => {
+        logger.warn('[qddrService] Failed to dispatch closed QDDR to inventory integration:', intErr.message)
+      })
   }
 
   return { data }

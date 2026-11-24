@@ -1093,6 +1093,57 @@ Return ONLY valid JSON in this exact format:
     }
   }
 
+  // Enrich with External Inventory Management synced record (if available)
+  if (extracted.batch_code_su_number || extracted.material_code) {
+    try {
+      const { lookupExternalInventoryForQddr } = await import('./integrationService.js')
+      const invMatch = await lookupExternalInventoryForQddr({
+        batchCodeSuNumber: extracted.batch_code_su_number,
+        materialCode: extracted.material_code
+      })
+      if (invMatch) {
+        extracted.inventory_matched = true
+        extracted.inventory_source = invMatch.inventory_source || 'api'
+        if (invMatch.available_stock_qty !== undefined) {
+          extracted.available_stock_qty = invMatch.available_stock_qty
+        }
+        if (!extracted.material_code && invMatch.material_code) {
+          extracted.material_code = invMatch.material_code
+        }
+        if (!extracted.batch_code_su_number && invMatch.batch_code_su_number) {
+          extracted.batch_code_su_number = invMatch.batch_code_su_number
+        }
+        if (!extracted.expiry_date && invMatch.expiry_date) {
+          extracted.expiry_date = invMatch.expiry_date
+        }
+        if (!extracted.material_description && invMatch.material_description) {
+          const expSuffix = extracted.expiry_date && !invMatch.material_description.toLowerCase().includes(extracted.expiry_date.toLowerCase())
+            ? ` (Exp: ${extracted.expiry_date})`
+            : ''
+          extracted.material_description = `${invMatch.material_description}${expSuffix}`
+        }
+
+        // Only attach non-empty delivery/shipment fields present in the inventory record
+        const extraFields = [
+          'po_reference',
+          'drwb_number',
+          'brand_supplier',
+          'trucker_broker',
+          'plate_number',
+          'container_number',
+          'location'
+        ]
+        for (const f of extraFields) {
+          if (invMatch[f]) {
+            extracted[f] = invMatch[f]
+          }
+        }
+      }
+    } catch (invErr) {
+      console.warn('[suggestionService] External inventory lookup on SU scan failed:', invErr.message)
+    }
+  }
+
   if ((extracted.material_code || extracted.batch_code_su_number) && !extracted.material_description) {
     try {
       let query = supabase
