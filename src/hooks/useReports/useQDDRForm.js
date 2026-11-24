@@ -6,6 +6,7 @@ import {
   scanBarcodeOrLabel,
   describeEvidenceWithAi
 } from '@/services/suggestionService'
+import { lookupInventoryBySuOrMaterial } from '@/services/integrationService'
 
 /**
  * Downscales & converts a File or Blob or DataURL image into a compact Base64 string + mimeType
@@ -528,6 +529,8 @@ export function useQDDRForm() {
 
       if (result) {
         const filledFields = []
+        const enrichedFromInventory = []
+
         if (result.material_code) {
           filledFields.push('Item Code')
         }
@@ -539,6 +542,22 @@ export function useQDDRForm() {
         if (result.batch_code_su_number) {
           filledFields.push('Batch Code')
         }
+
+        const inventoryFieldLabels = {
+          po_reference: 'PO Ref',
+          drwb_number: 'DR/WB No.',
+          brand_supplier: 'Supplier',
+          trucker_broker: 'Trucker',
+          plate_number: 'Plate No.',
+          container_number: 'Container No.',
+          location: 'Location'
+        }
+
+        Object.entries(inventoryFieldLabels).forEach(([key, label]) => {
+          if (result[key] && String(result[key]).trim() !== '') {
+            enrichedFromInventory.push(label)
+          }
+        })
 
         setForm(prev => {
           const next = { ...prev }
@@ -559,11 +578,29 @@ export function useQDDRForm() {
           if (result.batch_code_su_number) {
             next.batch_code_su_number = result.batch_code_su_number
           }
+
+          // Non-destructively fill any non-empty delivery/shipment fields from external inventory
+          Object.keys(inventoryFieldLabels).forEach((key) => {
+            if (result[key] && String(result[key]).trim() !== '') {
+              next[key] = String(result[key]).trim()
+            }
+          })
+
           return next
         })
 
-        if (filledFields.length > 0) {
-          setScanMessage(`Auto-filled: ${filledFields.join(', ')}`)
+        if (filledFields.length > 0 || enrichedFromInventory.length > 0) {
+          if (enrichedFromInventory.length > 0) {
+            setScanMessage(
+              `Auto-filled Label (${filledFields.join(', ')}) + Inventory (${enrichedFromInventory.join(', ')})`
+            )
+          } else if (result.inventory_matched) {
+            setScanMessage(
+              `Auto-filled: ${filledFields.join(', ')} (Matched in Inventory — no extra delivery details recorded)`
+            )
+          } else {
+            setScanMessage(`Auto-filled from SU Label: ${filledFields.join(', ')}`)
+          }
         } else {
           setError('Could not detect label fields from the barcode/image. Please try a clearer image.')
         }
@@ -572,6 +609,72 @@ export function useQDDRForm() {
     } catch (err) {
       console.error('Label scan error:', err)
       setError('Failed to scan barcode/label image. Please try again.')
+      return null
+    } finally {
+      setScanningLabel(false)
+    }
+  }
+
+  const handleLookupInventoryBySu = async () => {
+    const batchSu = String(form.batch_code_su_number || '').trim()
+    const matCode = String(form.material_code || '').trim()
+    if (!batchSu && !matCode) {
+      setError('Enter a Batch Code / SU No. or Material Code first to fetch from external inventory.')
+      return null
+    }
+
+    setScanningLabel(true)
+    setError(null)
+    setScanMessage(null)
+
+    try {
+      const match = await lookupInventoryBySuOrMaterial({
+        batchCodeSuNumber: batchSu,
+        materialCode: matCode
+      })
+
+      if (!match) {
+        setScanMessage('No matching external inventory record found for that SU/Material Code. You can enter fields manually.')
+        return null
+      }
+
+      const filled = []
+      const labelMap = {
+        material_code: 'Item Code',
+        material_description: 'Item Description',
+        batch_code_su_number: 'Batch/SU No.',
+        po_reference: 'PO Ref',
+        drwb_number: 'DR/WB No.',
+        brand_supplier: 'Supplier',
+        trucker_broker: 'Trucker',
+        plate_number: 'Plate No.',
+        container_number: 'Container No.',
+        location: 'Location'
+      }
+
+      setForm(prev => {
+        const next = { ...prev }
+        Object.entries(labelMap).forEach(([key, label]) => {
+          if (match[key] && String(match[key]).trim() !== '') {
+            let val = String(match[key]).trim()
+            if (key === 'material_description' && match.expiry_date && !val.toLowerCase().includes(String(match.expiry_date).toLowerCase())) {
+              val = `${val} (Exp: ${match.expiry_date})`
+            }
+            next[key] = val
+            filled.push(label)
+          }
+        })
+        return next
+      })
+
+      if (filled.length > 0) {
+        setScanMessage(`Auto-filled from Inventory: ${filled.join(', ')}`)
+      } else {
+        setScanMessage('Matched SU in Inventory, but no additional fields were populated.')
+      }
+      return match
+    } catch (err) {
+      setError('Could not query external inventory records at this time.')
       return null
     } finally {
       setScanningLabel(false)
@@ -597,6 +700,7 @@ export function useQDDRForm() {
     scanMessage,
     setScanMessage,
     handleScanLabel,
+    handleLookupInventoryBySu,
     evidenceItems,
     evidenceError,
     handleEvidenceFiles,

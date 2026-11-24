@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react'
-import { Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { Edit2, Trash2, ChevronLeft, ChevronRight, Download, FileJson, CheckSquare } from 'lucide-react'
 import QDDRReportCard from '../Cards/QDDRReportCard.jsx'
 import StarRatingAction from '../UI/StarRatingAction.jsx'
+import { exportClosedQddrsToFile } from '@/services/integrationService'
 
 export default function QDDRReportsList({
   qddrReports,
@@ -16,6 +17,141 @@ export default function QDDRReportsList({
 }) {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [selectedIds, setSelectedIds] = useState([])
+
+  const closedQddrs = useMemo(
+    () => (qddrReports || []).filter(q => String(q?.status || '').trim().toLowerCase() === 'closed'),
+    [qddrReports]
+  )
+
+  useEffect(() => {
+    const validClosedSet = new Set(closedQddrs.map(q => q.id))
+    setSelectedIds(prev => prev.filter(id => validClosedSet.has(id)))
+  }, [closedQddrs])
+
+  const toggleSelectQddr = (id) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    )
+  }
+
+  const allClosedSelected = closedQddrs.length > 0 && closedQddrs.every(q => selectedIds.includes(q.id))
+
+  const toggleSelectAllClosed = () => {
+    if (allClosedSelected) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(closedQddrs.map(q => q.id))
+    }
+  }
+
+  const selectedClosedReports = useMemo(
+    () => closedQddrs.filter(q => selectedIds.includes(q.id)),
+    [closedQddrs, selectedIds]
+  )
+
+  const handleExportSelected = async (format = 'csv') => {
+    const targetList = selectedClosedReports.length > 0 ? selectedClosedReports : closedQddrs
+    if (targetList.length === 0) return
+    await exportClosedQddrsToFile(targetList, format)
+  }
+
+  const renderMultiSelectExportBar = () => {
+    if (closedQddrs.length === 0) return null
+    const count = selectedClosedReports.length
+    const totalDeductQty = (count > 0 ? selectedClosedReports : closedQddrs)
+      .reduce((sum, r) => sum + (Number(r.qty) || 0), 0)
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '10px',
+          padding: '10px 14px',
+          marginBottom: '12px',
+          background: count > 0 ? 'rgba(8, 145, 178, 0.08)' : '#f8fafc',
+          border: count > 0 ? '1px solid rgba(8, 145, 178, 0.35)' : '1px solid #e2e8f0',
+          borderRadius: '10px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <label
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '12.5px',
+              fontWeight: 600,
+              color: '#1A435A',
+              cursor: 'pointer'
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={allClosedSelected}
+              onChange={toggleSelectAllClosed}
+              style={{ width: '15px', height: '15px', accentColor: '#0891b2', cursor: 'pointer' }}
+            />
+            Select All Closed QDDRs ({closedQddrs.length})
+          </label>
+          <span style={{ fontSize: '12px', color: '#475569' }}>
+            {count > 0
+              ? `• ${count} selected (${totalDeductQty} unit(s) for stock reduction)`
+              : `• Check closed reports to export for Inventory Stock Reduction`}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => handleExportSelected('csv')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#ffffff',
+              background: '#0891b2',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+            title="Export selected (or all) closed QDDRs as CSV for Inventory Management stock deduction"
+          >
+            <Download size={14} />
+            {count > 0 ? `Export Selected CSV (${count})` : `Export All Closed CSV (${closedQddrs.length})`}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleExportSelected('json')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#1A435A',
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+            title="Export selected (or all) closed QDDRs as JSON for ERP/WMS stock deduction"
+          >
+            <FileJson size={14} />
+            {count > 0 ? `Export JSON (${count})` : 'Export JSON'}
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   useEffect(() => {
     const maxPage = Math.max(1, Math.ceil((qddrReports?.length || 0) / itemsPerPage))
@@ -48,6 +184,7 @@ export default function QDDRReportsList({
   if (viewMode === 'feed') {
     return (
       <div className="reports-content-container">
+        {renderMultiSelectExportBar()}
         <div className="reports-list-stack">
           {paginatedQddrs.map(qddr => (
             <QDDRReportCard
@@ -59,6 +196,8 @@ export default function QDDRReportsList({
               onDeleteQddr={onDeleteQddr}
               onRateQddr={onRateQddr}
               isNewlySubmitted={String(qddr.id) === String(newlySubmittedId)}
+              isSelectedForExport={selectedIds.includes(qddr.id)}
+              onToggleSelectForExport={toggleSelectQddr}
             />
           ))}
         </div>
@@ -144,9 +283,11 @@ export default function QDDRReportsList({
   }
 
   const showActionsCol = canEdit || paginatedQddrs.some(q => String(q.status || '').trim().toLowerCase() === 'closed')
+  const hasClosedInList = closedQddrs.length > 0
 
   return (
     <div className="reports-content-container">
+      {renderMultiSelectExportBar()}
       <div className="glass-card-dcc reports-list-card-container">
         <div className="reports-table-instruction-banner">
           <span>💡 Click any row to view complete details, photos, and discrepancy actions.</span>
@@ -155,6 +296,16 @@ export default function QDDRReportsList({
           <table className="iso-table">
             <thead>
               <tr>
+                {hasClosedInList && (
+                  <th style={{ width: '36px', textAlign: 'center' }} title="Select Closed QDDRs for Inventory Export">
+                    <input
+                      type="checkbox"
+                      checked={allClosedSelected}
+                      onChange={toggleSelectAllClosed}
+                      style={{ width: '15px', height: '15px', accentColor: '#0891b2', cursor: 'pointer' }}
+                    />
+                  </th>
+                )}
                 <th>Ref No.</th>
                 <th>Date & Time</th>
                 <th>Location</th>
@@ -169,15 +320,37 @@ export default function QDDRReportsList({
               {paginatedQddrs.map((qddr) => {
                 const statusClean = String(qddr.status || '').trim().toLowerCase()
                 const isClosed = statusClean === 'closed'
+                const isSelected = selectedIds.includes(qddr.id)
                 return (
                   <tr
                     key={qddr.id}
                     id={`qddr-table-row-${qddr.id}`}
                     className={String(qddr.id) === String(newlySubmittedId) ? 'newly-submitted-table-row' : ''}
                     onClick={() => onSelectQddr && onSelectQddr(qddr)}
-                    style={{ cursor: 'pointer' }}
+                    style={{
+                      cursor: 'pointer',
+                      background: isSelected ? 'rgba(8, 145, 178, 0.06)' : undefined
+                    }}
                     title="Click to view full details and resolve discrepancy"
                   >
+                    {hasClosedInList && (
+                      <td
+                        style={{ textAlign: 'center' }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {isClosed ? (
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectQddr(qddr.id)}
+                            style={{ width: '15px', height: '15px', accentColor: '#0891b2', cursor: 'pointer' }}
+                            title="Select for Inventory Stock Deduction Export"
+                          />
+                        ) : (
+                          <span style={{ color: '#cbd5e1', fontSize: '11px' }}>—</span>
+                        )}
+                      </td>
+                    )}
                     <td style={{ fontWeight: 600 }}>{qddr.reference_no ?? '—'}</td>
                     <td>
                       <div className="table-text-cell" style={{ whiteSpace: 'nowrap' }}>

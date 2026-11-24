@@ -3,7 +3,17 @@ import { User, SquarePen, Trash2, CheckCircle2, Camera } from 'lucide-react'
 import StarRatingAction from '../UI/StarRatingAction.jsx'
 import ImageLightboxModal from '../Modals/ImageLightboxModal.jsx'
 
-function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr, onRateQddr, isNewlySubmitted }) {
+function QDDRReportCard({
+  qddr,
+  canEdit,
+  onSelectQddr,
+  onEditQddr,
+  onDeleteQddr,
+  onRateQddr,
+  isNewlySubmitted,
+  isSelectedForExport = false,
+  onToggleSelectForExport = null
+}) {
   const [lightboxIndex, setLightboxIndex] = useState(null)
   const statusClean = String(qddr.status || '').trim().toLowerCase()
   const isClosed = statusClean === 'closed'
@@ -55,6 +65,26 @@ function QDDRReportCard({ qddr, canEdit, onSelectQddr, onEditQddr, onDeleteQddr,
       {/* Header */}
       <div className="reports-card-header">
         <div className="reports-user-block">
+          {isClosed && onToggleSelectForExport && (
+            <label
+              onClick={(e) => e.stopPropagation()}
+              title="Select this Closed QDDR for Inventory Stock Deduction Export (CSV / JSON)"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                marginRight: '4px'
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={Boolean(isSelectedForExport)}
+                onChange={() => onToggleSelectForExport(qddr.id)}
+                style={{ width: '16px', height: '16px', accentColor: '#0891b2', cursor: 'pointer' }}
+              />
+            </label>
+          )}
           <div className="reports-avatar">
             <User size={20} color="#1A435A" />
           </div>

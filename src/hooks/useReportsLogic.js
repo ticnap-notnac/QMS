@@ -734,6 +734,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
       scanningLabel: qddrFormState.scanningLabel,
       scanMessage: qddrFormState.scanMessage,
       handleScanLabel: qddrFormState.handleScanLabel,
+      handleLookupInventoryBySu: qddrFormState.handleLookupInventoryBySu,
       evidenceItems: qddrFormState.evidenceItems,
       evidenceError: qddrFormState.evidenceError,
       handleEvidenceFiles: qddrFormState.handleEvidenceFiles,

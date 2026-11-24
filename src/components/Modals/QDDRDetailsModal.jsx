@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { X as CloseIcon, Clipboard, CheckCircle, User, Calendar, Sparkles, Star } from 'lucide-react'
+import { X as CloseIcon, Clipboard, CheckCircle, User, Calendar, Sparkles, Star, Download, FileJson } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 import { generateAiSuggestionFromText } from '../../services/suggestionService'
 import { rateQddrReport } from '../../services/qddrService'
+import { exportClosedQddrsToFile } from '@/services/integrationService'
 import { useAuth } from '@/hooks/useAuth'
 import { isAdminRole } from '@/utils/roleUtils.js'
 import StarRatingAction from '../UI/StarRatingAction.jsx'
@@ -690,13 +691,61 @@ export default function QDDRDetailsModal({
           style={{
             flexShrink: 0,
             display: 'flex',
-            justifyContent: 'flex-end',
+            justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px',
             padding: '18px 28px',
             borderTop: '1px solid #cbd5e1',
             boxSizing: 'border-box'
           }}
         >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {String(qddr.status || '').toLowerCase() === 'closed' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => exportClosedQddrsToFile([qddr], 'csv')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '7px 14px',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#0891b2',
+                    background: 'rgba(8, 145, 178, 0.1)',
+                    border: '1px solid rgba(8, 145, 178, 0.35)',
+                    borderRadius: '6px',
+                    cursor: 'pointer'
+                  }}
+                  title="Export this Closed QDDR as CSV for Inventory Management stock deduction"
+                >
+                  <Download size={14} /> Export Stock Deduction (CSV)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => exportClosedQddrsToFile([qddr], 'json')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '7px 14px',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    color: '#1A435A',
+                    background: '#f8fafc',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    cursor: 'pointer'
+                  }}
+                  title="Export this Closed QDDR as JSON for ERP/WMS stock deduction"
+                >
+                  <FileJson size={14} /> Export JSON
+                </button>
+              </>
+            )}
+          </div>
           <button type="button" className="btn-secondary-light" onClick={onClose} style={{ margin: 0, padding: '8px 24px', fontSize: '13px' }}>
             Close Detail
           </button>

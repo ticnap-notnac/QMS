@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { X as CloseIcon, Sparkles, LoaderCircle, ScanLine, Upload, Camera, CheckCircle2, FileText } from 'lucide-react'
+import { X as CloseIcon, Sparkles, LoaderCircle, ScanLine, Upload, Camera, CheckCircle2, FileText, Database } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 
 function QDDRModal({
@@ -21,6 +21,7 @@ function QDDRModal({
   scanningLabel,
   scanMessage,
   handleScanLabel,
+  handleLookupInventoryBySu,
   evidenceItems = [],
   evidenceError = null,
   handleEvidenceFiles,
@@ -496,9 +497,34 @@ function QDDRModal({
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <label className="label-field">
-                    Batch Code / ISU No: <span className="required-asterisk">*</span>
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
+                    <label className="label-field" style={{ marginBottom: '2px' }}>
+                      Batch Code / ISU No: <span className="required-asterisk">*</span>
+                    </label>
+                    {handleLookupInventoryBySu && (
+                      <button
+                        type="button"
+                        onClick={handleLookupInventoryBySu}
+                        disabled={scanningLabel}
+                        title="Pull PO, DR/WB, Supplier, Trucker & Logistics details from External Inventory System"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          color: '#0891b2',
+                          background: 'rgba(8, 145, 178, 0.1)',
+                          border: '1px solid rgba(8, 145, 178, 0.3)',
+                          borderRadius: '4px',
+                          padding: '1px 6px',
+                          cursor: scanningLabel ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        <Database size={11} /> Pull IM Info
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={form.batch_code_su_number}
