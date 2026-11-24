@@ -21,6 +21,7 @@ const PositionsPage = lazy(() => import('@/pages/PositionsPage.jsx'))
 const SettingsPage = lazy(() => import('@/pages/SettingsPage.jsx'))
 const AuditToolsPage = lazy(() => import('@/pages/AuditToolsPage.jsx'))
 const PermissionsPage = lazy(() => import('@/pages/PermissionsPage.jsx'))
+const IntegrationsPage = lazy(() => import('@/pages/IntegrationsPage.jsx'))
 
 const PageLoader = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', minHeight: '400px' }}>
@@ -85,6 +86,7 @@ export default function AppRouter({ sharedProps, refreshUserData }) {
         <Route path="/settings/severity-category" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><SeverityCategoryPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/non-conformance-types" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><SeverityCategoryPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/settings/positions" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><PositionsPage {...sharedProps} /></ProtectedRoute>} />
+        <Route path="/settings/integrations" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_categories" sharedProps={sharedProps}><IntegrationsPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute pageKey="admin_panel" rightKey="manage_users" sharedProps={sharedProps}><AddUserPage {...sharedProps} /></ProtectedRoute>} />
         <Route path="/audit-tools" element={<ProtectedRoute pageKey="audit_tools" sharedProps={sharedProps}><AuditToolsPage {...sharedProps} /></ProtectedRoute>} />
       </Routes>

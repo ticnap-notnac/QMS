@@ -4,7 +4,7 @@ export default function AdminNavbar({
   activeTab = 'Users',
 }) {
   const navigate = useNavigate()
-  const tabs = ['Users', 'Dept', 'Position', 'Roles', 'Permissions', 'Locations', 'Products', 'Product Types', 'ISO Standards', 'Non-Conformance Types']
+  const tabs = ['Users', 'Dept', 'Position', 'Roles', 'Permissions', 'Locations', 'Products', 'Product Types', 'ISO Standards', 'Non-Conformance Types', 'Integrations']
 
   const handleTabChange = (tab) => {
     const routeMap = {
@@ -18,7 +18,8 @@ export default function AdminNavbar({
       'ISO Standards': '/settings/iso-standards',
       'Non-Conformance Types': '/settings/non-conformance-types',
       'Severity Category': '/settings/non-conformance-types',
-      'Position': '/settings/positions'
+      'Position': '/settings/positions',
+      'Integrations': '/settings/integrations'
     }
     navigate(routeMap[tab] || '/admin')
   }
