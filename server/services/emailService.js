@@ -48,7 +48,7 @@ function getResendClient() {
  * 3. Uses Nodemailer SMTP (supports 465, 587, 2525) if SMTP_USER & SMTP_PASS are configured.
  * 4. Falls back to mock email in console if none is configured.
  */
-async function dispatchEmail({ to, subject, html, text, fromTitle = 'QFlow System' }) {
+async function dispatchEmail({ to, subject, html, text, fromTitle = 'ResQ System' }) {
   if (!to) {
     logger.warn('Email dispatch skipped: no recipient provided.')
     return null
@@ -84,7 +84,7 @@ async function dispatchEmail({ to, subject, html, text, fromTitle = 'QFlow Syste
 
   // 2. Brevo REST API (Standard HTTPS port 443)
   if (process.env.BREVO_API_KEY) {
-    const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || 'qflooww@gmail.com'
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER || 'resq@gmail.com'
     console.log(`[Email Dispatcher] Sending via Brevo to ${cleanTo} from ${senderEmail}`)
 
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -96,7 +96,7 @@ async function dispatchEmail({ to, subject, html, text, fromTitle = 'QFlow Syste
       },
       body: JSON.stringify({
         sender: {
-          name: fromTitle || 'QFlow System',
+          name: fromTitle || 'ResQ System',
           email: String(senderEmail).trim(),
         },
         to: [{ email: cleanTo }],
@@ -177,29 +177,29 @@ export async function sendNotificationEmail(userId, title, message) {
 
     const safeTitle = escapeHtml(title)
     const safeMessage = escapeHtml(message)
-    const subject = `QFlow Alert: ${String(title || '').replace(/[\r\n]+/g, ' ')}`
+    const subject = `ResQ Alert: ${String(title || '').replace(/[\r\n]+/g, ' ')}`
 
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-        <h2 style="color: #0f172a; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">QFlow System Alert</h2>
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+        <h2 style="color: #1A435A; border-bottom: 2px solid #4987A4; padding-bottom: 10px; margin-top: 0;">ResQ System Alert</h2>
         <p style="font-size: 16px; color: #334155; margin-top: 20px;"><strong>${safeTitle}</strong></p>
-        <p style="font-size: 15px; color: #475569; line-height: 1.5; background: #f8fafc; padding: 15px; border-radius: 6px;">
+        <p style="font-size: 15px; color: #475569; line-height: 1.5; background: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #4987A4;">
           ${safeMessage}
         </p>
-        <p style="font-size: 14px; color: #64748b; margin-top: 30px;">
-          You can view this by logging into your QFlow dashboard.<br>
+        <p style="font-size: 14px; color: #64748b; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+          You can view this by logging into your ResQ dashboard.<br>
           Please do not reply to this automated message.
         </p>
       </div>
     `
-    const text = `QFlow System Alert\n\n${title}\n\n${message}\n\nYou can view this by logging into your QFlow dashboard.`
+    const text = `ResQ System Alert\n\n${title}\n\n${message}\n\nYou can view this by logging into your ResQ dashboard.`
 
     await dispatchEmail({
       to: toEmail,
       subject,
       html,
       text,
-      fromTitle: 'QFlow Automated Alerts',
+      fromTitle: 'ResQ Automated Alerts',
     })
   } catch (error) {
     console.error(`[Email] Failed to send notification email:`, error.message)
@@ -229,18 +229,18 @@ export async function sendNewUserCredentialsEmail({ toEmail, password, frontendU
     const safePassword = escapeHtml(password)
     const safeTargetUrl = escapeHtml(targetUrl)
 
-    const subject = `Your QFlow account has been created`
-    const text = `Hello ${displayName || ''},\n\nYour QFlow account has been created.\n\nEmail: ${toEmail}\nPassword: ${password}\n\nSign in here: ${targetUrl}\n\nPlease keep these details secure.`
+    const subject = `Your ResQ account has been created`
+    const text = `Hello ${displayName || ''},\n\nYour ResQ account has been created.\n\nEmail: ${toEmail}\nPassword: ${password}\n\nSign in here: ${targetUrl}\n\nPlease keep these details secure.`
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 10px; background: #ffffff;">
-        <h2 style="color: #0f172a; margin-top: 0;">Welcome to QFlow!</h2>
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 10px; background: #ffffff;">
+        <h2 style="color: #1A435A; margin-top: 0; border-bottom: 2px solid #4987A4; padding-bottom: 10px;">Welcome to ResQ!</h2>
         <p style="font-size: 15px; color: #334155; line-height: 1.6;">${safeDisplayName ? `Hello ${safeDisplayName},` : 'Hello,'} your account has been created. Use the credentials below to sign in.</p>
         <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin: 20px 0;">
           <p style="margin: 0 0 10px; color: #0f172a; font-size: 14px;"><strong>Email:</strong> ${safeEmail}</p>
           <p style="margin: 0; color: #0f172a; font-size: 14px;"><strong>Password:</strong> ${safePassword}</p>
         </div>
-        <p style="font-size: 15px; color: #334155; line-height: 1.6;">Sign in here: <a href="${safeTargetUrl}" style="color: #2563eb; text-decoration: none;">${safeTargetUrl}</a></p>
-        <p style="font-size: 14px; color: #64748b; margin-top: 24px;">Please keep these details secure.</p>
+        <p style="font-size: 15px; color: #334155; line-height: 1.6;">Sign in here: <a href="${safeTargetUrl}" style="color: #1A435A; text-decoration: none; font-weight: 600;">${safeTargetUrl}</a></p>
+        <p style="font-size: 14px; color: #64748b; margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 12px;">Please keep these details secure.</p>
       </div>
     `
 
@@ -249,7 +249,7 @@ export async function sendNewUserCredentialsEmail({ toEmail, password, frontendU
       subject,
       html,
       text,
-      fromTitle: 'QFlow System',
+      fromTitle: 'ResQ System',
     })
   } catch (error) {
     console.error(`[Email] Failed to send new user credentials email:`, error.message)
@@ -278,12 +278,12 @@ export async function sendQddrClosedEmail({ toEmail, qddr, displayName }) {
     const safeRefNo = escapeHtml(refNo)
     const safeTargetUrl = escapeHtml(targetUrl)
 
-    const subject = `QFlow Alert: QDDR ${refNo} Closed - Please Review`
+    const subject = `ResQ Alert: QDDR ${refNo} Closed - Please Review`
     const text = `Hello ${displayName || 'Inventory Manager'},\n\nThis is a heads up that Quality Defect & Deviation Report ${refNo} has been closed. Please check the system to review the new document.\n\nSign in here: ${targetUrl}\n\nPlease do not reply to this automated message.`
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
-        <h2 style="color: #0f172a; margin-top: 0; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
-          QFlow Notification
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+        <h2 style="color: #1A435A; margin-top: 0; border-bottom: 2px solid #4987A4; padding-bottom: 10px;">
+          ResQ Notification
         </h2>
         <p style="font-size: 15px; color: #334155; line-height: 1.6;">
           Hello ${safeDisplayName},
@@ -292,8 +292,8 @@ export async function sendQddrClosedEmail({ toEmail, qddr, displayName }) {
           This is a heads up that Quality Defect &amp; Deviation Report <strong>${safeRefNo}</strong> has been closed. Please check the system to review the new document.
         </p>
         <p style="font-size: 15px; color: #334155; line-height: 1.6; margin-top: 20px;">
-          <a href="${safeTargetUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 500;">
-            Open QFlow System
+          <a href="${safeTargetUrl}" style="display: inline-block; background-color: #1A435A; color: #ffffff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 500;">
+            Open ResQ System
           </a>
         </p>
         <p style="font-size: 13px; color: #64748b; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
@@ -307,7 +307,7 @@ export async function sendQddrClosedEmail({ toEmail, qddr, displayName }) {
       subject,
       html,
       text,
-      fromTitle: 'QFlow Automated Alerts',
+      fromTitle: 'ResQ Automated Alerts',
     })
   } catch (error) {
     console.error(`[Email] Failed to send QDDR closed email:`, error.message)
