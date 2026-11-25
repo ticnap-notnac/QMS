@@ -121,23 +121,59 @@ export async function testWebhookPing(req, res, next) {
     }
     const signed = signWebhookPayload(testPayload, secret_token || 'whsec_test_secret')
 
+    let statusCode = 200
+    let deliveryStatus = 'success'
+    let deliveryError = null
+
+    if (target_url && /^https?:\/\//i.test(target_url) && !target_url.includes('/simulator/webhook-receiver')) {
+      try {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 7000)
+        const response = await fetch(target_url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-ResQ-Event': 'webhook.test_ping',
+            'X-ResQ-Signature': signed.signature,
+            'X-ResQ-Timestamp': signed.timestamp
+          },
+          body: signed.rawBody,
+          signal: controller.signal
+        })
+        clearTimeout(timeout)
+        statusCode = response.status
+        if (!response.ok) {
+          deliveryStatus = 'warning'
+        }
+      } catch (networkErr) {
+        statusCode = 0
+        deliveryStatus = 'failed'
+        deliveryError = networkErr.message
+      }
+    }
+
     await logIntegrationEvent({
       direction: 'outbound',
       channel: 'webhook',
       eventType: 'webhook.test_ping',
-      status: 'success',
+      status: deliveryStatus,
       referenceNo: 'QDDR-TEST-001',
-      summary: `Sent signed test webhook ping to ${target_url || 'Loopback Receiver'} (Signature: ${signed.signature.slice(0, 22)}...)`,
+      summary: `Sent signed test webhook ping to ${target_url || 'Loopback Receiver'} — HTTP ${statusCode || 'ERR'} (Signature: ${signed.signature.slice(0, 22)}...)`,
       payload: testPayload
     })
 
     return res.json({
-      success: true,
+      success: deliveryStatus !== 'failed',
+      http_status: statusCode,
+      delivery_error: deliveryError,
       signature: signed.signature,
       timestamp: signed.timestamp,
       payload: testPayload
     })
   } catch (err) {
+    next(err)
+  }
+}
     next(err)
   }
 }
