@@ -10,6 +10,40 @@ export async function fetchActiveStandards() {
   return data || []
 }
 
+export async function fetchActiveStandardsWithClauseCounts() {
+  const [stdRes, grpRes, clsRes] = await Promise.all([
+    supabase
+      .from('iso_standards')
+      .select('id, name, version')
+      .eq('is_active', true)
+      .order('name'),
+    supabase
+      .from('iso_clause_groups')
+      .select('id, standard_id'),
+    supabase
+      .from('iso_clauses')
+      .select('id, group_id')
+  ])
+
+  if (stdRes.error) throw stdRes.error
+  const standards = stdRes.data || []
+  if (standards.length === 0) return []
+
+  const groupToStandard = new Map((grpRes.data || []).map(g => [g.id, g.standard_id]))
+  const countByStandard = new Map()
+  for (const clause of clsRes.data || []) {
+    const stdId = groupToStandard.get(clause.group_id)
+    if (stdId) {
+      countByStandard.set(stdId, (countByStandard.get(stdId) || 0) + 1)
+    }
+  }
+
+  return standards.map(standard => ({
+    ...standard,
+    clauseCount: countByStandard.get(standard.id) || 0
+  }))
+}
+
 export async function fetchClauseGroupsForStandard(standardId) {
   const { data, error } = await supabase
     .from('iso_clause_groups')
@@ -48,7 +82,8 @@ export async function fetchCarReports() {
       .from('car_reports')
       .select('*, audit_schedules(id, title, scheduled_date)')
       .eq('status', 'closed')
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .limit(500),
     supabase
       .from('users')
       .select('id, auth_id, user_name, first_name, last_name'),
@@ -56,11 +91,11 @@ export async function fetchCarReports() {
       .from('report_ratings')
       .select('report_type, report_id, user_auth_id, rating')
       .eq('report_type', 'CAR'),
-    supabase.auth.getUser()
+    supabase.auth.getSession()
   ])
   if (error) throw error
 
-  const currentAuthId = authSessionData?.user?.id || ''
+  const currentAuthId = authSessionData?.session?.user?.id || ''
 
   const authUserMap = new Map(
     (usersData || [])
@@ -115,7 +150,8 @@ export async function fetchQddrReports() {
       .from('qddr_reports')
       .select('*')
       .eq('status', 'closed')
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .limit(500),
     supabase
       .from('users')
       .select('id, user_name, first_name, last_name'),
@@ -123,11 +159,11 @@ export async function fetchQddrReports() {
       .from('report_ratings')
       .select('report_type, report_id, user_auth_id, rating')
       .eq('report_type', 'QDDR'),
-    supabase.auth.getUser()
+    supabase.auth.getSession()
   ])
   if (error) throw error
 
-  const currentAuthId = authSessionData?.user?.id || ''
+  const currentAuthId = authSessionData?.session?.user?.id || ''
 
   const userMap = new Map(
     (usersData || []).map((u) => [

@@ -45,15 +45,20 @@ async function getUserProfileByAuthId(authId) {
 
   const { data: profile, error } = await supabase
     .from('users')
-    .select('id, auth_id, role_id, position_id, department_id, site_id, user_name, first_name, last_name')
+    .select('id, auth_id, role_id, position_id, department_id, site_id, user_name, first_name, last_name, roles(role_name, permissions), positions(role_id, roles(role_name, permissions)), departments(department_name)')
     .eq('auth_id', authId)
     .maybeSingle()
 
   if (error) throw error
   if (!profile) return null
 
-  let resolvedRoleId = profile.role_id || null
-  if (!resolvedRoleId && profile.position_id) {
+  let resolvedRoleId = profile.role_id || profile.positions?.role_id || null
+  let roleName = profile.roles?.role_name || profile.positions?.roles?.role_name || null
+  let permissions = profile.roles?.permissions || profile.positions?.roles?.permissions || null
+  let departmentName = profile.departments?.department_name || null
+
+  // Fallbacks for test mocks that do not return joined relations
+  if (!resolvedRoleId && profile.position_id && !profile.positions) {
     const { data: posData } = await supabase
       .from('positions')
       .select('role_id')
@@ -62,9 +67,7 @@ async function getUserProfileByAuthId(authId) {
     if (posData?.role_id) resolvedRoleId = posData.role_id
   }
 
-  let roleName = null
-  let permissions = null
-  if (resolvedRoleId) {
+  if (resolvedRoleId && !roleName) {
     const { data: roleData, error: roleError } = await supabase
       .from('roles')
       .select('role_name, permissions')
@@ -75,8 +78,7 @@ async function getUserProfileByAuthId(authId) {
     permissions = roleData?.permissions || null
   }
 
-  let departmentName = null
-  if (profile.department_id) {
+  if (profile.department_id && !departmentName && !profile.departments) {
     const { data: departmentData, error: departmentError } = await supabase
       .from('departments')
       .select('department_name')
@@ -209,12 +211,6 @@ export async function createCarReport({ body, reportedByAuthId }) {
     audit_result_id
   } = body || {}
 
-  const { data: creatorObj } = await supabase
-    .from('users')
-    .select('site_id')
-    .eq('auth_id', reportedByAuthId)
-    .maybeSingle()
-
   const getNextRef = async () => {
     if (typeof supabase.rpc === 'function') {
       const { data: rpcRef, error: rpcErr } = await supabase.rpc('next_report_reference', {
@@ -240,10 +236,23 @@ export async function createCarReport({ body, reportedByAuthId }) {
     return `CAR-${String(maxSeq + 1).padStart(3, '0')}`
   }
 
-  const resolvedTypeOfNonconformance = await upsertNonConformanceType(type_of_nonconformance)
-  const resolvedProductMaterialName = await upsertProductMaterialName(product_material_name)
+  const [
+    { data: creatorObj },
+    resolvedTypeOfNonconformance,
+    resolvedProductMaterialName,
+    initialReferenceNo
+  ] = await Promise.all([
+    supabase
+      .from('users')
+      .select('site_id')
+      .eq('auth_id', reportedByAuthId)
+      .maybeSingle(),
+    upsertNonConformanceType(type_of_nonconformance),
+    upsertProductMaterialName(product_material_name),
+    getNextRef()
+  ])
 
-  let generatedReferenceNo = await getNextRef()
+  let generatedReferenceNo = initialReferenceNo
   let data = null
   let error = null
 
@@ -772,12 +781,21 @@ export async function updateCarReport({ carId, body = {}, actorAuthId }) {
     }
   }
 
+  const [resolvedType, resolvedProduct] = await Promise.all([
+    body.type_of_nonconformance !== undefined
+      ? upsertNonConformanceType(body.type_of_nonconformance)
+      : Promise.resolve(undefined),
+    body.product_material_name !== undefined
+      ? upsertProductMaterialName(body.product_material_name)
+      : Promise.resolve(undefined),
+  ])
+
   if (body.type_of_nonconformance !== undefined) {
-    payload.type_of_nonconformance = await upsertNonConformanceType(body.type_of_nonconformance)
+    payload.type_of_nonconformance = resolvedType
   }
 
   if (body.product_material_name !== undefined) {
-    payload.product_material_name = await upsertProductMaterialName(body.product_material_name)
+    payload.product_material_name = resolvedProduct
   }
 
   const dateKeys = ['date', 'request_date']

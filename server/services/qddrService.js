@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase.js'
-import { resolveEffectivePermissions } from '../middlewares/roleMiddleware.js'
+import { fetchUserRoleAndPermissions, resolveEffectivePermissions } from '../middlewares/roleMiddleware.js'
 import logger from '../utils/logger.js'
 import { sendQddrClosedEmail } from './emailService.js'
 
@@ -19,42 +19,15 @@ function isAdminRole(roleName) {
 
 async function getCallerQddrProfile(actorAuthId) {
   if (!actorAuthId) return null
-  const { data: user } = await supabase
-    .from('users')
-    .select('id, auth_id, site_id, role_id, position_id')
-    .eq('auth_id', actorAuthId)
-    .maybeSingle()
+  const { profile, roleName, permissions } = await fetchUserRoleAndPermissions(actorAuthId)
+  if (!profile) return null
 
-  if (!user) return null
-
-  let effectiveRoleId = user.role_id
-  if (!effectiveRoleId && user.position_id) {
-    const { data: pos } = await supabase
-      .from('positions')
-      .select('role_id')
-      .eq('id', user.position_id)
-      .maybeSingle()
-    effectiveRoleId = pos?.role_id || null
-  }
-
-  let roleName = ''
-  let rawPermissions = null
-  if (effectiveRoleId) {
-    const { data: role } = await supabase
-      .from('roles')
-      .select('role_name, permissions')
-      .eq('id', effectiveRoleId)
-      .maybeSingle()
-    roleName = role?.role_name || ''
-    rawPermissions = role?.permissions || null
-  }
-
-  const effectivePerms = resolveEffectivePermissions(roleName, rawPermissions)
+  const effectivePerms = resolveEffectivePermissions(roleName || '', permissions)
   return {
-    id: user.id,
-    auth_id: user.auth_id,
-    site_id: user.site_id || null,
-    role_name: roleName,
+    id: profile.id,
+    auth_id: profile.auth_id,
+    site_id: profile.site_id || null,
+    role_name: roleName || '',
     rights: Array.isArray(effectivePerms?.rights) ? effectivePerms.rights : []
   }
 }
@@ -74,6 +47,37 @@ function buildQddrReferenceNumber(recordsOrLatestRef) {
   const match = String(recordsOrLatestRef || '').match(/^QDDR-(\d+)$/i)
   if (!match) return 0
   return Number(match[1]) || 0
+}
+
+let cachedUsersDirectory = null
+let cachedUsersDirectoryExpiresAt = 0
+let inFlightUsersDirectoryPromise = null
+
+async function getAllUsersForNameMatch() {
+  const now = Date.now()
+  if (cachedUsersDirectory && now < cachedUsersDirectoryExpiresAt) {
+    return cachedUsersDirectory
+  }
+  if (inFlightUsersDirectoryPromise) {
+    return inFlightUsersDirectoryPromise
+  }
+
+  inFlightUsersDirectoryPromise = (async () => {
+    try {
+      const { data: allUsers } = await supabase
+        .from('users')
+        .select('id, user_name, first_name, last_name')
+      if (Array.isArray(allUsers)) {
+        cachedUsersDirectory = allUsers
+        cachedUsersDirectoryExpiresAt = Date.now() + 30000
+      }
+      return allUsers || []
+    } finally {
+      inFlightUsersDirectoryPromise = null
+    }
+  })()
+
+  return inFlightUsersDirectoryPromise
 }
 
 export async function findUserIdByName(name) {
@@ -100,9 +104,7 @@ export async function findUserIdByName(name) {
   }
 
   // Fallback: match against first_name + last_name or user_name case-insensitively
-  const { data: allUsers } = await supabase
-    .from('users')
-    .select('id, user_name, first_name, last_name')
+  const allUsers = await getAllUsersForNameMatch()
 
   const lowerTarget = cleanName.toLowerCase()
   const matched = (allUsers || []).find((u) => {
@@ -149,15 +151,6 @@ async function upsertCleanProductFromQddrDescription(rawDesc) {
  * @returns {Promise<{data: Object}>} The created QDDR report data.
  */
 export async function createQddrReport({ body, reportedByAuthId }) {
-  const { data: reporter, error: reporterError } = await supabase
-    .from('users')
-    .select('id, site_id')
-    .eq('auth_id', reportedByAuthId)
-    .maybeSingle()
-
-  if (reporterError) throw reporterError
-  if (!reporter) throw Object.assign(new Error('Reporter profile not found.'), { status: 404 })
-
   const {
     location,
     date,
@@ -199,14 +192,6 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     audit_schedule_id
   } = body || {}
 
-  const [approvedById, notedById, leaderId] = await Promise.all([
-    findUserIdByName(approved_by),
-    findUserIdByName(noted_by),
-    findUserIdByName(leader)
-  ])
-
-  await upsertCleanProductFromQddrDescription(material_description)
-
   const getNextRef = async () => {
     if (typeof supabase.rpc === 'function') {
       const { data: rpcRef, error: rpcErr } = await supabase.rpc('next_report_reference', {
@@ -232,7 +217,30 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     return `QDDR-${String(maxSeq + 1).padStart(3, '0')}`
   }
 
-  let generatedReferenceNo = await getNextRef()
+  const [
+    { data: reporter, error: reporterError },
+    approvedById,
+    notedById,
+    leaderId,
+    _upsertedProd,
+    initialReferenceNo
+  ] = await Promise.all([
+    supabase
+      .from('users')
+      .select('id, site_id')
+      .eq('auth_id', reportedByAuthId)
+      .maybeSingle(),
+    findUserIdByName(approved_by),
+    findUserIdByName(noted_by),
+    findUserIdByName(leader),
+    upsertCleanProductFromQddrDescription(material_description),
+    getNextRef()
+  ])
+
+  if (reporterError) throw reporterError
+  if (!reporter) throw Object.assign(new Error('Reporter profile not found.'), { status: 404 })
+
+  let generatedReferenceNo = initialReferenceNo
   let data = null
   let error = null
 
@@ -725,10 +733,6 @@ export async function editQddrReport({ id, body = {}, actorAuthId }) {
     }
   }
 
-  if (body.material_description !== undefined) {
-    await upsertCleanProductFromQddrDescription(body.material_description)
-  }
-
   if (body.date !== undefined) {
     payload.date = body.date ? body.date : null
   }
@@ -770,6 +774,9 @@ export async function editQddrReport({ id, body = {}, actorAuthId }) {
     body.approved_by !== undefined ? findUserIdByName(body.approved_by) : Promise.resolve(undefined),
     body.noted_by !== undefined ? findUserIdByName(body.noted_by) : Promise.resolve(undefined),
     body.leader !== undefined ? findUserIdByName(body.leader) : Promise.resolve(undefined),
+    body.material_description !== undefined
+      ? upsertCleanProductFromQddrDescription(body.material_description)
+      : Promise.resolve(),
   ])
 
   if (body.approved_by !== undefined) payload.approved_by = approvedById

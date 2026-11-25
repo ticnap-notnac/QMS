@@ -12,8 +12,14 @@ export const useUserProfile = (authUserId) => {
     const fetchUserProfile = async () => {
       try {
         setLoading(true);
-        const { data: { user } } = await supabase.auth.getUser();
-        const currentAuthId = authUserId || user?.id;
+        let currentAuthId = authUserId;
+        let sessionEmail = null;
+
+        if (!currentAuthId) {
+          const { data: { session } } = await supabase.auth.getSession();
+          currentAuthId = session?.user?.id || null;
+          sessionEmail = session?.user?.email || null;
+        }
 
         if (!currentAuthId) return;
 
@@ -84,7 +90,7 @@ export const useUserProfile = (authUserId) => {
         if (isMounted) {
           setUserProfile({
             ...data,
-            email: data?.email || user?.email,
+            email: data?.email || sessionEmail,
             department_name: deptName,
             position_name: posName,
             role_name: rName,

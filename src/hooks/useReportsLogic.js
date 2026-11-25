@@ -1,7 +1,6 @@
 import { useCallback, useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { isAdminRole } from '@/utils/roleUtils.js'
-import { useAuth } from '@/hooks/useAuth'
 import { useReportsData } from './useReports/useReportsData'
 import { useReportsForm } from './useReports/useReportsForm'
 import { useReportsModals } from './useReports/useReportsModals'
@@ -25,9 +24,234 @@ import {
 import { supabase } from '@/utils/supabase'
 import { useCARDetails } from './useCARDetails'
 
+const CAR_COLUMNS_NO_EMBEDDING = [
+  'id',
+  'reference_no',
+  'requesting_department',
+  'responsible_department',
+  'requestor',
+  'recipient',
+  'date',
+  'reason_reissue',
+  'no_reply',
+  're_corrective_action',
+  'type_of_nonconformance',
+  'others',
+  'product_material_name',
+  'model_type',
+  'control_no',
+  'affected_quantity',
+  'details_of_nonconformance',
+  'request_date',
+  'prepared_by_audited_by',
+  'acknowledged_by',
+  'acknowledged_by_name',
+  'acknowledged_by_position',
+  'status',
+  'created_at',
+  'updated_at',
+  'root_cause_analysis',
+  'corrective_action',
+  'preventive_action',
+  'capa_submitted_at',
+  'verification_notes',
+  'verification_date',
+  'verified_by',
+  'audit_schedule_id',
+  'audit_result_id',
+  'resolution_time',
+  'site_id',
+  'verification_rating',
+  'target_verification_date',
+  'trend_cluster_id',
+  'average_rating',
+  'ratings_count',
+  'audit_schedules(id, title, scheduled_date)'
+].join(', ')
+
+const QDDR_COLUMNS_NO_EMBEDDING = [
+  'id',
+  'reference_no',
+  'location',
+  'date',
+  'time',
+  'trucker_broker',
+  'plate_number',
+  'container_number',
+  'po_reference',
+  'drwb_number',
+  'brand_supplier',
+  'material_description',
+  'material_code',
+  'batch_code_su_number',
+  'evidence_urls',
+  'holes_punctures',
+  'deformed_torn',
+  'open_carton',
+  'crushed_dented',
+  'wet_leaked',
+  'stain_graffiti',
+  'bulging',
+  'improper_stretch_wrapping',
+  'wrong_no_batchcode',
+  'opened_seal',
+  'no_label_broken_label',
+  'short_pack',
+  'excess_shipment',
+  'documentation_error',
+  'picking_discrepancy',
+  'others',
+  'qty',
+  'reason_of_discrepancy',
+  'corrective_action',
+  'preventive_action',
+  'reported_by',
+  'approved_by',
+  'noted_by',
+  'leader',
+  'status',
+  'created_at',
+  'updated_at',
+  'site_id',
+  'audit_schedule_id',
+  'trend_cluster_id',
+  'average_rating',
+  'ratings_count'
+].join(', ')
+
+// In-memory stale-while-revalidate cache so revisiting /reports renders immediately
+const reportsMemoryCache = {
+  cars: null,
+  qddrs: null,
+  ratingsMap: null,
+  authId: null,
+  inFlightPromise: null
+}
+
+async function fetchCarsFromSupabase() {
+  let res = await supabase
+    .from('car_reports')
+    .select(CAR_COLUMNS_NO_EMBEDDING)
+    .neq('status', 'deleted')
+    .order('created_at', { ascending: false })
+    .limit(500)
+
+  if (res.error) {
+    res = await supabase
+      .from('car_reports')
+      .select('*, audit_schedules(id, title, scheduled_date)')
+      .neq('status', 'deleted')
+      .order('created_at', { ascending: false })
+      .limit(500)
+  }
+  if (res.error) throw res.error
+  return res.data || []
+}
+
+async function fetchQddrsFromSupabase() {
+  let res = await supabase
+    .from('qddr_reports')
+    .select(QDDR_COLUMNS_NO_EMBEDDING)
+    .neq('status', 'deleted')
+    .order('created_at', { ascending: false })
+    .limit(500)
+
+  if (res.error) {
+    res = await supabase
+      .from('qddr_reports')
+      .select('*')
+      .neq('status', 'deleted')
+      .order('created_at', { ascending: false })
+      .limit(500)
+  }
+  if (res.error) throw res.error
+  return res.data || []
+}
+
+async function fetchRatingsFromSupabase(currentAuthId) {
+  const res = await supabase
+    .from('report_ratings')
+    .select('report_type, report_id, user_auth_id, rating')
+  if (res.error || !Array.isArray(res.data)) return null
+  return buildRatingStatsMap(res.data, currentAuthId)
+}
+
+/**
+ * Pre-warms the CAR & QDDR memory cache in the background (e.g. after Overview finishes loading)
+ * so navigating to the Reports tab renders in 0ms without a loading spinner.
+ */
+export async function prefetchReportsInBackground() {
+  try {
+    const { data } = await supabase.auth.getSession()
+    const authId = data?.session?.user?.id || ''
+    if (!authId) return
+    if (Array.isArray(reportsMemoryCache.cars) && reportsMemoryCache.authId === authId) {
+      return
+    }
+
+    const [carsData, ratingsMap] = await Promise.all([
+      fetchCarsFromSupabase(),
+      fetchRatingsFromSupabase(authId).catch(() => null)
+    ])
+
+    if (ratingsMap) reportsMemoryCache.ratingsMap = ratingsMap
+    reportsMemoryCache.cars = carsData.map(c => enrichItemWithRatings(c, 'CAR', ratingsMap))
+    reportsMemoryCache.authId = authId
+
+    const qddrsData = await fetchQddrsFromSupabase()
+    reportsMemoryCache.qddrs = qddrsData.map(q => enrichItemWithRatings(q, 'QDDR', ratingsMap))
+  } catch {
+    // Silent background prefetch
+  }
+}
+
+function buildRatingStatsMap(allRatings, currentAuthId) {
+  const ratingStatsMap = new Map()
+  for (const row of allRatings || []) {
+    const key = `${String(row.report_type || '').toUpperCase()}_${row.report_id}`
+    if (!ratingStatsMap.has(key)) {
+      ratingStatsMap.set(key, { sum: 0, count: 0, myRating: null })
+    }
+    const entry = ratingStatsMap.get(key)
+    const val = Number(row.rating)
+    if (val >= 1 && val <= 5) {
+      entry.sum += val
+      entry.count += 1
+      if (currentAuthId && String(row.user_auth_id) === String(currentAuthId)) {
+        entry.myRating = val
+      }
+    }
+  }
+  return ratingStatsMap
+}
+
+function enrichItemWithRatings(item, reportType, ratingStatsMap) {
+  const stats = ratingStatsMap ? ratingStatsMap.get(`${reportType}_${item.id}`) : null
+  const count = stats?.count ?? Number(item.ratings_count || 0)
+  const avg = stats && stats.count > 0
+    ? Number((stats.sum / stats.count).toFixed(2))
+    : (item.average_rating != null ? Number(item.average_rating) : null)
+  return {
+    ...item,
+    my_rating: stats?.myRating ?? item.my_rating ?? null,
+    average_rating: avg,
+    ratings_count: count,
+  }
+}
+
 export function useReportsLogic({ currentUserId, userRole, userPermissions, authUserId, userDepartmentId }) {
-  const { user: authUser } = useAuth()
-  const currentAuthId = authUser?.id || authUserId || ''
+  const [fallbackAuthId, setFallbackAuthId] = useState('')
+  const currentAuthId = authUserId || fallbackAuthId || ''
+
+  useEffect(() => {
+    if (!authUserId) {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data?.session?.user?.id) {
+          setFallbackAuthId(data.session.user.id)
+        }
+      }).catch(() => {})
+    }
+  }, [authUserId])
 
   const [toast, setToast] = useState(null)
   const [error, setError] = useState(null)
@@ -53,11 +277,14 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     }
   }, [location?.state?.tab, location?.state?.isClosed])
 
-  // ── CAR & QDDR Reports lists state ─────────────────────────────────────────
-  const [carReports, setCarReports] = useState([])
-  const [loadingCar, setLoadingCar] = useState(false)
-  const [qddrReports, setQddrReports] = useState([])
-  const [loadingQddr, setLoadingQddr] = useState(false)
+  // ── CAR & QDDR Reports lists state (with instant cache hydration) ──────────
+  const hasCachedCars = Array.isArray(reportsMemoryCache.cars) && reportsMemoryCache.authId === currentAuthId
+  const hasCachedQddrs = Array.isArray(reportsMemoryCache.qddrs) && reportsMemoryCache.authId === currentAuthId
+
+  const [rawCarReports, setRawCarReports] = useState(() => (hasCachedCars ? reportsMemoryCache.cars : []))
+  const [loadingCar, setLoadingCar] = useState(() => !hasCachedCars)
+  const [rawQddrReports, setRawQddrReports] = useState(() => (hasCachedQddrs ? reportsMemoryCache.qddrs : []))
+  const [loadingQddr, setLoadingQddr] = useState(() => !hasCachedQddrs)
 
   // ── Detail Modals state ────────────────────────────────────────────────────
   const carDetails = useCARDetails()
@@ -83,210 +310,215 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     [dataState.users]
   )
 
-  // ── Load & Filter CAR and QDDR Reports ────────────────────────────────────
+  // ── Load CAR and QDDR Reports Independently (Active Tab Prioritized!) ──────
   const refreshCarAndQddrLists = useCallback(async () => {
-    setLoadingCar(true)
-    setLoadingQddr(true)
-    try {
-      const [carRes, qddrRes, ratingsRes] = await Promise.all([
-        supabase
-          .from('car_reports')
-          .select('*, audit_schedules(id, title, scheduled_date)')
-          .neq('status', 'deleted')
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('qddr_reports')
-          .select('*')
-          .neq('status', 'deleted')
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('report_ratings')
-          .select('report_type, report_id, user_auth_id, rating')
-      ])
+    const showCarSpinner = !Array.isArray(reportsMemoryCache.cars) || reportsMemoryCache.authId !== currentAuthId
+    const showQddrSpinner = !Array.isArray(reportsMemoryCache.qddrs) || reportsMemoryCache.authId !== currentAuthId
 
-      if (carRes.error) throw carRes.error
-      if (qddrRes.error) throw qddrRes.error
+    if (showCarSpinner) setLoadingCar(true)
+    if (showQddrSpinner) setLoadingQddr(true)
 
-      const allRatings = !ratingsRes.error && Array.isArray(ratingsRes.data) ? ratingsRes.data : []
-      const ratingStatsMap = new Map()
-      for (const row of allRatings) {
-        const key = `${String(row.report_type || '').toUpperCase()}_${row.report_id}`
-        if (!ratingStatsMap.has(key)) {
-          ratingStatsMap.set(key, { sum: 0, count: 0, myRating: null })
-        }
-        const entry = ratingStatsMap.get(key)
-        const val = Number(row.rating)
-        if (val >= 1 && val <= 5) {
-          entry.sum += val
-          entry.count += 1
-          if (currentAuthId && String(row.user_auth_id) === String(currentAuthId)) {
-            entry.myRating = val
+    const ratingsPromise = fetchRatingsFromSupabase(currentAuthId).catch(() => null)
+
+    const runCarPipeline = () =>
+      fetchCarsFromSupabase()
+        .then(async (carsData) => {
+          const currentRatingsMap = reportsMemoryCache.ratingsMap
+          const initialCars = carsData.map(c => enrichItemWithRatings(c, 'CAR', currentRatingsMap))
+          reportsMemoryCache.cars = initialCars
+          reportsMemoryCache.authId = currentAuthId
+          setRawCarReports(initialCars)
+          setLoadingCar(false)
+
+          const freshRatingsMap = await ratingsPromise
+          if (freshRatingsMap) {
+            reportsMemoryCache.ratingsMap = freshRatingsMap
+            const enrichedCars = carsData.map(c => enrichItemWithRatings(c, 'CAR', freshRatingsMap))
+            reportsMemoryCache.cars = enrichedCars
+            setRawCarReports(enrichedCars)
           }
-        }
-      }
-
-      const enrichWithRatings = (item, reportType) => {
-        const stats = ratingStatsMap.get(`${reportType}_${item.id}`)
-        const count = stats?.count ?? Number(item.ratings_count || 0)
-        const avg = stats && stats.count > 0
-          ? Number((stats.sum / stats.count).toFixed(2))
-          : (item.average_rating != null ? Number(item.average_rating) : null)
-        return {
-          ...item,
-          my_rating: stats?.myRating ?? item.my_rating ?? null,
-          average_rating: avg,
-          ratings_count: count,
-        }
-      }
-
-      const normRole = String(userRole || '').trim().toLowerCase()
-      const pagesList = Array.isArray(userPermissions?.pages) ? userPermissions.pages : []
-      const rightsList = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
-      const isCrossDepartmentRole =
-        isAdminRole(userRole) ||
-        ['auditor', 'qa officer', 'quality assurance'].includes(normRole) ||
-        pagesList.includes('audit_tools') ||
-        pagesList.includes('iso') ||
-        rightsList.includes('manage_iso') ||
-        rightsList.includes('edit_delete_report')
-      const isStandardUser = !isCrossDepartmentRole
-      const activeDeptFilterId = formState.reportFilters.departmentId
-      const currentUserObj = (dataState.users || []).find(u => Number(u.id) === Number(currentUserId))
-      const currentUserName = String(currentUserObj?.label || '').split(/\s+[—–-]\s+/)[0].trim().toLowerCase()
-
-      // 1. CAR department scoping & filtering
-      let filteredCars = carRes.data || []
-      if (isStandardUser) {
-        const userDeptName = dataState.departmentNameById.get(String(userDepartmentId))?.toLowerCase()
-        filteredCars = filteredCars.filter(car => {
-          if (String(car.prepared_by_audited_by) === String(currentUserId)) return true
-          if (currentUserName) {
-            const reqName = String(car.requestor || '').split(/\s+[—–-]\s+/)[0].trim().toLowerCase()
-            const recName = String(car.recipient || '').split(/\s+[—–-]\s+/)[0].trim().toLowerCase()
-            if (reqName === currentUserName || recName === currentUserName) return true
-          }
-          if (userDeptName) {
-            return (
-              car.requesting_department?.toLowerCase() === userDeptName ||
-              car.responsible_department?.toLowerCase() === userDeptName
-            )
-          }
-          return false
         })
-      } else if (activeDeptFilterId) {
-        const filterDeptName = dataState.departmentNameById.get(String(activeDeptFilterId))?.toLowerCase()
-        filteredCars = filteredCars.filter(car => {
-          if (filterDeptName) {
-            return (
-              car.requesting_department?.toLowerCase() === filterDeptName ||
-              car.responsible_department?.toLowerCase() === filterDeptName
-            )
-          }
-          return false
+        .catch(() => {
+          setLoadingCar(false)
+          setToast({ message: 'We could not load the CAR list. Please refresh the page.', type: 'error' })
         })
-      }
 
-      if (formState.reportFilters?.status) {
-        const targetStatus = String(formState.reportFilters.status).trim().toLowerCase()
-        filteredCars = filteredCars.filter(car => String(car.status || '').trim().toLowerCase() === targetStatus)
-      }
-      if (formState.reportFilters?.date) {
-        filteredCars = filteredCars.filter(car => String(car.created_at || '').startsWith(formState.reportFilters.date))
-      }
-      if (formState.reportFilters?.productTypeId) {
-        const targetPt = (dataState.productTypes || []).find(pt => String(pt.id) === String(formState.reportFilters.productTypeId))
-        if (targetPt) {
-          const allowedNames = new Set(
-            (targetPt.products || [])
-              .map(p => String(p.product_name || '').trim().toLowerCase())
-              .filter(Boolean)
+    const runQddrPipeline = () =>
+      fetchQddrsFromSupabase()
+        .then(async (qddrsData) => {
+          const currentRatingsMap = reportsMemoryCache.ratingsMap
+          const initialQddrs = qddrsData.map(q => enrichItemWithRatings(q, 'QDDR', currentRatingsMap))
+          reportsMemoryCache.qddrs = initialQddrs
+          reportsMemoryCache.authId = currentAuthId
+          setRawQddrReports(initialQddrs)
+          setLoadingQddr(false)
+
+          const freshRatingsMap = await ratingsPromise
+          if (freshRatingsMap) {
+            reportsMemoryCache.ratingsMap = freshRatingsMap
+            const enrichedQddrs = qddrsData.map(q => enrichItemWithRatings(q, 'QDDR', freshRatingsMap))
+            reportsMemoryCache.qddrs = enrichedQddrs
+            setRawQddrReports(enrichedQddrs)
+          }
+        })
+        .catch(() => {
+          setLoadingQddr(false)
+          setToast({ message: 'We could not load the QDDR list. Please refresh the page.', type: 'error' })
+        })
+
+    // Prioritize CAR download first so QDDR evidence_urls never steals CAR bandwidth
+    await runCarPipeline()
+    await runQddrPipeline()
+  }, [currentAuthId])
+
+  // ── Instant In-Memory Scoping & Filtering (No DB Re-fetch on Filter Change) ─
+  const { carReports, qddrReports } = useMemo(() => {
+    const normRole = String(userRole || '').trim().toLowerCase()
+    const pagesList = Array.isArray(userPermissions?.pages) ? userPermissions.pages : []
+    const rightsList = Array.isArray(userPermissions?.rights) ? userPermissions.rights : []
+    const isCrossDepartmentRole =
+      isAdminRole(userRole) ||
+      ['auditor', 'qa officer', 'quality assurance'].includes(normRole) ||
+      pagesList.includes('audit_tools') ||
+      pagesList.includes('iso') ||
+      rightsList.includes('manage_iso') ||
+      rightsList.includes('edit_delete_report')
+    const isStandardUser = !isCrossDepartmentRole
+    const activeDeptFilterId = formState.reportFilters.departmentId
+    const currentUserObj = (dataState.users || []).find(u => Number(u.id) === Number(currentUserId))
+    const currentUserName = String(currentUserObj?.label || '').split(/\s+[—–-]\s+/)[0].trim().toLowerCase()
+
+    // 1. CAR department scoping & filtering
+    let filteredCars = rawCarReports
+    if (isStandardUser) {
+      const userDeptName = dataState.departmentNameById.get(String(userDepartmentId))?.toLowerCase()
+      filteredCars = filteredCars.filter(car => {
+        if (String(car.prepared_by_audited_by) === String(currentUserId)) return true
+        if (currentUserName) {
+          const reqName = String(car.requestor || '').split(/\s+[—–-]\s+/)[0].trim().toLowerCase()
+          const recName = String(car.recipient || '').split(/\s+[—–-]\s+/)[0].trim().toLowerCase()
+          if (reqName === currentUserName || recName === currentUserName) return true
+        }
+        if (userDeptName) {
+          return (
+            car.requesting_department?.toLowerCase() === userDeptName ||
+            car.responsible_department?.toLowerCase() === userDeptName
           )
-          const ptNameLower = String(targetPt.product_type_name || '').trim().toLowerCase()
-          filteredCars = filteredCars.filter(car => {
-            const carProd = String(car.product_material_name || '').trim().toLowerCase()
-            const carModel = String(car.model_type || '').trim().toLowerCase()
-            if (!carProd && !carModel) return false
-            return allowedNames.has(carProd) ||
-                   allowedNames.has(carModel) ||
-                   (ptNameLower && carProd.includes(ptNameLower)) ||
-                   (ptNameLower && carModel.includes(ptNameLower))
-          })
         }
-      }
-      if (formState.reportFilters?.productMaterialName) {
-        const targetProd = String(formState.reportFilters.productMaterialName).trim().toLowerCase()
+        return false
+      })
+    } else if (activeDeptFilterId) {
+      const filterDeptName = dataState.departmentNameById.get(String(activeDeptFilterId))?.toLowerCase()
+      filteredCars = filteredCars.filter(car => {
+        if (filterDeptName) {
+          return (
+            car.requesting_department?.toLowerCase() === filterDeptName ||
+            car.responsible_department?.toLowerCase() === filterDeptName
+          )
+        }
+        return false
+      })
+    }
+
+    if (formState.reportFilters?.status) {
+      const targetStatus = String(formState.reportFilters.status).trim().toLowerCase()
+      filteredCars = filteredCars.filter(car => String(car.status || '').trim().toLowerCase() === targetStatus)
+    }
+    if (formState.reportFilters?.date) {
+      filteredCars = filteredCars.filter(car => String(car.created_at || '').startsWith(formState.reportFilters.date))
+    }
+    if (formState.reportFilters?.productTypeId) {
+      const targetPt = (dataState.productTypes || []).find(pt => String(pt.id) === String(formState.reportFilters.productTypeId))
+      if (targetPt) {
+        const allowedNames = new Set(
+          (targetPt.products || [])
+            .map(p => String(p.product_name || '').trim().toLowerCase())
+            .filter(Boolean)
+        )
+        const ptNameLower = String(targetPt.product_type_name || '').trim().toLowerCase()
         filteredCars = filteredCars.filter(car => {
           const carProd = String(car.product_material_name || '').trim().toLowerCase()
           const carModel = String(car.model_type || '').trim().toLowerCase()
-          return carProd.includes(targetProd) || carModel.includes(targetProd)
+          if (!carProd && !carModel) return false
+          return allowedNames.has(carProd) ||
+                 allowedNames.has(carModel) ||
+                 (ptNameLower && carProd.includes(ptNameLower)) ||
+                 (ptNameLower && carModel.includes(ptNameLower))
         })
       }
-      setCarReports(filteredCars.map(car => enrichWithRatings(car, 'CAR')))
+    }
+    if (formState.reportFilters?.productMaterialName) {
+      const targetProd = String(formState.reportFilters.productMaterialName).trim().toLowerCase()
+      filteredCars = filteredCars.filter(car => {
+        const carProd = String(car.product_material_name || '').trim().toLowerCase()
+        const carModel = String(car.model_type || '').trim().toLowerCase()
+        return carProd.includes(targetProd) || carModel.includes(targetProd)
+      })
+    }
 
-      // 2. QDDR department scoping & filtering
-      let filteredQddrs = qddrRes.data || []
-      if (isStandardUser) {
-        const userDeptName = dataState.departmentNameById.get(String(userDepartmentId))?.toLowerCase()
-        filteredQddrs = filteredQddrs.filter(q => {
-          if (
-            String(q.reported_by) === String(currentUserId) ||
-            String(q.leader) === String(currentUserId) ||
-            String(q.approved_by) === String(currentUserId) ||
-            String(q.noted_by) === String(currentUserId)
-          ) {
-            return true
-          }
-          if (userDeptName && q.issuing_department) {
-            return q.issuing_department.toLowerCase() === userDeptName
-          }
-          return false
-        })
-      } else if (activeDeptFilterId) {
-        const filterDeptName = dataState.departmentNameById.get(String(activeDeptFilterId))?.toLowerCase()
-        filteredQddrs = filteredQddrs.filter(q => {
-          if (filterDeptName && q.issuing_department) {
-            return q.issuing_department.toLowerCase() === filterDeptName
-          }
-          return false
-        })
-      }
-
-      if (formState.reportFilters?.status) {
-        const targetStatus = String(formState.reportFilters.status).trim().toLowerCase()
-        filteredQddrs = filteredQddrs.filter(q => String(q.status || '').trim().toLowerCase() === targetStatus)
-      }
-      if (formState.reportFilters?.date) {
-        filteredQddrs = filteredQddrs.filter(q => String(q.created_at || '').startsWith(formState.reportFilters.date))
-      }
-      if (formState.reportFilters?.productTypeId) {
-        const targetPt = (dataState.productTypes || []).find(pt => String(pt.id) === String(formState.reportFilters.productTypeId))
-        if (targetPt) {
-          const allowedNames = (targetPt.products || [])
-            .map(p => String(p.product_name || '').trim().toLowerCase())
-            .filter(Boolean)
-          const ptNameLower = String(targetPt.product_type_name || '').trim().toLowerCase()
-          filteredQddrs = filteredQddrs.filter(q => {
-            const qDesc = String(q.material_description || '').trim().toLowerCase()
-            if (!qDesc) return false
-            return allowedNames.some(prodName => qDesc.includes(prodName)) || (ptNameLower && qDesc.includes(ptNameLower))
-          })
+    // 2. QDDR department scoping & filtering
+    let filteredQddrs = rawQddrReports
+    if (isStandardUser) {
+      const userDeptName = dataState.departmentNameById.get(String(userDepartmentId))?.toLowerCase()
+      filteredQddrs = filteredQddrs.filter(q => {
+        if (
+          String(q.reported_by) === String(currentUserId) ||
+          String(q.leader) === String(currentUserId) ||
+          String(q.approved_by) === String(currentUserId) ||
+          String(q.noted_by) === String(currentUserId)
+        ) {
+          return true
         }
+        if (userDeptName && q.issuing_department) {
+          return q.issuing_department.toLowerCase() === userDeptName
+        }
+        return false
+      })
+    } else if (activeDeptFilterId) {
+      const filterDeptName = dataState.departmentNameById.get(String(activeDeptFilterId))?.toLowerCase()
+      filteredQddrs = filteredQddrs.filter(q => {
+        if (filterDeptName && q.issuing_department) {
+          return q.issuing_department.toLowerCase() === filterDeptName
+        }
+        return false
+      })
+    }
+
+    if (formState.reportFilters?.status) {
+      const targetStatus = String(formState.reportFilters.status).trim().toLowerCase()
+      filteredQddrs = filteredQddrs.filter(q => String(q.status || '').trim().toLowerCase() === targetStatus)
+    }
+    if (formState.reportFilters?.date) {
+      filteredQddrs = filteredQddrs.filter(q => String(q.created_at || '').startsWith(formState.reportFilters.date))
+    }
+    if (formState.reportFilters?.productTypeId) {
+      const targetPt = (dataState.productTypes || []).find(pt => String(pt.id) === String(formState.reportFilters.productTypeId))
+      if (targetPt) {
+        const allowedNames = (targetPt.products || [])
+          .map(p => String(p.product_name || '').trim().toLowerCase())
+          .filter(Boolean)
+        const ptNameLower = String(targetPt.product_type_name || '').trim().toLowerCase()
+        filteredQddrs = filteredQddrs.filter(q => {
+          const qDesc = String(q.material_description || '').trim().toLowerCase()
+          if (!qDesc) return false
+          return allowedNames.some(prodName => qDesc.includes(prodName)) || (ptNameLower && qDesc.includes(ptNameLower))
+        })
       }
-      if (formState.reportFilters?.productMaterialName) {
-        const targetProd = String(formState.reportFilters.productMaterialName).trim().toLowerCase()
-        filteredQddrs = filteredQddrs.filter(q =>
-          String(q.material_description || '').trim().toLowerCase().includes(targetProd)
-        )
-      }
-      setQddrReports(filteredQddrs.map(q => enrichWithRatings(q, 'QDDR')))
-    } catch (err) {
-      setToast({ message: 'We could not load the CAR/QDDR lists. Please refresh the page.', type: 'error' })
-    } finally {
-      setLoadingCar(false)
-      setLoadingQddr(false)
+    }
+    if (formState.reportFilters?.productMaterialName) {
+      const targetProd = String(formState.reportFilters.productMaterialName).trim().toLowerCase()
+      filteredQddrs = filteredQddrs.filter(q =>
+        String(q.material_description || '').trim().toLowerCase().includes(targetProd)
+      )
+    }
+
+    return {
+      carReports: filteredCars,
+      qddrReports: filteredQddrs
     }
   }, [
-    currentAuthId,
+    rawCarReports,
+    rawQddrReports,
     currentUserId,
     userRole,
     userPermissions,
@@ -303,10 +535,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
 
   useEffect(() => {
     if (currentAuthId) {
-      const timer = setTimeout(() => {
-        refreshCarAndQddrLists()
-      }, 0)
-      return () => clearTimeout(timer)
+      refreshCarAndQddrLists()
     }
   }, [currentAuthId, refreshCarAndQddrLists])
 
@@ -379,7 +608,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
 
       modalsState.closeCARModal()
       carFormState.resetForm()
-      await dataState.loadLookupData()
+      dataState.loadLookupData({ force: true })
       await refreshCarAndQddrLists()
       setActiveTab('car')
       setIsClosedMode(false)
@@ -473,7 +702,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
 
       modalsState.closeQDDRModal()
       qddrFormState.resetForm()
-      await dataState.loadLookupData()
+      dataState.loadLookupData({ force: true })
       await refreshCarAndQddrLists()
       setActiveTab('qddr')
       setIsClosedMode(false)
@@ -590,7 +819,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         average_rating: res?.average_rating ?? rating,
         ratings_count: res?.ratings_count ?? 1
       }
-      setCarReports(prev =>
+      setRawCarReports(prev =>
         prev.map(c => (Number(c.id) === Number(carId) ? { ...c, ...updatedFields } : c))
       )
       if (carDetails.selectedCar && Number(carDetails.selectedCar.id) === Number(carId)) {
@@ -612,7 +841,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         average_rating: res?.average_rating ?? rating,
         ratings_count: res?.ratings_count ?? 1
       }
-      setQddrReports(prev =>
+      setRawQddrReports(prev =>
         prev.map(q => (Number(q.id) === Number(qddrId) ? { ...q, ...updatedFields } : q))
       )
       if (selectedQddr && Number(selectedQddr.id) === Number(qddrId)) {

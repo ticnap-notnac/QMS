@@ -33,22 +33,7 @@ export function useDCCISO() {
   const loadActiveStandards = useCallback(async () => {
     setLoadingStandards(true)
     try {
-      const standardsData = await dccService.fetchActiveStandards()
-
-      const enriched = await Promise.all(
-        standardsData.map(async (standard) => {
-          const groups = await dccService.fetchClauseGroupsForStandard(standard.id)
-          const groupIds = (groups ?? []).map((g) => g.id)
-
-          let clauseCount = 0
-          if (groupIds.length) {
-            clauseCount = await dccService.fetchClausesCount(groupIds)
-          }
-
-          return { ...standard, clauseCount }
-        }),
-      )
-
+      const enriched = await dccService.fetchActiveStandardsWithClauseCounts()
       setStandards(enriched)
     } catch (err) {
       console.error('[useDCCISO] loadActiveStandards:', err?.message ?? err)

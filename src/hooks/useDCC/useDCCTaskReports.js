@@ -88,18 +88,20 @@ export function useDCCTaskReports({ carDetails } = {}) {
   const loadClosedAudits = useCallback(async () => {
     setLoadingAudit(true)
     try {
-      const runs = await dccService.fetchAuditRuns()
+      const [runs, schedulesData, standardsData, auditorsData] = await Promise.all([
+        dccService.fetchAuditRuns(),
+        dccService.fetchAuditSchedules(),
+        dccService.fetchStandardsForAuditMapping(),
+        dccService.fetchAuditorsForAuditMapping()
+      ])
+
       if (!runs || runs.length === 0) {
         setAuditReports([])
         return
       }
 
       const scheduleIds = runs.map(r => r.schedule_id).filter(Boolean)
-      const schedulesData = await dccService.fetchAuditSchedules()
       const filteredSchedules = (schedulesData || []).filter(s => scheduleIds.includes(s.id))
-
-      const standardsData = await dccService.fetchStandardsForAuditMapping()
-      const auditorsData = await dccService.fetchAuditorsForAuditMapping()
       
       const runIds = runs.map(r => r.id)
       const { data: resultsData } = await supabase
@@ -153,9 +155,11 @@ export function useDCCTaskReports({ carDetails } = {}) {
   const loadAuditSchedules = useCallback(async () => {
     setLoadingAuditSchedules(true)
     try {
-      const schedulesData = await dccService.fetchAuditSchedules()
-      const standardsData = await dccService.fetchStandardsForAuditMapping()
-      const auditorsData = await dccService.fetchAuditorsForAuditMapping()
+      const [schedulesData, standardsData, auditorsData] = await Promise.all([
+        dccService.fetchAuditSchedules(),
+        dccService.fetchStandardsForAuditMapping(),
+        dccService.fetchAuditorsForAuditMapping()
+      ])
 
       const mapped = (schedulesData || []).map(schedule => {
         const std = (standardsData || []).find(s => s.id === schedule.standard_id)

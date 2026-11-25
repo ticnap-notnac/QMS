@@ -21,6 +21,7 @@ import { AlertCircle, Shield, TrendingUp, BarChart2, Clock, MoreHorizontal, Cale
 // Custom tooltips for nice monotone popup displays
 import './Dashboard.css'
 import OccurringIssuesSummary from './Dashboard/OccurringIssuesSummary'
+import { prefetchReportsInBackground } from '@/hooks/useReportsLogic'
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -196,6 +197,10 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
       } else {
         setLatestActivities([])
       }
+      // Warm Reports tab cache in the background after Overview finishes rendering
+      setTimeout(() => {
+        prefetchReportsInBackground()
+      }, 300)
     } catch (err) {
       console.error('Error fetching dashboard data:', err)
       setError('We could not load your dashboard. Please refresh the page to try again.')
