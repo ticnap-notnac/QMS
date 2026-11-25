@@ -773,6 +773,9 @@ export async function updateCarReport({ carId, body = {}, actorAuthId }) {
     'control_no',
     'details_of_nonconformance',
     'type_of_nonconformance',
+    'root_cause_analysis',
+    'corrective_action',
+    'preventive_action',
   ]
 
   for (const key of stringOrNullKeys) {
@@ -790,6 +793,20 @@ export async function updateCarReport({ carId, body = {}, actorAuthId }) {
       : Promise.resolve(undefined),
   ])
 
+  // Support camelCase aliases from client payloads
+  if (body.rootCauseAnalysis !== undefined && payload.root_cause_analysis === undefined) {
+    payload.root_cause_analysis = body.rootCauseAnalysis
+  }
+  if (body.correctiveAction !== undefined && payload.corrective_action === undefined) {
+    payload.corrective_action = body.correctiveAction
+  }
+  if (body.preventiveAction !== undefined && payload.preventive_action === undefined) {
+    payload.preventive_action = body.preventiveAction
+  }
+  if (body.targetVerificationDate !== undefined && body.target_verification_date === undefined) {
+    payload.target_verification_date = body.targetVerificationDate || null
+  }
+
   if (body.type_of_nonconformance !== undefined) {
     payload.type_of_nonconformance = resolvedType
   }
@@ -798,7 +815,7 @@ export async function updateCarReport({ carId, body = {}, actorAuthId }) {
     payload.product_material_name = resolvedProduct
   }
 
-  const dateKeys = ['date', 'request_date']
+  const dateKeys = ['date', 'request_date', 'target_verification_date']
   for (const key of dateKeys) {
     if (body[key] !== undefined) {
       payload[key] = body[key] ? body[key] : null
@@ -818,6 +835,20 @@ export async function updateCarReport({ carId, body = {}, actorAuthId }) {
 
   if (body.affected_quantity !== undefined) {
     payload.affected_quantity = body.affected_quantity ? parseInt(body.affected_quantity, 10) : null
+  }
+
+  // If CAPA plan is provided on an open CAR, transition to under_verification
+  if (payload.root_cause_analysis && payload.corrective_action && payload.preventive_action) {
+    const { data: existingCar } = await supabase
+      .from('car_reports')
+      .select('id, status')
+      .eq('id', carId)
+      .maybeSingle()
+
+    if (existingCar && String(existingCar.status || '').toLowerCase() === CAR_STATUS.OPEN) {
+      payload.status = CAR_STATUS.UNDER_VERIFICATION
+      payload.capa_submitted_at = new Date().toISOString()
+    }
   }
 
   let data = null

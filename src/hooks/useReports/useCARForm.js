@@ -21,6 +21,11 @@ export function useCARForm() {
     affected_quantity: '',
     details_of_nonconformance: '',
     request_date: '',
+    // CAPA Plan fields (for editing / updating CAR)
+    root_cause_analysis: '',
+    corrective_action: '',
+    preventive_action: '',
+    target_verification_date: '',
     // ISO Clause linkage
     linked_clause_ids: [],    // confirmed clause IDs to be saved
     suggested_clauses: [],    // AI-returned suggestions shown to user
@@ -96,6 +101,10 @@ export function useCARForm() {
       control_no: existingCar.control_no || '',
       affected_quantity: existingCar.affected_quantity || '',
       details_of_nonconformance: existingCar.details_of_nonconformance || '',
+      root_cause_analysis: existingCar.root_cause_analysis || '',
+      corrective_action: existingCar.corrective_action || '',
+      preventive_action: existingCar.preventive_action || '',
+      target_verification_date: existingCar.target_verification_date ? existingCar.target_verification_date.split('T')[0] : '',
       linked_clause_ids: existingCar.linked_clause_ids || [],
       suggested_clauses: existingCar.suggested_clauses || []
     })

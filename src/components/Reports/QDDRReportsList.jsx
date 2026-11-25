@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Edit2, Trash2, ChevronLeft, ChevronRight, Download, FileJson, CheckSquare } from 'lucide-react'
+import { Edit2, Trash2, ChevronLeft, ChevronRight, Download, FileJson, CheckSquare, Search, X } from 'lucide-react'
 import QDDRReportCard from '../Cards/QDDRReportCard.jsx'
 import StarRatingAction from '../UI/StarRatingAction.jsx'
 import { exportClosedQddrsToFile } from '@/services/integrationService'
@@ -18,11 +18,43 @@ export default function QDDRReportsList({
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
   const [selectedIds, setSelectedIds] = useState([])
+  const [searchQuery, setSearchQuery] = useState('')
 
   const closedQddrs = useMemo(
     () => (qddrReports || []).filter(q => String(q?.status || '').trim().toLowerCase() === 'closed'),
     [qddrReports]
   )
+
+  const filteredQddrs = useMemo(() => {
+    if (!searchQuery.trim()) return qddrReports || []
+    const q = searchQuery.trim().toLowerCase()
+    return (qddrReports || []).filter(qddr => {
+      const ref = String(qddr.reference_no || '').toLowerCase()
+      const loc = String(qddr.location || '').toLowerCase()
+      const po = String(qddr.po_reference || '').toLowerCase()
+      const mat = String(qddr.material_description || '').toLowerCase()
+      const prodName = String(qddr.product_material_name || '').toLowerCase()
+      const prodType = String(qddr.product_type_name || '').toLowerCase()
+      const reason = String(qddr.reason_of_discrepancy || qddr.defect_type || '').toLowerCase()
+      const desc = String(qddr.description || '').toLowerCase()
+      const status = String(qddr.status || '').toLowerCase()
+      const driver = String(qddr.tracker_driver || '').toLowerCase()
+      const dateStr = qddr.date ? new Date(qddr.date).toLocaleDateString().toLowerCase() : ''
+      const qtyStr = String(qddr.qty || '')
+      return ref.includes(q) ||
+        loc.includes(q) ||
+        po.includes(q) ||
+        mat.includes(q) ||
+        prodName.includes(q) ||
+        prodType.includes(q) ||
+        reason.includes(q) ||
+        desc.includes(q) ||
+        status.includes(q) ||
+        driver.includes(q) ||
+        dateStr.includes(q) ||
+        qtyStr === q
+    })
+  }, [qddrReports, searchQuery])
 
   useEffect(() => {
     const validClosedSet = new Set(closedQddrs.map(q => q.id))
@@ -154,17 +186,17 @@ export default function QDDRReportsList({
   }
 
   useEffect(() => {
-    const maxPage = Math.max(1, Math.ceil((qddrReports?.length || 0) / itemsPerPage))
+    const maxPage = Math.max(1, Math.ceil((filteredQddrs?.length || 0) / itemsPerPage))
     if (currentPage > maxPage) {
       setCurrentPage(1)
     }
-  }, [qddrReports, itemsPerPage, currentPage])
+  }, [filteredQddrs, itemsPerPage, currentPage])
 
-  const totalItems = qddrReports?.length || 0
+  const totalItems = filteredQddrs?.length || 0
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage))
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = Math.min(startIndex + itemsPerPage, totalItems)
-  const paginatedQddrs = (qddrReports || []).slice(startIndex, endIndex)
+  const paginatedQddrs = (filteredQddrs || []).slice(startIndex, endIndex)
   if (isLoading) {
     return (
       <div className="reports-card">
@@ -290,7 +322,37 @@ export default function QDDRReportsList({
       {renderMultiSelectExportBar()}
       <div className="glass-card-dcc reports-list-card-container">
         <div className="reports-table-instruction-banner">
-          <span>💡 Click any row to view complete details, photos, and discrepancy actions.</span>
+          <div className="reports-table-instruction-text">
+            <span>💡 Click any row to view complete details, photos, and discrepancy actions.</span>
+          </div>
+          <div className="reports-table-search-box">
+            <Search size={15} className="reports-table-search-icon" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setCurrentPage(1)
+              }}
+              placeholder="Search QDDR table (Ref, PO, Material...)"
+              className="reports-table-search-input"
+              aria-label="Search QDDR table"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('')
+                  setCurrentPage(1)
+                }}
+                className="reports-table-search-clear"
+                title="Clear search"
+                aria-label="Clear search"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
         </div>
         <div className="reports-table-scroll-wrap">
           <table className="iso-table">
@@ -317,7 +379,38 @@ export default function QDDRReportsList({
               </tr>
             </thead>
             <tbody>
-              {paginatedQddrs.map((qddr) => {
+              {paginatedQddrs.length === 0 ? (
+                <tr>
+                  <td colSpan={(hasClosedInList ? 1 : 0) + 6 + (showActionsCol ? 1 : 0)} style={{ textAlign: 'center', padding: '36px 16px', color: '#64748b' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <Search size={26} style={{ color: '#94a3b8' }} />
+                      <span style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>
+                        No QDDR reports matching "{searchQuery}"
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery('')
+                          setCurrentPage(1)
+                        }}
+                        style={{
+                          marginTop: '4px',
+                          fontSize: '12px',
+                          color: '#0891b2',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          fontWeight: 600
+                        }}
+                      >
+                        Clear search
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                paginatedQddrs.map((qddr) => {
                 const statusClean = String(qddr.status || '').trim().toLowerCase()
                 const isClosed = statusClean === 'closed'
                 const isSelected = selectedIds.includes(qddr.id)
@@ -406,7 +499,7 @@ export default function QDDRReportsList({
                     )}
                   </tr>
                 )
-              })}
+              }))}
             </tbody>
           </table>
         </div>
@@ -416,6 +509,11 @@ export default function QDDRReportsList({
           <div className="reports-table-pagination-info">
             <span>
               Showing <strong>{totalItems === 0 ? 0 : startIndex + 1}</strong> to <strong>{endIndex}</strong> of <strong>{totalItems}</strong> reports
+              {searchQuery.trim() && (qddrReports?.length || 0) !== totalItems && (
+                <span style={{ color: '#0891b2', marginLeft: '6px', fontWeight: 500, fontSize: '12px' }}>
+                  (filtered from {qddrReports?.length || 0})
+                </span>
+              )}
             </span>
             <div className="reports-feed-per-page">
               <label>Per page:</label>

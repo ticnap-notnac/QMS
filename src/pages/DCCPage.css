@@ -826,6 +826,8 @@ main.page-root .dcc-glass-main-card .dcc-center-pane,
 .dcc-breadcrumbs-header {
   display: flex !important;
   align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
   gap: 12px !important;
   margin-bottom: 20px !important;
   padding-bottom: 12px !important;
@@ -1048,6 +1050,129 @@ main.page-root .dcc-glass-main-card .dcc-explorer-viewport .flex-column.full-hei
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   line-height: 1.3 !important;
+}
+
+/* Document Tiles View */
+.dcc-document-tiles {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+  gap: 12px !important;
+  margin-top: 16px !important;
+}
+
+.dcc-tile-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 12px 14px !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.dcc-tile-card:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07) !important;
+}
+
+.dcc-tile-card.active {
+  border-color: #0891b2 !important;
+  background: #f0fdfa !important;
+  box-shadow: 0 0 0 1.5px #0891b2 !important;
+}
+
+/* Document List View */
+.dcc-document-list {
+  display: flex !important;
+  flex-direction: column !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  overflow-x: auto !important;
+  margin-top: 16px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+
+.dcc-list-header-row {
+  display: flex !important;
+  align-items: center !important;
+  padding: 10px 16px !important;
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  min-width: 580px !important;
+}
+
+.dcc-list-row {
+  display: flex !important;
+  align-items: center !important;
+  padding: 10px 16px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  cursor: pointer !important;
+  transition: background 0.15s ease !important;
+  font-size: 13px !important;
+  color: #1e293b !important;
+  min-width: 580px !important;
+}
+
+.dcc-list-row:last-child {
+  border-bottom: none !important;
+}
+
+.dcc-list-row:hover {
+  background: #f8fafc !important;
+}
+
+.dcc-list-row.active {
+  background: #f0fdfa !important;
+  border-left: 3px solid #0891b2 !important;
+}
+
+/* View Mode Selector Button Styling */
+.dcc-view-mode-selector {
+  display: inline-flex !important;
+  align-items: center !important;
+  background: #f1f5f9 !important;
+  padding: 3px !important;
+  border-radius: 8px !important;
+  gap: 2px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.dcc-view-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 5px 10px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  color: #64748b !important;
+  transition: all 0.15s ease !important;
+}
+
+.dcc-view-btn:hover {
+  color: #0f172a !important;
+}
+
+.dcc-view-btn.active {
+  background: #ffffff !important;
+  color: #0891b2 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* Right Details Panel */

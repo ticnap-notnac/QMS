@@ -221,7 +221,7 @@ export function ISOTemplatesModal({
               </button>
             )}
             <h3 className="iso-submodal-title" style={{ margin: 0, fontSize: '18px', color: '#1A435A' }}>
-              {selectedTemplate ? selectedTemplate.title : 'ISO Audit Templates'}
+              {selectedTemplate ? selectedTemplate.title : 'Audit Checklist Templates'}
             </h3>
           </div>
           <button

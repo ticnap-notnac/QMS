@@ -22,7 +22,6 @@ export default function UsersTable({
             <th>Role</th>
             <th>Department</th>
             <th className="text-center">Site</th>
-            <th>Contact</th>
             <th style={{ width: '10%' }} className="text-center">STATUS</th>
             <th style={{ width: '12%' }} className="text-center">ACTION</th>
           </tr>
@@ -49,7 +48,6 @@ export default function UsersTable({
                     {siteLabel}
                   </span>
                 </td>
-                <td>{user.contact_number || '-'}</td>
                 <td className="text-center">
                   <span className={`status-badge ${user.status === 'ACTIVE' ? 'status-active' :
                     user.status === 'DEACTIVATED' ? 'status-deactivated' :

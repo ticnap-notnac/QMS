@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import Toast from '../components/UI/Toast.jsx'
 import CARModal from '../components/Modals/CARModal.jsx'
 import { AlertTriangle, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react'
@@ -10,6 +11,7 @@ import './ISOPage.css'
 import { isAdminRole } from '@/utils/roleUtils.js'
 
 export default function ISOPage({ userRole, userPermissions, userName }) {
+  const navigate = useNavigate()
   const hasExplicitRights = Array.isArray(userPermissions?.rights)
   const rights = hasExplicitRights ? userPermissions.rights : []
   const canManageIso = isAdminRole(userRole) || (hasExplicitRights ? rights.includes('manage_iso') : String(userRole || '').toLowerCase() === 'auditor')
@@ -37,7 +39,7 @@ export default function ISOPage({ userRole, userPermissions, userName }) {
             {canManageIso && (
               <div className="iso-overview-header-buttons" style={{ display: 'flex', gap: '12px' }}>
                 <button type="button" className="btn-metric-card" style={{ background: '#090d16', color: '#fff' }} onClick={fetchActiveModules}>ISO Modules</button>
-                <button type="button" className="btn-metric-card" style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1' }} onClick={fetchAndOpenTemplates}>ISO Templates</button>
+                <button type="button" className="btn-metric-card" style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1' }} onClick={() => navigate('/audit-tools?tab=Templates')}>Audit Checklist Templates</button>
               </div>
             )}
           </div>

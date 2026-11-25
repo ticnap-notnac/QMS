@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { isAdminRole } from '../utils/roleUtils.js'
-import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X, Calendar, SlidersHorizontal, Trash2, RotateCcw, RefreshCw, Clock, AlertTriangle, FileCheck, Layers } from 'lucide-react'
+import { Folder, FileText, Search, ArrowLeft, AlertCircle, ChevronDown, ChevronRight, Download, Terminal, ShieldAlert, Share2, Settings, File, Eye, X, Calendar, SlidersHorizontal, Trash2, RotateCcw, RefreshCw, Clock, AlertTriangle, FileCheck, Layers, LayoutGrid, LayoutList, List } from 'lucide-react'
 import SystemLogsPanel from './Panels/SystemLogsPanel.jsx'
 import { supabase } from '../utils/supabase'
 import html2pdf from 'html2pdf.js'
@@ -167,6 +167,22 @@ export default function DCCFolderContent({
   const [shareSuccess, setShareSuccess] = useState(false)
   const [showFilterMenu, setShowFilterMenu] = useState(false)
   const [sortOrder, setSortOrder] = useState('newest')
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      return localStorage.getItem('dcc_view_mode') || 'grid'
+    } catch {
+      return 'grid'
+    }
+  })
+
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode)
+    try {
+      localStorage.setItem('dcc_view_mode', mode)
+    } catch {
+      // Ignore storage errors
+    }
+  }
   const [productTypesList, setProductTypesList] = useState([])
   const [productsList, setProductsList] = useState([])
   const [selectedProductTypeId, setSelectedProductTypeId] = useState('')
@@ -334,6 +350,16 @@ export default function DCCFolderContent({
     }, 100)
   }
 
+  const getItemDetails = (item, reportType) => {
+    const title = item.reference_no || item.title || `${reportType}-${item.id ? String(item.id).slice(0, 6) : ''}`
+    const subtitle = item.material_description || item.product_material_name || item.product_type_name || item.issue_type || item.type_of_nonconformance || item.description || ''
+    const dateStr = item.date_of_incident || item.occurrence_date || item.audit_date || item.scheduled_date || item.date || item.created_at
+    const formattedDate = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''
+    const status = item.status || 'Active'
+    const secondary = item.defect_type || item.type_of_nonconformance || item.severity || item.issue_type || ''
+    return { title, subtitle, date: formattedDate, status, secondary }
+  }
+
   const renderGroupedReports = (reports, reportType) => {
     if (!reports || !reports.length) {
       return <div className="empty-state">No {reportType} reports found.</div>
@@ -348,43 +374,141 @@ export default function DCCFolderContent({
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
+              justifyContent: 'space-between',
               paddingBottom: '8px',
               borderBottom: '2px solid #e2e8f0',
               marginBottom: '16px'
             }}>
-              <Calendar size={18} color="#0f172a" />
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-                {group.label}
-              </h3>
-              <span style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                padding: '2px 10px',
-                borderRadius: '12px',
-                background: '#f1f5f9',
-                color: '#64748b'
-              }}>
-                {group.items.length} {group.items.length === 1 ? 'file' : 'files'}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Calendar size={18} color="#0f172a" />
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                  {group.label}
+                </h3>
+                <span style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '2px 10px',
+                  borderRadius: '12px',
+                  background: '#f1f5f9',
+                  color: '#64748b'
+                }}>
+                  {group.items.length} {group.items.length === 1 ? 'file' : 'files'}
+                </span>
+              </div>
             </div>
 
-            <div className="dcc-document-grid">
-              {group.items.map((item) => (
-                <div
-                  key={item.id}
-                  className={`dcc-document-card ${selectedDocument?.id === item.id ? 'active' : ''}`}
-                  onClick={() => setSelectedDocument({ ...item, _type: reportType })}
-                >
-                  <div className="document-card-icon-wrap doc">
-                    <FileText size={24} />
+            {/* Grid View */}
+            {viewMode === 'grid' && (
+              <div className="dcc-document-grid">
+                {group.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`dcc-document-card ${selectedDocument?.id === item.id ? 'active' : ''}`}
+                    onClick={() => setSelectedDocument({ ...item, _type: reportType })}
+                    title={item.reference_no || item.title}
+                  >
+                    <div className="document-card-icon-wrap doc">
+                      <FileText size={24} />
+                    </div>
+                    <span className="document-card-label">
+                      {item.reference_no || item.title || `${reportType}-${item.id ? String(item.id).slice(0, 6) : ''}`}
+                    </span>
                   </div>
-                  <span className="document-card-label">
-                    {item.reference_no || item.title || `${reportType}-${item.id.slice(0, 6)}`}
-                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Tiles View */}
+            {viewMode === 'tiles' && (
+              <div className="dcc-document-tiles">
+                {group.items.map((item) => {
+                  const details = getItemDetails(item, reportType)
+                  return (
+                    <div
+                      key={item.id}
+                      className={`dcc-tile-card ${selectedDocument?.id === item.id ? 'active' : ''}`}
+                      onClick={() => setSelectedDocument({ ...item, _type: reportType })}
+                      title={`${details.title}${details.subtitle ? ` — ${details.subtitle}` : ''}`}
+                    >
+                      <div className="document-card-icon-wrap doc" style={{ width: '42px', height: '42px', minWidth: '42px', borderRadius: '8px' }}>
+                        <FileText size={20} />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0, flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                          <span style={{ fontWeight: 700, fontSize: '13.5px', color: '#1A435A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {details.title}
+                          </span>
+                          {details.status && (
+                            <span className={`status-pill ${String(details.status).toLowerCase().replace(/\s+/g, '-')}`} style={{ fontSize: '10px', padding: '1px 6px' }}>
+                              {details.status}
+                            </span>
+                          )}
+                        </div>
+                        {details.subtitle && (
+                          <span style={{ fontSize: '12px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {details.subtitle}
+                          </span>
+                        )}
+                        {details.date && (
+                          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                            {details.date}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* List View */}
+            {viewMode === 'list' && (
+              <div className="dcc-document-list">
+                <div className="dcc-list-header-row">
+                  <div style={{ flex: '2', minWidth: '160px' }}>Document / Ref</div>
+                  <div style={{ flex: '3', minWidth: '180px' }}>Details / Material</div>
+                  <div style={{ flex: '1.5', minWidth: '120px' }}>Issue / Category</div>
+                  <div style={{ flex: '1.2', minWidth: '100px' }}>Date</div>
+                  <div style={{ width: '90px', textAlign: 'center' }}>Status</div>
                 </div>
-              ))}
-            </div>
+                {group.items.map((item) => {
+                  const details = getItemDetails(item, reportType)
+                  return (
+                    <div
+                      key={item.id}
+                      className={`dcc-list-row ${selectedDocument?.id === item.id ? 'active' : ''}`}
+                      onClick={() => setSelectedDocument({ ...item, _type: reportType })}
+                      title={`${details.title}${details.subtitle ? ` — ${details.subtitle}` : ''}`}
+                    >
+                      <div style={{ flex: '2', minWidth: '160px', display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                        <div className="document-card-icon-wrap doc" style={{ width: '28px', height: '28px', minWidth: '28px', borderRadius: '4px' }}>
+                          <FileText size={15} />
+                        </div>
+                        <span style={{ fontWeight: 600, fontSize: '13px', color: '#1A435A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {details.title}
+                        </span>
+                      </div>
+                      <div style={{ flex: '3', minWidth: '180px', fontSize: '12.5px', color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {details.subtitle || '—'}
+                      </div>
+                      <div style={{ flex: '1.5', minWidth: '120px', fontSize: '12px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {details.secondary || '—'}
+                      </div>
+                      <div style={{ flex: '1.2', minWidth: '100px', fontSize: '12px', color: '#64748b' }}>
+                        {details.date || '—'}
+                      </div>
+                      <div style={{ width: '90px', textAlign: 'center' }}>
+                        {details.status ? (
+                          <span className={`status-pill ${String(details.status).toLowerCase().replace(/\s+/g, '-')}`} style={{ fontSize: '10.5px', padding: '2px 8px' }}>
+                            {details.status}
+                          </span>
+                        ) : '—'}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -640,13 +764,48 @@ export default function DCCFolderContent({
       <div className="dcc-center-pane">
         {selectedFolder && (
           <div className="dcc-breadcrumbs-header">
-            <button onClick={backHandler} className="back-button-mini" title={selectedStandard ? 'Back to ISO standards' : 'Back'}>
-              <ArrowLeft size={20} />
-            </button>
-            <span className="dcc-breadcrumb-text">
-              DCC &gt; {selectedFolder.label}{subFolderLabel}
-              {selectedStandard ? ` > ${selectedStandard.name}` : ''}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+              <button onClick={backHandler} className="back-button-mini" title={selectedStandard ? 'Back to ISO standards' : 'Back'}>
+                <ArrowLeft size={20} />
+              </button>
+              <span className="dcc-breadcrumb-text">
+                DCC &gt; {selectedFolder.label}{subFolderLabel}
+                {selectedStandard ? ` > ${selectedStandard.name}` : ''}
+              </span>
+            </div>
+
+            {/* View Mode Switcher: Grid | Tiles | List (excluded for System Logs, ISO Terms & Policy, and Recycle Bin) */}
+            {selectedFolder && !['system_logs', 'terms_policy', 'recycle_bin'].includes(selectedFolder.id) && (
+              <div className="dcc-view-mode-selector" role="group" aria-label="View mode">
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('grid')}
+                  className={`dcc-view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                  title="Grid view (Large icons)"
+                >
+                  <LayoutGrid size={15} />
+                  <span>Grid</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('tiles')}
+                  className={`dcc-view-btn ${viewMode === 'tiles' ? 'active' : ''}`}
+                  title="Tiles view (Compact cards)"
+                >
+                  <LayoutList size={15} />
+                  <span>Tiles</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('list')}
+                  className={`dcc-view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                  title="List view (Details rows)"
+                >
+                  <List size={15} />
+                  <span>List</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -1460,23 +1619,80 @@ export default function DCCFolderContent({
                   ) : !filteredStandards.length ? (
                     <div className="empty-state">No active ISO standards found.</div>
                   ) : (
-                    <div className="dcc-document-grid">
-                      {filteredStandards.map((s) => (
-                        <div
-                          key={s.id}
-                          className="dcc-document-card"
-                          onClick={() => onSelectStandard(s)}
-                        >
-                          <div className="document-card-icon-wrap iso">
-                            <Folder size={24} />
-                          </div>
-                          <span className="document-card-label" title={s.name}>
-                            {s.name}
-                            {s.version ? ` - ${s.version}` : ''}
-                          </span>
+                    <>
+                      {viewMode === 'grid' && (
+                        <div className="dcc-document-grid">
+                          {filteredStandards.map((s) => (
+                            <div
+                              key={s.id}
+                              className="dcc-document-card"
+                              onClick={() => onSelectStandard(s)}
+                            >
+                              <div className="document-card-icon-wrap iso">
+                                <Folder size={24} />
+                              </div>
+                              <span className="document-card-label" title={s.name}>
+                                {s.name}
+                                {s.version ? ` - ${s.version}` : ''}
+                              </span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      )}
+
+                      {viewMode === 'tiles' && (
+                        <div className="dcc-document-tiles">
+                          {filteredStandards.map((s) => (
+                            <div
+                              key={s.id}
+                              className="dcc-tile-card"
+                              onClick={() => onSelectStandard(s)}
+                              title={s.name}
+                            >
+                              <div className="document-card-icon-wrap iso" style={{ width: '42px', height: '42px', minWidth: '42px', borderRadius: '8px' }}>
+                                <Folder size={20} />
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0, flex: 1 }}>
+                                <span style={{ fontWeight: 700, fontSize: '13.5px', color: '#1A435A' }}>
+                                  {s.name}
+                                </span>
+                                <span style={{ fontSize: '12px', color: '#64748b' }}>
+                                  {s.version ? `Standard Version: ${s.version}` : 'ISO Standard'}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {viewMode === 'list' && (
+                        <div className="dcc-document-list">
+                          <div className="dcc-list-header-row">
+                            <div style={{ flex: '2', minWidth: '180px' }}>Standard Name</div>
+                            <div style={{ flex: '1', minWidth: '120px' }}>Version</div>
+                          </div>
+                          {filteredStandards.map((s) => (
+                            <div
+                              key={s.id}
+                              className="dcc-list-row"
+                              onClick={() => onSelectStandard(s)}
+                            >
+                              <div style={{ flex: '2', minWidth: '180px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div className="document-card-icon-wrap iso" style={{ width: '28px', height: '28px', minWidth: '28px', borderRadius: '4px' }}>
+                                  <Folder size={15} />
+                                </div>
+                                <span style={{ fontWeight: 600, fontSize: '13px', color: '#1A435A' }}>
+                                  {s.name}
+                                </span>
+                              </div>
+                              <div style={{ flex: '1', minWidth: '120px', fontSize: '12.5px', color: '#64748b' }}>
+                                {s.version || '—'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ) : (
@@ -1498,20 +1714,77 @@ export default function DCCFolderContent({
               {!filteredTaskSubfolders.length ? (
                 <div className="empty-state">No report folders are available based on your role permissions.</div>
               ) : (
-                <div className="dcc-document-grid">
-                  {filteredTaskSubfolders.map((item) => (
-                    <div
-                      key={item.id}
-                      className="dcc-document-card"
-                      onClick={() => onOpenTaskFolder(item)}
-                    >
-                      <div className="document-card-icon-wrap folder">
-                        <Folder size={24} />
-                      </div>
-                      <span className="document-card-label">{item.label}</span>
+                <>
+                  {viewMode === 'grid' && (
+                    <div className="dcc-document-grid">
+                      {filteredTaskSubfolders.map((item) => (
+                        <div
+                          key={item.id}
+                          className="dcc-document-card"
+                          onClick={() => onOpenTaskFolder(item)}
+                        >
+                          <div className="document-card-icon-wrap folder">
+                            <Folder size={24} />
+                          </div>
+                          <span className="document-card-label">{item.label}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )}
+
+                  {viewMode === 'tiles' && (
+                    <div className="dcc-document-tiles">
+                      {filteredTaskSubfolders.map((item) => (
+                        <div
+                          key={item.id}
+                          className="dcc-tile-card"
+                          onClick={() => onOpenTaskFolder(item)}
+                          title={item.label}
+                        >
+                          <div className="document-card-icon-wrap folder" style={{ width: '42px', height: '42px', minWidth: '42px', borderRadius: '8px' }}>
+                            <Folder size={20} />
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0, flex: 1 }}>
+                            <span style={{ fontWeight: 700, fontSize: '13.5px', color: '#1A435A' }}>
+                              {item.label}
+                            </span>
+                            <span style={{ fontSize: '12px', color: '#64748b' }}>
+                              Report Folder
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {viewMode === 'list' && (
+                    <div className="dcc-document-list">
+                      <div className="dcc-list-header-row">
+                        <div style={{ flex: '2', minWidth: '180px' }}>Folder Name</div>
+                        <div style={{ flex: '1', minWidth: '120px' }}>Type</div>
+                      </div>
+                      {filteredTaskSubfolders.map((item) => (
+                        <div
+                          key={item.id}
+                          className="dcc-list-row"
+                          onClick={() => onOpenTaskFolder(item)}
+                        >
+                          <div style={{ flex: '2', minWidth: '180px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div className="document-card-icon-wrap folder" style={{ width: '28px', height: '28px', minWidth: '28px', borderRadius: '4px' }}>
+                              <Folder size={15} />
+                            </div>
+                            <span style={{ fontWeight: 600, fontSize: '13px', color: '#1A435A' }}>
+                              {item.label}
+                            </span>
+                          </div>
+                          <div style={{ flex: '1', minWidth: '120px', fontSize: '12.5px', color: '#64748b' }}>
+                            Report Folder
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

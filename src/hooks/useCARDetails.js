@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import { fetchLinkedClausesForCar } from '@/services/carService'
 import { generateAiSuggestionFromText } from '@/services/suggestionService'
 
-const INITIAL_FIVE_WHYS = {
+export const INITIAL_FIVE_WHYS = {
   why1: '',
   why2: '',
   why3: '',
@@ -10,7 +10,7 @@ const INITIAL_FIVE_WHYS = {
   why5: ''
 }
 
-const INITIAL_FISHBONE = {
+export const INITIAL_FISHBONE = {
   man: '',
   machine: '',
   material: '',
@@ -19,7 +19,7 @@ const INITIAL_FISHBONE = {
   environment: ''
 }
 
-const FISHBONE_LABELS = [
+export const FISHBONE_LABELS = [
   { key: 'man', label: 'Man (People)' },
   { key: 'machine', label: 'Machine (Equipment)' },
   { key: 'material', label: 'Material' },

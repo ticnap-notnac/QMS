@@ -15,7 +15,7 @@ import {
   Line,
   Legend
 } from 'recharts'
-import { AlertCircle, Shield, TrendingUp, BarChart2, Clock, MoreHorizontal, Calendar, CheckSquare, FileText, CheckCircle2 } from 'lucide-react'
+import { TrendingUp, BarChart2, Clock, MoreHorizontal, Calendar, CheckSquare, FileText, CheckCircle2 } from 'lucide-react'
 
 
 // Custom tooltips for nice monotone popup displays
@@ -244,54 +244,6 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
           <span>{error}</span>
         </div>
       )}
-
-      {/* Top Metrics Cards Row */}
-      <section className="metrics-section">
-        <div className="metric-card" 
-          title="The total number of currently active, unresolved CAR (Corrective Action Requests) processes."
-        >
-          <div className="metric-card-header">
-            <p className="metric-card-title">Open Complaints</p>
-            <div className="metric-icon-badge">
-              <AlertCircle size={18} color="#1A435A" />
-            </div>
-          </div>
-          <h3 className="metric-card-value">
-            {metrics?.openComplaints || 0}
-          </h3>
-          <span className="metric-card-subtitle">Active CAR processes</span>
-        </div>
-
-        <div className="metric-card" 
-          title="The average audit compliance score calculated across all active ISO standards and guidelines."
-        >
-          <div className="metric-card-header">
-            <p className="metric-card-title">ISO Compliance Rate</p>
-            <div className="metric-icon-badge">
-              <Shield size={18} color="#1A435A" />
-            </div>
-          </div>
-          <h3 className="metric-card-value">
-            {metrics?.isoCompliance ?? 0}%
-          </h3>
-          <span className="metric-card-subtitle">Average across all standards</span>
-        </div>
-
-        <div className="metric-card" 
-          title="The total number of active Quality Defects / Damaged / Discrepancy Reports currently undergoing inspection or quarantine."
-        >
-          <div className="metric-card-header">
-            <p className="metric-card-title">Active QDDR Defects</p>
-            <div className="metric-icon-badge">
-              <TrendingUp size={18} color="#1A435A" />
-            </div>
-          </div>
-          <h3 className="metric-card-value">
-            {metrics?.defectRate ?? 0}
-          </h3>
-          <span className="metric-card-subtitle">Active receiving &amp; warehouse discrepancies</span>
-        </div>
-      </section>
 
       {/* Occurring Issues Summary Section (NCR • CAR • QDDR) */}
       <OccurringIssuesSummary
