@@ -149,3 +149,98 @@ export async function assignProductsToProductType({ productTypeId, productIds = 
 
   return { success: true, error: null }
 }
+
+export async function createProductsBulk({ products, actorAuthId }) {
+  if (!Array.isArray(products) || products.length === 0) {
+    return { data: [], skipped: [], totalAdded: 0, totalSkipped: 0, validationError: 'Please provide at least one product.' }
+  }
+
+  const cleaned = []
+  const seen = new Set()
+
+  for (const item of products) {
+    const rawName = typeof item === 'string' ? item : (item?.productName || item?.product_name || '')
+    const name = String(rawName || '').trim()
+    const productTypeId = typeof item === 'object' ? (item?.productTypeId || item?.product_type_id || null) : null
+
+    if (!name) continue
+    const lower = name.toLowerCase()
+    if (seen.has(lower)) continue
+    seen.add(lower)
+
+    cleaned.push({
+      product_name: name,
+      product_type_id: productTypeId ? Number(productTypeId) : null,
+    })
+  }
+
+  if (cleaned.length === 0) {
+    return { data: [], skipped: [], totalAdded: 0, totalSkipped: 0, validationError: 'No valid product names were found.' }
+  }
+
+  // Fetch existing products to check for duplicates
+  const { data: existingRows, error: lookupError } = await supabase
+    .from('products')
+    .select('id, product_name')
+
+  if (lookupError) {
+    return { data: null, error: lookupError }
+  }
+
+  const existingMap = new Set((existingRows || []).map((r) => String(r.product_name || '').trim().toLowerCase()))
+
+  const toInsert = []
+  const skipped = []
+
+  for (const item of cleaned) {
+    if (existingMap.has(item.product_name.toLowerCase())) {
+      skipped.push(item.product_name)
+    } else {
+      toInsert.push(item)
+    }
+  }
+
+  if (toInsert.length === 0) {
+    return {
+      data: [],
+      skipped,
+      totalAdded: 0,
+      totalSkipped: skipped.length,
+      error: null,
+    }
+  }
+
+  const { data: inserted, error: insertError } = await supabase
+    .from('products')
+    .insert(toInsert)
+    .select('id, product_name, product_type_id')
+
+  if (insertError) {
+    return { data: null, error: insertError }
+  }
+
+  try {
+    await writeAudit({
+      level: 'audit',
+      source: 'products',
+      action: 'product_bulk_create',
+      userAuthId: actorAuthId,
+      details: {
+        addedCount: (inserted || []).length,
+        skippedCount: skipped.length,
+        addedProducts: (inserted || []).map((p) => p.product_name),
+        skippedProducts: skipped,
+      },
+    })
+  } catch (auditError) {
+    console.warn('Failed to record product_bulk_create audit:', auditError?.message || auditError)
+  }
+
+  return {
+    data: inserted || [],
+    skipped,
+    totalAdded: (inserted || []).length,
+    totalSkipped: skipped.length,
+    error: null,
+  }
+}

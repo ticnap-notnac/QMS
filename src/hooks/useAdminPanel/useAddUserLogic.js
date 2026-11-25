@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLookup } from '@/context/LookupContext'
 import useUserManager from '@/hooks/useUserManager'
-import { createUser, updateUser } from '@/services/userService'
+import { createUser, updateUser, createUsersBulk } from '@/services/userService'
 import { supabase } from '@/utils/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { isSuperAdminRole, isAdminOrSuperAdminRole } from '@/utils/roleUtils.js'
@@ -36,6 +36,8 @@ export default function useAddUserLogic({ currentUserRole } = {}) {
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false)
+  const [isBulkUserModalOpen, setIsBulkUserModalOpen] = useState(false)
+  const [bulkLoading, setBulkLoading] = useState(false)
   const [toast, setToast] = useState(null)
   const [userToDelete, setUserToDelete] = useState(null)
   
@@ -386,6 +388,58 @@ export default function useAddUserLogic({ currentUserRole } = {}) {
     onCancel: cancelDeleteUser,
   }
 
+  const openBulkUserModal = useCallback(() => {
+    setIsBulkUserModalOpen(true)
+  }, [])
+
+  const closeBulkUserModal = useCallback(() => {
+    setIsBulkUserModalOpen(false)
+  }, [])
+
+  const handleBulkUserSubmit = useCallback(async (usersToImport) => {
+    setBulkLoading(true)
+    try {
+      const res = await createUsersBulk(usersToImport)
+      const succeededCount = res?.succeeded?.length || 0
+      const failedCount = res?.failed?.length || 0
+
+      if (succeededCount > 0) {
+        setToast({
+          message: `Successfully created ${succeededCount} user account${succeededCount === 1 ? '' : 's'}.${failedCount > 0 ? ` (${failedCount} failed)` : ''}`,
+          type: failedCount > 0 ? 'info' : 'success'
+        })
+        await reloadUsers()
+      } else if (failedCount > 0) {
+        setToast({
+          message: `Failed to import users. Please check the error details in the summary.`,
+          type: 'error'
+        })
+      }
+      return res
+    } catch (err) {
+      setToast({
+        message: err.message || 'Failed to bulk import users. Please try again.',
+        type: 'error'
+      })
+      return null
+    } finally {
+      setBulkLoading(false)
+    }
+  }, [reloadUsers])
+
+  const bulkUserModalProps = {
+    isOpen: isBulkUserModalOpen,
+    onClose: closeBulkUserModal,
+    onSubmit: handleBulkUserSubmit,
+    existingUsers: adminUsers || [],
+    availableRoles: availableRolesForActor || [],
+    availableDepartments: departments || [],
+    availablePositions: availablePositionsForActor || [],
+    availableSites: sites || [],
+    currentUserRole: userRole,
+    loading: bulkLoading,
+  }
+
   return {
     searchQuery,
     setSearchQuery,
@@ -393,6 +447,10 @@ export default function useAddUserLogic({ currentUserRole } = {}) {
     setStatusFilter,
     reloadUsers,
     openAddUserModal,
+    openBulkUserModal,
+    closeBulkUserModal,
+    isBulkUserModalOpen,
+    bulkUserModalProps,
     usersLoading,
     usersError,
     filteredUsers,

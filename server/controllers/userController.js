@@ -4,6 +4,7 @@ import { sendNewUserCredentialsEmail } from '../services/emailService.js'
 import {
   fetchAllUsers,
   createUserWithAuth,
+  createUsersBulk as createUsersBulkService,
   deleteUserById,
   updateUserById,
   updateUserStatusById,
@@ -102,6 +103,30 @@ export async function createUser(req, res) {
   }).catch(err => logger.error('Failed to send user credentials email', { error: err?.message }))
 
   return res.json({ authUser, profile })
+}
+
+export async function createUsersBulk(req, res) {
+  const { users } = req.body || {}
+  const rawList = Array.isArray(users) ? users : null
+
+  if (!rawList || rawList.length === 0) {
+    return res.status(400).json({ error: 'Please provide a non-empty array of users to import.' })
+  }
+
+  const actorRoleName = req.dbUser?.role_name || ''
+  const actorAuthId = getRequestActor(req)
+
+  const result = await createUsersBulkService({
+    users: rawList,
+    actorRoleName,
+    actorAuthId,
+  })
+
+  if (result.error) {
+    return res.status(400).json({ error: result.error })
+  }
+
+  return res.status(200).json(result)
 }
 
 export async function deleteUser(req, res) {

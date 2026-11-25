@@ -14,6 +14,10 @@ export async function createProduct(productName) {
   return await request('/products', { method: 'POST', body: JSON.stringify({ productName }) })
 }
 
+export async function createProductsBulk(products) {
+  return await request('/products/bulk', { method: 'POST', body: JSON.stringify({ products }) })
+}
+
 export async function deleteProduct(id) {
   await request(`/products/${id}`, { method: 'DELETE' })
   return true

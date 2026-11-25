@@ -12,6 +12,13 @@ export async function createUser(payload) {
   })
 }
 
+export async function createUsersBulk(users) {
+  return request('/users/bulk', {
+    method: 'POST',
+    body: JSON.stringify({ users }),
+  })
+}
+
 // backwards-compatible alias
 export { createUser as createAdminUser }
 

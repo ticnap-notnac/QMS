@@ -1,6 +1,7 @@
 import SettingsNavbar from '@/components/Navbars/SettingsNavbar'
 import AddUserModal from '@/components/Modals/AddUserModal'
 import EditUserModal from '@/components/Modals/EditUserModal'
+import BulkAddUsersModal from '@/components/Modals/BulkAddUsersModal'
 import SearchForm from '@/components/Forms/SearchForm'
 import AdminNavbar from '@/components/Navbars/AdminNavbar'
 import UsersTable from '@/components/UsersTable/UsersTable'
@@ -8,6 +9,7 @@ import ConfirmDialog from '@/components/Modals/ConfirmDialog'
 import { useAddUserLogic } from '@/hooks/useAdminPanel.js'
 import SubmissionLoadingOverlay from '@/components/UI/SubmissionLoadingOverlay.jsx'
 import Toast from '@/components/UI/Toast.jsx'
+import { Users } from 'lucide-react'
 import './AdminPanel.css'
 
 import { hasAdminPanelAccess } from '@/utils/roleUtils.js'
@@ -20,6 +22,8 @@ export default function AddUserPage({ userRole, userPermissions }) {
     setStatusFilter,
     reloadUsers,
     openAddUserModal,
+    openBulkUserModal,
+    bulkUserModalProps,
     usersLoading,
     usersError,
     filteredUsers,
@@ -67,6 +71,14 @@ export default function AddUserPage({ userRole, userPermissions }) {
                     </select>
                   </div>
                   <div className="admin-actions-right" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={openBulkUserModal}
+                      className="btn-add-action"
+                      style={{ background: '#334155', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Users size={16} /> Bulk Import Users
+                    </button>
                     <button onClick={openAddUserModal} className="btn-add-action"><span>+ Add User</span></button>
                   </div>
                 </div>
@@ -98,6 +110,7 @@ export default function AddUserPage({ userRole, userPermissions }) {
           </div>
 
           <AddUserModal {...addUserModalProps} />
+          <BulkAddUsersModal {...bulkUserModalProps} />
           <EditUserModal {...editUserModalProps} />
           <ConfirmDialog {...confirmDialogProps} />
           <SubmissionLoadingOverlay isOpen={isOverlayLoading} message={overlayMessage} />

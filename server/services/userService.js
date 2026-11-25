@@ -3,6 +3,7 @@ import { hasServiceRole, supabase } from '../lib/supabase.js'
 import { writeAudit } from '../lib/audit.js'
 import { isAdminRole } from '../utils/roleUtils.js'
 import { invalidateRbacCache } from '../lib/authCache.js'
+import { sendNewUserCredentialsEmail } from './emailService.js'
 
 /**
  * Fetches all users enriched with role, department, site, and team leader information.
@@ -438,4 +439,221 @@ export async function updateUserStatusById(id, status, actorAuthId, actorDbUser 
   }
 
   return { success: true, error: null, status: 200 }
+}
+
+export async function createUsersBulk({ users, actorRoleName, actorAuthId }) {
+  if (!Array.isArray(users) || users.length === 0) {
+    return { succeeded: [], failed: [], total: 0, error: 'No users provided for bulk import.' }
+  }
+
+  if (!hasServiceRole) {
+    return {
+      succeeded: [],
+      failed: [],
+      total: users.length,
+      error: 'Server is missing SUPABASE_SERVICE_ROLE_KEY. User creation is disabled until that key is configured.'
+    }
+  }
+
+  const [rolesRes, posRes] = await Promise.all([
+    supabase.from('roles').select('id, role_name'),
+    supabase.from('positions').select('id, role_id')
+  ])
+  const roleMap = new Map((rolesRes.data || []).map((r) => [r.id, r.role_name]))
+  const posRoleMap = new Map((posRes.data || []).map((p) => [p.id, p.role_id]))
+
+  const isActorAdmin = isAdminRole(actorRoleName)
+
+  const succeeded = []
+  const failed = []
+
+  for (let i = 0; i < users.length; i++) {
+    const row = users[i]
+    const rowNum = i + 1
+    const {
+      firstName,
+      lastName,
+      userName,
+      email,
+      contactNumber,
+      roleId,
+      departmentId,
+      siteId,
+      positionId
+    } = row || {}
+
+    let password = row?.password ? String(row.password).trim() : ''
+    // Generate secure temporary password if omitted
+    if (!password) {
+      const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$'
+      let generated = ''
+      for (let c = 0; c < 10; c++) {
+        generated += chars.charAt(Math.floor(Math.random() * chars.length))
+      }
+      password = generated
+    }
+
+    const cleanFirst = String(firstName || '').trim()
+    const cleanLast = String(lastName || '').trim()
+    const cleanUser = String(userName || '').trim()
+    const cleanEmail = String(email || '').trim().toLowerCase()
+    const cleanContact = contactNumber ? String(contactNumber).trim() : null
+
+    // Validation
+    if (!cleanFirst || !cleanLast || !cleanEmail || !cleanUser || !departmentId) {
+      failed.push({
+        row: rowNum,
+        email: cleanEmail || '(empty)',
+        userName: cleanUser || '(empty)',
+        error: 'First name, last name, username, email, and department are required.'
+      })
+      continue
+    }
+
+    const invalidNameRegex = /[^a-zA-Z\s\-']/
+    if (invalidNameRegex.test(cleanFirst) || invalidNameRegex.test(cleanLast)) {
+      failed.push({
+        row: rowNum,
+        email: cleanEmail,
+        userName: cleanUser,
+        error: 'First and Last names cannot contain numbers or special characters.'
+      })
+      continue
+    }
+
+    if (!/@gmail\.com$/i.test(cleanEmail)) {
+      failed.push({
+        row: rowNum,
+        email: cleanEmail,
+        userName: cleanUser,
+        error: 'Only Gmail addresses are allowed.'
+      })
+      continue
+    }
+
+    if (cleanContact && !/^\d{11}$/.test(cleanContact)) {
+      failed.push({
+        row: rowNum,
+        email: cleanEmail,
+        userName: cleanUser,
+        error: 'Contact number must be exactly 11 digits.'
+      })
+      continue
+    }
+
+    if (password.length < 6) {
+      failed.push({
+        row: rowNum,
+        email: cleanEmail,
+        userName: cleanUser,
+        error: 'Password must be at least 6 characters.'
+      })
+      continue
+    }
+
+    // Role check: non-admins cannot assign Admin roles
+    if (!isActorAdmin) {
+      let resolvedRoleId = roleId
+      if (!resolvedRoleId && positionId) {
+        resolvedRoleId = posRoleMap.get(Number(positionId))
+      }
+      const targetRoleName = roleMap.get(Number(resolvedRoleId))
+      if (isAdminRole(targetRoleName)) {
+        failed.push({
+          row: rowNum,
+          email: cleanEmail,
+          userName: cleanUser,
+          error: 'Only Administrators can assign Administrator roles or positions.'
+        })
+        continue
+      }
+    }
+
+    // Create user in Auth + DB
+    const { profile, error: createError } = await createUserWithAuth({
+      firstName: cleanFirst,
+      lastName: cleanLast,
+      email: cleanEmail,
+      password,
+      userName: cleanUser,
+      contactNumber: cleanContact,
+      roleId: roleId ? Number(roleId) : null,
+      departmentId: departmentId ? Number(departmentId) : null,
+      siteId: siteId ? Number(siteId) : null,
+      positionId: positionId ? Number(positionId) : null,
+    })
+
+    if (createError || !profile) {
+      failed.push({
+        row: rowNum,
+        email: cleanEmail,
+        userName: cleanUser,
+        error: createError || 'Failed to create user account.'
+      })
+      continue
+    }
+
+    // Dispatch welcome email
+    sendNewUserCredentialsEmail({
+      toEmail: cleanEmail,
+      password,
+      frontendUrl: process.env.FRONTEND_URL || 'https://qms-jade.vercel.app',
+      displayName: `${cleanFirst} ${cleanLast}`.trim(),
+    }).catch((err) => {
+      console.warn('Failed to send welcome email during bulk import:', err?.message || err)
+    })
+
+    try {
+      await writeAudit({
+        level: 'audit',
+        source: 'users',
+        action: 'user_create',
+        userAuthId: actorAuthId,
+        details: {
+          id: profile.id,
+          email: profile.email,
+          role_id: profile.role_id,
+          department_id: profile.department_id,
+          bulk_import: true
+        }
+      })
+    } catch (auditErr) {
+      console.warn('Failed to write audit log in bulk create:', auditErr?.message || auditErr)
+    }
+
+    succeeded.push({
+      id: profile.id,
+      email: profile.email,
+      userName: profile.user_name,
+      firstName: profile.first_name,
+      lastName: profile.last_name,
+      temporaryPassword: password
+    })
+  }
+
+  if (succeeded.length > 0) {
+    invalidateRbacCache()
+    try {
+      await writeAudit({
+        level: 'audit',
+        source: 'users',
+        action: 'users_bulk_import',
+        userAuthId: actorAuthId,
+        details: {
+          total: users.length,
+          succeededCount: succeeded.length,
+          failedCount: failed.length
+        }
+      })
+    } catch (auditErr) {
+      console.warn('Failed to record users_bulk_import audit:', auditErr?.message || auditErr)
+    }
+  }
+
+  return {
+    succeeded,
+    failed,
+    total: users.length,
+    error: null
+  }
 }

@@ -52,3 +52,22 @@ export const updateUserStatusSchema = z.object({
     )
   })
 })
+
+export const createUsersBulkSchema = z.object({
+  body: z.object({
+    users: z.array(
+      z.object({
+        firstName: z.string().trim().min(1, 'First name is required'),
+        lastName: z.string().trim().min(1, 'Last name is required'),
+        email: z.string().trim().email('Invalid email address'),
+        userName: z.string().trim().min(1, 'Username is required'),
+        password: z.string().optional().nullable(),
+        contactNumber: z.string().trim().optional().nullable(),
+        roleId: z.union([z.string(), z.number()]).optional().nullable(),
+        departmentId: z.union([z.string(), z.number()]).optional().nullable(),
+        siteId: z.union([z.string(), z.number()]).optional().nullable(),
+        positionId: z.union([z.string(), z.number()]).optional().nullable(),
+      })
+    ).min(1, 'At least one user must be provided for import.')
+  })
+})
