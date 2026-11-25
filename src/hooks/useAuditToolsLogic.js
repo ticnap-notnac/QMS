@@ -696,6 +696,7 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
+      flushOnSwitch()
       window.removeEventListener('blur', flushOnSwitch)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
@@ -1248,6 +1249,9 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
   }
 
   useEffect(() => {
+    if (activeTab === 'Logs') {
+      fetchAuditLogs(logsPage)
+    }
     if (activeTab === 'Reports') {
       fetchAuditReports()
     }

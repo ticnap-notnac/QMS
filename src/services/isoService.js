@@ -48,7 +48,8 @@ export async function fetchNonCompliantFindings() {
         title
       )
     `)
-    .in('status', ['ofi', 'minor_nc', 'major_nc'])
+    .in('status', ['minor_nc', 'major_nc'])
+    .order('created_at', { ascending: false })
   if (error) throw error
   return data || []
 }

@@ -84,7 +84,7 @@ export default function ISOPage({ userRole, userPermissions, userName }) {
 
         <div className="metric-card metric-card--padded iso-action-center-card">
           <h3 className="metric-card-title iso-review-title iso-action-center-title"><AlertTriangle size={18} className="icon-amber" />Gaps Action Center</h3>
-          <p className="iso-action-center-text">Review non-compliant clauses and generate CARs.</p>
+          <p className="iso-action-center-text">Review Minor NC and Major NC clauses from audits and generate CARs.</p>
           {nonCompliantFindings.length === 0 ? (
             <div className="iso-no-gaps">No active gaps found!</div>
           ) : (
@@ -92,10 +92,11 @@ export default function ISOPage({ userRole, userPermissions, userName }) {
               {nonCompliantFindings.map((finding) => {
                 const statusMeta = {
                   major_nc: { label: 'Major NC', bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
-                  minor_nc: { label: 'Minor NC', bg: '#fffbeb', color: '#d97706', border: '#fde68a' },
-                  ofi: { label: 'OFI', bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' }
+                  minor_nc: { label: 'Minor NC', bg: '#fffbeb', color: '#d97706', border: '#fde68a' }
                 }[finding.status] || { label: 'Finding', bg: '#f8fafc', color: '#475569', border: '#cbd5e1' }
                 const schedule = finding.audit_runs?.audit_schedules
+                const findingNotes = (finding.notes || '').trim()
+                const findingEvidence = (finding.evidence || '').trim()
 
                 return (
                   <div key={finding.id} className="iso-finding-item">
@@ -118,13 +119,18 @@ export default function ISOPage({ userRole, userPermissions, userName }) {
                         <strong className="iso-finding-title">{finding.iso_clauses?.title || 'Unknown Clause'}</strong>
                       </div>
                       {schedule?.title && (
-                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
                           {schedule.title}{schedule.scheduled_date ? ` • ${schedule.scheduled_date}` : ''}
                         </div>
                       )}
-                      {finding.requirement && (
-                        <div style={{ fontSize: '12.5px', color: '#334155', marginTop: '4px', lineHeight: 1.4 }}>
-                          {finding.requirement}
+                      <div style={{ fontSize: '13px', color: '#1e293b', marginTop: '4px', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                        <strong style={{ color: '#475569' }}>Findings: </strong>
+                        {findingNotes ? findingNotes : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>No findings recorded.</span>}
+                      </div>
+                      {findingEvidence && (
+                        <div style={{ fontSize: '12.5px', color: '#475569', marginTop: '2px', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
+                          <strong style={{ color: '#64748b' }}>Evidence: </strong>
+                          {findingEvidence}
                         </div>
                       )}
                     </div>
