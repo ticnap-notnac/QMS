@@ -174,9 +174,6 @@ export async function testWebhookPing(req, res, next) {
     next(err)
   }
 }
-    next(err)
-  }
-}
 
 export async function getInventoryRecords(req, res, next) {
   try {
