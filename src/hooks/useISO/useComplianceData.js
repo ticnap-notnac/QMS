@@ -3,18 +3,46 @@ import * as isoService from '@/services/isoService'
 import { supabase } from '@/utils/supabase'
 import { SEVERITY_LEVELS, AUDIT_STATUS, REPORT_STATUS } from '../../../shared/constants'
 
+const isoComplianceCache = {
+  compliantCount: 0,
+  ofiCount: 0,
+  minorNcCount: 0,
+  majorNcCount: 0,
+  nonCompliantFindings: null,
+  createdCars: null
+}
+
 export function useComplianceData() {
-  const [compliantCount, setCompliantCount] = useState(0)
-  const [ofiCount, setOfiCount] = useState(0)
-  const [minorNcCount, setMinorNcCount] = useState(0)
-  const [majorNcCount, setMajorNcCount] = useState(0)
-  const [nonCompliantFindings, setNonCompliantFindings] = useState([])
-  const [createdCars, setCreatedCars] = useState({})
+  const [compliantCount, setCompliantCount] = useState(() => isoComplianceCache.compliantCount)
+  const [ofiCount, setOfiCount] = useState(() => isoComplianceCache.ofiCount)
+  const [minorNcCount, setMinorNcCount] = useState(() => isoComplianceCache.minorNcCount)
+  const [majorNcCount, setMajorNcCount] = useState(() => isoComplianceCache.majorNcCount)
+  const [nonCompliantFindings, setNonCompliantFindings] = useState(() => isoComplianceCache.nonCompliantFindings || [])
+  const [createdCars, setCreatedCars] = useState(() => isoComplianceCache.createdCars || {})
 
   const fetchComplianceData = useCallback(async () => {
     try {
-      const results = await isoService.fetchAuditResults()
-      
+      const [
+        results,
+        findingsData,
+        { data: carsList, error: carsError },
+        { data: linksData },
+        rawNcrData
+      ] = await Promise.all([
+        isoService.fetchAuditResults(),
+        isoService.fetchNonCompliantFindings(),
+        supabase
+          .from('car_reports')
+          .select('id, reference_no, audit_schedule_id, audit_result_id')
+          .neq('status', 'deleted'),
+        supabase
+          .from('car_clause_links')
+          .select('car_report_id, clause_id'),
+        isoService.fetchNcrReportsForISO()
+      ])
+
+      if (carsError) throw carsError
+
       let comp = 0
       let ofi = 0
       let minor = 0
@@ -32,26 +60,11 @@ export function useComplianceData() {
       setMinorNcCount(minor)
       setMajorNcCount(major)
 
-      // Fetch non-compliant findings
-      const findingsData = await isoService.fetchNonCompliantFindings()
+      isoComplianceCache.compliantCount = comp
+      isoComplianceCache.ofiCount = ofi
+      isoComplianceCache.minorNcCount = minor
+      isoComplianceCache.majorNcCount = major
 
-      // Fetch CAR reports (excluding soft-deleted reports in Recycle Bin)
-      const { data: carsList, error: carsError } = await supabase
-        .from('car_reports')
-        .select(`
-          id,
-          reference_no,
-          audit_schedule_id,
-          audit_result_id
-        `)
-        .neq('status', 'deleted')
-      if (carsError) throw carsError
-
-      // Safely fetch clause links
-      const { data: linksData } = await supabase
-        .from('car_clause_links')
-        .select('car_report_id, clause_id')
-      
       const linksList = linksData || []
 
       // Merge links into carsList manually
@@ -62,7 +75,6 @@ export function useComplianceData() {
       }
 
       // Fetch NCRs (exclude closed or those with car_filed = true)
-      const rawNcrData = await isoService.fetchNcrReportsForISO()
       const ncrData = (rawNcrData || []).filter(ncr => 
         !ncr.car_filed && 
         String(ncr.status || '').toUpperCase() !== REPORT_STATUS.CLOSED
@@ -146,6 +158,7 @@ export function useComplianceData() {
 
       const allFindings = [...findingsData, ...escalatedFindings]
       setNonCompliantFindings(allFindings)
+      isoComplianceCache.nonCompliantFindings = allFindings
 
       // Dynamically populate createdCars map
       const carsMap = {}
@@ -172,6 +185,7 @@ export function useComplianceData() {
         })
       }
       setCreatedCars(carsMap)
+      isoComplianceCache.createdCars = carsMap
     } catch (err) {
       console.error('[useComplianceData] Error fetching compliance data:', err)
     }

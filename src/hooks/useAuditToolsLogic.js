@@ -527,25 +527,49 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     }
   }, [activeRun?.id, autoSaveResultsQuietly])
 
-  // Fetch initial schedules/auditors/standards data
+  // Fetch initial schedules/auditors/standards data concurrently
   const fetchData = async () => {
     setLoading(true)
+    setTemplatesLoading(true)
     setError('')
     try {
-      const { data: standardsData, error: stdError } = await supabase
-        .from('iso_standards')
-        .select('id, name, version')
-        .eq('is_active', true)
-      
+      const [
+        { data: standardsData, error: stdError },
+        { data: allUsersData, error: audError },
+        templatesData,
+        { data: schedulesData, error: schedError }
+      ] = await Promise.all([
+        supabase
+          .from('iso_standards')
+          .select('id, name, version')
+          .eq('is_active', true),
+        supabase
+          .from('users')
+          .select('id, first_name, last_name, auth_id, role_id, status, roles(role_name, permissions)'),
+        checklistService.fetchTemplates().catch(err => {
+          console.warn('Failed to fetch templates:', err)
+          return []
+        }),
+        supabase
+          .from('audit_schedules')
+          .select(`
+            id,
+            title,
+            scheduled_date,
+            status,
+            standard_id,
+            auditor_id,
+            template_id
+          `)
+          .order('scheduled_date', { ascending: true })
+      ])
+
       if (stdError) throw stdError
+      if (audError) throw audError
+      if (schedError) throw schedError
+
       setStandards(standardsData || [])
 
-      const { data: allUsersData, error: audError } = await supabase
-        .from('users')
-        .select('id, first_name, last_name, auth_id, role_id, status, roles(role_name, permissions)')
-      
-      if (audError) throw audError
-      
       const auditorsData = (allUsersData || []).filter(u => {
         if (String(u.status || 'ACTIVE').toUpperCase() !== 'ACTIVE') return false
         const rName = String(u.roles?.role_name || '').trim().toLowerCase()
@@ -557,31 +581,9 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
           rRights.includes('manage_audit_schedules')
         )
       })
-      
+
       setAuditors(auditorsData)
-
-      setTemplatesLoading(true)
-      const templatesData = await checklistService.fetchTemplates().catch(err => {
-        console.warn('Failed to fetch templates:', err)
-        return []
-      })
       setTemplates(templatesData || [])
-      setTemplatesLoading(false)
-
-      const { data: schedulesData, error: schedError } = await supabase
-        .from('audit_schedules')
-        .select(`
-          id,
-          title,
-          scheduled_date,
-          status,
-          standard_id,
-          auditor_id,
-          template_id
-        `)
-        .order('scheduled_date', { ascending: true })
-
-      if (schedError) throw schedError
 
       const mappedSchedules = (schedulesData || []).map(schedule => {
         const std = (standardsData || []).find(s => s.id === schedule.standard_id)
@@ -600,6 +602,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       console.error('Error fetching audit data:', err)
       setError('Failed to load audit tools data. Please try again.')
     } finally {
+      setTemplatesLoading(false)
       setLoading(false)
     }
   }
@@ -708,13 +711,27 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     setLoadingReports(true)
     setReportsError('')
     try {
-      const { data: runs, error: runsErr } = await supabase
-        .from('audit_runs')
-        .select('*')
-        .not('completed_at', 'is', null)
-        .order('completed_at', { ascending: false })
+      const [
+        { data: runs, error: runsErr },
+        { data: standardsData, error: stdError },
+        { data: auditorsData, error: audError }
+      ] = await Promise.all([
+        supabase
+          .from('audit_runs')
+          .select('*')
+          .not('completed_at', 'is', null)
+          .order('completed_at', { ascending: false }),
+        supabase
+          .from('iso_standards')
+          .select('id, name, version'),
+        supabase
+          .from('users')
+          .select('id, first_name, last_name, auth_id, status')
+      ])
 
       if (runsErr) throw runsErr
+      if (stdError) throw stdError
+      if (audError) throw audError
 
       if (!runs || runs.length === 0) {
         setCompletedRuns([])
@@ -722,31 +739,23 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       }
 
       const scheduleIds = runs.map(r => r.schedule_id).filter(Boolean)
-      const { data: schedulesData, error: schedError } = await supabase
-        .from('audit_schedules')
-        .select('id, title, standard_id, scheduled_date')
-        .in('id', scheduleIds)
+      const runIds = runs.map(r => r.id)
+
+      const [
+        { data: schedulesData, error: schedError },
+        { data: resultsData, error: resultsErr }
+      ] = await Promise.all([
+        supabase
+          .from('audit_schedules')
+          .select('id, title, standard_id, scheduled_date')
+          .in('id', scheduleIds),
+        supabase
+          .from('audit_results')
+          .select('run_id, status')
+          .in('run_id', runIds)
+      ])
 
       if (schedError) throw schedError
-
-      const { data: standardsData, error: stdError } = await supabase
-        .from('iso_standards')
-        .select('id, name, version')
-
-      if (stdError) throw stdError
-
-      const { data: auditorsData, error: audError } = await supabase
-        .from('users')
-        .select('id, first_name, last_name, auth_id, status')
-
-      if (audError) throw audError
-
-      const runIds = runs.map(r => r.id)
-      const { data: resultsData, error: resultsErr } = await supabase
-        .from('audit_results')
-        .select('run_id, status')
-        .in('run_id', runIds)
-
       if (resultsErr) throw resultsErr
 
       const mapped = runs.map(run => {

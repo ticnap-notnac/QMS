@@ -47,8 +47,10 @@ export function useISOCARForm({ userName, userAuthId, setToast, setCreatedCars, 
   const loadDropdownOptions = useCallback(async () => {
     try {
       setLoadingDropdowns(true)
-      const deptData = await isoService.fetchDepartments()
-      const userData = await isoService.fetchUsers()
+      const [deptData, userData] = await Promise.all([
+        isoService.fetchDepartments(),
+        isoService.fetchUsers()
+      ])
       
       setDepartments((deptData || []).map(d => ({ id: d.id, label: d.department_name })))
       const activeUserData = (userData || []).filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
