@@ -119,24 +119,30 @@ export default function ReportsPage({
   else if (logic.qddrModalProps.isSubmitting) overlayMessage = 'Submitting QDDR report...'
 
   const displayedCars = useMemo(() => {
-    let list = logic.isClosedMode
-      ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase())
-      : logic.carReports.filter(c => String(c.status).toLowerCase() !== CAR_STATUS.CLOSED.toLowerCase())
+    const explicitStatusFilter = String(logic.reportFilters?.status || '').trim().toLowerCase().replace(/[\s_-]+/g, '_')
+    let list = explicitStatusFilter
+      ? logic.carReports
+      : logic.isClosedMode
+        ? logic.carReports.filter(c => String(c.status).toLowerCase() === CAR_STATUS.CLOSED.toLowerCase())
+        : logic.carReports.filter(c => String(c.status).toLowerCase() !== CAR_STATUS.CLOSED.toLowerCase())
     if (isRecurringMode && allRecurringReportIds.length > 0) {
       list = list.filter(c => allRecurringReportIds.includes(c.id))
     }
     return list
-  }, [logic.isClosedMode, logic.carReports, isRecurringMode, allRecurringReportIds])
+  }, [logic.isClosedMode, logic.carReports, logic.reportFilters?.status, isRecurringMode, allRecurringReportIds])
 
   const displayedQddrs = useMemo(() => {
-    let list = logic.isClosedMode
-      ? logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed')
-      : logic.qddrReports.filter(q => String(q.status).toLowerCase() !== 'closed')
+    const explicitStatusFilter = String(logic.reportFilters?.status || '').trim().toLowerCase().replace(/[\s_-]+/g, '_')
+    let list = explicitStatusFilter
+      ? logic.qddrReports
+      : logic.isClosedMode
+        ? logic.qddrReports.filter(q => String(q.status).toLowerCase() === 'closed')
+        : logic.qddrReports.filter(q => String(q.status).toLowerCase() !== 'closed')
     if (isRecurringMode && allRecurringReportIds.length > 0) {
       list = list.filter(q => allRecurringReportIds.includes(q.id))
     }
     return list
-  }, [logic.isClosedMode, logic.qddrReports, isRecurringMode, allRecurringReportIds])
+  }, [logic.isClosedMode, logic.qddrReports, logic.reportFilters?.status, isRecurringMode, allRecurringReportIds])
 
   const currentUserObj = useMemo(() => {
     return (logic.users || []).find(u =>

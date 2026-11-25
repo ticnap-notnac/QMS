@@ -421,8 +421,10 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     }
 
     if (formState.reportFilters?.status) {
-      const targetStatus = String(formState.reportFilters.status).trim().toLowerCase()
-      filteredCars = filteredCars.filter(car => String(car.status || '').trim().toLowerCase() === targetStatus)
+      const targetStatus = String(formState.reportFilters.status).trim().toLowerCase().replace(/[\s_-]+/g, '_')
+      filteredCars = filteredCars.filter(
+        car => String(car.status || '').trim().toLowerCase().replace(/[\s_-]+/g, '_') === targetStatus
+      )
     }
     if (formState.reportFilters?.date) {
       filteredCars = filteredCars.filter(car => String(car.created_at || '').startsWith(formState.reportFilters.date))
@@ -485,8 +487,10 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     }
 
     if (formState.reportFilters?.status) {
-      const targetStatus = String(formState.reportFilters.status).trim().toLowerCase()
-      filteredQddrs = filteredQddrs.filter(q => String(q.status || '').trim().toLowerCase() === targetStatus)
+      const targetStatus = String(formState.reportFilters.status).trim().toLowerCase().replace(/[\s_-]+/g, '_')
+      filteredQddrs = filteredQddrs.filter(
+        q => String(q.status || '').trim().toLowerCase().replace(/[\s_-]+/g, '_') === targetStatus
+      )
     }
     if (formState.reportFilters?.date) {
       filteredQddrs = filteredQddrs.filter(q => String(q.created_at || '').startsWith(formState.reportFilters.date))
