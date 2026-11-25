@@ -109,6 +109,9 @@ app.get('/api/test-email', async (req, res) => {
   }
 })
 
+// External Public API v1 gateway (Must be mounted BEFORE the catch-all /api authMiddleware routes)
+app.use('/api/v1/external', externalApiRouter)
+
 app.use('/api/users', authMiddleware, userRoutes)
 app.use('/api/roles', authMiddleware, roleRoutes)
 app.use('/api/departments', authMiddleware, departmentRoutes)
@@ -134,7 +137,6 @@ app.use('/api', authMiddleware, auditChecklistRoutes)
 app.use('/api/notifications', authMiddleware, notificationRoutes)
 app.use('/api/dashboard', authMiddleware, dashboardRoutes)
 app.use('/api/integrations', internalIntegrationRouter)
-app.use('/api/v1/external', externalApiRouter)
 
 // Ensure integration tables exist on boot in the background
 ensureIntegrationSchema().catch(() => {})
