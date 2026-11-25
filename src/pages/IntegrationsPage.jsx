@@ -229,9 +229,10 @@ export default function IntegrationsPage({ userRole, userPermissions }) {
     setTestingWebhook(true)
     try {
       const res = await triggerTestWebhook({ target_url: url || whUrl, secret_token: secret || whSecret })
+      const statusText = res?.http_status ? ` → HTTP ${res.http_status}` : ''
       setToast({
-        message: `Signed webhook ping dispatched (${res?.signature?.slice(0, 20)}...)`,
-        type: 'success'
+        message: `Signed webhook ping dispatched${statusText} (${res?.signature?.slice(0, 18)}...)`,
+        type: res?.success ? 'success' : 'error'
       })
       loadAllIntegrationData()
     } catch (err) {
