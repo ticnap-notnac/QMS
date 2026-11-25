@@ -11,7 +11,7 @@ import SubmissionLoadingOverlay from '../components/UI/SubmissionLoadingOverlay.
 import './SettingsPage.css'
 
 
-export default function AuditToolsPage({ authUserId, userRole, userPermissions }) {
+export default function AuditToolsPage({ authUserId, userRole, userPermissions, userName }) {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const isInsideSettings = location.pathname.startsWith('/settings')
@@ -23,7 +23,12 @@ export default function AuditToolsPage({ authUserId, userRole, userPermissions }
     ? ['Logs', 'Reports', 'Schedules', 'Templates']
     : ['Logs', 'Reports']
 
-  const logic = useAuditToolsLogic({ authUserId, activeTabParam: tabParam || 'Logs' })
+  const logic = useAuditToolsLogic({
+    authUserId,
+    userName,
+    userRole,
+    activeTabParam: tabParam || 'Logs'
+  })
   const { activeTab, setActiveTab, activeRun } = logic
 
   // Aggregate loading and saving states for overlay progress spinner feedback

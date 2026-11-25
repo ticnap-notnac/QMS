@@ -7,9 +7,98 @@ import { useQDDRDetails } from './useQDDRDetails'
 import * as checklistService from '../services/auditChecklistService'
 import { request } from '../lib/api'
 
-export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs' }) {
-  const [activeTab, setActiveTab] = useState(activeTabParam)
+const COLLABORATOR_COLORS = [
+  '#2563eb', // blue
+  '#16a34a', // green
+  '#9333ea', // purple
+  '#ea580c', // orange
+  '#0891b2', // cyan
+  '#db2777', // pink
+  '#4f46e5', // indigo
+  '#ca8a04', // amber
+  '#059669', // emerald
+  '#e11d48'  // rose
+]
+
+function getCollaboratorColor(id = '') {
+  let hash = 0
+  const str = String(id || 'default')
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash |= 0
+  }
+  const index = Math.abs(hash) % COLLABORATOR_COLORS.length
+  return COLLABORATOR_COLORS[index]
+}
+
+export default function useAuditToolsLogic({ authUserId, userName = '', userRole = '', activeTabParam = 'Logs' }) {
+  const [activeTab, setActiveTabRaw] = useState(() => {
+    try {
+      return sessionStorage.getItem('audit_active_tab') || activeTabParam
+    } catch {
+      return activeTabParam
+    }
+  })
+
+  const setActiveTab = useCallback((tab) => {
+    setActiveTabRaw(tab)
+    try {
+      sessionStorage.setItem('audit_active_tab', tab)
+    } catch {}
+  }, [])
   
+  // Current auditor identity & avatar styling
+  const [currentAuditorProfile, setCurrentAuditorProfile] = useState({
+    id: authUserId,
+    name: userName || 'Auditor',
+    role: userRole || 'Auditor',
+    color: getCollaboratorColor(authUserId)
+  })
+
+  useEffect(() => {
+    if (authUserId) {
+      supabase
+        .from('users')
+        .select('first_name, last_name, roles(role_name)')
+        .eq('auth_id', authUserId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            const fullName = [data.first_name, data.last_name].filter(Boolean).join(' ') || userName || 'Auditor'
+            const roleName = data.roles?.role_name || userRole || 'Auditor'
+            setCurrentAuditorProfile({
+              id: authUserId,
+              name: fullName,
+              role: roleName,
+              color: getCollaboratorColor(authUserId)
+            })
+          }
+        })
+        .catch(err => console.warn('Could not load user profile for auditor collaboration:', err))
+    }
+  }, [authUserId, userName, userRole])
+
+  // Real-time Collaboration (Google Docs style) states
+  const [collaborators, setCollaborators] = useState([])
+  const [activeEditing, setActiveEditing] = useState({}) // { [resultKey]: { evidence: { name, color }, notes: { name, color } } }
+  const [remoteFlashMap, setRemoteFlashMap] = useState({}) // { [resultKey]: { evidence: bool, notes: bool, status: bool } }
+  const [saveStatus, setSaveStatus] = useState('saved') // 'saved' | 'saving' | 'synced' | 'error'
+  const [recentActivity, setRecentActivity] = useState('')
+  const [activeAuditorsBySchedule, setActiveAuditorsBySchedule] = useState({}) // { [scheduleId]: [{ id, name, color }] }
+  const [progressBySchedule, setProgressBySchedule] = useState({}) // { [scheduleId]: { evaluated, total, percent } }
+
+  const roomChannelRef = useRef(null)
+  const globalHubChannelRef = useRef(null)
+  const recentActivityTimerRef = useRef(null)
+
+  const triggerRecentActivity = useCallback((message) => {
+    setRecentActivity(message)
+    if (recentActivityTimerRef.current) clearTimeout(recentActivityTimerRef.current)
+    recentActivityTimerRef.current = setTimeout(() => {
+      setRecentActivity('')
+    }, 4000)
+  }, [])
+
   // Data lists
   const [schedules, setSchedules] = useState([])
   const [standards, setStandards] = useState([])
@@ -47,7 +136,18 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
   const [templateId, setTemplateId] = useState('')
 
   // Checklist / Audit Run states
-  const [activeRun, setActiveRun] = useState(null)
+  const [activeRun, setActiveRunState] = useState(null)
+
+  const setActiveRun = useCallback((val) => {
+    setActiveRunState(val)
+    try {
+      if (val?.schedule_id) {
+        sessionStorage.setItem('audit_active_schedule_id', val.schedule_id)
+      } else {
+        sessionStorage.removeItem('audit_active_schedule_id')
+      }
+    } catch {}
+  }, [])
   const [activeClauses, setActiveClauses] = useState([])
   const [resultsMap, setResultsMap] = useState({})
   const [savingProgress, setSavingProgress] = useState(false)
@@ -77,6 +177,52 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
   const qddrDetails = useQDDRDetails()
 
 
+  // Google Docs Style Real-Time Broadcast Actions
+  const broadcastClauseChange = useCallback((resultKey, field, value) => {
+    if (!roomChannelRef.current || !activeRunRef.current?.id) return
+    roomChannelRef.current.send({
+      type: 'broadcast',
+      event: 'clause_change',
+      payload: {
+        resultKey,
+        field,
+        value,
+        userId: authUserId,
+        userName: currentAuditorProfile.name
+      }
+    })
+  }, [authUserId, currentAuditorProfile.name])
+
+  const broadcastFieldFocus = useCallback((resultKey, field) => {
+    if (!roomChannelRef.current || !activeRunRef.current?.id) return
+    roomChannelRef.current.send({
+      type: 'broadcast',
+      event: 'field_focus',
+      payload: {
+        resultKey,
+        field,
+        user: {
+          id: authUserId,
+          name: currentAuditorProfile.name,
+          color: currentAuditorProfile.color
+        }
+      }
+    })
+  }, [authUserId, currentAuditorProfile.name, currentAuditorProfile.color])
+
+  const broadcastFieldBlur = useCallback((resultKey, field) => {
+    if (!roomChannelRef.current || !activeRunRef.current?.id) return
+    roomChannelRef.current.send({
+      type: 'broadcast',
+      event: 'field_blur',
+      payload: {
+        resultKey,
+        field,
+        userId: authUserId
+      }
+    })
+  }, [authUserId])
+
   // Start/Resume Audit
 
   const handleStartAudit = async (schedule) => {
@@ -97,6 +243,12 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
       if (existingRuns && existingRuns.length > 0) {
         activeRunData = existingRuns[0]
+        if (schedule.status !== 'in_progress') {
+          await supabase
+            .from('audit_schedules')
+            .update({ status: 'in_progress' })
+            .eq('id', schedule.id)
+        }
       } else {
         const { data: newRun, error: createError } = await supabase
           .from('audit_runs')
@@ -110,6 +262,11 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
 
         if (createError) throw createError
         activeRunData = newRun
+
+        await supabase
+          .from('audit_schedules')
+          .update({ status: 'in_progress' })
+          .eq('id', schedule.id)
       }
 
       const { data: groups, error: groupErr } = await supabase
@@ -324,6 +481,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       }
     }
     setSavingProgress(true)
+    setSaveStatus('saving')
     try {
       const upsertData = Object.entries(resultsMap).map(([resultKey, val]) => {
         const payload = {
@@ -365,6 +523,7 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
         // Ignore storage quota errors
       }
       setResultsMap(updatedResultsMap)
+      setSaveStatus('saved')
 
       if (complete) {
         // Bind existing open CARs to this schedule so they don't appear in future audits
@@ -417,6 +576,21 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
           .eq('id', activeRun.schedule_id)
 
         if (schedErr) throw schedErr
+
+        if (roomChannelRef.current) {
+          try {
+            roomChannelRef.current.send({
+              type: 'broadcast',
+              event: 'audit_completed',
+              payload: {
+                completedById: authUserId,
+                completedByName: currentAuditorProfile.name
+              }
+            })
+          } catch (bErr) {
+            console.warn('Could not broadcast audit completion:', bErr)
+          }
+        }
 
         try {
           localStorage.removeItem(`audit_draft_${activeRun.id}`)
@@ -537,7 +711,9 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
         { data: standardsData, error: stdError },
         { data: allUsersData, error: audError },
         templatesData,
-        { data: schedulesData, error: schedError }
+        { data: schedulesData, error: schedError },
+        { data: activeRunsData, error: runsErr },
+        { data: allResultsData }
       ] = await Promise.all([
         supabase
           .from('iso_standards')
@@ -561,7 +737,14 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
             auditor_id,
             template_id
           `)
-          .order('scheduled_date', { ascending: true })
+          .order('scheduled_date', { ascending: true }),
+        supabase
+          .from('audit_runs')
+          .select('id, schedule_id, auditor_id, started_at, completed_at')
+          .is('completed_at', null),
+        supabase
+          .from('audit_results')
+          .select('id, run_id, status, evidence, notes')
       ])
 
       if (stdError) throw stdError
@@ -585,19 +768,53 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
       setAuditors(auditorsData)
       setTemplates(templatesData || [])
 
+      const newProgressMap = {}
       const mappedSchedules = (schedulesData || []).map(schedule => {
         const std = (standardsData || []).find(s => s.id === schedule.standard_id)
         const aud = (allUsersData || []).find(a => a.auth_id === schedule.auditor_id) || (auditorsData || []).find(a => a.auth_id === schedule.auditor_id)
         const temp = (templatesData || []).find(t => String(t.id) === String(schedule.template_id))
+        const activeRunItem = (activeRunsData || []).find(r => r.schedule_id === schedule.id)
+
+        let scheduleStatus = schedule.status
+        if (scheduleStatus !== 'completed' && activeRunItem) {
+          scheduleStatus = 'in_progress'
+        }
+
+        if (activeRunItem && allResultsData) {
+          const runResults = allResultsData.filter(r => r.run_id === activeRunItem.id)
+          const total = runResults.length
+          const evaluated = runResults.filter(r => (r.evidence && r.evidence.trim().length > 0) || (r.notes && r.notes.trim().length > 0) || r.status !== 'compliant').length
+          const percent = total > 0 ? Math.round((evaluated / total) * 100) : 0
+          newProgressMap[schedule.id] = { evaluated, total, percent }
+        }
+
         return {
           ...schedule,
+          status: scheduleStatus,
+          active_run_id: activeRunItem?.id || null,
           standard_name: std ? `${std.name} (${std.version})` : 'Unknown Standard',
           auditor_name: aud ? `${aud.first_name} ${aud.last_name}` : 'Unknown Auditor',
           template_name: temp ? temp.title : null
         }
       })
 
+      setProgressBySchedule(newProgressMap)
       setSchedules(mappedSchedules)
+
+      // Auto-restore active run if browser refreshed or HMR reloaded
+      try {
+        const savedSchedId = sessionStorage.getItem('audit_active_schedule_id')
+        if (savedSchedId && !activeRunRef.current) {
+          const targetSched = mappedSchedules.find(s => s.id === savedSchedId)
+          if (targetSched && targetSched.status !== 'completed') {
+            handleStartAudit(targetSched)
+          } else {
+            sessionStorage.removeItem('audit_active_schedule_id')
+          }
+        }
+      } catch (resumeErr) {
+        console.warn('Could not auto-resume active audit run:', resumeErr)
+      }
     } catch (err) {
       console.error('Error fetching audit data:', err)
       setError('Failed to load audit tools data. Please try again.')
@@ -627,12 +844,240 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     fetchData()
   }, [])
 
+  // 1. Global Schedules Presence & Realtime Hub: Every auditor sees schedules update live
   useEffect(() => {
-    if (activeTab === 'Logs') {
-      fetchAuditLogs(0)
-      setLogsPage(0)
+    const hubChannel = supabase.channel('audit-schedules-hub')
+
+    const updatePresenceState = () => {
+      const state = hubChannel.presenceState()
+      const map = {}
+      Object.values(state).forEach(presences => {
+        presences.forEach(p => {
+          if (p.schedule_id) {
+            if (!map[p.schedule_id]) map[p.schedule_id] = []
+            if (!map[p.schedule_id].some(u => u.id === p.user_id)) {
+              map[p.schedule_id].push({
+                id: p.user_id,
+                name: p.user_name || 'Auditor',
+                color: p.user_color || getCollaboratorColor(p.user_id)
+              })
+            }
+          }
+        })
+      })
+      setActiveAuditorsBySchedule(map)
     }
-  }, [activeTab])
+
+    hubChannel
+      .on('presence', { event: 'sync' }, updatePresenceState)
+      .on('presence', { event: 'join' }, updatePresenceState)
+      .on('presence', { event: 'leave' }, updatePresenceState)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_schedules' }, () => {
+        fetchData()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_runs' }, () => {
+        fetchData()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_results' }, () => {
+        fetchData()
+      })
+
+    globalHubChannelRef.current = hubChannel
+
+    hubChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await hubChannel.track({
+          user_id: authUserId,
+          user_name: currentAuditorProfile.name,
+          user_color: currentAuditorProfile.color,
+          schedule_id: activeRun?.schedule_id || null,
+          run_id: activeRun?.id || null,
+          timestamp: Date.now()
+        })
+      }
+    })
+
+    return () => {
+      supabase.removeChannel(hubChannel)
+      globalHubChannelRef.current = null
+    }
+  }, [authUserId, currentAuditorProfile.name, currentAuditorProfile.color])
+
+  // Sync current presence when entering / leaving activeRun
+  useEffect(() => {
+    if (globalHubChannelRef.current) {
+      globalHubChannelRef.current.track({
+        user_id: authUserId,
+        user_name: currentAuditorProfile.name,
+        user_color: currentAuditorProfile.color,
+        schedule_id: activeRun?.schedule_id || null,
+        run_id: activeRun?.id || null,
+        timestamp: Date.now()
+      }).catch(err => console.warn('Hub presence track error:', err))
+    }
+  }, [activeRun?.id, activeRun?.schedule_id, authUserId, currentAuditorProfile.name, currentAuditorProfile.color])
+
+  // 2. Real-Time Collaborative Workspace Channel (Google Docs style)
+  useEffect(() => {
+    if (!activeRun?.id) {
+      setCollaborators([])
+      setActiveEditing({})
+      setRemoteFlashMap({})
+      return
+    }
+
+    const roomChannel = supabase.channel(`audit-room-${activeRun.id}`, {
+      config: {
+        presence: { key: authUserId || 'anon-' + Math.random().toString(36).substring(2) }
+      }
+    })
+    roomChannelRef.current = roomChannel
+
+    roomChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = roomChannel.presenceState()
+        const activeList = []
+        const seen = new Set()
+        Object.values(state).forEach(presences => {
+          presences.forEach(p => {
+            if (p.user_id && !seen.has(p.user_id)) {
+              seen.add(p.user_id)
+              activeList.push({
+                id: p.user_id,
+                name: p.name || 'Auditor',
+                role: p.role || 'Auditor',
+                color: p.color || getCollaboratorColor(p.user_id),
+                isSelf: p.user_id === authUserId
+              })
+            }
+          })
+        })
+        setCollaborators(activeList)
+      })
+      .on('presence', { event: 'join' }, ({ newPresences }) => {
+        newPresences.forEach(p => {
+          if (p.user_id !== authUserId) {
+            triggerRecentActivity(`${p.name || 'An auditor'} joined the session`)
+          }
+        })
+      })
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+        leftPresences.forEach(p => {
+          if (p.user_id !== authUserId) {
+            triggerRecentActivity(`${p.name || 'An auditor'} left the session`)
+          }
+        })
+      })
+      .on('broadcast', { event: 'clause_change' }, ({ payload }) => {
+        if (!payload || payload.userId === authUserId) return
+
+        setResultsMap(prev => {
+          const current = prev[payload.resultKey] || {}
+          return {
+            ...prev,
+            [payload.resultKey]: {
+              ...current,
+              [payload.field]: payload.value
+            }
+          }
+        })
+
+        setRemoteFlashMap(prev => ({
+          ...prev,
+          [payload.resultKey]: {
+            ...(prev[payload.resultKey] || {}),
+            [payload.field]: true
+          }
+        }))
+        setTimeout(() => {
+          setRemoteFlashMap(prev => ({
+            ...prev,
+            [payload.resultKey]: {
+              ...(prev[payload.resultKey] || {}),
+              [payload.field]: false
+            }
+          }))
+        }, 2000)
+
+        const fieldName = payload.field === 'notes' ? 'findings' : payload.field
+        triggerRecentActivity(`${payload.userName || 'Co-auditor'} updated ${fieldName}`)
+        setSaveStatus('synced')
+      })
+      .on('broadcast', { event: 'field_focus' }, ({ payload }) => {
+        if (!payload || payload.user?.id === authUserId) return
+        setActiveEditing(prev => ({
+          ...prev,
+          [payload.resultKey]: {
+            ...(prev[payload.resultKey] || {}),
+            [payload.field]: payload.user
+          }
+        }))
+      })
+      .on('broadcast', { event: 'field_blur' }, ({ payload }) => {
+        if (!payload || payload.userId === authUserId) return
+        setActiveEditing(prev => {
+          const copy = { ...(prev[payload.resultKey] || {}) }
+          delete copy[payload.field]
+          return {
+            ...prev,
+            [payload.resultKey]: copy
+          }
+        })
+      })
+      .on('broadcast', { event: 'audit_completed' }, ({ payload }) => {
+        if (payload?.completedById === authUserId) return
+        setToast({
+          message: `This audit was just completed and saved by ${payload?.completedByName || 'a co-auditor'}.`,
+          type: 'info'
+        })
+        setActiveRun(null)
+        setActiveClauses([])
+        setResultsMap({})
+        fetchData()
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'audit_results',
+        filter: `run_id=eq.${activeRun.id}`
+      }, (payload) => {
+        if (payload.new) {
+          const row = payload.new
+          setResultsMap(prev => {
+            const existing = prev[row.id] || {}
+            return {
+              ...prev,
+              [row.id]: {
+                id: row.id,
+                clause_id: row.clause_id,
+                status: row.status || existing.status || 'compliant',
+                evidence: row.evidence ?? existing.evidence ?? '',
+                notes: row.notes ?? existing.notes ?? '',
+                attachment_url: row.attachment_url ?? existing.attachment_url ?? ''
+              }
+            }
+          })
+          setSaveStatus('synced')
+        }
+      })
+
+    roomChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await roomChannel.track({
+          user_id: authUserId,
+          name: currentAuditorProfile.name,
+          role: currentAuditorProfile.role,
+          color: currentAuditorProfile.color,
+          joined_at: new Date().toISOString()
+        })
+      }
+    })
+
+    return () => {
+      supabase.removeChannel(roomChannel)
+      roomChannelRef.current = null
+    }
+  }, [activeRun?.id, authUserId, currentAuditorProfile.name, currentAuditorProfile.role, currentAuditorProfile.color, triggerRecentActivity])
 
   // Real-time channel listener for car_clause_links table updates
   useEffect(() => {
@@ -1142,6 +1587,18 @@ export default function useAuditToolsLogic({ authUserId, activeTabParam = 'Logs'
     handleDeleteTemplate,
     loading,
     saving,
+    // Real-Time Google Docs Collaboration Features
+    collaborators,
+    activeEditing,
+    remoteFlashMap,
+    saveStatus,
+    recentActivity,
+    activeAuditorsBySchedule,
+    progressBySchedule,
+    broadcastClauseChange,
+    broadcastFieldFocus,
+    broadcastFieldBlur,
+    currentAuditorProfile,
     selectedCar: carDetails.selectedCar,
     isCarDetailsModalOpen: carDetails.isCarDetailsModalOpen,
     openCarDetails: carDetails.openCarDetails,

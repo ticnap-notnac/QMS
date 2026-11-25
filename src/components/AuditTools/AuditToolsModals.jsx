@@ -1,4 +1,4 @@
-import { LoaderCircle, BookOpen, Paperclip, CheckCircle } from 'lucide-react'
+import { LoaderCircle, BookOpen, Paperclip, CheckCircle, Users, Sparkles, Check } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../utils/supabase'
@@ -25,7 +25,16 @@ export function AuditChecklistSection({
   handleRemoveCarLink,
   handleRemoveQddrLink,
   onSelectCar,
-  onSelectQddr
+  onSelectQddr,
+  collaborators = [],
+  activeEditing = {},
+  remoteFlashMap = {},
+  saveStatus = 'saved',
+  recentActivity = '',
+  broadcastClauseChange,
+  broadcastFieldFocus,
+  broadcastFieldBlur,
+  currentAuditorProfile
 }) {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchClause, setSearchClause] = useState('')
@@ -72,6 +81,9 @@ export function AuditChecklistSection({
         ...resultsMap,
         [clauseId]: { ...currentAnswer, attachment_url: urlData.publicUrl }
       })
+      if (broadcastClauseChange) {
+        broadcastClauseChange(clauseId, 'attachment_url', urlData.publicUrl)
+      }
     } catch (err) {
       console.error('Upload error:', err)
       alert('Failed to upload file. Please try again.')
@@ -82,85 +94,169 @@ export function AuditChecklistSection({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Header Info */}
-      <div className="iso-card" style={{ marginBottom: '24px', padding: '16px 20px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', color: '#1A435A' }}>
-            Audit Checklist: {activeRun?.audit_schedules?.audit_checklist_templates?.title || 'Custom'}
-          </h3>
-          <span style={{ fontSize: '13px', color: '#64748b' }}>
-            Standard: {activeRun?.audit_schedules?.iso_standards?.name} ({activeRun?.audit_schedules?.iso_standards?.version})
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Search Clause */}
-          <input 
-            type="text" 
-            placeholder="Search clause..." 
-            value={searchClause}
-            onChange={(e) => {
-              setSearchClause(e.target.value)
-              setCurrentPage(1)
-            }}
-            style={{ 
-              padding: '6px 12px', 
-              border: '1px solid #cbd5e1', 
-              borderRadius: '6px', 
-              fontSize: '14px', 
-              outline: 'none',
-              width: '200px'
-            }}
-          />
-
-          {/* Jump to Page */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '14px', color: '#475569' }}>Page:</span>
+      {/* Header Info with Google Docs Style Collaboration Bar */}
+      <div className="iso-card" style={{ marginBottom: '24px', padding: '16px 20px', background: '#fff', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', color: '#1A435A' }}>
+              Audit Checklist: {activeRun?.audit_schedules?.audit_checklist_templates?.title || 'Custom'}
+            </h3>
+            <span style={{ fontSize: '13px', color: '#64748b' }}>
+              Standard: {activeRun?.audit_schedules?.iso_standards?.name} ({activeRun?.audit_schedules?.iso_standards?.version})
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {/* Search Clause */}
             <input 
-              type="number" 
-              min="1" 
-              max={totalPages}
-              value={jumpPage}
-              onChange={(e) => setJumpPage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const p = parseInt(jumpPage)
-                  if (p >= 1 && p <= totalPages) {
-                    setCurrentPage(p)
-                    setJumpPage('') // Clear after jump
-                  }
-                }
+              type="text" 
+              placeholder="Search clause..." 
+              value={searchClause}
+              onChange={(e) => {
+                setSearchClause(e.target.value)
+                setCurrentPage(1)
               }}
-              onBlur={() => {
-                const p = parseInt(jumpPage)
-                if (p >= 1 && p <= totalPages) {
-                  setCurrentPage(p)
-                }
-                setJumpPage('') // Clear when unfocused
-              }}
-              placeholder={currentPage.toString()}
               style={{ 
-                width: '60px', 
-                padding: '6px', 
+                padding: '6px 12px', 
                 border: '1px solid #cbd5e1', 
                 borderRadius: '6px', 
                 fontSize: '14px', 
                 outline: 'none',
-                textAlign: 'center'
+                width: '200px'
               }}
             />
-            <span style={{ fontSize: '14px', color: '#94a3b8' }}>/ {totalPages}</span>
+
+            {/* Jump to Page */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '14px', color: '#475569' }}>Page:</span>
+              <input 
+                type="number" 
+                min="1" 
+                max={totalPages}
+                value={jumpPage}
+                onChange={(e) => setJumpPage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const p = parseInt(jumpPage)
+                    if (p >= 1 && p <= totalPages) {
+                      setCurrentPage(p)
+                      setJumpPage('') // Clear after jump
+                    }
+                  }
+                }}
+                onBlur={() => {
+                  const p = parseInt(jumpPage)
+                  if (p >= 1 && p <= totalPages) {
+                    setCurrentPage(p)
+                  }
+                  setJumpPage('') // Clear when unfocused
+                }}
+                placeholder={currentPage.toString()}
+                style={{ 
+                  width: '60px', 
+                  padding: '6px', 
+                  border: '1px solid #cbd5e1', 
+                  borderRadius: '6px', 
+                  fontSize: '14px', 
+                  outline: 'none',
+                  textAlign: 'center'
+                }}
+              />
+              <span style={{ fontSize: '14px', color: '#94a3b8' }}>/ {totalPages}</span>
+            </div>
+
+            <button
+              className="btn-add-action"
+              style={{ background: '#ffffff', color: '#475569', border: '1px solid #cbd5e1', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontSize: '14px', padding: '6px 14px' }}
+              onClick={() => {
+                setActiveRun(null)
+                fetchData()
+              }}
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+
+        {/* Real-Time Google Docs Collaboration Bar */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderTop: '1px solid #f1f5f9',
+          paddingTop: '12px',
+          flexWrap: 'wrap',
+          gap: '12px'
+        }}>
+          {/* Active Collaborators */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Users size={16} style={{ color: '#0284c7' }} />
+              <span style={{ fontSize: '12.5px', fontWeight: '600', color: '#334155' }}>
+                Co-Auditors:
+              </span>
+            </div>
+
+            {collaborators.length === 0 ? (
+              <span style={{ fontSize: '12px', color: '#94a3b8' }}>Connecting to collaboration room...</span>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="collaborator-avatar-stack">
+                  {collaborators.map((c, i) => (
+                    <div
+                      key={c.id || i}
+                      className="collaborator-avatar-item"
+                      style={{ background: c.color }}
+                      title={`${c.name} (${c.role || 'Auditor'})${c.isSelf ? ' - You' : ''}`}
+                    >
+                      {(c.name || 'A').substring(0, 1).toUpperCase()}
+                    </div>
+                  ))}
+                </div>
+                <span style={{
+                  fontSize: '11.5px',
+                  fontWeight: '600',
+                  color: '#0369a1',
+                  background: 'rgba(2, 132, 199, 0.08)',
+                  padding: '3px 8px',
+                  borderRadius: '12px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}>
+                  <span className="live-pulse-dot" style={{ width: '6px', height: '6px' }} />
+                  {collaborators.length} online
+                </span>
+              </div>
+            )}
           </div>
 
-          <button
-            className="btn-add-action"
-            style={{ background: '#ffffff', color: '#475569', border: '1px solid #cbd5e1', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontSize: '14px', padding: '6px 14px' }}
-            onClick={() => {
-              setActiveRun(null)
-              fetchData()
-            }}
-          >
-            Go Back
-          </button>
+          {/* Sync Status & Activity Feed Ticker */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {recentActivity && (
+              <div className="co-activity-ticker" title={recentActivity}>
+                <span>⚡ {recentActivity}</span>
+              </div>
+            )}
+
+            <div className={`cloud-sync-pill ${saveStatus === 'saving' ? 'is-saving' : saveStatus === 'synced' ? 'is-synced' : 'is-saved'}`}>
+              {saveStatus === 'saving' ? (
+                <>
+                  <LoaderCircle size={13} className="spin" />
+                  <span>Saving changes...</span>
+                </>
+              ) : saveStatus === 'synced' ? (
+                <>
+                  <Sparkles size={13} />
+                  <span>Synced with co-auditors</span>
+                </>
+              ) : (
+                <>
+                  <Check size={13} />
+                  <span>Saved to cloud</span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -211,18 +307,49 @@ export function AuditChecklistSection({
                         )}
                       </td>
                       <td className="valign-top" style={{ paddingRight: '16px' }}>
+                        {/* Google Docs active editor presence indicator */}
+                        {activeEditing[resultKey]?.evidence && (
+                          <div className="co-editor-badge" style={{
+                            color: activeEditing[resultKey].evidence.color || '#2563eb',
+                            background: `${activeEditing[resultKey].evidence.color || '#2563eb'}18`,
+                            border: `1px solid ${activeEditing[resultKey].evidence.color || '#2563eb'}40`
+                          }}>
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: activeEditing[resultKey].evidence.color || '#2563eb' }} />
+                            {activeEditing[resultKey].evidence.name} is typing...
+                          </div>
+                        )}
                         <textarea
-                          className="input-field"
+                          className={`input-field ${remoteFlashMap[resultKey]?.evidence ? 'remote-updated-flash' : ''}`}
                           rows={4}
                           placeholder="Enter evidence..."
                           value={answer.evidence || ''}
                           onChange={(e) => {
+                            const val = e.target.value
                             setResultsMap({
                               ...resultsMap,
-                              [resultKey]: { ...answer, evidence: e.target.value }
+                              [resultKey]: { ...answer, evidence: val }
                             })
+                            if (broadcastClauseChange) {
+                              broadcastClauseChange(resultKey, 'evidence', val)
+                            }
                           }}
-                          style={{ display: 'block', margin: 0, marginBottom: '10px', width: '100%', resize: 'vertical', minHeight: '80px', borderRadius: '8px' }}
+                          onFocus={() => {
+                            if (broadcastFieldFocus) broadcastFieldFocus(resultKey, 'evidence')
+                          }}
+                          onBlur={() => {
+                            if (broadcastFieldBlur) broadcastFieldBlur(resultKey, 'evidence')
+                          }}
+                          style={{
+                            display: 'block',
+                            margin: 0,
+                            marginBottom: '10px',
+                            width: '100%',
+                            resize: 'vertical',
+                            minHeight: '80px',
+                            borderRadius: '8px',
+                            borderColor: activeEditing[resultKey]?.evidence ? activeEditing[resultKey].evidence.color : undefined,
+                            boxShadow: activeEditing[resultKey]?.evidence ? `0 0 0 1px ${activeEditing[resultKey].evidence.color}40` : undefined
+                          }}
                         />
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <label style={{
@@ -258,18 +385,49 @@ export function AuditChecklistSection({
                         </div>
                       </td>
                       <td className="valign-top" style={{ paddingRight: '16px' }}>
+                        {/* Google Docs active editor presence indicator */}
+                        {activeEditing[resultKey]?.notes && (
+                          <div className="co-editor-badge" style={{
+                            color: activeEditing[resultKey].notes.color || '#2563eb',
+                            background: `${activeEditing[resultKey].notes.color || '#2563eb'}18`,
+                            border: `1px solid ${activeEditing[resultKey].notes.color || '#2563eb'}40`
+                          }}>
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: activeEditing[resultKey].notes.color || '#2563eb' }} />
+                            {activeEditing[resultKey].notes.name} is editing...
+                          </div>
+                        )}
                         <textarea
-                          className="input-field"
+                          className={`input-field ${remoteFlashMap[resultKey]?.notes ? 'remote-updated-flash' : ''}`}
                           rows={4}
                           placeholder="Enter findings / CAR notes..."
                           value={answer.notes || ''}
                           onChange={(e) => {
+                            const val = e.target.value
                             setResultsMap({
                               ...resultsMap,
-                              [resultKey]: { ...answer, notes: e.target.value }
+                              [resultKey]: { ...answer, notes: val }
                             })
+                            if (broadcastClauseChange) {
+                              broadcastClauseChange(resultKey, 'notes', val)
+                            }
                           }}
-                          style={{ display: 'block', margin: 0, marginBottom: '10px', width: '100%', resize: 'vertical', minHeight: '80px', borderRadius: '8px' }}
+                          onFocus={() => {
+                            if (broadcastFieldFocus) broadcastFieldFocus(resultKey, 'notes')
+                          }}
+                          onBlur={() => {
+                            if (broadcastFieldBlur) broadcastFieldBlur(resultKey, 'notes')
+                          }}
+                          style={{
+                            display: 'block',
+                            margin: 0,
+                            marginBottom: '10px',
+                            width: '100%',
+                            resize: 'vertical',
+                            minHeight: '80px',
+                            borderRadius: '8px',
+                            borderColor: activeEditing[resultKey]?.notes ? activeEditing[resultKey].notes.color : undefined,
+                            boxShadow: activeEditing[resultKey]?.notes ? `0 0 0 1px ${activeEditing[resultKey].notes.color}40` : undefined
+                          }}
                         />
                         {/* Linked CARs & QDDRs display could go here if needed, or omitted for compactness */}
                         {linkedCarsMap && linkedCarsMap[clauseKey]?.length > 0 && (
@@ -285,12 +443,17 @@ export function AuditChecklistSection({
                       </td>
                       <td className="valign-top">
                         <select
+                          className={remoteFlashMap[resultKey]?.status ? 'remote-updated-flash' : ''}
                           value={answer.status || 'compliant'}
                           onChange={(e) => {
+                            const val = e.target.value
                             setResultsMap({
                               ...resultsMap,
-                              [resultKey]: { ...answer, status: e.target.value }
+                              [resultKey]: { ...answer, status: val }
                             })
+                            if (broadcastClauseChange) {
+                              broadcastClauseChange(resultKey, 'status', val)
+                            }
                           }}
                           style={{
                             display: 'block',

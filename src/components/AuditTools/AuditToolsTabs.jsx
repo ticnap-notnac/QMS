@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { BookOpen, LoaderCircle, Calendar, Plus, CheckCircle, Clock, Trash2, Filter, Search, User } from 'lucide-react'
+import { BookOpen, LoaderCircle, Calendar, Plus, CheckCircle, Clock, Trash2, Filter, Search, User, Users } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 import ConfirmDialog from '../Modals/ConfirmDialog'
 
@@ -500,7 +500,9 @@ export function AuditSchedulesTab({
   confirmDeleteScheduleDialogProps,
   templateId,
   setTemplateId,
-  templates
+  templates,
+  activeAuditorsBySchedule = {},
+  progressBySchedule = {}
 }) {
   const auditorOptions = useMemo(() => {
     return auditors
@@ -680,59 +682,127 @@ export function AuditSchedulesTab({
                     </td>
                   </tr>
                 ) : (
-                  schedules.map(sched => (
-                    <tr key={sched.id}>
-                      <td>
-                        <strong>{sched.title}</strong>
-                        {sched.template_name && (
-                          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                            Template: {sched.template_name}
-                          </div>
-                        )}
-                      </td>
-                      <td>{sched.standard_name}</td>
-                      <td>{sched.auditor_name}</td>
-                      <td>{sched.scheduled_date}</td>
-                      <td className="text-center">
-                        <span className={`iso-status-pill ${sched.status === 'completed' ? 'is-active' : 'is-inactive'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  schedules.map(sched => {
+                    const activeAuditors = activeAuditorsBySchedule[sched.id] || []
+                    const progress = progressBySchedule[sched.id] || null
+                    const isInProgress = sched.status === 'in_progress' || activeAuditors.length > 0
+
+                    return (
+                      <tr key={sched.id}>
+                        <td>
+                          <strong>{sched.title}</strong>
+                          {sched.template_name && (
+                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                              Template: {sched.template_name}
+                            </div>
+                          )}
+                          
+                          {/* Real-time Collaborators / Activity on Schedule */}
+                          {isInProgress && activeAuditors.length > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+                              <div className="collaborator-avatar-stack">
+                                {activeAuditors.slice(0, 3).map((aud, idx) => (
+                                  <div
+                                    key={aud.id || idx}
+                                    className="collaborator-avatar-item"
+                                    style={{
+                                      background: aud.color || '#0284c7',
+                                      width: '22px',
+                                      height: '22px',
+                                      fontSize: '10px'
+                                    }}
+                                    title={`${aud.name} (Currently auditing)`}
+                                  >
+                                    {(aud.name || 'A').substring(0, 1).toUpperCase()}
+                                  </div>
+                                ))}
+                              </div>
+                              <span style={{ fontSize: '11px', color: '#0284c7', fontWeight: '600' }}>
+                                {activeAuditors.length === 1
+                                  ? `${activeAuditors[0].name} co-auditing`
+                                  : `${activeAuditors.length} auditors active now`}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Live evaluation progress */}
+                          {isInProgress && progress && progress.total > 0 && (
+                            <div style={{ marginTop: '6px', width: '180px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#64748b', marginBottom: '3px' }}>
+                                <span>Evaluated: {progress.evaluated}/{progress.total}</span>
+                                <span style={{ fontWeight: '600', color: '#0284c7' }}>{progress.percent}%</span>
+                              </div>
+                              <div style={{ width: '100%', height: '5px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                <div style={{ width: `${progress.percent}%`, height: '100%', background: 'linear-gradient(90deg, #0284c7, #06b6d4)', transition: 'width 0.4s ease' }} />
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                        <td>{sched.standard_name}</td>
+                        <td>{sched.auditor_name}</td>
+                        <td>{sched.scheduled_date}</td>
+                        <td className="text-center">
                           {sched.status === 'completed' ? (
-                            <>
+                            <span className="iso-status-pill is-active" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                               <CheckCircle size={12} />
                               Completed
-                            </>
+                            </span>
+                          ) : isInProgress ? (
+                            <span className="iso-status-pill" style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              background: 'rgba(2, 132, 199, 0.1)',
+                              color: '#0284c7',
+                              border: '1px solid rgba(2, 132, 199, 0.3)',
+                              fontWeight: '600'
+                            }}>
+                              <span className="live-pulse-dot" />
+                              In Progress
+                            </span>
                           ) : (
-                            <>
+                            <span className="iso-status-pill is-inactive" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                               <Clock size={12} />
                               Pending
-                            </>
+                            </span>
                           )}
-                        </span>
-                      </td>
-                      <td className="text-center">
-                        {sched.status !== 'completed' && (
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                            <button
-                              type="button"
-                              className="btn-primary"
-                              style={{ padding: '6px 12px', fontSize: '12px' }}
-                              onClick={() => handleStartAudit(sched)}
-                            >
-                              Start Run
-                            </button>
-                            <button
-                              type="button"
-                              className="sidebar-button"
-                              style={{ padding: '6px 10px', fontSize: '12px', color: '#ef4444' }}
-                              onClick={() => handleDeleteSchedule(sched.id)}
-                              title="Delete Schedule"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                        <td className="text-center">
+                          {sched.status !== 'completed' && (
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                              <button
+                                type="button"
+                                className="btn-primary"
+                                style={{
+                                  padding: '6px 12px',
+                                  fontSize: '12px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  background: isInProgress ? 'linear-gradient(135deg, #0284c7, #0891b2)' : undefined,
+                                  boxShadow: isInProgress ? '0 2px 4px rgba(2, 132, 199, 0.25)' : undefined
+                                }}
+                                onClick={() => handleStartAudit(sched)}
+                                title={isInProgress ? 'Collaborate on this live audit' : 'Start Audit'}
+                              >
+                                {isInProgress && <Users size={13} />}
+                                {isInProgress ? 'Collaborate' : 'Start Run'}
+                              </button>
+                              <button
+                                type="button"
+                                className="sidebar-button"
+                                style={{ padding: '6px 10px', fontSize: '12px', color: '#ef4444' }}
+                                onClick={() => handleDeleteSchedule(sched.id)}
+                                title="Delete Schedule"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>
