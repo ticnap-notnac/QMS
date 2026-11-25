@@ -2,6 +2,7 @@
 import { hasServiceRole, supabase } from '../lib/supabase.js'
 import { writeAudit } from '../lib/audit.js'
 import { isAdminRole } from '../utils/roleUtils.js'
+import { invalidateRbacCache } from '../lib/authCache.js'
 
 /**
  * Fetches all users enriched with role, department, site, and team leader information.
@@ -20,10 +21,11 @@ export async function fetchAllUsers({ actorRoleName, actorSiteId } = {}) {
     usersQuery = usersQuery.or(`site_id.eq.${actorSiteId},site_id.is.null`)
   }
 
-  const [usersResult, rolesResult, departmentsResult] = await Promise.all([
+  const [usersResult, rolesResult, departmentsResult, sitesResult] = await Promise.all([
     usersQuery,
     supabase.from('roles').select('id, role_name'),
     supabase.from('departments').select('id, department_name'),
+    supabase.from('sites').select('id, site_name, site_code'),
   ])
 
   if (usersResult.error) {
@@ -36,10 +38,8 @@ export async function fetchAllUsers({ actorRoleName, actorSiteId } = {}) {
   const departmentMap = new Map(
     (departmentsResult.data || []).map((d) => [String(d.id), d.department_name])
   )
-
-  const { data: sitesData } = await supabase.from('sites').select('id, site_name, site_code')
   const siteMap = new Map(
-    (sitesData || []).map((s) => [String(s.id), { site_name: s.site_name, site_code: s.site_code }])
+    (sitesResult.data || []).map((s) => [String(s.id), { site_name: s.site_name, site_code: s.site_code }])
   )
 
   const allRows = usersResult.data || []
@@ -278,6 +278,8 @@ export async function deleteUserById(id, actorAuthId) {
   const { error: dbError } = await supabase.from('users').delete().eq('id', id)
   if (dbError) return { success: false, error: dbError.message, status: 500 }
 
+  invalidateRbacCache(existing.auth_id)
+
   const { error: authError } = await supabase.auth.admin.deleteUser(existing.auth_id)
   if (authError) return { success: false, error: authError.message, status: 500 }
 
@@ -342,6 +344,7 @@ export async function updateUserById(id, { firstName, lastName, email, userName,
 
     if (profileError) return { profile: null, error: profileError.message, status: 500 }
     updatedProfile = profileData || updatedProfile
+    invalidateRbacCache(existing.auth_id)
   }
 
   if (hasServiceRole && existing.auth_id && (password || (email && email !== existing.email) || updates.status)) {
@@ -411,6 +414,8 @@ export async function updateUserStatusById(id, status, actorAuthId, actorDbUser 
     .eq('id', id)
 
   if (dbError) return { success: false, error: dbError.message, status: 500 }
+
+  invalidateRbacCache(existing.auth_id)
 
   if (hasServiceRole && existing.auth_id) {
     const { error: authErr } = await supabase.auth.admin.updateUserById(existing.auth_id, {

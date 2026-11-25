@@ -2,6 +2,41 @@ import { supabase } from '@/utils/supabase'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
+let cachedAccessToken = null
+let cachedTokenExpiresAt = 0
+let inFlightSessionPromise = null
+
+// Keep token cache synchronized with auth state changes
+if (supabase?.auth?.onAuthStateChange) {
+  supabase.auth.onAuthStateChange((_event, session) => {
+    cachedAccessToken = session?.access_token || null
+    cachedTokenExpiresAt = cachedAccessToken ? Date.now() + 10000 : 0
+  })
+}
+
+async function getAccessToken() {
+  const now = Date.now()
+  if (cachedAccessToken && now < cachedTokenExpiresAt) {
+    return cachedAccessToken
+  }
+  if (inFlightSessionPromise) {
+    return inFlightSessionPromise
+  }
+  inFlightSessionPromise = supabase.auth
+    .getSession()
+    .then(({ data }) => {
+      const token = data?.session?.access_token || null
+      cachedAccessToken = token
+      cachedTokenExpiresAt = token ? Date.now() + 10000 : 0
+      return token
+    })
+    .catch(() => null)
+    .finally(() => {
+      inFlightSessionPromise = null
+    })
+  return inFlightSessionPromise
+}
+
 function toPlainLanguageError(message) {
   const text = String(message || '').trim()
 
@@ -27,8 +62,7 @@ function toPlainLanguageError(message) {
 async function request(path, options = {}) {
   const { headers: requestHeaders, ...restOptions } = options
   
-  const { data: { session } } = await supabase.auth.getSession()
-  const token = session?.access_token
+  const token = await getAccessToken()
 
   const isMultipart = restOptions.body instanceof FormData
 

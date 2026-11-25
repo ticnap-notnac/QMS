@@ -1,4 +1,9 @@
+import NodeCache from 'node-cache'
 import { supabase } from '../lib/supabase.js'
+import { fetchUserRoleAndPermissions } from '../middlewares/roleMiddleware.js'
+
+const resolutionCache = new NodeCache({ stdTTL: 30, checkperiod: 60, useClones: false })
+const inFlightResolutionTrends = new Map()
 
 function isAdminRole(roleName) {
   const norm = String(roleName || '').trim().toLowerCase()
@@ -38,88 +43,103 @@ const parseResolutionTimeToHours = (resTime, start, end) => {
 export async function fetchResolutionTrends(userAuthId = null) {
   let callerSiteId = null
   if (userAuthId) {
-    const { data: currentUser } = await supabase
-      .from('users')
-      .select('id, site_id, role:roles(role_name)')
-      .eq('auth_id', userAuthId)
-      .maybeSingle()
-
-    if (currentUser && !isAdminRole(currentUser.role?.role_name) && currentUser.site_id) {
-      callerSiteId = currentUser.site_id
+    const { profile, roleName } = await fetchUserRoleAndPermissions(userAuthId)
+    if (profile && !isAdminRole(roleName) && profile.site_id) {
+      callerSiteId = profile.site_id
     }
   }
 
-  // Only fetch data from the last 12 months to prevent DB slowdowns with large datasets
-  const dateOneYearAgo = new Date()
-  dateOneYearAgo.setFullYear(dateOneYearAgo.getFullYear() - 1)
-  const oneYearAgoStr = dateOneYearAgo.toISOString()
+  const cacheKey = `resolution_trends:${callerSiteId ?? 'all'}`
+  const cached = resolutionCache.get(cacheKey)
+  if (cached) return cached
 
-  let carQuery = supabase
-    .from('car_reports')
-    .select('created_at, request_date, resolution_time, verification_date, updated_at, site_id')
-    .eq('status', 'closed')
-    .gte('created_at', oneYearAgoStr)
-
-  let qddrQuery = supabase
-    .from('qddr_reports')
-    .select('created_at, updated_at, site_id')
-    .eq('status', 'closed')
-    .gte('created_at', oneYearAgoStr)
-
-  if (callerSiteId) {
-    const siteFilter = `site_id.is.null,site_id.eq.${callerSiteId}`
-    carQuery = carQuery.or(siteFilter)
-    qddrQuery = qddrQuery.or(siteFilter)
+  if (inFlightResolutionTrends.has(cacheKey)) {
+    return inFlightResolutionTrends.get(cacheKey)
   }
 
-  const [carsRes, qddrsRes] = await Promise.all([
-    carQuery,
-    qddrQuery
-  ])
+  const promise = (async () => {
+    try {
+      // Only fetch data from the last 12 months to prevent DB slowdowns with large datasets
+      const dateOneYearAgo = new Date()
+      dateOneYearAgo.setFullYear(dateOneYearAgo.getFullYear() - 1)
+      const oneYearAgoStr = dateOneYearAgo.toISOString()
 
-  const cars = carsRes.data || []
-  const qddrs = qddrsRes.data || []
+      let carQuery = supabase
+        .from('car_reports')
+        .select('created_at, request_date, resolution_time, verification_date, updated_at, site_id')
+        .eq('status', 'closed')
+        .gte('created_at', oneYearAgoStr)
 
-  const months = {}
+      let qddrQuery = supabase
+        .from('qddr_reports')
+        .select('created_at, updated_at, site_id')
+        .eq('status', 'closed')
+        .gte('created_at', oneYearAgoStr)
 
-  const addValue = (dateStr, val, type) => {
-    if (val === null || isNaN(val)) return
-    const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return
-    const monthKey = d.toLocaleString('default', { month: 'short' }) + ' ' + d.getFullYear()
-    if (!months[monthKey]) {
-      months[monthKey] = {
-        carSum: 0, carCount: 0,
-        qddrSum: 0, qddrCount: 0,
-        rawDate: d
+      if (callerSiteId) {
+        const siteFilter = `site_id.is.null,site_id.eq.${callerSiteId}`
+        carQuery = carQuery.or(siteFilter)
+        qddrQuery = qddrQuery.or(siteFilter)
       }
+
+      const [carsRes, qddrsRes] = await Promise.all([
+        carQuery,
+        qddrQuery
+      ])
+
+      const cars = carsRes.data || []
+      const qddrs = qddrsRes.data || []
+
+      const months = {}
+
+      const addValue = (dateStr, val, type) => {
+        if (val === null || isNaN(val)) return
+        const d = new Date(dateStr)
+        if (isNaN(d.getTime())) return
+        const monthKey = d.toLocaleString('default', { month: 'short' }) + ' ' + d.getFullYear()
+        if (!months[monthKey]) {
+          months[monthKey] = {
+            carSum: 0, carCount: 0,
+            qddrSum: 0, qddrCount: 0,
+            rawDate: d
+          }
+        }
+        months[monthKey][`${type}Sum`] += val
+        months[monthKey][`${type}Count`] += 1
+      }
+
+      cars.forEach(item => {
+        const val = parseResolutionTimeToHours(item.resolution_time, item.created_at || item.request_date, item.verification_date || item.updated_at)
+        addValue(item.created_at || item.request_date, val, 'car')
+      })
+
+      qddrs.forEach(item => {
+        const val = parseResolutionTimeToHours(null, item.created_at, item.updated_at)
+        addValue(item.created_at, val, 'qddr')
+      })
+
+      const result = Object.entries(months)
+        .map(([month, data]) => {
+          const carAvg = data.carCount > 0 ? Number((data.carSum / data.carCount).toFixed(1)) : null
+          const qddrAvg = data.qddrCount > 0 ? Number((data.qddrSum / data.qddrCount).toFixed(1)) : null
+          return {
+            month,
+            CAR: carAvg,
+            QDDR: qddrAvg,
+            rawDate: data.rawDate.toISOString()
+          }
+        })
+        .sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate))
+
+      resolutionCache.set(cacheKey, result)
+      return result
+    } finally {
+      inFlightResolutionTrends.delete(cacheKey)
     }
-    months[monthKey][`${type}Sum`] += val
-    months[monthKey][`${type}Count`] += 1
-  }
+  })()
 
-  cars.forEach(item => {
-    const val = parseResolutionTimeToHours(item.resolution_time, item.created_at || item.request_date, item.verification_date || item.updated_at)
-    addValue(item.created_at || item.request_date, val, 'car')
-  })
-
-  qddrs.forEach(item => {
-    const val = parseResolutionTimeToHours(null, item.created_at, item.updated_at)
-    addValue(item.created_at, val, 'qddr')
-  })
-
-  return Object.entries(months)
-    .map(([month, data]) => {
-      const carAvg = data.carCount > 0 ? Number((data.carSum / data.carCount).toFixed(1)) : null
-      const qddrAvg = data.qddrCount > 0 ? Number((data.qddrSum / data.qddrCount).toFixed(1)) : null
-      return {
-        month,
-        CAR: carAvg,
-        QDDR: qddrAvg,
-        rawDate: data.rawDate.toISOString()
-      }
-    })
-    .sort((a, b) => new Date(a.rawDate) - new Date(b.rawDate))
+  inFlightResolutionTrends.set(cacheKey, promise)
+  return promise
 }
 
 export async function fetchPendingRatings(_userAuthId) {

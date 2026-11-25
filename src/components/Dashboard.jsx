@@ -78,6 +78,8 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
   const [error, setError] = useState('')
   const [upcomingAudits, setUpcomingAudits] = useState([])
   const [latestActivities, setLatestActivities] = useState([])
+  const [activeCars, setActiveCars] = useState(null)
+  const [activeQddrs, setActiveQddrs] = useState(null)
 
   const getRelativeTime = (dateStr) => {
     if (!dateStr) return ''
@@ -96,7 +98,12 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      // Fire all network requests concurrently to dramatically speed up load times
+      const carSummaryColumns =
+        'id, reference_no, status, created_at, type_of_nonconformance, others, product_material_name, control_no, details_of_nonconformance, requesting_department, responsible_department, recipient'
+      const qddrSummaryColumns =
+        'id, reference_no, status, created_at, material_description, qty, reason_of_discrepancy, location, crushed_dented, holes_punctures, wet_leaked, open_carton, deformed_torn, opened_seal, no_label_broken_label'
+
+      // Fire all network requests concurrently in a single wave (including OccurringIssuesSummary data)
       const [
         carRes,
         statsRes,
@@ -106,7 +113,13 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
         carsRes,
         qddrRes
       ] = await Promise.all([
-        supabase.from('car_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed').neq('status', 'deleted'),
+        supabase
+          .from('car_reports')
+          .select(carSummaryColumns, { count: 'exact' })
+          .not('status', 'ilike', 'closed')
+          .neq('status', 'deleted')
+          .order('created_at', { ascending: false })
+          .limit(100),
         request('/compliance'),
         request('/compliance/trends'),
         request('/dashboard/resolution-trends'),
@@ -117,14 +130,34 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
           .gte('scheduled_date', new Date().toISOString().split('T')[0])
           .order('scheduled_date', { ascending: true })
           .limit(3),
-        supabase.from('car_reports').select('id, reference_no, status, created_at, recipient').neq('status', 'deleted').order('created_at', { ascending: false }).limit(4),
-        supabase.from('qddr_reports').select('id', { count: 'exact', head: true }).not('status', 'ilike', 'closed').neq('status', 'deleted')
+        supabase
+          .from('car_reports')
+          .select('id, reference_no, status, created_at, recipient')
+          .neq('status', 'deleted')
+          .order('created_at', { ascending: false })
+          .limit(4),
+        supabase
+          .from('qddr_reports')
+          .select(qddrSummaryColumns, { count: 'exact' })
+          .not('status', 'ilike', 'closed')
+          .neq('status', 'deleted')
+          .order('created_at', { ascending: false })
+          .limit(100)
       ])
 
       const stats = statsRes || []
       setComplianceStats(stats)
       setTrends(trendDataRes || [])
       setResolutionTrend(resolutionRes || [])
+
+      const carsList = (carRes?.data || []).filter(
+        c => !['closed', 'deleted'].includes(String(c.status || '').trim().toLowerCase())
+      )
+      const qddrsList = (qddrRes?.data || []).filter(
+        q => !['closed', 'deleted'].includes(String(q.status || '').trim().toLowerCase())
+      )
+      setActiveCars(carsList)
+      setActiveQddrs(qddrsList)
 
       // Calculate average ISO compliance score
       let avgCompliance = 0
@@ -134,9 +167,9 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
       }
 
       setMetrics({
-        openComplaints: carRes.count || 0,
+        openComplaints: carRes.count ?? carsList.length,
         isoCompliance: avgCompliance,
-        defectRate: qddrRes?.count || 0
+        defectRate: qddrRes?.count ?? qddrsList.length
       })
 
       // Handle upcoming audit schedules
@@ -256,7 +289,11 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
       </section>
 
       {/* Occurring Issues Summary Section (NCR • CAR • QDDR) */}
-      <OccurringIssuesSummary onRefresh={fetchDashboardData} />
+      <OccurringIssuesSummary
+        onRefresh={fetchDashboardData}
+        initialCars={activeCars}
+        initialQddrs={activeQddrs}
+      />
 
       {/* Double Column Info Widgets Row */}
       {canViewAuditAndCarWidgets && (

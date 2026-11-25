@@ -29,16 +29,31 @@ function getRelativeTime(dateStr) {
   return 'Just now'
 }
 
-export default function OccurringIssuesSummary({ onRefresh }) {
+const CAR_SUMMARY_COLUMNS =
+  'id, reference_no, status, created_at, type_of_nonconformance, others, product_material_name, control_no, details_of_nonconformance, requesting_department, responsible_department, recipient'
+
+const QDDR_SUMMARY_COLUMNS =
+  'id, reference_no, status, created_at, material_description, qty, reason_of_discrepancy, location, crushed_dented, holes_punctures, wet_leaked, open_carton, deformed_torn, opened_seal, no_label_broken_label'
+
+export default function OccurringIssuesSummary({ onRefresh, initialCars = null, initialQddrs = null }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('all') // 'all' | 'car' | 'qddr'
   const [searchQuery, setSearchQuery] = useState('')
-  const [loading, setLoading] = useState(true)
+  const hasPrefetchedData = Array.isArray(initialCars) && Array.isArray(initialQddrs)
+  const [loading, setLoading] = useState(!hasPrefetchedData)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState(null)
 
-  const [activeCars, setActiveCars] = useState([])
-  const [activeQddrs, setActiveQddrs] = useState([])
+  const [activeCars, setActiveCars] = useState(hasPrefetchedData ? initialCars : [])
+  const [activeQddrs, setActiveQddrs] = useState(hasPrefetchedData ? initialQddrs : [])
+
+  useEffect(() => {
+    if (Array.isArray(initialCars) && Array.isArray(initialQddrs)) {
+      setActiveCars(initialCars)
+      setActiveQddrs(initialQddrs)
+      setLoading(false)
+    }
+  }, [initialCars, initialQddrs])
 
   const loadOccurringIssues = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true)
@@ -46,22 +61,27 @@ export default function OccurringIssuesSummary({ onRefresh }) {
     setError(null)
 
     try {
+      if (isManualRefresh && onRefresh) {
+        // Parent fetchDashboardData already fetches activeCars, activeQddrs, and dashboard metrics in one wave
+        await onRefresh()
+        return
+      }
+
       const [carResult, qddrResult] = await Promise.all([
         supabase
           .from('car_reports')
-          .select('*, audit_schedules(id, title, scheduled_date)')
+          .select(CAR_SUMMARY_COLUMNS)
           .not('status', 'ilike', 'closed')
           .neq('status', 'deleted')
           .order('created_at', { ascending: false })
           .limit(100),
         supabase
           .from('qddr_reports')
-          .select('*')
+          .select(QDDR_SUMMARY_COLUMNS)
           .not('status', 'ilike', 'closed')
           .neq('status', 'deleted')
           .order('created_at', { ascending: false })
-          .limit(100),
-        isManualRefresh && onRefresh ? onRefresh().catch(() => {}) : Promise.resolve()
+          .limit(100)
       ])
 
       const carsList = (carResult?.data || [])
@@ -82,8 +102,10 @@ export default function OccurringIssuesSummary({ onRefresh }) {
   }, [onRefresh])
 
   useEffect(() => {
-    loadOccurringIssues()
-  }, [loadOccurringIssues])
+    if (!hasPrefetchedData) {
+      loadOccurringIssues()
+    }
+  }, [hasPrefetchedData, loadOccurringIssues])
 
   // ─── Analytics Aggregations ────────────────────────────────────────────────
 

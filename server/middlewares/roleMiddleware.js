@@ -1,46 +1,54 @@
 import { supabase } from '../lib/supabase.js'
 import logger from '../utils/logger.js'
+import { getOrFetchRbacProfile } from '../lib/authCache.js'
 
 /**
  * Helper to fetch profile and role permissions for an authenticated user.
+ * Uses a single joined query with in-memory caching and in-flight deduplication.
  */
 export async function fetchUserRoleAndPermissions(authId) {
-  const { data: profile, error } = await supabase
-    .from('users')
-    .select('id, auth_id, role_id, position_id, department_id, site_id, status, user_name, first_name, last_name')
-    .eq('auth_id', authId)
-    .maybeSingle()
-
-  if (error || !profile) return { profile: null, roleName: null, permissions: null }
-
-  let resolvedRoleId = profile.role_id || null
-
-  if (!resolvedRoleId && profile.position_id) {
-    const { data: posData } = await supabase
-      .from('positions')
-      .select('role_id')
-      .eq('id', profile.position_id)
+  return getOrFetchRbacProfile(authId, async (targetAuthId) => {
+    const { data: profile, error } = await supabase
+      .from('users')
+      .select('id, auth_id, role_id, position_id, department_id, site_id, status, user_name, first_name, last_name, roles(role_name, permissions), positions(role_id, roles(role_name, permissions))')
+      .eq('auth_id', targetAuthId)
       .maybeSingle()
-    if (posData?.role_id) {
-      resolvedRoleId = posData.role_id
+
+    if (error || !profile) return { profile: null, roleName: null, permissions: null }
+
+    let resolvedRoleId = profile.role_id || profile.positions?.role_id || null
+    let roleName = profile.roles?.role_name || profile.positions?.roles?.role_name || null
+    let permissions = profile.roles?.permissions || profile.positions?.roles?.permissions || null
+
+    if (resolvedRoleId && !profile.role_id) {
       profile.role_id = resolvedRoleId
     }
-  }
 
-  let roleName = null
-  let permissions = null
+    // Fallback only if joined relations were not returned (e.g. in unit test mocks)
+    if (!resolvedRoleId && profile.position_id && !profile.positions) {
+      const { data: posData } = await supabase
+        .from('positions')
+        .select('role_id')
+        .eq('id', profile.position_id)
+        .maybeSingle()
+      if (posData?.role_id) {
+        resolvedRoleId = posData.role_id
+        profile.role_id = resolvedRoleId
+      }
+    }
 
-  if (resolvedRoleId) {
-    const { data: roleData } = await supabase
-      .from('roles')
-      .select('role_name, permissions')
-      .eq('id', resolvedRoleId)
-      .maybeSingle()
-    roleName = roleData?.role_name || null
-    permissions = roleData?.permissions || null
-  }
+    if (resolvedRoleId && !roleName) {
+      const { data: roleData } = await supabase
+        .from('roles')
+        .select('role_name, permissions')
+        .eq('id', resolvedRoleId)
+        .maybeSingle()
+      roleName = roleData?.role_name || null
+      permissions = roleData?.permissions || null
+    }
 
-  return { profile, roleName, permissions }
+    return { profile, roleName, permissions }
+  })
 }
 
 function isAdminRole(roleName) {

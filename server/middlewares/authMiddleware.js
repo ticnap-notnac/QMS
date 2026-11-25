@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js'
+import { getOrFetchAuthUser } from '../lib/authCache.js'
 
 export async function authMiddleware(req, res, next) {
   try {
@@ -11,15 +12,15 @@ export async function authMiddleware(req, res, next) {
 
     const token = authHeader.split(' ')[1]
     
-    // Verify the JWT token using Supabase
-    const { data, error } = await supabase.auth.getUser(token)
+    // Verify the JWT token using cached / deduplicated Supabase Auth lookup
+    const { user, error } = await getOrFetchAuthUser(token, (t) => supabase.auth.getUser(t))
 
-    if (error || !data?.user) {
+    if (error || !user) {
       return res.status(401).json({ error: 'Your session has expired or is invalid. Please log in again.' })
     }
 
     // Attach the authenticated user to the request object
-    req.user = data.user
+    req.user = user
     
     next()
   } catch (err) {

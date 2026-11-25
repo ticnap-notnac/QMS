@@ -2,6 +2,7 @@ import { getRequestActor } from '../lib/requestUtils.js'
 import logger from '../utils/logger.js'
 import { writeAudit } from '../lib/audit.js'
 import { isAdminOrSuperAdminRole } from '../utils/roleUtils.js'
+import { clearAllRbacCache } from '../lib/authCache.js'
 import {
   fetchAllRoles,
   fetchRoleById,
@@ -41,6 +42,7 @@ export async function createRole(req, res) {
   const { data, error } = await insertRole(trimmedRoleName, permissions)
 
   if (error) return res.status(500).json({ error: error.message })
+  clearAllRbacCache()
 
   const userAuthId = getRequestActor(req)
   try {
@@ -71,6 +73,7 @@ export async function deleteRole(req, res) {
 
   const { error } = await removeRole(id)
   if (error) return res.status(500).json({ error: error.message })
+  clearAllRbacCache()
 
   // Fire-and-forget audit — failure must not affect the HTTP response
   const userAuthId = getRequestActor(req)
@@ -105,6 +108,7 @@ export async function putRole(req, res) {
 
   const { data, error } = await updateRole(id, trimmedRoleName)
   if (error) return res.status(500).json({ error: error.message })
+  clearAllRbacCache()
 
   const userAuthId = getRequestActor(req)
   auditRoleUpdate({ userAuthId, role: data?.[0] })
@@ -132,6 +136,7 @@ export async function putRolePermissions(req, res) {
 
   const { data, error } = await updateRolePermissions(id, permissions)
   if (error) return res.status(500).json({ error: error.message })
+  clearAllRbacCache()
 
   const userAuthId = getRequestActor(req)
   auditRoleUpdate({ userAuthId, role: data?.[0] })
@@ -158,5 +163,6 @@ export async function putRolePositions(req, res) {
   const result = await assignPositionsToRole({ roleId: Number(id), positionIds: positionIds || [], actorAuthId })
 
   if (result.error) return res.status(500).json({ error: result.error.message || result.error })
+  clearAllRbacCache()
   return res.json({ success: true })
 }
