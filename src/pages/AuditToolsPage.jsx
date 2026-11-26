@@ -6,7 +6,6 @@ import useAuditToolsLogic from '../hooks/useAuditToolsLogic'
 import { AuditLogsTab, AuditReportsTab, AuditSchedulesTab, AuditTemplatesTab } from '../components/AuditTools/AuditToolsTabs'
 import { AuditChecklistSection, AuditRunDetailsModal } from '../components/AuditTools/AuditToolsModals'
 import CARDetailsModal from '../components/Modals/CARDetailsModal.jsx'
-import QDDRDetailsModal from '../components/Modals/QDDRDetailsModal.jsx'
 import SubmissionLoadingOverlay from '../components/UI/SubmissionLoadingOverlay.jsx'
 import './SettingsPage.css'
 
@@ -111,17 +110,6 @@ export default function AuditToolsPage({ authUserId, userRole, userPermissions, 
         car={logic.selectedCar}
         onSubmitCapa={null}
         onVerify={null}
-        userRole="auditor"
-        authUserId={authUserId}
-        readOnly={true}
-      />
-      <QDDRDetailsModal
-        isOpen={logic.isQddrDetailsModalOpen}
-        onClose={logic.closeQddrDetails}
-        qddr={logic.selectedQddr}
-        onUpdateQddr={null}
-        users={[]}
-        usersLoading={false}
         userRole="auditor"
         authUserId={authUserId}
         readOnly={true}

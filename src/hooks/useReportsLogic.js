@@ -113,7 +113,6 @@ const QDDR_COLUMNS_NO_EMBEDDING = [
   'created_at',
   'updated_at',
   'site_id',
-  'audit_schedule_id',
   'trend_cluster_id',
   'average_rating',
   'ratings_count'

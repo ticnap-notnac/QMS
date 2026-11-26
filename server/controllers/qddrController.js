@@ -1,7 +1,6 @@
 import { getRequestActor } from '../lib/requestUtils.js'
 import { writeAudit } from '../lib/audit.js'
 import { createQddrReport, updateQddrReport, rateQddrReport } from '../services/qddrService.js'
-import { suggestClausesForQddr } from '../services/clauseMatchService.js'
 import { safeCreateNotificationsForRoles } from '../lib/notificationHelper.js'
 
 export async function createQddr(req, res, next) {
@@ -83,24 +82,6 @@ export async function editQddr(req, res, next) {
     next(err)
   }
 }
-
-export async function suggestClauses(req, res, next) {
-  const actorAuthId = getRequestActor(req)
-  if (!actorAuthId) return res.status(400).json({ error: 'Missing x-user-auth-id header.' })
-
-  const { description, flags } = req.body
-  if (!description) {
-    return res.status(400).json({ error: 'Description is required to suggest clauses.' })
-  }
-
-  try {
-    const suggestions = await suggestClausesForQddr({ description, flags })
-    return res.json({ suggestions })
-  } catch (err) {
-    next(err)
-  }
-}
-
 
 export async function getQddrRecurringTrends(req, res, next) {
   try {

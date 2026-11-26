@@ -297,8 +297,6 @@ CREATE TABLE IF NOT EXISTS public.qddr_reports (
   updated_at timestamp NULL,
   site_id bigint NULL REFERENCES public.sites(id) ON DELETE SET NULL,
   embedding vector NULL,
-  audit_schedule_id uuid NULL REFERENCES public.audit_schedules(id) ON DELETE SET NULL,
-  audit_result_id uuid NULL REFERENCES public.audit_results(id) ON DELETE SET NULL,
   trend_cluster_id bigint NULL REFERENCES public.trend_clusters(id) ON DELETE SET NULL
 );
 
@@ -362,14 +360,6 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 CREATE TABLE IF NOT EXISTS public.car_clause_links (
   id bigint PRIMARY KEY,
   car_report_id bigint NOT NULL REFERENCES public.car_reports(id) ON DELETE CASCADE,
-  clause_id uuid NOT NULL REFERENCES public.iso_clauses(id) ON DELETE CASCADE,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
--- Table: qddr_clause_links
-CREATE TABLE IF NOT EXISTS public.qddr_clause_links (
-  id bigint PRIMARY KEY,
-  qddr_report_id bigint NOT NULL REFERENCES public.qddr_reports(id) ON DELETE CASCADE,
   clause_id uuid NOT NULL REFERENCES public.iso_clauses(id) ON DELETE CASCADE,
   created_at timestamptz NOT NULL DEFAULT now()
 );
@@ -740,12 +730,6 @@ CREATE POLICY "Allow all actions for service role" ON public.positions FOR ALL T
 ALTER TABLE public.issue_types ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow authenticated select on issue_types" ON public.issue_types FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Allow all actions for service role on issue_types" ON public.issue_types FOR ALL TO service_role USING (true) WITH CHECK (true);
-
--- qddr_clause_links
-ALTER TABLE public.qddr_clause_links ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow authenticated select on qddr_clause_links" ON public.qddr_clause_links FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow authorized delete on qddr_clause_links" ON public.qddr_clause_links FOR DELETE TO authenticated USING ((public.current_user_has_right('manage_audit_schedules') OR public.current_user_has_right('edit_delete_report')));
-CREATE POLICY "Allow all actions for service role on qddr_clause_links" ON public.qddr_clause_links FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- car_case_repository
 ALTER TABLE public.car_case_repository ENABLE ROW LEVEL SECURITY;

@@ -76,20 +76,6 @@ export function useAuditRunDetails() {
               return { ...c, linked_cars: cars }
             })
           }
-
-          const { data: qddrLinksData, error: qddrLinkErr } = await supabase
-            .from('qddr_clause_links')
-            .select('clause_id, qddr_reports(*)')
-            .in('clause_id', clauseIds)
-
-          if (!qddrLinkErr && qddrLinksData) {
-            clausesList = clausesList.map(c => {
-              const qddrs = qddrLinksData
-                .filter(l => l.clause_id === c.id && l.qddr_reports)
-                .map(l => l.qddr_reports)
-              return { ...c, linked_qddrs: qddrs }
-            })
-          }
         }
       }
       setRunClauses(clausesList)

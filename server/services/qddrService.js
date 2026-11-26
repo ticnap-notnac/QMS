@@ -187,9 +187,7 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     preventive_action,
     approved_by,
     noted_by,
-    leader,
-    clause_ids,
-    audit_schedule_id
+    leader
   } = body || {}
 
   const getNextRef = async () => {
@@ -292,7 +290,6 @@ export async function createQddrReport({ body, reportedByAuthId }) {
       approved_by: approvedById,
       noted_by: notedById,
       leader: leaderId,
-      audit_schedule_id: audit_schedule_id || null,
       status: 'open',
       site_id: reporter.site_id || null
     }
@@ -315,23 +312,6 @@ export async function createQddrReport({ body, reportedByAuthId }) {
     const customErr = new Error(`Database error creating QDDR: ${error.message}`)
     customErr.status = 500
     throw customErr
-  }
-
-  if (data?.id && Array.isArray(clause_ids) && clause_ids.length > 0) {
-    const linkRows = clause_ids
-      .map(cid => String(cid).trim())
-      .filter(cid => cid.length > 0)
-      .map(cid => ({ qddr_report_id: data.id, clause_id: cid }))
-
-    if (linkRows.length > 0) {
-      const { error: linkError } = await supabase
-        .from('qddr_clause_links')
-        .insert(linkRows)
-
-      if (linkError) {
-        console.warn('[qddrService] Failed to insert qddr_clause_links:', linkError.message)
-      }
-    }
   }
 
   if (data?.id) {
@@ -652,8 +632,6 @@ export async function permanentDeleteQddrReport({ id, actorAuthId }) {
     throw err
   }
 
-  await supabase.from('qddr_clause_links').delete().eq('qddr_report_id', id)
-
   const { data, error } = await supabase
     .from('qddr_reports')
     .delete()
@@ -680,7 +658,7 @@ export async function permanentDeleteQddrReport({ id, actorAuthId }) {
 }
 
 /**
- * Fully edits an existing QDDR report and its clause links (supports partial updates).
+ * Fully edits an existing QDDR report (supports partial updates).
  * @param {Object} params - The parameters for editing a QDDR report.
  * @param {number|string} params.id - The ID of the QDDR report.
  * @param {Object} params.body - The report data payload.
@@ -813,26 +791,6 @@ export async function editQddrReport({ id, body = {}, actorAuthId }) {
       .eq('id', id)
       .maybeSingle()
     data = current
-  }
-
-  const { clause_ids } = body || {}
-  if (Array.isArray(clause_ids)) {
-    await supabase.from('qddr_clause_links').delete().eq('qddr_report_id', id)
-
-    const linkRows = clause_ids
-      .map(cid => String(cid).trim())
-      .filter(cid => cid.length > 0)
-      .map(cid => ({ qddr_report_id: id, clause_id: cid }))
-
-    if (linkRows.length > 0) {
-      const { error: linkError } = await supabase
-        .from('qddr_clause_links')
-        .insert(linkRows)
-
-      if (linkError) {
-        console.warn('[qddrService] Failed to insert qddr_clause_links during update:', linkError.message)
-      }
-    }
   }
 
   try {

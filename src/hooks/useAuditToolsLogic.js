@@ -3,7 +3,6 @@ import { supabase } from '../utils/supabase'
 import { fetchLogs } from '../services/logService'
 import { useCARDetails } from './useCARDetails'
 import { useAuditRunDetails } from './useAuditRunDetails'
-import { useQDDRDetails } from './useQDDRDetails'
 import * as checklistService from '../services/auditChecklistService'
 import { request } from '../lib/api'
 
@@ -156,7 +155,6 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
   const activeRunRef = useRef(null)
   const isAutoSavingRef = useRef(false)
   const [linkedCarsMap, setLinkedCarsMap] = useState({})  // { [clause_id]: [{ id, reference_no, status }] }
-  const [linkedQddrsMap, setLinkedQddrsMap] = useState({}) // { [clause_id]: [{ id, reference_no, status }] }
 
   // Audit Logs states
   const [logs, setLogs] = useState([])
@@ -174,7 +172,6 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
   // Hook states
   const auditRunDetails = useAuditRunDetails()
   const carDetails = useCARDetails()
-  const qddrDetails = useQDDRDetails()
 
 
   // Google Docs Style Real-Time Broadcast Actions
@@ -438,28 +435,6 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
           console.warn('[useAuditToolsLogic] Could not load linked CARs:', linkErr.message)
           setLinkedCarsMap({})
         }
-
-        try {
-          const { data: linkDataQddr } = await supabase
-            .from('qddr_clause_links')
-            .select('clause_id, qddr_reports(*)').in('clause_id', clauseIds)
-
-          const qddrsMap = {}
-          for (const row of linkDataQddr || []) {
-            if (!row.qddr_reports) continue
-            const qddr = row.qddr_reports
-            
-            if (qddr.audit_schedule_id && qddr.audit_schedule_id !== schedule.id) continue
-            if (String(qddr.status || '').toLowerCase() === 'closed') continue
-            
-            if (!qddrsMap[row.clause_id]) qddrsMap[row.clause_id] = []
-            qddrsMap[row.clause_id].push(qddr)
-          }
-          setLinkedQddrsMap(qddrsMap)
-        } catch (linkErr) {
-          console.warn('[useAuditToolsLogic] Could not load linked QDDRs:', linkErr.message)
-          setLinkedQddrsMap({})
-        }
       }
     } catch (err) {
       console.error('Error starting audit run:', err)
@@ -544,21 +519,6 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
               .from('car_reports')
               .update({ audit_schedule_id: activeRun.schedule_id })
               .in('id', carIdsToBind)
-              .is('audit_schedule_id', null)
-          }
-
-          const { data: qddrLinksData, error: qddrLinksErr } = await supabase
-            .from('qddr_clause_links')
-            .select('qddr_report_id')
-            .in('clause_id', clauseIds)
-
-          if (!qddrLinksErr && qddrLinksData && qddrLinksData.length > 0) {
-            const qddrIdsToBind = qddrLinksData.map(l => l.qddr_report_id)
-
-            await supabase
-              .from('qddr_reports')
-              .update({ audit_schedule_id: activeRun.schedule_id })
-              .in('id', qddrIdsToBind)
               .is('audit_schedule_id', null)
           }
         }
@@ -1118,38 +1078,8 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
       )
       .subscribe()
 
-    const qddrChannel = supabase
-      .channel('realtime-qddr-links')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'qddr_clause_links' },
-        async (payload) => {
-          try {
-            const { data: linkData } = await supabase
-              .from('qddr_clause_links')
-              .select('clause_id, qddr_reports(*)').in('clause_id', clauseIds)
-
-            const qddrsMap = {}
-            for (const row of linkData || []) {
-              if (!row.qddr_reports) continue
-              const qddr = row.qddr_reports
-              
-              if (qddr.audit_schedule_id && qddr.audit_schedule_id !== activeRun.schedule_id) continue
-              
-              if (!qddrsMap[row.clause_id]) qddrsMap[row.clause_id] = []
-              qddrsMap[row.clause_id].push(qddr)
-            }
-            setLinkedQddrsMap(qddrsMap)
-          } catch (linkErr) {
-            console.warn('[useAuditToolsLogic] Could not reload linked QDDRs:', linkErr.message)
-          }
-        }
-      )
-      .subscribe()
-
     return () => {
       supabase.removeChannel(channel)
-      supabase.removeChannel(qddrChannel)
     }
   }, [activeRun?.id, activeClauses])
 
@@ -1506,30 +1436,6 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
     }
   }
 
-  const handleRemoveQddrLink = async (qddrId, clauseId) => {
-    try {
-      setError('')
-      const { error: deleteError } = await supabase
-        .from('qddr_clause_links')
-        .delete()
-        .eq('qddr_report_id', qddrId)
-        .eq('clause_id', clauseId)
-
-      if (deleteError) throw deleteError
-
-      setLinkedQddrsMap(prev => {
-        const list = prev[clauseId] || []
-        return {
-          ...prev,
-          [clauseId]: list.filter(qddr => qddr.id !== qddrId)
-        }
-      })
-    } catch (err) {
-      console.error('Failed to remove QDDR link:', err)
-      setError('We could not remove the QDDR link. Please try again.')
-    }
-  }
-
   return {
     activeTab,
     setActiveTab,
@@ -1563,7 +1469,6 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
     setResultsMap,
     savingProgress,
     linkedCarsMap,
-    linkedQddrsMap,
     logs,
     logsLoading,
     logsError,
@@ -1584,7 +1489,6 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
     handleDeleteSchedule,
     confirmDeleteScheduleDialogProps,
     handleRemoveCarLink,
-    handleRemoveQddrLink,
     fetchClausesForStandard,
     handleCreateTemplate,
     handleUpdateTemplate,
@@ -1607,12 +1511,7 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
     isCarDetailsModalOpen: carDetails.isCarDetailsModalOpen,
     openCarDetails: carDetails.openCarDetails,
     closeCarDetails: carDetails.closeCarDetails,
-    onSelectCar: carDetails.openCarDetails,
-    selectedQddr: qddrDetails.selectedQddr,
-    isQddrDetailsModalOpen: qddrDetails.isQddrDetailsModalOpen,
-    openQddrDetails: qddrDetails.openQddrDetails,
-    closeQddrDetails: qddrDetails.closeQddrDetails,
-    onSelectQddr: qddrDetails.openQddrDetails
+    onSelectCar: carDetails.openCarDetails
   }
 }
 

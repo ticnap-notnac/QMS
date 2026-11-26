@@ -21,11 +21,8 @@ export function AuditChecklistSection({
   setActiveRun,
   fetchData,
   linkedCarsMap,
-  linkedQddrsMap,
   handleRemoveCarLink,
-  handleRemoveQddrLink,
   onSelectCar,
-  onSelectQddr,
   collaborators = [],
   activeEditing = {},
   remoteFlashMap = {},
@@ -429,15 +426,10 @@ export function AuditChecklistSection({
                             boxShadow: activeEditing[resultKey]?.notes ? `0 0 0 1px ${activeEditing[resultKey].notes.color}40` : undefined
                           }}
                         />
-                        {/* Linked CARs & QDDRs display could go here if needed, or omitted for compactness */}
+                        {/* Linked CARs display */}
                         {linkedCarsMap && linkedCarsMap[clauseKey]?.length > 0 && (
                           <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 'bold' }}>
                             Linked CARs: {linkedCarsMap[clauseKey].map(car => car.reference_no).join(', ')}
-                          </div>
-                        )}
-                        {linkedQddrsMap && linkedQddrsMap[clauseKey]?.length > 0 && (
-                          <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 'bold' }}>
-                            Linked QDDRs: {linkedQddrsMap[clauseKey].map(qddr => qddr.reference_no).join(', ')}
                           </div>
                         )}
                       </td>
@@ -720,29 +712,6 @@ export function AuditRunDetailsModal({
                           >
                             <BookOpen size={10} />
                             {car.title} ({car.status})
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {clause.linked_qddrs && clause.linked_qddrs.length > 0 && (
-                      <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', flexShrink: 0 }}>Linked QDDRs:</span>
-                        {clause.linked_qddrs.map(qddr => (
-                          <div 
-                            key={qddr.id} 
-                            style={{ 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              background: '#fffbeb', 
-                              border: '1px solid #fde68a', 
-                              padding: '2px 8px', 
-                              borderRadius: '12px', 
-                              fontSize: '11px', 
-                              color: '#b45309', 
-                              gap: '6px' 
-                            }}
-                          >
-                            📦 {qddr.title || qddr.reference_no} ({qddr.status})
                           </div>
                         ))}
                       </div>

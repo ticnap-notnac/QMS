@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { createQddr, updateQddr, editQddr, deleteQddr, restoreQddr, permanentDeleteQddr, suggestClauses, getQddrRecurringTrends, rateQddr } from '../controllers/qddrController.js'
+import { createQddr, updateQddr, editQddr, deleteQddr, restoreQddr, permanentDeleteQddr, getQddrRecurringTrends, rateQddr } from '../controllers/qddrController.js'
 import { requirePermission } from '../middlewares/roleMiddleware.js'
 import { validateRequest } from '../middlewares/validateRequest.js'
 import { createQddrSchema, updateQddrSchema } from '../validations/qddrValidation.js'
@@ -16,7 +16,5 @@ router.delete('/qddr/:id/permanent', requirePermission('edit_delete_report'), pe
 // Note: editQddr is a separate route for full form edits, using different roles/validation potentially, but we'll re-use the generic id path
 router.put('/qddr/:id/edit', requirePermission('edit_delete_report'), editQddr)
 router.delete('/qddr/:id', requirePermission('edit_delete_report'), deleteQddr)
-
-router.post('/qddr/suggest-clauses', requirePermission(['create_qddr_report', 'create_report', 'reports']), suggestClauses)
 
 export default router
