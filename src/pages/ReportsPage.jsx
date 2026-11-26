@@ -145,11 +145,12 @@ export default function ReportsPage({
   }, [logic.isClosedMode, logic.qddrReports, logic.reportFilters?.status, isRecurringMode, allRecurringReportIds])
 
   const currentUserObj = useMemo(() => {
-    return (logic.users || []).find(u =>
+    const list = (logic.rawUsers && logic.rawUsers.length > 0) ? logic.rawUsers : (logic.users || [])
+    return list.find(u =>
       (currentUserId && Number(u.id) === Number(currentUserId)) ||
       (authUserId && u.auth_id === authUserId)
     )
-  }, [logic.users, currentUserId, authUserId])
+  }, [logic.rawUsers, logic.users, currentUserId, authUserId])
 
   // Extract ONLY user-specific personal identifiers (strictly excluding role names)
   const userStrictNames = useMemo(() => {
@@ -157,13 +158,21 @@ export default function ReportsPage({
     if (currentUserObj) {
       if (currentUserObj.user_name) names.add(currentUserObj.user_name.trim().toLowerCase())
       if (currentUserObj.first_name) names.add(currentUserObj.first_name.trim().toLowerCase())
+      if (currentUserObj.last_name) names.add(currentUserObj.last_name.trim().toLowerCase())
       const full = [currentUserObj.first_name, currentUserObj.last_name].filter(Boolean).join(' ').trim().toLowerCase()
       if (full) names.add(full)
+      if (currentUserObj.label) {
+        const labelPart = String(currentUserObj.label).split(/\s+[—–-]\s+/)[0].trim().toLowerCase()
+        if (labelPart) names.add(labelPart)
+      }
     }
     if (userName) {
       const trimmed = userName.trim().toLowerCase()
       const cleanBeforeDash = trimmed.split(/\s+[—–-]\s+/)[0].trim()
       if (cleanBeforeDash) names.add(cleanBeforeDash)
+      cleanBeforeDash.split(/\s+/).forEach(part => {
+        if (part.length > 1) names.add(part)
+      })
     }
     return Array.from(names).filter(Boolean)
   }, [userName, currentUserObj])

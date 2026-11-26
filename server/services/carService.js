@@ -244,7 +244,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
   ] = await Promise.all([
     supabase
       .from('users')
-      .select('site_id')
+      .select('id, site_id')
       .eq('auth_id', reportedByAuthId)
       .maybeSingle(),
     upsertNonConformanceType(type_of_nonconformance),
@@ -282,6 +282,7 @@ export async function createCarReport({ body, reportedByAuthId }) {
       audit_schedule_id: audit_schedule_id || null,
       audit_result_id: audit_result_id || null,
       status: CAR_STATUS.OPEN,
+      prepared_by_audited_by: creatorObj?.id || null,
       site_id: creatorObj?.site_id || null
     }
 

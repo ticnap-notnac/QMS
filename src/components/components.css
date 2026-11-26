@@ -381,70 +381,247 @@
 /* SettingsNavbar label */
 .settings-nav-label { margin-left: 8px; }
 
-/* AdminNavbar styles */
-.admin-top-nav { display: flex; gap: 20px; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-.admin-tabs { 
-  display: flex; 
-  gap: 8px; 
-  align-items: center;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  max-width: 100%;
+/* ══════════════════════════════════════════════════════════════════════════
+   TWO-TIER CATEGORY NAVBAR (CLEAN, INTUITIVE & UNCLUTTERED)
+   Tier 1: 5 Main Categories
+   Tier 2: Only sub-items of the selected category are visible
+   ══════════════════════════════════════════════════════════════════════════ */
+.admin-two-tier-nav {
   width: 100%;
-  padding-bottom: 8px; /* scrollbar padding */
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  margin-bottom: 20px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.admin-tab-button {
-  white-space: nowrap;
-  flex-shrink: 0;
+
+/* Tier 1: Category Tabs Bar (Full Width across 5 Columns) */
+.admin-tier1-track {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 8px 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
-.admin-tab-button { 
-  background: #ffffff; 
-  border: 1px solid #cbd5e1; 
-  color: #475569; 
-  padding: 0 16px; 
-  height: 36px;
+
+@media (max-width: 1100px) {
+  .admin-tier1-track {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+}
+
+.admin-category-tab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px; 
-  cursor: pointer; 
-  font-weight: 600; 
-  font-size: 16px; 
-  transition: all 0.2s ease;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  user-select: none;
+  position: relative;
+  font-family: inherit;
+  width: 100%;
   box-sizing: border-box;
 }
-.admin-tab-button.active { background: #0f172a; color: #ffffff; border-color: #0f172a; }
-.admin-tab-button.disabled,
-.admin-tab-button:disabled { opacity: 0.45; cursor: not-allowed; color: #94a3b8; }
 
-/* Mobile Dropdown styling for Admin Tabs */
-.admin-tabs-mobile {
+.admin-category-tab:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.admin-category-tab.active {
+  color: #0891b2;
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.admin-category-icon {
+  flex-shrink: 0;
+  color: #94a3b8;
+  transition: color 0.15s ease;
+}
+
+.admin-category-tab:hover .admin-category-icon {
+  color: #0f172a;
+}
+
+.admin-category-tab.active .admin-category-icon {
+  color: #0891b2;
+}
+
+.admin-category-indicator {
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 2.5px;
+  background: #0891b2;
+  border-radius: 999px;
+}
+
+/* Tier 2: Sub-items Bar (Full Width Responsive Cards) */
+.admin-tier2-track {
+  padding: 10px 12px;
+  background: #ffffff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-tier2-items-grid {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
   width: 100%;
 }
-.admin-tab-select {
+
+.admin-subitem-card-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-radius: 9px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: left;
+  user-select: none;
+  font-family: inherit;
+  box-sizing: border-box;
+  min-height: 48px;
+}
+
+.admin-subitem-card-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.admin-subitem-card-btn.active {
+  background: #0891b2;
+  border-color: #0891b2;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(8, 145, 178, 0.28);
+  transform: none;
+}
+
+.admin-subitem-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0891b2;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.admin-subitem-card-btn:hover .admin-subitem-icon-box {
+  border-color: #cbd5e1;
+}
+
+.admin-subitem-card-btn.active .admin-subitem-icon-box {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-subitem-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-subitem-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-subitem-subtitle {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 400;
+}
+
+.admin-subitem-card-btn.active .admin-subitem-subtitle {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* Mobile Select */
+.admin-mobile-select-wrap {
   width: 100%;
-  padding: 10px 18px;
-  border-radius: 999px; /* Pill shape to match active tab */
-  border: 1px solid #0f172a;
+  padding: 8px;
+}
+
+.admin-mobile-nav-select {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #0891b2;
   background-color: #0f172a;
   color: #ffffff;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   outline: none;
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
   background-repeat: no-repeat;
-  background-position: right 16px center;
-  background-size: 18px;
-  box-shadow: 0 4px 6px rgba(15, 23, 42, 0.15);
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  background-position: right 14px center;
+  background-size: 16px;
+  box-shadow: 0 3px 6px rgba(15, 23, 42, 0.12);
+  transition: all 0.15s ease;
 }
-.admin-tab-select:active {
-  transform: scale(0.98);
+
+.admin-mobile-nav-select optgroup {
+  background-color: #1e293b;
+  color: #94a3b8;
+  font-weight: 700;
+  padding: 6px 0;
 }
+
+.admin-mobile-nav-select option {
+  background-color: #0f172a;
+  color: #ffffff;
+  font-weight: 500;
+  padding: 6px 12px;
+}
+
+/* Fallbacks & Shared Classes */
+.admin-top-nav { display: flex; gap: 20px; align-items: center; justify-content: space-between; margin-bottom: 18px; width: 100%; }
+.admin-tabs { display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; overflow-x: auto; max-width: 100%; width: 100%; }
+.admin-tab-button { white-space: nowrap; flex-shrink: 0; background: #ffffff; border: 1px solid #cbd5e1; color: #475569; padding: 0 16px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease; }
+.admin-tab-button.active { background: #0891b2; color: #ffffff; border-color: #0891b2; }
 
 .desktop-only { display: flex !important; }
 .mobile-only { display: none !important; }

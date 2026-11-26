@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { X as CloseIcon, Sparkles, LoaderCircle, ScanLine, Upload, Camera, CheckCircle2, FileText, Database, Truck, Package, AlertTriangle, CheckSquare, Search, ChevronDown } from 'lucide-react'
+import { X as CloseIcon, Sparkles, LoaderCircle, ScanLine, Upload, Camera, CheckCircle2, FileText, Database, Truck, Package, AlertTriangle, CheckSquare, Search, ChevronDown, Plus } from 'lucide-react'
 import SearchableDropdown from '../Forms/SearchableDropdown'
 
 const CHECKBOX_FIELDS = [
@@ -862,7 +862,7 @@ function QDDRModal({
                 alignItems: 'stretch'
               }}>
                 {/* ── SECTION 4: Evidence Upload Section & Reason of Discrepancy ── */}
-                <div className="qddr-form-section" style={{ height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="qddr-form-section" style={{ height: '100%', minHeight: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div className="qddr-section-title" style={{ margin: 0 }}>
                       <Camera size={15} color="#0891b2" />
@@ -880,8 +880,9 @@ function QDDRModal({
                     </span>
                   </div>
 
-                  {evidenceItems.length > 0 && (
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {/* ── Evidence Thumbnails & Inline Upload Slot ── */}
+                  {evidenceItems.length > 0 ? (
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                       {evidenceItems.map((item, idx) => {
                         const isImage = item.type?.includes('image') || /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(item.url || '')
                         return (
@@ -898,7 +899,8 @@ function QDDRModal({
                               display: 'flex',
                               flexDirection: 'column',
                               alignItems: 'center',
-                              justifyContent: 'center'
+                              justifyContent: 'center',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
                             }}
                           >
                             {isImage ? (
@@ -945,10 +947,54 @@ function QDDRModal({
                           </div>
                         )
                       })}
-                    </div>
-                  )}
 
-                  {evidenceItems.length < 3 && (
+                      {evidenceItems.length < 3 && (
+                        <div
+                          onClick={() => evidenceFileInputRef.current && evidenceFileInputRef.current.click()}
+                          onDragOver={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            if (e.dataTransfer?.files?.length && handleEvidenceFiles) {
+                              handleEvidenceFiles(Array.from(e.dataTransfer.files))
+                            }
+                          }}
+                          title="Click or drag to add another evidence file (up to 3)"
+                          style={{
+                            width: '80px',
+                            height: '80px',
+                            borderRadius: '8px',
+                            border: '1.5px dashed #0891b2',
+                            background: 'rgba(8, 145, 178, 0.04)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '3px',
+                            cursor: 'pointer',
+                            color: '#0891b2',
+                            transition: 'all 0.15s ease',
+                            boxSizing: 'border-box'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(8, 145, 178, 0.1)'
+                            e.currentTarget.style.borderColor = '#0e7490'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(8, 145, 178, 0.04)'
+                            e.currentTarget.style.borderColor = '#0891b2'
+                          }}
+                        >
+                          <Plus size={22} strokeWidth={2.4} />
+                          <span style={{ fontSize: '10px', fontWeight: 600 }}>Add More</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* ── Empty State: Full Width Drag & Drop Zone ── */
                     <div
                       onClick={() => evidenceFileInputRef.current && evidenceFileInputRef.current.click()}
                       onDragOver={(e) => {
@@ -964,7 +1010,7 @@ function QDDRModal({
                       }}
                       style={{
                         width: '100%',
-                        minHeight: '70px',
+                        minHeight: '68px',
                         background: '#f8fafc',
                         border: '1.5px dashed #94a3b8',
                         borderRadius: '8px',
@@ -974,7 +1020,7 @@ function QDDRModal({
                         justifyContent: 'center',
                         gap: '4px',
                         cursor: 'pointer',
-                        padding: '12px 10px',
+                        padding: '10px',
                         boxSizing: 'border-box',
                         textAlign: 'center',
                         transition: 'border-color 0.2s ease, background 0.2s ease'
@@ -987,21 +1033,23 @@ function QDDRModal({
                       <div style={{ fontSize: '10.5px', color: '#64748b' }}>
                         Supports JPG, PNG, PDF, or DOC (up to 3 files)
                       </div>
-                      <input
-                        ref={evidenceFileInputRef}
-                        type="file"
-                        multiple
-                        accept=".pdf,.doc,.docx,image/jpeg,image/jpg,image/png,image/webp"
-                        onChange={(e) => {
-                          if (e.target.files?.length && handleEvidenceFiles) {
-                            handleEvidenceFiles(Array.from(e.target.files))
-                          }
-                          e.target.value = ''
-                        }}
-                        style={{ display: 'none' }}
-                      />
                     </div>
                   )}
+
+                  {/* Hidden File Input */}
+                  <input
+                    ref={evidenceFileInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={(e) => {
+                      if (e.target.files?.length && handleEvidenceFiles) {
+                        handleEvidenceFiles(Array.from(e.target.files))
+                      }
+                      e.target.value = ''
+                    }}
+                    style={{ display: 'none' }}
+                  />
 
                   {evidenceError && (
                     <div style={{ color: '#dc2626', fontSize: '12px' }}>
@@ -1009,8 +1057,8 @@ function QDDRModal({
                     </div>
                   )}
 
-                  {/* ── Reason of Discrepancy Moved Below Evidence Upload ── */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, marginTop: '2px' }}>
+                  {/* ── Reason of Discrepancy Below Evidence Upload ── */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, marginTop: '4px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
                       <label className="label-field" style={{ marginBottom: 0, fontWeight: 600 }}>
                         Reason of Discrepancy:
@@ -1046,17 +1094,17 @@ function QDDRModal({
                       onChange={(e) => handleChange('reason_of_discrepancy', e.target.value)}
                       placeholder="Upload an evidence photo and click 'Image to Description', or type reason..."
                       className="input-field"
-                      style={{ flex: 1, minHeight: '95px', padding: '10px 12px', resize: 'vertical' }}
+                      style={{ width: '100%', flex: 1, minHeight: '140px', padding: '10px 12px', resize: 'vertical', boxSizing: 'border-box' }}
                     />
                   </div>
                 </div>
 
-                {/* ── SECTION 5: Actions & Analysis ── */}
-                <div className="qddr-form-section" style={{ height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {/* ── SECTION 5: Actions ── */}
+                <div className="qddr-form-section" style={{ height: '100%', minHeight: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                     <div className="qddr-section-title" style={{ margin: 0 }}>
                       <Sparkles size={15} color="#0891b2" />
-                      <span>5. Actions &amp; Root Cause Analysis</span>
+                      <span>5. Actions</span>
                     </div>
                     <button
                       type="button"
@@ -1083,7 +1131,7 @@ function QDDRModal({
                         onChange={(e) => handleChange('corrective_action', e.target.value)}
                         placeholder="Enter corrective action..."
                         className="input-field"
-                        style={{ flex: 1, minHeight: '95px', padding: '10px 12px', resize: 'vertical' }}
+                        style={{ width: '100%', flex: 1, minHeight: '95px', padding: '10px 12px', resize: 'vertical', boxSizing: 'border-box' }}
                       />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
@@ -1095,7 +1143,7 @@ function QDDRModal({
                         onChange={(e) => handleChange('preventive_action', e.target.value)}
                         placeholder="Enter preventive action..."
                         className="input-field"
-                        style={{ flex: 1, minHeight: '95px', padding: '10px 12px', resize: 'vertical' }}
+                        style={{ width: '100%', flex: 1, minHeight: '95px', padding: '10px 12px', resize: 'vertical', boxSizing: 'border-box' }}
                       />
                     </div>
                   </div>

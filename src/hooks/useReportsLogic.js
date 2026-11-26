@@ -304,7 +304,11 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
         .filter(u => String(u.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
         .map(u => ({
           id: u.id,
-          label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}`
+          label: `${u.user_name || 'Unnamed'} — ${u.role || u.role_name || 'Unknown'}`,
+          user_name: u.user_name,
+          first_name: u.first_name,
+          last_name: u.last_name,
+          auth_id: u.auth_id
         })),
     [dataState.users]
   )
@@ -892,6 +896,7 @@ export function useReportsLogic({ currentUserId, userRole, userPermissions, auth
     handleRateQddr,
 
     users: activeUserOptions,
+    rawUsers: dataState.users,
     usersLoading: dataState.usersLoading,
     departments: dataState.departments,
     departmentNameById: dataState.departmentNameById,
