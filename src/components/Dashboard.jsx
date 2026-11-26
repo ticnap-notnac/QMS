@@ -15,7 +15,7 @@ import {
   Line,
   Legend
 } from 'recharts'
-import { TrendingUp, BarChart2, Clock, MoreHorizontal, Calendar, CheckSquare, FileText, CheckCircle2 } from 'lucide-react'
+import { TrendingUp, BarChart2, Clock, MoreHorizontal, Calendar, CheckSquare, FileText, CheckCircle2, ClipboardCheck } from 'lucide-react'
 
 
 // Custom tooltips for nice monotone popup displays
@@ -78,7 +78,7 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [upcomingAudits, setUpcomingAudits] = useState([])
-  const [latestActivities, setLatestActivities] = useState([])
+  const [upcomingVerifications, setUpcomingVerifications] = useState([])
   const [activeCars, setActiveCars] = useState(null)
   const [activeQddrs, setActiveQddrs] = useState(null)
 
@@ -133,10 +133,12 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
           .limit(3),
         supabase
           .from('car_reports')
-          .select('id, reference_no, status, created_at, recipient')
+          .select('id, reference_no, status, target_verification_date, responsible_department, recipient, type_of_nonconformance, created_at')
           .neq('status', 'deleted')
-          .order('created_at', { ascending: false })
-          .limit(4),
+          .not('status', 'ilike', 'closed')
+          .or('status.eq.under_verification,target_verification_date.not.is.null')
+          .order('target_verification_date', { ascending: true, nullsFirst: false })
+          .limit(5),
         supabase
           .from('qddr_reports')
           .select(qddrSummaryColumns, { count: 'exact' })
@@ -185,17 +187,58 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
         setUpcomingAudits([])
       }
 
-      // Handle latest CAR activities
+      // Handle upcoming verification of effectiveness of CAR
       if (carsRes.data && carsRes.data.length > 0) {
-        setLatestActivities(carsRes.data.map((c, idx) => ({
-          id: c.id,
-          title: `CAR Notification: ${c.reference_no}`,
-          description: `Status: ${String(c.status || '').toUpperCase()}${c.recipient ? ` | Assignee: ${c.recipient}` : ''}`,
-          time: getRelativeTime(c.created_at),
-          tone: idx % 2 === 0 ? 'success' : 'danger'
-        })))
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        setUpcomingVerifications(carsRes.data.map((c) => {
+          let dateBadge = 'Date pending'
+          let dateTone = 'info'
+          let iconTone = 'info'
+
+          if (c.target_verification_date) {
+            const target = new Date(c.target_verification_date)
+            const targetZero = new Date(c.target_verification_date)
+            targetZero.setHours(0, 0, 0, 0)
+            const diffDays = Math.round((targetZero - today) / (1000 * 60 * 60 * 24))
+            const formatted = target.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+
+            if (diffDays < 0) {
+              const overdueDays = Math.abs(diffDays)
+              dateBadge = `Overdue (${formatted})`
+              dateTone = 'danger'
+              iconTone = 'danger'
+            } else if (diffDays === 0) {
+              dateBadge = 'Due Today'
+              dateTone = 'warning'
+              iconTone = 'warning'
+            } else if (diffDays === 1) {
+              dateBadge = 'Due Tomorrow'
+              dateTone = 'info'
+              iconTone = 'info'
+            } else {
+              dateBadge = formatted
+              dateTone = 'success'
+              iconTone = 'success'
+            }
+          }
+
+          const statusLabel = String(c.status || '').toUpperCase().replace(/_/g, ' ')
+          const deptOrAssignee = c.responsible_department || (c.recipient ? c.recipient.split(/\s+[—–-]\s+/)[0] : '')
+
+          return {
+            id: c.id,
+            referenceNo: c.reference_no,
+            title: `Verification: ${c.reference_no}`,
+            description: `Status: ${statusLabel}${deptOrAssignee ? ` | ${deptOrAssignee}` : ''}`,
+            dateBadge,
+            dateTone,
+            iconTone
+          }
+        }))
       } else {
-        setLatestActivities([])
+        setUpcomingVerifications([])
       }
       // Warm Reports tab cache in the background after Overview finishes rendering
       setTimeout(() => {
@@ -294,40 +337,41 @@ export default function Dashboard({ currentUserId, userRole, userPermissions, us
           </div>
         </div>
 
-        {/* Card 2: Latest CAR activities */}
+        {/* Card 2: Upcoming Verification of Effectiveness of CAR */}
         <div className="dashboard-widget-card">
           <div className="widget-card-header">
-            <h3 className="widget-card-title">Latest CAR activities</h3>
+            <h3 className="widget-card-title">Upcoming Verification of Effectiveness of CAR</h3>
           </div>
 
           <div className="widget-list">
-            {Array.isArray(latestActivities) && latestActivities.length > 0 ? (
-              latestActivities.map((activity) => (
+            {Array.isArray(upcomingVerifications) && upcomingVerifications.length > 0 ? (
+              upcomingVerifications.map((item) => (
                 <div 
-                  key={activity.id} 
+                  key={item.id} 
                   className="dashboard-clickable-row car-row"
-                  onClick={() => navigate('/reports', { state: { tab: 'car' } })}
+                  onClick={() => navigate(`/reports?tab=car&openCar=${item.id}`)}
+                  title={`Click to view Verification of Effectiveness for ${item.referenceNo}`}
                 >
                   <div className="row-left">
-                    <div className={`row-icon-car car-${activity.tone}`}>
-                      <FileText size={16} />
+                    <div className={`row-icon-car car-${item.iconTone}`}>
+                      <ClipboardCheck size={16} />
                     </div>
                     <div className="row-text-container">
                       <span className="row-title">
-                        {activity.title}
+                        {item.title}
                       </span>
                       <span className="row-subtitle">
-                        {activity.description}
+                        {item.description}
                       </span>
                     </div>
                   </div>
-                  <span className="row-date-car">{activity.time}</span>
+                  <span className={`row-date-car date-${item.dateTone}`}>{item.dateBadge}</span>
                 </div>
               ))
             ) : (
               <div className="chart-empty flex-column align-center justify-center" style={{ padding: '24px', background: '#F8FAFC', borderRadius: '12px', border: '1px dashed #E2E8F0', color: '#64748B' }}>
-                <FileText size={24} style={{ opacity: 0.5, marginBottom: '8px' }} />
-                <span>No CAR activities recently.</span>
+                <ClipboardCheck size={24} style={{ opacity: 0.5, marginBottom: '8px' }} />
+                <span>No upcoming verification of effectiveness scheduled.</span>
               </div>
             )}
           </div>

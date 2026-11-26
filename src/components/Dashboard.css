@@ -229,6 +229,16 @@
   color: #991b1b;
 }
 
+.car-warning {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.car-info {
+  background: #f0f9ff;
+  color: #0369a1;
+}
+
 .row-text-container {
   display: flex;
   flex-direction: column;
@@ -253,9 +263,31 @@
 }
 
 .row-date-car {
-  font-size: 14px;
+  font-size: 13.5px;
   color: #94a3b8;
   font-weight: 500;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.row-date-car.date-danger {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.row-date-car.date-warning {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.row-date-car.date-success {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.row-date-car.date-info {
+  color: #0284c7;
+  font-weight: 600;
 }
 
 /* Charts Section */
