@@ -1150,48 +1150,50 @@ function QDDRModal({
                 </div>
               </div>
 
-              {/* ── SECTION 6: Signatures & Routing ── */}
-              <div className="qddr-form-section">
-                <div className="qddr-section-title">
-                  <CheckSquare size={15} color="#0891b2" />
-                  <span>6. Signatures &amp; Routing</span>
+              {/* ── SECTION 6: Signatures & Routing (shown only when updating an existing QDDR) ── */}
+              {Boolean(form?.id) && (
+                <div className="qddr-form-section">
+                  <div className="qddr-section-title">
+                    <CheckSquare size={15} color="#0891b2" />
+                    <span>6. Signatures &amp; Routing</span>
+                  </div>
+                  <div className="qddr-form-row-3-col">
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <SearchableDropdown
+                        label="Leader / Supervisor:"
+                        value={form.leader}
+                        onValueChange={(val) => handleChange('leader', val)}
+                        options={users}
+                        loading={usersLoading}
+                        placeholder="Search leader..."
+                        onSelectOption={(opt) => handleChange('leader', opt.label)}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <SearchableDropdown
+                        label="Approved By:"
+                        value={form.approved_by}
+                        onValueChange={(val) => handleChange('approved_by', val)}
+                        options={users}
+                        loading={usersLoading}
+                        placeholder="Search user..."
+                        onSelectOption={(opt) => handleChange('approved_by', opt.label)}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <SearchableDropdown
+                        label="Noted By:"
+                        value={form.noted_by}
+                        onValueChange={(val) => handleChange('noted_by', val)}
+                        options={users}
+                        loading={usersLoading}
+                        placeholder="Search user..."
+                        onSelectOption={(opt) => handleChange('noted_by', opt.label)}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="qddr-form-row-3-col">
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <SearchableDropdown
-                      label="Leader / Supervisor:"
-                      value={form.leader}
-                      onValueChange={(val) => handleChange('leader', val)}
-                      options={users}
-                      loading={usersLoading}
-                      placeholder="Search leader..."
-                      onSelectOption={(opt) => handleChange('leader', opt.label)}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <SearchableDropdown
-                      label="Approved By:"
-                      value={form.approved_by}
-                      onValueChange={(val) => handleChange('approved_by', val)}
-                      options={users}
-                      loading={usersLoading}
-                      placeholder="Search user..."
-                      onSelectOption={(opt) => handleChange('approved_by', opt.label)}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <SearchableDropdown
-                      label="Noted By:"
-                      value={form.noted_by}
-                      onValueChange={(val) => handleChange('noted_by', val)}
-                      options={users}
-                      loading={usersLoading}
-                      placeholder="Search user..."
-                      onSelectOption={(opt) => handleChange('noted_by', opt.label)}
-                    />
-                  </div>
-                </div>
-              </div>
+              )}
 
           </form>
         </div>
