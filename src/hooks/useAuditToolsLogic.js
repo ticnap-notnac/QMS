@@ -304,6 +304,8 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
         .from('audit_results')
         .select('*')
         .eq('run_id', activeRunData.id)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
 
       if (resultsError) throw resultsError
 
@@ -312,6 +314,7 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
           .from('audit_checklist_items')
           .select('clause_id, requirement, what_to_look_for')
           .eq('template_id', schedule.template_id)
+          .order('id', { ascending: true })
 
         if (tempItemsError) throw tempItemsError
 
@@ -321,7 +324,7 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
             clause_id: item.clause_id,
             requirement: item.requirement,
             what_to_look_for: item.what_to_look_for,
-            status: 'compliant',
+            status: 'na',
             evidence: '',
             notes: ''
           }))
@@ -341,7 +344,7 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
           clause_id: clause.id,
           requirement: clause.description || '',
           what_to_look_for: 'Check standard compliance details',
-          status: 'compliant',
+          status: 'na',
           evidence: '',
           notes: ''
         }))
@@ -353,18 +356,36 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
         existingResults = insertedResults || []
       }
 
-      const itemsList = (existingResults || []).map(res => {
-        const clauseDetails = clausesList.find(c => c.id === res.clause_id)
-        return {
-          id: res.id,
-          clause_id: res.clause_id,
-          clause_number: clauseDetails?.clause_number || 'N/A',
-          title: clauseDetails?.title || 'Custom Requirement',
-          requirement: res.requirement || '',
-          what_to_look_for: res.what_to_look_for || '',
-          result_id: res.id
-        }
-      })
+      const itemsList = (existingResults || [])
+        .map(res => {
+          const clauseDetails = clausesList.find(c => c.id === res.clause_id)
+          return {
+            id: res.id,
+            clause_id: res.clause_id,
+            clause_number: clauseDetails?.clause_number || 'N/A',
+            title: clauseDetails?.title || 'Custom Requirement',
+            requirement: res.requirement || '',
+            what_to_look_for: res.what_to_look_for || '',
+            result_id: res.id,
+            created_at: res.created_at || ''
+          }
+        })
+        .sort((a, b) => {
+          const aIsNA = a.clause_number === 'N/A'
+          const bIsNA = b.clause_number === 'N/A'
+          if (aIsNA !== bIsNA) return aIsNA ? 1 : -1
+
+          const clauseCmp = String(a.clause_number).localeCompare(String(b.clause_number), undefined, { numeric: true })
+          if (clauseCmp !== 0) return clauseCmp
+
+          const createdCmp = String(a.created_at).localeCompare(String(b.created_at))
+          if (createdCmp !== 0) return createdCmp
+
+          const reqCmp = String(a.requirement).localeCompare(String(b.requirement))
+          if (reqCmp !== 0) return reqCmp
+
+          return String(a.id).localeCompare(String(b.id))
+        })
 
       const initialResults = {}
       itemsList.forEach(item => {
@@ -373,7 +394,7 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
         initialResults[resultKey] = {
           id: resObj?.id || null,
           clause_id: item.clause_id,
-          status: resObj?.status || 'compliant',
+          status: resObj?.status || 'na',
           evidence: resObj?.evidence || '',
           notes: resObj?.notes || '',
           attachment_url: resObj?.attachment_url || ''
@@ -485,7 +506,7 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
     dirtyKeysRef.current.add(resultKey)
     setSaveStatus('unsaved')
     setResultsMap(prev => {
-      const current = prev[resultKey] || { status: 'compliant', evidence: '', notes: '', attachment_url: '' }
+      const current = prev[resultKey] || { status: 'na', evidence: '', notes: '', attachment_url: '' }
       const next = {
         ...prev,
         [resultKey]: {
@@ -529,7 +550,7 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
         const payload = {
           run_id: currentRun.id,
           clause_id: val.clause_id || resultKey,
-          status: val.status || 'compliant',
+          status: val.status || 'na',
           evidence: val.evidence || null,
           notes: val.notes || null,
           attachment_url: val.attachment_url || null
@@ -697,7 +718,7 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
         const payload = {
           run_id: runToSave.id,
           clause_id: val.clause_id || resultKey,
-          status: val.status || 'compliant',
+          status: val.status || 'na',
           evidence: val.evidence || null,
           notes: val.notes || null,
           attachment_url: val.attachment_url || null
@@ -913,7 +934,7 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
         if (activeRunItem && allResultsData) {
           const runResults = allResultsData.filter(r => r.run_id === activeRunItem.id)
           const total = runResults.length
-          const evaluated = runResults.filter(r => (r.evidence && r.evidence.trim().length > 0) || (r.notes && r.notes.trim().length > 0) || r.status !== 'compliant').length
+          const evaluated = runResults.filter(r => (r.evidence && r.evidence.trim().length > 0) || (r.notes && r.notes.trim().length > 0) || r.status !== 'na').length
           const percent = total > 0 ? Math.round((evaluated / total) * 100) : 0
           newProgressMap[schedule.id] = { evaluated, total, percent }
         }
@@ -1182,7 +1203,7 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
               [row.id]: {
                 id: row.id,
                 clause_id: row.clause_id,
-                status: row.status || existing.status || 'compliant',
+                status: row.status || existing.status || 'na',
                 evidence: row.evidence ?? existing.evidence ?? '',
                 notes: row.notes ?? existing.notes ?? '',
                 attachment_url: row.attachment_url ?? existing.attachment_url ?? ''

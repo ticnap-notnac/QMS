@@ -34,7 +34,6 @@ export default function DCCPage({
     ...(canViewSystemLogs ? [{ id: 'system_logs', label: 'System Logs' }] : []),
     ...(canViewIsoModules ? [{ id: 'iso_modules', label: 'ISO Modules' }] : []),
     { id: 'task_reports', label: 'Task Reports' },
-    { id: 'terms_policy', label: 'ISO Terms & Compliance Policy' },
     ...(canViewRecycleBin ? [{ id: 'recycle_bin', label: 'Recycle Bin' }] : []),
   ]
 

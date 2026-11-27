@@ -80,7 +80,7 @@ export function AuditChecklistSection({
       } else {
         setResultsMap(prev => ({
           ...prev,
-          [clauseId]: { ...(prev[clauseId] || { status: 'compliant', evidence: '', notes: '' }), attachment_url: urlData.publicUrl }
+          [clauseId]: { ...(prev[clauseId] || { status: 'na', evidence: '', notes: '' }), attachment_url: urlData.publicUrl }
         }))
         if (broadcastClauseChange) {
           broadcastClauseChange(clauseId, 'attachment_url', urlData.publicUrl)
@@ -310,7 +310,7 @@ export function AuditChecklistSection({
                 {paginatedClauses.map(clause => {
                   const resultKey = clause.result_id || clause.id
                   const clauseKey = clause.clause_id || clause.id
-                  const answer = resultsMap[resultKey] || { status: 'compliant', evidence: '', notes: '' }
+                  const answer = resultsMap[resultKey] || { status: 'na', evidence: '', notes: '' }
                   return (
                     <tr key={resultKey}>
                       <td className="valign-top" style={{ paddingRight: '16px' }}>
@@ -472,7 +472,7 @@ export function AuditChecklistSection({
                       <td className="valign-top">
                         <select
                           className={remoteFlashMap[resultKey]?.status ? 'remote-updated-flash' : ''}
-                          value={answer.status || 'compliant'}
+                          value={answer.status || 'na'}
                           onChange={(e) => {
                             const val = e.target.value
                             if (updateClauseField) {

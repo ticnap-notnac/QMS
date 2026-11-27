@@ -627,11 +627,11 @@ export function AuditSchedulesTab({
             <div className="form-row-2">
               <div className="form-group">
                 <SearchableDropdown
-                  label="Assign Auditor"
+                  label="Lead Auditor"
                   value={auditorSearchValue}
                   onValueChange={setAuditorSearchValue}
                   options={auditorOptions}
-                  placeholder="Search and select auditor..."
+                  placeholder="Search and select lead auditor..."
                   onSelectOption={(option) => {
                     setAuditorId(option.id)
                   }}
@@ -666,7 +666,7 @@ export function AuditSchedulesTab({
                 <tr>
                   <th style={{ width: '25%' }}>Audit Title / Template</th>
                   <th style={{ width: '20%' }}>ISO Standard</th>
-                  <th style={{ width: '20%' }}>Assigned Auditor</th>
+                  <th style={{ width: '20%' }}>Lead Auditor</th>
                   <th style={{ width: '15%' }}>Date</th>
                   <th style={{ width: '10%' }} className="text-center">Status</th>
                   <th style={{ width: '10%' }} className="text-center">Action</th>

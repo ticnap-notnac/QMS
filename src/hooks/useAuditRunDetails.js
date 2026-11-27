@@ -121,7 +121,7 @@ export function useAuditRunDetails() {
           <h1>AUDIT REPORT: ${safeTitleUpper}</h1>
           <div class="meta-section">
             <div class="meta-item"><strong>ISO Standard:</strong> ${safeStandardName}</div>
-            <div class="meta-item"><strong>Assigned Auditor:</strong> ${safeAuditorName}</div>
+            <div class="meta-item"><strong>Lead Auditor:</strong> ${safeAuditorName}</div>
             <div class="meta-item"><strong>Completion Date:</strong> ${escapeHtml(new Date(run.completed_at).toLocaleDateString())}</div>
             <div class="meta-item"><strong>Status:</strong> <span class="score-badge" style="color: ${statusColor}">${safeStatusText}</span></div>
           </div>
@@ -189,7 +189,7 @@ export function useAuditRunDetails() {
                       <h1>AUDIT REPORT: ${safeTitleUpper}</h1>
                       <div class="meta-section">
                         <div class="meta-item"><strong>ISO Standard:</strong> ${safeStandardName}</div>
-                        <div class="meta-item"><strong>Assigned Auditor:</strong> ${safeAuditorName}</div>
+                        <div class="meta-item"><strong>Lead Auditor:</strong> ${safeAuditorName}</div>
                         <div class="meta-item"><strong>Completion Date:</strong> ${escapeHtml(new Date(run.completed_at).toLocaleString())}</div>
                         <div class="meta-item"><strong>Status:</strong> <span class="score-badge" style="color: ${statusColor}">${safeStatusText}</span></div>
                       </div>

@@ -1,8 +1,6 @@
-import { useState } from 'react'
 import Navbar from '@/components/Navbars/Navbar.jsx'
 import AppRouter from '@/routes/AppRouter.jsx'
 import ErrorBoundary from '@/components/ErrorBoundary.jsx'
-import HelpSidebar from '@/components/UI/HelpSidebar.jsx'
 
 export default function MainLayout({
   isUserMenuOpen,
@@ -25,8 +23,6 @@ export default function MainLayout({
   sharedProps,
   refreshUserData
 }) {
-  const [isHelpOpen, setIsHelpOpen] = useState(false)
-
   return (
     <>
       <Navbar
@@ -35,7 +31,6 @@ export default function MainLayout({
         onLogout={handleLogout}
         isNotificationsOpen={isNotificationsOpen}
         onToggleNotifications={() => setIsNotificationsOpen((open) => !open)}
-        onToggleHelp={() => setIsHelpOpen((open) => !open)}
         userRole={userRole}
         userPermissions={sharedProps?.userPermissions}
         userName={userName}
@@ -53,7 +48,6 @@ export default function MainLayout({
       <ErrorBoundary>
         <AppRouter sharedProps={sharedProps} refreshUserData={refreshUserData} />
       </ErrorBoundary>
-      <HelpSidebar isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
     </>
   )
 }

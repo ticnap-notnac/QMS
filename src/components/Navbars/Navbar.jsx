@@ -10,8 +10,7 @@ import {
   User,
   Users,
   Shield,
-  ClipboardCheck,
-  HelpCircle
+  ClipboardCheck
 } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import NotificationsModal from '../Modals/NotificationsModal.jsx'
@@ -25,7 +24,6 @@ export default function Navbar({
   onLogout,
   isNotificationsOpen,
   onToggleNotifications,
-  onToggleHelp,
   userRole,
   userPermissions,
   userName,
@@ -187,15 +185,6 @@ export default function Navbar({
           ) : null}
         </button>
       )}
-
-      <button 
-        onClick={onToggleHelp} 
-        className="nav-icon-link-button desktop-only" 
-        title="Help & Documentation"
-        aria-label="Help & Documentation"
-      >
-        <HelpCircle size={20} />
-      </button>
     </div>
   )
 
