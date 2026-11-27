@@ -117,6 +117,7 @@ export default function IntegrationsPage({ userRole, userPermissions }) {
 
   // 3. Inventory Records & Logs State
   const [inventoryItems, setInventoryItems] = useState([])
+  const [showDepletedInventory, setShowDepletedInventory] = useState(false)
   const [closedQddrs, setClosedQddrs] = useState([])
   const [logs, setLogs] = useState([])
 
@@ -1133,7 +1134,7 @@ export default function IntegrationsPage({ userRole, userPermissions }) {
                           />
                         </div>
                         <div>
-                          <label className="label-field">Initial Stock Qty (Cases)</label>
+                          <label className="label-field">Stock Qty (Cases)</label>
                           <input
                             type="number"
                             value={simForm.stock_qty}
@@ -1245,82 +1246,139 @@ export default function IntegrationsPage({ userRole, userPermissions }) {
               )}
 
               {/* ── LIVE SYNCED INVENTORY TABLE (Always visible below tabs for transparent verification) ── */}
-              <div style={{ marginTop: '24px' }}>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#1A435A', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Database size={16} color="#0891b2" /> Synced External Inventory Records (SU Autofill Cache &amp; Live Stock Deduction Tracker)
-                </div>
-                <div className="reports-table-scroll-wrap">
-                  <table className="iso-table">
-                    <thead>
-                      <tr>
-                        <th>SU / Batch No.</th>
-                        <th>Mat. Code</th>
-                        <th>Material Description</th>
-                        <th>PO Ref / DR-WB</th>
-                        <th>Supplier / Trucker</th>
-                        <th className="text-center-important">Initial Stock</th>
-                        <th className="text-center-important">Deducted (Closed QDDR)</th>
-                        <th className="text-center-important">Current Stock</th>
-                        <th>Last QDDR Deduction</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {inventoryItems.length === 0 ? (
-                        <tr>
-                          <td colSpan={9} style={{ textAlign: 'center', color: '#64748b', padding: '16px' }}>
-                            No external SU records synced yet. Push a record from the Live WMS Simulator or import a CSV/JSON manifest.
-                          </td>
-                        </tr>
-                      ) : (
-                        inventoryItems.map((item) => (
-                          <tr key={item.id}>
-                            <td style={{ fontWeight: 700, color: '#0891b2' }}>{item.batch_code_su_number}</td>
-                            <td><code>{item.material_code || '—'}</code></td>
-                            <td>{item.material_description || '—'}</td>
-                            <td style={{ fontSize: '12px' }}>
-                              {[item.po_reference, item.drwb_number].filter(Boolean).join(' / ') || '—'}
-                            </td>
-                            <td style={{ fontSize: '12px' }}>
-                              {[item.brand_supplier, item.trucker_broker, item.plate_number].filter(Boolean).join(' • ') || '—'}
-                            </td>
-                            <td className="text-center-important">{item.initial_stock_qty}</td>
-                            <td className="text-center-important" style={{ color: item.deducted_qty > 0 ? '#dc2626' : '#64748b', fontWeight: 700 }}>
-                              {item.deducted_qty > 0 ? `-${item.deducted_qty}` : '0'}
-                            </td>
-                            <td className="text-center-important" style={{ fontWeight: 700, color: '#059669' }}>
-                              {item.current_stock_qty}
-                            </td>
-                            <td>
-                              {item.last_qddr_ref ? (
-                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                                  <span className="iso-status-pill is-closed">{item.last_qddr_ref}</span>
-                                  {simApiKey && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleSimAcknowledgeQddr(item.last_qddr_ref)}
-                                      style={{
-                                        fontSize: '11px',
-                                        padding: '2px 6px',
-                                        borderRadius: '4px',
-                                        border: '1px solid #cbd5e1',
-                                        background: '#ffffff',
-                                        cursor: 'pointer'
-                                      }}
-                                      title="Acknowledge deduction via API Key"
-                                    >
-                                      Ack
-                                    </button>
-                                  )}
-                                </div>
-                              ) : '—'}
-                            </td>
-                          </tr>
-                        ))
+              {(() => {
+                const depletedCount = inventoryItems.filter((item) => (Number(item.current_stock_qty) || 0) <= 0).length
+                const visibleInventoryItems = showDepletedInventory
+                  ? inventoryItems
+                  : inventoryItems.filter((item) => (Number(item.current_stock_qty) || 0) > 0)
+
+                return (
+                  <div style={{ marginTop: '24px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '10px',
+                        marginBottom: '8px'
+                      }}
+                    >
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#1A435A', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Database size={16} color="#0891b2" /> Synced External Inventory Records (SU Autofill Cache &amp; Live Stock Deduction Tracker)
+                      </div>
+                      {depletedCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setShowDepletedInventory((prev) => !prev)}
+                          style={{
+                            padding: '5px 10px',
+                            fontSize: '11.5px',
+                            fontWeight: 600,
+                            borderRadius: '6px',
+                            border: '1px solid #cbd5e1',
+                            background: showDepletedInventory ? '#e0f2fe' : '#f8fafc',
+                            color: showDepletedInventory ? '#0369a1' : '#475569',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {showDepletedInventory
+                            ? `Hide 0-Stock / Shipped (${depletedCount})`
+                            : `Show 0-Stock / Shipped (${depletedCount})`}
+                        </button>
                       )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    </div>
+                    <div className="reports-table-scroll-wrap">
+                      <table className="iso-table">
+                        <thead>
+                          <tr>
+                            <th>SU / Batch No.</th>
+                            <th>Mat. Code</th>
+                            <th>Material Description</th>
+                            <th>PO Ref / DR-WB</th>
+                            <th>Supplier / Trucker</th>
+                            <th className="text-center-important">Initial Stock</th>
+                            <th className="text-center-important">Deducted (Closed QDDR)</th>
+                            <th className="text-center-important">Delivered / Shipped</th>
+                            <th className="text-center-important">Current Stock</th>
+                            <th>Last QDDR Deduction</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {visibleInventoryItems.length === 0 ? (
+                            <tr>
+                              <td colSpan={10} style={{ textAlign: 'center', color: '#64748b', padding: '16px' }}>
+                                {inventoryItems.length === 0
+                                  ? 'No external SU records synced yet. Push a record from the Live WMS Simulator or import a CSV/JSON manifest.'
+                                  : `All ${depletedCount} synced SU record(s) currently have 0 stock (shipped or depleted). Click "Show 0-Stock / Shipped" above to view them.`}
+                              </td>
+                            </tr>
+                          ) : (
+                            visibleInventoryItems.map((item) => {
+                              const initialQty = Number(item.initial_stock_qty) || 0
+                              const deductedQty = Number(item.deducted_qty) || 0
+                              const currentQty = Number(item.current_stock_qty) || 0
+                              const deliveredQty = Math.max(0, initialQty - deductedQty - currentQty)
+                              const isDepleted = currentQty <= 0
+
+                              return (
+                                <tr
+                                  key={item.id}
+                                  style={isDepleted ? { opacity: 0.72, background: '#f8fafc' } : undefined}
+                                >
+                                  <td style={{ fontWeight: 700, color: '#0891b2' }}>{item.batch_code_su_number}</td>
+                                  <td><code>{item.material_code || '—'}</code></td>
+                                  <td>{item.material_description || '—'}</td>
+                                  <td style={{ fontSize: '12px' }}>
+                                    {[item.po_reference, item.drwb_number].filter(Boolean).join(' / ') || '—'}
+                                  </td>
+                                  <td style={{ fontSize: '12px' }}>
+                                    {[item.brand_supplier, item.trucker_broker, item.plate_number].filter(Boolean).join(' • ') || '—'}
+                                  </td>
+                                  <td className="text-center-important">{initialQty}</td>
+                                  <td className="text-center-important" style={{ color: deductedQty > 0 ? '#dc2626' : '#64748b', fontWeight: 700 }}>
+                                    {deductedQty > 0 ? `-${deductedQty}` : '0'}
+                                  </td>
+                                  <td className="text-center-important" style={{ color: deliveredQty > 0 ? '#d97706' : '#64748b', fontWeight: 700 }}>
+                                    {deliveredQty > 0 ? `-${deliveredQty}` : '0'}
+                                  </td>
+                                  <td className="text-center-important" style={{ fontWeight: 700, color: isDepleted ? '#64748b' : '#059669' }}>
+                                    {isDepleted ? '0 (Shipped / Depleted)' : currentQty}
+                                  </td>
+                                  <td>
+                                    {item.last_qddr_ref ? (
+                                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                        <span className="iso-status-pill is-closed">{item.last_qddr_ref}</span>
+                                        {simApiKey && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSimAcknowledgeQddr(item.last_qddr_ref)}
+                                            style={{
+                                              fontSize: '11px',
+                                              padding: '2px 6px',
+                                              borderRadius: '4px',
+                                              border: '1px solid #cbd5e1',
+                                              background: '#ffffff',
+                                              cursor: 'pointer'
+                                            }}
+                                            title="Acknowledge deduction via API Key"
+                                          >
+                                            Ack
+                                          </button>
+                                        )}
+                                      </div>
+                                    ) : '—'}
+                                  </td>
+                                </tr>
+                              )
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )
+              })()}
 
               {/* ── INTEGRATION SECURITY & SYNC AUDIT LOG ── */}
               <div style={{ marginTop: '24px' }}>

@@ -302,10 +302,52 @@ export async function upsertExternalInventoryItems({ items = [], source = 'api',
   }
 
   const results = []
+  const metadataFields = [
+    'material_code',
+    'material_description',
+    'expiry_date',
+    'po_reference',
+    'drwb_number',
+    'brand_supplier',
+    'trucker_broker',
+    'plate_number',
+    'container_number',
+    'location'
+  ]
+
   for (const row of normalizedList) {
+    const { data: existingItem } = await supabase
+      .from('external_inventory_items')
+      .select('*')
+      .ilike('batch_code_su_number', row.batch_code_su_number)
+      .maybeSingle()
+
+    let payloadToSave = row
+    if (existingItem) {
+      const existingInitial = Number(existingItem.initial_stock_qty) || 0
+      const incomingStock = Number(row.current_stock_qty) || 0
+      const preservedInitial =
+        existingInitial > 0 ? Math.max(existingInitial, incomingStock) : incomingStock
+
+      const merged = {
+        ...row,
+        batch_code_su_number: existingItem.batch_code_su_number,
+        initial_stock_qty: preservedInitial,
+        current_stock_qty: incomingStock
+      }
+
+      for (const field of metadataFields) {
+        if ((merged[field] === null || merged[field] === undefined || merged[field] === '') && existingItem[field]) {
+          merged[field] = existingItem[field]
+        }
+      }
+
+      payloadToSave = merged
+    }
+
     const { data, error } = await supabase
       .from('external_inventory_items')
-      .upsert([row], { onConflict: 'batch_code_su_number' })
+      .upsert([payloadToSave], { onConflict: 'batch_code_su_number' })
       .select('*')
       .maybeSingle()
 
@@ -313,8 +355,9 @@ export async function upsertExternalInventoryItems({ items = [], source = 'api',
     if (data) results.push(data)
 
     // Also keep `products` catalog in sync if material_description is present
-    if (row.material_description) {
-      const cleanProdName = row.material_description.replace(/\s*\(\s*exp\s*:?.*?\)\s*$/i, '').trim()
+    const resolvedMaterialDesc = payloadToSave.material_description
+    if (resolvedMaterialDesc) {
+      const cleanProdName = resolvedMaterialDesc.replace(/\s*\(\s*exp\s*:?.*?\)\s*$/i, '').trim()
       if (cleanProdName) {
         const { data: existingProd } = await supabase
           .from('products')
