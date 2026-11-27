@@ -53,15 +53,17 @@ export function requireApiKey(requiredScope = null) {
         .maybeSingle()
 
       if (error || !keyRecord || !safeCompareHex(incomingHash, keyRecord.key_hash)) {
-        await supabase.from('integration_sync_logs').insert([{
-          direction: 'inbound',
-          channel: 'api',
-          event_type: 'auth.failed',
-          status: 'rejected',
-          key_prefix: rawKey.slice(0, 14),
-          summary: `Rejected invalid API key attempt on ${req.method} ${req.originalUrl}`,
-          ip_address: req.ip || null
-        }]).catch(() => {})
+        try {
+          await supabase.from('integration_sync_logs').insert([{
+            direction: 'inbound',
+            channel: 'api',
+            event_type: 'auth.failed',
+            status: 'rejected',
+            key_prefix: rawKey.slice(0, 14),
+            summary: `Rejected invalid API key attempt on ${req.method} ${req.originalUrl}`,
+            ip_address: req.ip || null
+          }])
+        } catch {}
 
         return res.status(401).json({
           error: 'Invalid API key.'
@@ -69,15 +71,17 @@ export function requireApiKey(requiredScope = null) {
       }
 
       if (!keyRecord.is_active) {
-        await supabase.from('integration_sync_logs').insert([{
-          direction: 'inbound',
-          channel: 'api',
-          event_type: 'auth.revoked_key',
-          status: 'rejected',
-          key_prefix: keyRecord.key_prefix,
-          summary: `Blocked revoked API key "${keyRecord.name}" on ${req.method} ${req.originalUrl}`,
-          ip_address: req.ip || null
-        }]).catch(() => {})
+        try {
+          await supabase.from('integration_sync_logs').insert([{
+            direction: 'inbound',
+            channel: 'api',
+            event_type: 'auth.revoked_key',
+            status: 'rejected',
+            key_prefix: keyRecord.key_prefix,
+            summary: `Blocked revoked API key "${keyRecord.name}" on ${req.method} ${req.originalUrl}`,
+            ip_address: req.ip || null
+          }])
+        } catch {}
 
         return res.status(401).json({
           error: 'This API key has been revoked.'
@@ -85,15 +89,17 @@ export function requireApiKey(requiredScope = null) {
       }
 
       if (keyRecord.expires_at && new Date(keyRecord.expires_at).getTime() < Date.now()) {
-        await supabase.from('integration_sync_logs').insert([{
-          direction: 'inbound',
-          channel: 'api',
-          event_type: 'auth.expired_key',
-          status: 'rejected',
-          key_prefix: keyRecord.key_prefix,
-          summary: `Blocked expired API key "${keyRecord.name}" on ${req.method} ${req.originalUrl}`,
-          ip_address: req.ip || null
-        }]).catch(() => {})
+        try {
+          await supabase.from('integration_sync_logs').insert([{
+            direction: 'inbound',
+            channel: 'api',
+            event_type: 'auth.expired_key',
+            status: 'rejected',
+            key_prefix: keyRecord.key_prefix,
+            summary: `Blocked expired API key "${keyRecord.name}" on ${req.method} ${req.originalUrl}`,
+            ip_address: req.ip || null
+          }])
+        } catch {}
 
         return res.status(401).json({
           error: 'This API key has expired.'
@@ -102,15 +108,17 @@ export function requireApiKey(requiredScope = null) {
 
       const grantedScopes = Array.isArray(keyRecord.scopes) ? keyRecord.scopes : []
       if (requiredScope && !grantedScopes.includes(requiredScope) && !grantedScopes.includes('*')) {
-        await supabase.from('integration_sync_logs').insert([{
-          direction: 'inbound',
-          channel: 'api',
-          event_type: 'auth.insufficient_scope',
-          status: 'forbidden',
-          key_prefix: keyRecord.key_prefix,
-          summary: `Key "${keyRecord.name}" missing required scope "${requiredScope}"`,
-          ip_address: req.ip || null
-        }]).catch(() => {})
+        try {
+          await supabase.from('integration_sync_logs').insert([{
+            direction: 'inbound',
+            channel: 'api',
+            event_type: 'auth.insufficient_scope',
+            status: 'forbidden',
+            key_prefix: keyRecord.key_prefix,
+            summary: `Key "${keyRecord.name}" missing required scope "${requiredScope}"`,
+            ip_address: req.ip || null
+          }])
+        } catch {}
 
         return res.status(403).json({
           error: `Insufficient API key permissions. Required scope: ${requiredScope}`

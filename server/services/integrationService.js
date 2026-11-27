@@ -365,7 +365,11 @@ export async function upsertExternalInventoryItems({ items = [], source = 'api',
           .ilike('product_name', cleanProdName)
           .maybeSingle()
         if (!existingProd) {
-          await supabase.from('products').insert([{ product_name: cleanProdName }]).catch(() => {})
+          try {
+            await supabase.from('products').insert([{ product_name: cleanProdName }])
+          } catch {
+            // Non-blocking catalog sync
+          }
         }
       }
     }
