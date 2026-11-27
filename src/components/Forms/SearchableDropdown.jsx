@@ -1,18 +1,31 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
+import { ChevronDown, Check } from 'lucide-react'
+import './SearchableDropdown.css'
 
 /**
  * @param {{
- *   label: string,
+ *   label?: string,
  *   value: string,
  *   onValueChange: (val: string) => void,
  *   options: Array<{ id: string|number, label: string }>,
  *   loading?: boolean,
  *   placeholder?: string,
- *   onSelectOption: (option: { id: string|number, label: string }) => void,
+ *   onSelectOption?: (option: { id: string|number, label: string }) => void,
+ *   required?: boolean,
  * }} props
  */
-function SearchableDropdown({ label, value, onValueChange, options, loading = false, placeholder = '', onSelectOption, required = false }) {
+function SearchableDropdown({
+  label,
+  value,
+  onValueChange,
+  options = [],
+  loading = false,
+  placeholder = '',
+  onSelectOption,
+  required = false
+}) {
   const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef(null)
 
   // Clean trailing asterisks from string labels to avoid duplication/dark asterisks
   const cleanLabel = typeof label === 'string' ? label.replace(/\s*\*+$/, '') : label
@@ -23,74 +36,85 @@ function SearchableDropdown({ label, value, onValueChange, options, loading = fa
     return options.filter((o) => String(o.label || '').toLowerCase().includes(query))
   }, [options, value])
 
+  // Clean outside click listener to close dropdown
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick)
+    }
+  }, [])
+
   return (
-    <div>
-      <label className="label-field">
-        {cleanLabel}
-        {required && (
-          <span 
-            className="required-asterisk" 
-            style={{ 
-              color: '#dc2626', 
-              marginLeft: '4px', 
-              fontWeight: 700, 
-              fontSize: '15px',
-              lineHeight: 1 
-            }}
-          >
-            *
-          </span>
-        )}
-      </label>
-      <div style={{ position: 'relative' }}>
+    <div className="searchable-dropdown-root" ref={containerRef}>
+      {cleanLabel && (
+        <label className="label-field" style={{ display: 'block', marginBottom: '6px', fontWeight: 600, fontSize: '13.5px', color: '#1e293b' }}>
+          {cleanLabel}
+          {required && (
+            <span
+              className="required-asterisk"
+              style={{
+                color: '#dc2626',
+                marginLeft: '4px',
+                fontWeight: 700,
+                fontSize: '15px',
+                lineHeight: 1
+              }}
+            >
+              *
+            </span>
+          )}
+        </label>
+      )}
+
+      <div className="searchable-dropdown-input-wrapper">
         <input
           type="text"
           value={value ?? ''}
-          onChange={(e) => { onValueChange(e.target.value); setIsOpen(true) }}
+          onChange={(e) => {
+            onValueChange(e.target.value)
+            setIsOpen(true)
+          }}
           onFocus={() => setIsOpen(true)}
-          onBlur={() => window.setTimeout(() => setIsOpen(false), 120)}
-          className="input-field"
+          className="searchable-dropdown-input input-field"
           placeholder={placeholder}
+          autoComplete="off"
         />
+        <div className={`searchable-dropdown-icon ${isOpen ? 'open' : ''}`}>
+          <ChevronDown size={18} />
+        </div>
 
         {isOpen && (
-          <div
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              top: '100%',
-              zIndex: 20,
-              marginTop: '6px',
-              maxHeight: '180px',
-              overflowY: 'auto',
-              border: '1px solid #cbd5e1',
-              borderRadius: '12px',
-              background: '#ffffff',
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-            }}
-          >
+          <div className="searchable-dropdown-menu">
             {loading ? (
-              <div style={{ padding: '12px 14px', color: '#64748b' }}>Loading...</div>
+              <div className="searchable-dropdown-empty">Loading options...</div>
             ) : filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault()
-                    onValueChange(option.label)
-                    onSelectOption(option)
-                    setIsOpen(false)
-                  }}
-                  className="dropdown-option-btn"
-                >
-                  {option.label}
-                </button>
-              ))
+              filteredOptions.map((option) => {
+                const isSelected = String(value || '').trim().toLowerCase() === String(option.label || '').trim().toLowerCase()
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      onValueChange(option.label)
+                      if (onSelectOption) onSelectOption(option)
+                      setIsOpen(false)
+                    }}
+                    className={`searchable-dropdown-item dropdown-option-btn ${isSelected ? 'selected' : ''}`}
+                  >
+                    <span>{option.label}</span>
+                    {isSelected && <Check size={16} style={{ color: '#0284c7' }} />}
+                  </button>
+                )
+              })
             ) : (
-              <div style={{ padding: '12px 14px', color: '#64748b' }}>
-                No matches found. You can keep typing a custom value.
+              <div className="searchable-dropdown-empty">
+                No matches found.
               </div>
             )}
           </div>

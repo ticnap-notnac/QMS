@@ -471,3 +471,25 @@ body.reduce-motion-mode *::after {
     margin: 0 !important;
   }
 }
+
+/* Global fallback for SearchableDropdown option buttons */
+.dropdown-option-btn {
+  display: flex !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  text-align: left !important;
+  padding: 10px 14px !important;
+  background: transparent !important;
+  color: #1A435A !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: background 0.15s ease !important;
+  margin: 0 !important;
+}
+
+.dropdown-option-btn:hover {
+  background: #f1f5f9 !important;
+}

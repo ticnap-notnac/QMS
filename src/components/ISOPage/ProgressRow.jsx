@@ -1,23 +1,33 @@
 import React from 'react'
+import Tooltip from '../UI/Tooltip.jsx'
 
 export const ProgressRow = ({ label, tone, percent, icon }) => {
   const getTooltipText = () => {
     switch (String(label).toLowerCase()) {
       case 'compliant':
-        return 'Compliant - Audited items that fully satisfy and follow all required ISO standard clause specifications.'
+        return 'Audited items that fully satisfy and follow all required ISO standard clause specifications.'
+      case 'ofi':
+      case 'opportunity for improvement':
+      case 'opportunity for improvement (ofi)':
+        return 'Observations or areas where efficiency can be improved to prevent future non-conformance. No mandatory corrective action required.'
+      case 'minor non-conformance':
+      case 'minor nc':
       case 'partial':
-        return 'Partial - Audited items that partially meet clause requirements but need further adjustments or corrective actions.'
+        return 'An isolated lapse in meeting ISO requirements that does not directly compromise the entire quality management system.'
+      case 'major non-conformance':
+      case 'major nc':
       case 'gap':
-        return 'Gap - Identified areas that fail to meet standard requirements and lack documented procedures or compliance control.'
+        return 'A critical breakdown, total absence of a required procedure, or direct compliance risk requiring an immediate CAR.'
       default:
         return ''
     }
   }
 
-  return (
+  const tooltipText = getTooltipText()
+
+  const rowContent = (
     <div 
       className="progress-row iso-progress-row" 
-      title={getTooltipText()}
       style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '16px', cursor: 'help' }}
     >
       <div className="progress-label-container iso-progress-label-container" style={{ width: '130px', flexShrink: 0 }}>
@@ -30,4 +40,14 @@ export const ProgressRow = ({ label, tone, percent, icon }) => {
       <span style={{ fontSize: '13px', color: '#475569', minWidth: '40px', textAlign: 'right' }}>{percent}%</span>
     </div>
   )
+
+  if (tooltipText) {
+    return (
+      <Tooltip content={tooltipText} position="top" className="full-width">
+        {rowContent}
+      </Tooltip>
+    )
+  }
+
+  return rowContent
 }

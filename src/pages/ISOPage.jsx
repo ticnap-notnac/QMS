@@ -1,11 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import Toast from '../components/UI/Toast.jsx'
 import CARModal from '../components/Modals/CARModal.jsx'
+import Tooltip from '../components/UI/Tooltip.jsx'
 import { AlertTriangle, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { ISOModulesModal, ISOTaskSelectionModal, ISOSubTaskModal, ISOTemplatesModal } from '../components/ISOPage/ISOModals.jsx'
 import useISOLogic from '../hooks/useISOLogic'
-import { ProgressRow } from '../components/ISOPage/ProgressRow.jsx'
 import './ISOPage.css'
 
 import { isAdminRole } from '@/utils/roleUtils.js'
@@ -38,49 +37,91 @@ export default function ISOPage({ userRole, userPermissions, userName }) {
             </div>
             {canManageIso && (
               <div className="iso-overview-header-buttons" style={{ display: 'flex', gap: '12px' }}>
-                <button type="button" className="btn-metric-card" style={{ background: '#090d16', color: '#fff' }} onClick={fetchActiveModules}>ISO Modules</button>
-                <button type="button" className="btn-metric-card" style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1' }} onClick={() => navigate('/audit-tools?tab=Templates')}>Audit Checklist Templates</button>
+                <Tooltip content="Manage and activate ISO standards modules (e.g. ISO 9001, ISO 22000)" position="bottom">
+                  <button type="button" className="btn-metric-card" style={{ background: '#090d16', color: '#fff' }} onClick={fetchActiveModules}>ISO Modules</button>
+                </Tooltip>
+                <Tooltip content="Configure and manage audit checklist question templates" position="bottom">
+                  <button type="button" className="btn-metric-card" style={{ background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1' }} onClick={() => navigate('/audit-tools?tab=Templates')}>Audit Checklist Templates</button>
+                </Tooltip>
               </div>
             )}
           </div>
 
           <div className="iso-metrics-summary-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-            <div className="metric-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', borderTop: '4px solid #16a34a' }}>
-              <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold', letterSpacing: '0.5px' }}>COMPLIANT CLAUSES</div>
-              <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#16a34a', marginTop: '8px' }}>{compliantCount}</div>
-            </div>
+            <Tooltip content="Total number of ISO standard clauses verified as fully compliant across all audit reviews." position="bottom" className="full-width">
+              <div className="metric-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', borderTop: '4px solid #16a34a', cursor: 'help' }}>
+                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  COMPLIANT CLAUSES
+                  <HelpCircle size={14} style={{ opacity: 0.6 }} />
+                </div>
+                <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#16a34a', marginTop: '8px' }}>{compliantCount}</div>
+              </div>
+            </Tooltip>
             
-            <div className="metric-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', borderTop: '4px solid #f59e0b' }}>
-              <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold', letterSpacing: '0.5px' }}>TOTAL FINDINGS</div>
-              <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#f59e0b', marginTop: '8px' }}>{totalFindings}</div>
-            </div>
+            <Tooltip content="Total audit findings recorded (including Opportunities for Improvement, Minor NCs, and Major NCs)." position="bottom" className="full-width">
+              <div className="metric-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', borderTop: '4px solid #f59e0b', cursor: 'help' }}>
+                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  TOTAL FINDINGS
+                  <HelpCircle size={14} style={{ opacity: 0.6 }} />
+                </div>
+                <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#f59e0b', marginTop: '8px' }}>{totalFindings}</div>
+              </div>
+            </Tooltip>
 
-            <div className="metric-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', borderTop: '4px solid #dc2626' }}>
-              <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold', letterSpacing: '0.5px' }}>NON-COMPLIANT</div>
-              <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#dc2626', marginTop: '8px' }}>{majorNcCount + minorNcCount}</div>
-            </div>
+            <Tooltip content="Total active Minor and Major Non-Conformances requiring corrective actions." position="bottom" className="full-width">
+              <div className="metric-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', borderTop: '4px solid #dc2626', cursor: 'help' }}>
+                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 'bold', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  NON-COMPLIANT
+                  <HelpCircle size={14} style={{ opacity: 0.6 }} />
+                </div>
+                <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#dc2626', marginTop: '8px' }}>{majorNcCount + minorNcCount}</div>
+              </div>
+            </Tooltip>
           </div>
         </div>
 
         <div className="metric-card metric-card--padded iso-review-card" style={{ padding: '24px', height: 'auto', minHeight: 'max-content' }}>
           <h3 className="metric-card-title iso-review-title" style={{ margin: '0 0 16px 0', fontSize: '18px', color: '#0f172a' }}>Review Clause Status</h3>
           <div className="iso-progress-stack iso-progress-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
-              <span style={{ fontWeight: '600', color: '#166534' }}>Compliant</span>
-              <span style={{ fontWeight: 'bold', color: '#15803d', fontSize: '18px' }}>{compliantCount}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px' }}>
-              <span style={{ fontWeight: '600', color: '#1e40af' }}>Opportunity for Improvement (OFI)</span>
-              <span style={{ fontWeight: 'bold', color: '#1d4ed8', fontSize: '18px' }}>{ofiCount}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px' }}>
-              <span style={{ fontWeight: '600', color: '#92400e' }}>Minor Non-Conformance</span>
-              <span style={{ fontWeight: 'bold', color: '#b45309', fontSize: '18px' }}>{minorNcCount}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
-              <span style={{ fontWeight: '600', color: '#991b1b' }}>Major Non-Conformance</span>
-              <span style={{ fontWeight: 'bold', color: '#b91c1c', fontSize: '18px' }}>{majorNcCount}</span>
-            </div>
+            <Tooltip content="Audited items that fully satisfy and follow all required ISO standard clause specifications." position="top" className="full-width">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', cursor: 'help' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontWeight: '600', color: '#166534' }}>Compliant</span>
+                  <HelpCircle size={14} style={{ color: '#16a34a', opacity: 0.7 }} />
+                </div>
+                <span style={{ fontWeight: 'bold', color: '#15803d', fontSize: '18px' }}>{compliantCount}</span>
+              </div>
+            </Tooltip>
+
+            <Tooltip content="Observations or areas where efficiency can be improved to prevent future non-conformance. No mandatory corrective action required." position="top" className="full-width">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', cursor: 'help' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontWeight: '600', color: '#1e40af' }}>Opportunity for Improvement (OFI)</span>
+                  <HelpCircle size={14} style={{ color: '#2563eb', opacity: 0.7 }} />
+                </div>
+                <span style={{ fontWeight: 'bold', color: '#1d4ed8', fontSize: '18px' }}>{ofiCount}</span>
+              </div>
+            </Tooltip>
+
+            <Tooltip content="An isolated lapse in meeting ISO requirements that does not directly compromise the entire quality management system." position="top" className="full-width">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', cursor: 'help' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontWeight: '600', color: '#92400e' }}>Minor Non-Conformance</span>
+                  <HelpCircle size={14} style={{ color: '#d97706', opacity: 0.7 }} />
+                </div>
+                <span style={{ fontWeight: 'bold', color: '#b45309', fontSize: '18px' }}>{minorNcCount}</span>
+              </div>
+            </Tooltip>
+
+            <Tooltip content="A critical breakdown, total absence of a required procedure, or direct compliance risk requiring an immediate CAR." position="top" className="full-width">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', cursor: 'help' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontWeight: '600', color: '#991b1b' }}>Major Non-Conformance</span>
+                  <HelpCircle size={14} style={{ color: '#dc2626', opacity: 0.7 }} />
+                </div>
+                <span style={{ fontWeight: 'bold', color: '#b91c1c', fontSize: '18px' }}>{majorNcCount}</span>
+              </div>
+            </Tooltip>
           </div>
         </div>
 
@@ -104,20 +145,25 @@ export default function ISOPage({ userRole, userPermissions, userName }) {
                   <div key={finding.id} className="iso-finding-item">
                     <div className="iso-finding-info">
                       <div className="iso-finding-title-row">
-                        <span className="iso-finding-badge">Clause {finding.iso_clauses?.clause_number || 'N/A'}</span>
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            fontWeight: '700',
-                            padding: '2px 8px',
-                            borderRadius: '999px',
-                            background: statusMeta.bg,
-                            color: statusMeta.color,
-                            border: `1px solid ${statusMeta.border}`
-                          }}
-                        >
-                          {statusMeta.label}
-                        </span>
+                        <Tooltip content={`ISO Clause ${finding.iso_clauses?.clause_number || ''}: ${finding.iso_clauses?.title || 'Clause Standard'}`} position="top">
+                          <span className="iso-finding-badge" style={{ cursor: 'help' }}>Clause {finding.iso_clauses?.clause_number || 'N/A'}</span>
+                        </Tooltip>
+                        <Tooltip content={statusMeta.label === 'Major NC' ? 'Major Non-Conformance: Critical breakdown, absent requirement, or high-risk compliance failure' : 'Minor Non-Conformance: Isolated lapse that does not directly compromise the system'} position="top">
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: '700',
+                              padding: '2px 8px',
+                              borderRadius: '999px',
+                              background: statusMeta.bg,
+                              color: statusMeta.color,
+                              border: `1px solid ${statusMeta.border}`,
+                              cursor: 'help'
+                            }}
+                          >
+                            {statusMeta.label}
+                          </span>
+                        </Tooltip>
                         <strong className="iso-finding-title">{finding.iso_clauses?.title || 'Unknown Clause'}</strong>
                       </div>
                       {schedule?.title && (

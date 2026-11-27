@@ -505,12 +505,24 @@ export function AuditSchedulesTab({
   progressBySchedule = {}
 }) {
   const auditorOptions = useMemo(() => {
+    const seen = new Set()
     return auditors
       .filter(aud => String(aud.status || 'ACTIVE').toUpperCase() === 'ACTIVE')
-      .map(aud => ({
-        id: aud.auth_id,
-        label: `${aud.first_name} ${aud.last_name} (${aud.roles?.role_name || 'Auditor'})`
-      }))
+      .map(aud => {
+        const id = aud.auth_id || aud.id
+        const role = aud.roles?.role_name || 'Auditor'
+        const name = `${aud.first_name || ''} ${aud.last_name || ''}`.trim()
+        return {
+          id,
+          label: `${name} (${role})`
+        }
+      })
+      .filter(opt => {
+        const norm = opt.label.trim().toLowerCase()
+        if (seen.has(norm)) return false
+        seen.add(norm)
+        return true
+      })
   }, [auditors])
 
   const [auditorSearchValue, setAuditorSearchValue] = useState('')
@@ -627,13 +639,6 @@ export function AuditSchedulesTab({
               </div>
               <div className="form-group"></div>
             </div>
-
-
-            {error && (
-              <div className="iso-inline-message iso-inline-message--error" style={{ marginBottom: '16px' }}>
-                {error}
-              </div>
-            )}
 
             <div className="iso-actions-row" style={{ marginTop: '8px' }}>
               <button type="submit" className="btn-primary" disabled={saving}>
@@ -1201,12 +1206,6 @@ export function AuditTemplatesTab({
                 </div>
               )}
             </div>
-
-            {error && (
-              <div className="iso-inline-message iso-inline-message--error" style={{ marginBottom: '16px' }}>
-                {error}
-              </div>
-            )}
 
             <div className="iso-actions-row">
               <button type="submit" className="btn-primary" disabled={saving || formItems.length === 0}>

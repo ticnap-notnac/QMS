@@ -1,0 +1,114 @@
+/* src/components/Forms/SearchableDropdown.css */
+
+.searchable-dropdown-root {
+  position: relative;
+  width: 100%;
+}
+
+.searchable-dropdown-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.searchable-dropdown-input {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  height: 40px !important;
+  padding: 8px 36px 8px 14px !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  color: #0f172a !important;
+  outline: none !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.searchable-dropdown-input:focus {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12) !important;
+}
+
+.searchable-dropdown-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.searchable-dropdown-icon.open {
+  transform: translateY(-50%) rotate(180deg);
+  color: #0284c7;
+}
+
+.searchable-dropdown-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 9999;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-sizing: border-box;
+}
+
+/* Individual options in the vertical list */
+.searchable-dropdown-item,
+.dropdown-option-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  text-align: left !important;
+  padding: 10px 14px !important;
+  background: transparent !important;
+  color: #1e293b !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  transition: background 0.15s ease, color 0.15s ease !important;
+  outline: none !important;
+  margin: 0 !important;
+}
+
+.searchable-dropdown-item:hover,
+.dropdown-option-btn:hover,
+.searchable-dropdown-item:focus,
+.dropdown-option-btn:focus {
+  background: #f1f5f9 !important;
+  color: #0284c7 !important;
+}
+
+.searchable-dropdown-item.selected,
+.dropdown-option-btn.selected {
+  background: #e0f2fe !important;
+  color: #0369a1 !important;
+  font-weight: 600 !important;
+}
+
+.searchable-dropdown-empty {
+  padding: 14px 12px;
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
+}

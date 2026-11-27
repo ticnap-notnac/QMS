@@ -75,7 +75,6 @@ const DEFAULT_ROLE_PERMISSIONS = {
     rights: [
       'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
       'accept_decline_report', 'assign_report',
-      'create_car_report', 'create_qddr_report',
       'submit_capa', 'manage_iso', 'manage_audit_schedules', 'view_logs'
     ],
   },
@@ -93,14 +92,13 @@ const DEFAULT_ROLE_PERMISSIONS = {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
       'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
-      'create_car_report', 'accept_decline_report'
+      'create_car_report', 'create_qddr_report', 'accept_decline_report', 'assign_report'
     ],
   },
   'warehouse supervisor': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
       'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
-      'create_car_report', 'create_qddr_report',
       'accept_decline_report', 'assign_report'
     ],
   },
@@ -108,26 +106,26 @@ const DEFAULT_ROLE_PERMISSIONS = {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
       'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
-      'create_qddr_report', 'accept_decline_report'
+      'accept_decline_report'
     ],
   },
   'checker': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
       'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
-      'create_car_report', 'create_qddr_report', 'verify_car'
+      'verify_car'
     ],
   },
   'warehouse checker': {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
     rights: [
       'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
-      'create_car_report', 'create_qddr_report', 'verify_car'
+      'verify_car'
     ],
   },
   default: {
     pages: ['dashboard', 'reports', 'dcc', 'settings'],
-    rights: ['view_car_reports', 'view_qddr_reports', 'create_car_report', 'create_qddr_report', 'view_audit_schedules', 'view_audit_reports'],
+    rights: ['view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports'],
   }
 }
 

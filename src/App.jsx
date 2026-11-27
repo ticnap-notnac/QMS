@@ -28,7 +28,7 @@ function AppInner() {
   const [toast, setToast] = useState(null)
 
   const [userRole, setUserRole] = useState('user')
-  const [userPermissions, setUserPermissions] = useState({ pages: ['dashboard', 'reports', 'dcc', 'settings'], rights: ['create_report'] })
+  const [userPermissions, setUserPermissions] = useState({ pages: ['dashboard', 'reports', 'dcc', 'settings'], rights: ['view_car_reports', 'view_qddr_reports'] })
   const [currentUserId, setCurrentUserId] = useState(null)
   const [userDepartmentId, setUserDepartmentId] = useState(null)
   const [userName, setUserName] = useState('Name of the User')
@@ -108,17 +108,27 @@ function AppInner() {
             'manage_audit_schedules', 'view_logs'
           ],
         })
-      } else if (['auditor', 'qa officer'].includes(normalized)) {
+      } else if (normalized === 'qa officer') {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
           rights: [
             'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
             'accept_decline_report', 'assign_report',
             'create_car_report', 'create_qddr_report', 'create_report',
+            'edit_delete_report', 'submit_capa', 'verify_car',
+            'manage_iso', 'manage_audit_schedules', 'view_logs'
+          ],
+        })
+      } else if (normalized === 'auditor') {
+        setUserPermissions({
+          pages: ['dashboard', 'reports', 'iso', 'dcc', 'audit_tools', 'settings'],
+          rights: [
+            'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+            'accept_decline_report', 'assign_report',
             'submit_capa', 'manage_iso', 'manage_audit_schedules', 'view_logs'
           ],
         })
-      } else if (['team leader', 'warehouse executive', 'warehouse supervisor'].includes(normalized)) {
+      } else if (normalized === 'team leader') {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'dcc', 'settings'],
           rights: [
@@ -127,10 +137,18 @@ function AppInner() {
             'accept_decline_report', 'assign_report'
           ],
         })
+      } else if (['warehouse executive', 'warehouse supervisor'].includes(normalized)) {
+        setUserPermissions({
+          pages: ['dashboard', 'reports', 'dcc', 'settings'],
+          rights: [
+            'view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports',
+            'accept_decline_report', 'assign_report'
+          ],
+        })
       } else {
         setUserPermissions({
           pages: ['dashboard', 'reports', 'dcc', 'settings'],
-          rights: ['view_car_reports', 'view_qddr_reports', 'create_car_report', 'create_qddr_report', 'create_report', 'view_audit_schedules', 'view_audit_reports'],
+          rights: ['view_car_reports', 'view_qddr_reports', 'view_audit_schedules', 'view_audit_reports'],
         })
       }
     }
