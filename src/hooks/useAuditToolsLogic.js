@@ -154,6 +154,8 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
   const resultsMapRef = useRef({})
   const activeRunRef = useRef(null)
   const isAutoSavingRef = useRef(false)
+  const pendingAutoSaveRef = useRef(false)
+  const dirtyKeysRef = useRef(new Set())
   const [linkedCarsMap, setLinkedCarsMap] = useState({})  // { [clause_id]: [{ id, reference_no, status }] }
 
   // Audit Logs states
@@ -377,31 +379,55 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
         audit_schedules: schedule
       })
       setActiveClauses(itemsList)
-      let dbSnapshot = JSON.stringify(initialResults)
+      dirtyKeysRef.current = new Set()
+      const dbSnapshot = JSON.stringify(initialResults)
+      let restoredUnsavedDraft = false
       try {
         const rawDraft = localStorage.getItem(`audit_draft_${activeRunData.id}`)
         if (rawDraft) {
-          const parsedDraft = JSON.parse(rawDraft)
-          if (parsedDraft && typeof parsedDraft === 'object') {
-            Object.keys(initialResults).forEach(clauseId => {
-              if (parsedDraft[clauseId]) {
-                initialResults[clauseId] = {
-                  ...initialResults[clauseId],
-                  status: parsedDraft[clauseId].status || initialResults[clauseId].status,
-                  evidence: parsedDraft[clauseId].evidence ?? initialResults[clauseId].evidence,
-                  notes: parsedDraft[clauseId].notes ?? initialResults[clauseId].notes,
-                  attachment_url: parsedDraft[clauseId].attachment_url ?? initialResults[clauseId].attachment_url,
-                  id: initialResults[clauseId].id || parsedDraft[clauseId].id || null
+          const parsed = JSON.parse(rawDraft)
+          // Only merge explicitly dirty unsaved rows (new format: { dirty: { [key]: row } })
+          // Ignore legacy full-map drafts that could contain stale empty strings and overwrite DB data.
+          const dirtyDraftMap = parsed && typeof parsed === 'object' && parsed.dirty && typeof parsed.dirty === 'object'
+            ? parsed.dirty
+            : null
+          if (dirtyDraftMap) {
+            Object.entries(dirtyDraftMap).forEach(([key, draftRow]) => {
+              if (!initialResults[key] || !draftRow || typeof draftRow !== 'object') return
+              const dbRow = initialResults[key]
+              const mergedEvidence = (draftRow.evidence && draftRow.evidence.length > 0) ? draftRow.evidence : dbRow.evidence
+              const mergedNotes = (draftRow.notes && draftRow.notes.length > 0) ? draftRow.notes : dbRow.notes
+              const mergedAttachment = draftRow.attachment_url || dbRow.attachment_url
+              const mergedStatus = draftRow.status || dbRow.status
+              const hasDiff =
+                mergedStatus !== dbRow.status ||
+                mergedEvidence !== dbRow.evidence ||
+                mergedNotes !== dbRow.notes ||
+                mergedAttachment !== dbRow.attachment_url
+              if (hasDiff) {
+                initialResults[key] = {
+                  ...dbRow,
+                  status: mergedStatus,
+                  evidence: mergedEvidence,
+                  notes: mergedNotes,
+                  attachment_url: mergedAttachment
                 }
+                dirtyKeysRef.current.add(key)
+                restoredUnsavedDraft = true
               }
             })
+          }
+          if (!restoredUnsavedDraft) {
+            localStorage.removeItem(`audit_draft_${activeRunData.id}`)
           }
         }
       } catch (draftErr) {
         console.warn('[useAuditToolsLogic] Failed to restore local audit draft:', draftErr)
       }
       lastSavedSnapshotRef.current = dbSnapshot
+      resultsMapRef.current = initialResults
       setResultsMap(initialResults)
+      setSaveStatus(restoredUnsavedDraft ? 'unsaved' : 'saved')
 
       // Batch-fetch all CARs linked to the clauses in this audit
       if (clausesList.length > 0) {
@@ -444,25 +470,56 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
     }
   }
 
+  // Safe functional updater for checklist fields (avoids stale closures during collaboration)
+  const updateClauseField = useCallback((resultKey, field, value) => {
+    dirtyKeysRef.current.add(resultKey)
+    setSaveStatus('unsaved')
+    setResultsMap(prev => {
+      const current = prev[resultKey] || { status: 'compliant', evidence: '', notes: '', attachment_url: '' }
+      const next = {
+        ...prev,
+        [resultKey]: {
+          ...current,
+          [field]: value
+        }
+      }
+      resultsMapRef.current = next
+      return next
+    })
+    broadcastClauseChange(resultKey, field, value)
+  }, [broadcastClauseChange])
+
   // Save Progress / Complete Audit
-  const handleSaveResults = async (complete = false) => {
-    setError('')
-    setSuccess('')
+  const handleSaveResults = async (complete = false, { silent = false } = {}) => {
+    if (!activeRunRef.current?.id) return false
+    const currentRun = activeRunRef.current
+    const currentMap = resultsMapRef.current || resultsMap
+
+    if (!silent) {
+      setError('')
+      setSuccess('')
+    }
     if (complete) {
-      const missingClause = (activeClauses || []).find(c => !resultsMap[c.result_id || c.id]?.status)
+      const missingClause = (activeClauses || []).find(c => !currentMap[c.result_id || c.id]?.status)
       if (missingClause) {
         setError(`Please record a status for Clause ${missingClause.clause_number || ''} before completing the audit.`)
-        return
+        return false
       }
     }
     setSavingProgress(true)
     setSaveStatus('saving')
     try {
-      const upsertData = Object.entries(resultsMap).map(([resultKey, val]) => {
+      const dirtyKeys = Array.from(dirtyKeysRef.current)
+      // On manual Save Progress or Complete, upsert dirty rows (or all rows if none are flagged dirty)
+      const entriesToSave = (!complete && dirtyKeys.length > 0)
+        ? dirtyKeys.filter(k => currentMap[k]).map(k => [k, currentMap[k]])
+        : Object.entries(currentMap)
+
+      const upsertData = entriesToSave.map(([resultKey, val]) => {
         const payload = {
-          run_id: activeRun.id,
+          run_id: currentRun.id,
           clause_id: val.clause_id || resultKey,
-          status: val.status,
+          status: val.status || 'compliant',
           evidence: val.evidence || null,
           notes: val.notes || null,
           attachment_url: val.attachment_url || null
@@ -473,37 +530,60 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
         return payload
       })
 
-      const { data: savedData, error: upsertError } = await supabase
-        .from('audit_results')
-        .upsert(upsertData)
-        .select('id, clause_id, status, evidence, notes, attachment_url')
+      let savedData = []
+      if (upsertData.length > 0) {
+        const { data, error: upsertError } = await supabase
+          .from('audit_results')
+          .upsert(upsertData, { onConflict: 'id' })
+          .select('id, clause_id, status, evidence, notes, attachment_url')
 
-      if (upsertError) throw upsertError
-
-      const updatedResultsMap = { ...resultsMap }
-      savedData.forEach(row => {
-        updatedResultsMap[row.id] = {
-          id: row.id,
-          clause_id: row.clause_id,
-          status: row.status,
-          evidence: row.evidence || '',
-          notes: row.notes || '',
-          attachment_url: row.attachment_url || ''
+        if (upsertError) throw upsertError
+        if (!data || data.length === 0) {
+          throw new Error('No audit rows were saved. Please check your permissions or reload the page.')
         }
-      })
-      lastSavedSnapshotRef.current = JSON.stringify(updatedResultsMap)
-      try {
-        localStorage.setItem(`audit_draft_${activeRun.id}`, lastSavedSnapshotRef.current)
-      } catch {
-        // Ignore storage quota errors
+        savedData = data
       }
-      setResultsMap(updatedResultsMap)
-      setSaveStatus('saved')
+
+      const savedSnapshotByKey = {}
+      entriesToSave.forEach(([k, v]) => {
+        savedSnapshotByKey[k] = JSON.stringify(v)
+      })
+
+      setResultsMap(prev => {
+        const merged = { ...prev }
+        savedData.forEach(row => {
+          // Only overwrite if user did not type again while request was in-flight
+          const latestVal = prev[row.id]
+          if (!latestVal || JSON.stringify(latestVal) === savedSnapshotByKey[row.id]) {
+            merged[row.id] = {
+              id: row.id,
+              clause_id: row.clause_id,
+              status: row.status,
+              evidence: row.evidence || '',
+              notes: row.notes || '',
+              attachment_url: row.attachment_url || ''
+            }
+            dirtyKeysRef.current.delete(row.id)
+          }
+        })
+        resultsMapRef.current = merged
+        lastSavedSnapshotRef.current = JSON.stringify(merged)
+        return merged
+      })
+
+      try {
+        if (dirtyKeysRef.current.size === 0) {
+          localStorage.removeItem(`audit_draft_${currentRun.id}`)
+        }
+      } catch {
+        // Ignore storage errors
+      }
+      setSaveStatus(dirtyKeysRef.current.size === 0 ? 'saved' : 'unsaved')
 
       if (complete) {
         // Bind existing open CARs to this schedule so they don't appear in future audits
         const clauseIds = Array.from(
-          new Set(Object.values(resultsMap).map(v => v.clause_id).filter(Boolean))
+          new Set(Object.values(currentMap).map(v => v.clause_id).filter(Boolean))
         )
         if (clauseIds.length > 0) {
           const { data: linksData, error: linksErr } = await supabase
@@ -517,7 +597,7 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
             // Only bind CARs that don't already belong to an audit schedule
             await supabase
               .from('car_reports')
-              .update({ audit_schedule_id: activeRun.schedule_id })
+              .update({ audit_schedule_id: currentRun.schedule_id })
               .in('id', carIdsToBind)
               .is('audit_schedule_id', null)
           }
@@ -526,14 +606,14 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
         const { error: runErr } = await supabase
           .from('audit_runs')
           .update({ completed_at: new Date().toISOString() })
-          .eq('id', activeRun.id)
+          .eq('id', currentRun.id)
 
         if (runErr) throw runErr
 
         const { error: schedErr } = await supabase
           .from('audit_schedules')
           .update({ status: 'completed' })
-          .eq('id', activeRun.schedule_id)
+          .eq('id', currentRun.schedule_id)
 
         if (schedErr) throw schedErr
 
@@ -553,22 +633,26 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
         }
 
         try {
-          localStorage.removeItem(`audit_draft_${activeRun.id}`)
+          localStorage.removeItem(`audit_draft_${currentRun.id}`)
         } catch {
           // Ignore storage errors
         }
+        dirtyKeysRef.current.clear()
         lastSavedSnapshotRef.current = ''
         setSuccess('Audit completed and saved successfully!')
         setActiveRun(null)
         setActiveClauses([])
         setResultsMap({})
         await fetchData()
-      } else {
+      } else if (!silent) {
         setSuccess('Progress saved successfully!')
       }
+      return true
     } catch (err) {
       console.error('Error saving audit results:', err)
-      setError('Failed to save audit results. ' + err.message)
+      setSaveStatus('error')
+      setError('Failed to save audit results. ' + (err.message || 'Please try again.'))
+      return false
     } finally {
       setSavingProgress(false)
     }
@@ -580,18 +664,30 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
   }, [resultsMap, activeRun])
 
   const autoSaveResultsQuietly = useCallback(async (runToSave, mapToSave) => {
-    if (!runToSave?.id || !mapToSave || Object.keys(mapToSave).length === 0) return
-    if (isAutoSavingRef.current) return
-    const currentSnapshot = JSON.stringify(mapToSave)
-    if (currentSnapshot === lastSavedSnapshotRef.current) return
+    if (!runToSave?.id || !mapToSave || Object.keys(mapToSave).length === 0) return true
+    if (dirtyKeysRef.current.size === 0) return true
+    if (isAutoSavingRef.current) {
+      pendingAutoSaveRef.current = true
+      return true
+    }
 
     isAutoSavingRef.current = true
+    setSaveStatus('saving')
     try {
-      const upsertData = Object.entries(mapToSave).map(([resultKey, val]) => {
+      const keysToSave = Array.from(dirtyKeysRef.current).filter(k => mapToSave[k])
+      if (keysToSave.length === 0) {
+        setSaveStatus('saved')
+        return true
+      }
+
+      const snapshotByKey = {}
+      const upsertData = keysToSave.map((resultKey) => {
+        const val = mapToSave[resultKey]
+        snapshotByKey[resultKey] = JSON.stringify(val)
         const payload = {
           run_id: runToSave.id,
           clause_id: val.clause_id || resultKey,
-          status: val.status,
+          status: val.status || 'compliant',
           evidence: val.evidence || null,
           notes: val.notes || null,
           attachment_url: val.attachment_url || null
@@ -602,46 +698,99 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
         return payload
       })
 
-      const { error: upsertError } = await supabase
+      const { data: savedRows, error: upsertError } = await supabase
         .from('audit_results')
-        .upsert(upsertData)
+        .upsert(upsertData, { onConflict: 'id' })
+        .select('id')
 
-      if (!upsertError) {
-        lastSavedSnapshotRef.current = currentSnapshot
+      if (upsertError) {
+        console.error('[useAuditToolsLogic] Background auto-save failed:', upsertError)
+        setSaveStatus('error')
+        return false
       }
+
+      if (!savedRows || savedRows.length === 0) {
+        console.warn('[useAuditToolsLogic] Background auto-save updated 0 rows')
+        setSaveStatus('error')
+        return false
+      }
+
+      // Only clear dirty flags for rows that didn't change again while saving
+      keysToSave.forEach(k => {
+        const latest = resultsMapRef.current?.[k]
+        if (latest && JSON.stringify(latest) === snapshotByKey[k]) {
+          dirtyKeysRef.current.delete(k)
+        }
+      })
+
+      if (dirtyKeysRef.current.size === 0) {
+        lastSavedSnapshotRef.current = JSON.stringify(resultsMapRef.current || mapToSave)
+        try {
+          localStorage.removeItem(`audit_draft_${runToSave.id}`)
+        } catch {}
+        setSaveStatus('saved')
+      } else {
+        setSaveStatus('unsaved')
+      }
+      return true
     } catch (err) {
-      console.warn('[useAuditToolsLogic] Background auto-save warning:', err?.message || err)
+      console.error('[useAuditToolsLogic] Background auto-save exception:', err?.message || err)
+      setSaveStatus('error')
+      return false
     } finally {
       isAutoSavingRef.current = false
+      if (pendingAutoSaveRef.current && activeRunRef.current?.id && dirtyKeysRef.current.size > 0) {
+        pendingAutoSaveRef.current = false
+        autoSaveResultsQuietly(activeRunRef.current, resultsMapRef.current)
+      } else {
+        pendingAutoSaveRef.current = false
+      }
     }
   }, [])
 
-  // Layer 1 & 2: Instant localStorage mirror + 2s debounced Supabase auto-save
+  // Safe Go Back: flush unsaved changes to Supabase BEFORE leaving the checklist
+  const handleGoBack = useCallback(async () => {
+    if (activeRunRef.current?.id && dirtyKeysRef.current.size > 0) {
+      const ok = await handleSaveResults(false, { silent: true })
+      if (!ok) {
+        return
+      }
+    }
+    setActiveRun(null)
+    fetchData()
+  }, [setActiveRun])
+
+  // Layer 1 & 2: Instant dirty-only localStorage backup + 1.5s debounced Supabase auto-save
   useEffect(() => {
     if (!activeRun?.id || Object.keys(resultsMap).length === 0) return
+    if (dirtyKeysRef.current.size === 0) return
 
-    const currentSnapshot = JSON.stringify(resultsMap)
     try {
-      localStorage.setItem(`audit_draft_${activeRun.id}`, currentSnapshot)
+      const dirtyObj = {}
+      dirtyKeysRef.current.forEach(k => {
+        if (resultsMap[k]) dirtyObj[k] = resultsMap[k]
+      })
+      localStorage.setItem(
+        `audit_draft_${activeRun.id}`,
+        JSON.stringify({ updatedAt: Date.now(), dirty: dirtyObj })
+      )
     } catch {
       // Ignore storage quota errors
     }
 
-    if (currentSnapshot === lastSavedSnapshotRef.current) return
-
     const timer = setTimeout(() => {
       autoSaveResultsQuietly(activeRunRef.current, resultsMapRef.current)
-    }, 2000)
+    }, 1500)
 
     return () => clearTimeout(timer)
   }, [activeRun?.id, resultsMap, autoSaveResultsQuietly])
 
-  // Layer 3: Immediate cloud auto-save when switching windows/tabs (blur or visibilitychange)
+  // Layer 3: Immediate cloud auto-save on tab switch + warn on accidental close/back with unsaved edits
   useEffect(() => {
     if (!activeRun?.id) return
 
     const flushOnSwitch = () => {
-      if (activeRunRef.current?.id) {
+      if (activeRunRef.current?.id && dirtyKeysRef.current.size > 0) {
         autoSaveResultsQuietly(activeRunRef.current, resultsMapRef.current)
       }
     }
@@ -652,12 +801,22 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
       }
     }
 
+    const handleBeforeUnload = (e) => {
+      if (dirtyKeysRef.current.size > 0) {
+        flushOnSwitch()
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
     window.addEventListener('blur', flushOnSwitch)
+    window.addEventListener('beforeunload', handleBeforeUnload)
     document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       flushOnSwitch()
       window.removeEventListener('blur', flushOnSwitch)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [activeRun?.id, autoSaveResultsQuietly])
@@ -1004,9 +1163,11 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
       }, (payload) => {
         if (payload.new) {
           const row = payload.new
+          // Do not overwrite a row that has unsaved local typing on this client
+          if (dirtyKeysRef.current.has(row.id)) return
           setResultsMap(prev => {
             const existing = prev[row.id] || {}
-            return {
+            const next = {
               ...prev,
               [row.id]: {
                 id: row.id,
@@ -1017,6 +1178,8 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
                 attachment_url: row.attachment_url ?? existing.attachment_url ?? ''
               }
             }
+            resultsMapRef.current = next
+            return next
           })
           setSaveStatus('synced')
         }
@@ -1482,6 +1645,8 @@ export default function useAuditToolsLogic({ authUserId, userName = '', userRole
     ...auditRunDetails,
     handleStartAudit,
     handleSaveResults,
+    handleGoBack,
+    updateClauseField,
     fetchData,
     fetchAuditLogs,
     fetchAuditReports,

@@ -18,6 +18,8 @@ export function AuditChecklistSection({
   setResultsMap,
   savingProgress,
   handleSaveResults,
+  handleGoBack,
+  updateClauseField,
   setActiveRun,
   fetchData,
   linkedCarsMap,
@@ -73,13 +75,16 @@ export function AuditChecklistSection({
         .from('audit-evidence')
         .getPublicUrl(filePath)
 
-      const currentAnswer = resultsMap[clauseId] || { status: 'compliant', evidence: '', notes: '' }
-      setResultsMap({
-        ...resultsMap,
-        [clauseId]: { ...currentAnswer, attachment_url: urlData.publicUrl }
-      })
-      if (broadcastClauseChange) {
-        broadcastClauseChange(clauseId, 'attachment_url', urlData.publicUrl)
+      if (updateClauseField) {
+        updateClauseField(clauseId, 'attachment_url', urlData.publicUrl)
+      } else {
+        setResultsMap(prev => ({
+          ...prev,
+          [clauseId]: { ...(prev[clauseId] || { status: 'compliant', evidence: '', notes: '' }), attachment_url: urlData.publicUrl }
+        }))
+        if (broadcastClauseChange) {
+          broadcastClauseChange(clauseId, 'attachment_url', urlData.publicUrl)
+        }
       }
     } catch (err) {
       console.error('Upload error:', err)
@@ -164,12 +169,17 @@ export function AuditChecklistSection({
             <button
               className="btn-add-action"
               style={{ background: '#ffffff', color: '#475569', border: '1px solid #cbd5e1', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontSize: '14px', padding: '6px 14px' }}
+              disabled={savingProgress}
               onClick={() => {
-                setActiveRun(null)
-                fetchData()
+                if (handleGoBack) {
+                  handleGoBack()
+                } else {
+                  setActiveRun(null)
+                  fetchData()
+                }
               }}
             >
-              Go Back
+              {savingProgress ? 'Saving...' : 'Go Back'}
             </button>
           </div>
         </div>
@@ -235,11 +245,29 @@ export function AuditChecklistSection({
               </div>
             )}
 
-            <div className={`cloud-sync-pill ${saveStatus === 'saving' ? 'is-saving' : saveStatus === 'synced' ? 'is-synced' : 'is-saved'}`}>
+            <div
+              className={`cloud-sync-pill ${saveStatus === 'saving' ? 'is-saving' : saveStatus === 'synced' ? 'is-synced' : 'is-saved'}`}
+              style={
+                saveStatus === 'error'
+                  ? { background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }
+                  : saveStatus === 'unsaved'
+                    ? { background: '#fffbeb', color: '#b45309', border: '1px solid #fde68a' }
+                    : undefined
+              }
+            >
               {saveStatus === 'saving' ? (
                 <>
                   <LoaderCircle size={13} className="spin" />
                   <span>Saving changes...</span>
+                </>
+              ) : saveStatus === 'unsaved' ? (
+                <>
+                  <LoaderCircle size={13} className="spin" />
+                  <span>Unsaved changes...</span>
+                </>
+              ) : saveStatus === 'error' ? (
+                <>
+                  <span>Save failed — click Save Progress</span>
                 </>
               ) : saveStatus === 'synced' ? (
                 <>
@@ -322,12 +350,16 @@ export function AuditChecklistSection({
                           value={answer.evidence || ''}
                           onChange={(e) => {
                             const val = e.target.value
-                            setResultsMap({
-                              ...resultsMap,
-                              [resultKey]: { ...answer, evidence: val }
-                            })
-                            if (broadcastClauseChange) {
-                              broadcastClauseChange(resultKey, 'evidence', val)
+                            if (updateClauseField) {
+                              updateClauseField(resultKey, 'evidence', val)
+                            } else {
+                              setResultsMap(prev => ({
+                                ...prev,
+                                [resultKey]: { ...(prev[resultKey] || answer), evidence: val }
+                              }))
+                              if (broadcastClauseChange) {
+                                broadcastClauseChange(resultKey, 'evidence', val)
+                              }
                             }
                           }}
                           onFocus={() => {
@@ -400,12 +432,16 @@ export function AuditChecklistSection({
                           value={answer.notes || ''}
                           onChange={(e) => {
                             const val = e.target.value
-                            setResultsMap({
-                              ...resultsMap,
-                              [resultKey]: { ...answer, notes: val }
-                            })
-                            if (broadcastClauseChange) {
-                              broadcastClauseChange(resultKey, 'notes', val)
+                            if (updateClauseField) {
+                              updateClauseField(resultKey, 'notes', val)
+                            } else {
+                              setResultsMap(prev => ({
+                                ...prev,
+                                [resultKey]: { ...(prev[resultKey] || answer), notes: val }
+                              }))
+                              if (broadcastClauseChange) {
+                                broadcastClauseChange(resultKey, 'notes', val)
+                              }
                             }
                           }}
                           onFocus={() => {
@@ -439,12 +475,16 @@ export function AuditChecklistSection({
                           value={answer.status || 'compliant'}
                           onChange={(e) => {
                             const val = e.target.value
-                            setResultsMap({
-                              ...resultsMap,
-                              [resultKey]: { ...answer, status: val }
-                            })
-                            if (broadcastClauseChange) {
-                              broadcastClauseChange(resultKey, 'status', val)
+                            if (updateClauseField) {
+                              updateClauseField(resultKey, 'status', val)
+                            } else {
+                              setResultsMap(prev => ({
+                                ...prev,
+                                [resultKey]: { ...(prev[resultKey] || answer), status: val }
+                              }))
+                              if (broadcastClauseChange) {
+                                broadcastClauseChange(resultKey, 'status', val)
+                              }
                             }
                           }}
                           style={{

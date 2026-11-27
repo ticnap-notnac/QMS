@@ -23,3 +23,5 @@ export const AUDIT_STATUS = {
   MAJOR_NC: 'major_nc',
   NA: 'na'
 };
+
+export const RECYCLE_BIN_RETENTION_DAYS = 30;

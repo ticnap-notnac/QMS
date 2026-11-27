@@ -2,6 +2,7 @@ import app from './index.js'
 import logger from './utils/logger.js'
 
 import { startQueue } from './utils/queue.js'
+import { startRecycleBinPurgeScheduler } from './services/recycleBinService.js'
 
 const PORT = process.env.PORT || 3000
 
@@ -18,6 +19,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 const startServer = async () => {
   await startQueue()
+  startRecycleBinPurgeScheduler()
 
   const server = app.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`)

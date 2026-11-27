@@ -16,6 +16,7 @@ import { fetchProductTypes } from '../services/productTypeService'
 import { fetchDeletedReports } from '../services/dccService'
 import { restoreCarReport, permanentDeleteCarReport } from '../services/carService'
 import { restoreQddrReport, permanentDeleteQddrReport } from '../services/qddrService'
+import { RECYCLE_BIN_RETENTION_DAYS } from '../../shared/constants'
 
 
 const SEVERITY_COLORS = {
@@ -1071,7 +1072,7 @@ export default function DCCFolderContent({
                         Recycle Bin
                       </h3>
                       <p style={{ margin: 0, fontSize: '12.5px', color: '#64748b' }}>
-                        Soft-deleted reports are archived here. You can safely restore any report back to active status or delete it permanently.
+                        Soft-deleted reports are kept for {RECYCLE_BIN_RETENTION_DAYS} days before being permanently deleted automatically. You can restore any report or delete it permanently before then.
                       </p>
                     </div>
                   </div>
@@ -1182,7 +1183,7 @@ export default function DCCFolderContent({
                     </div>
                     <p style={{ margin: '0 0 6px 0', fontWeight: 700, fontSize: '16px', color: '#1e293b' }}>Recycle Bin is empty</p>
                     <span style={{ fontSize: '13px', color: '#64748b', maxWidth: '440px', display: 'inline-block', lineHeight: 1.5 }}>
-                      Deleted CAR and QDDR reports will be preserved here so you can review, restore, or permanently remove them anytime.
+                      Deleted CAR and QDDR reports are preserved here for {RECYCLE_BIN_RETENTION_DAYS} days so you can review, restore, or permanently remove them before they auto-delete.
                     </span>
                   </div>
                 ) : (
@@ -1200,6 +1201,19 @@ export default function DCCFolderContent({
                         hour: '2-digit',
                         minute: '2-digit'
                       }) : 'N/A'
+                      const msPerDay = 24 * 60 * 60 * 1000
+                      const expiresAtMs = deletedDateStr
+                        ? new Date(deletedDateStr).getTime() + RECYCLE_BIN_RETENTION_DAYS * msPerDay
+                        : null
+                      const daysRemaining = expiresAtMs !== null && !Number.isNaN(expiresAtMs)
+                        ? Math.max(0, Math.ceil((expiresAtMs - Date.now()) / msPerDay))
+                        : RECYCLE_BIN_RETENTION_DAYS
+                      const expiryLabel = daysRemaining === 0
+                        ? 'Auto-deletes today'
+                        : daysRemaining === 1
+                          ? 'Auto-deletes in 1 day'
+                          : `Auto-deletes in ${daysRemaining} days`
+                      const isExpiringSoon = daysRemaining <= 7
                       const summaryText = isCar
                         ? (doc.details_of_nonconformance || doc.type_of_nonconformance || '')
                         : (doc.reason_of_discrepancy || doc.material_description || '')
@@ -1506,9 +1520,24 @@ export default function DCCFolderContent({
                             paddingTop: '8px',
                             borderTop: '1px solid #f1f5f9'
                           }}>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748b' }}>
-                              <Clock size={13} color="#94a3b8" />
-                              <span>Deleted on {formattedDeletedDate}</span>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '12px', color: '#64748b' }}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                <Clock size={13} color="#94a3b8" />
+                                <span>Deleted on {formattedDeletedDate}</span>
+                              </span>
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '2px 8px',
+                                borderRadius: '999px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                background: isExpiringSoon ? '#fef2f2' : '#f1f5f9',
+                                color: isExpiringSoon ? '#b91c1c' : '#475569',
+                                border: `1px solid ${isExpiringSoon ? '#fecaca' : '#e2e8f0'}`
+                              }}>
+                                {expiryLabel}
+                              </span>
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
